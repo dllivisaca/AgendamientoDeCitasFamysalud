@@ -55,30 +55,34 @@
     <div class="container">
         <div class="booking-container">
             <div class="booking-header">
-                <h2><i class="bi bi-calendar-check"></i> Appointment Booking</h2>
-                <p class="mb-0">Book your appointment in a few simple steps</p>
+                <h2><i class="bi bi-calendar-check"></i> Agenda tu cita</h2>
+                <p class="mb-0">Agenda tu cita en pocos pasos</p>
             </div>
 
             <div class="booking-steps position-relative">
                 <div class="step active" data-step="1">
                     <div class="step-number">1</div>
-                    <div class="step-title">Category</div>
+                    <div class="step-title">Área de atención</div>
                 </div>
                 <div class="step" data-step="2">
                     <div class="step-number">2</div>
-                    <div class="step-title">Service</div>
+                    <div class="step-title">Servicio</div>
                 </div>
                 <div class="step" data-step="3">
                     <div class="step-number">3</div>
-                    <div class="step-title">Staff</div>
+                    <div class="step-title">Profesional</div>
                 </div>
                 <div class="step" data-step="4">
                     <div class="step-number">4</div>
-                    <div class="step-title">Date & Time</div>
+                    <div class="step-title">Fecha y hora</div>
                 </div>
                 <div class="step" data-step="5">
                     <div class="step-number">5</div>
-                    <div class="step-title">Confirm</div>
+                    <div class="step-title">Pago</div>
+                </div>
+                <div class="step" data-step="6">
+                    <div class="step-number">6</div>
+                    <div class="step-title">Confirmación</div>
                 </div>
                 <div class="progress-bar-steps">
                     <div class="progress"></div>
@@ -88,7 +92,7 @@
             <div class="booking-content">
                 <!-- Step 1: Category Selection -->
                 <div class="booking-step active" id="step1">
-                    <h3 class="mb-4">Select a Category</h3>
+                    <h3 class="mb-4">Selecciona un área de atención</h3>
                     <div class="row row-cols-1 row-cols-md-3 g-4" id="categories-container">
                         <!-- Categories will be inserted here by jQuery -->
                     </div>
@@ -96,7 +100,7 @@
 
                 <!-- Step 2: Service Selection -->
                 <div class="booking-step" id="step2">
-                    <h3 class="mb-4">Select a Service</h3>
+                    <h3 class="mb-4">Selecciona un servicio</h3>
                     <div class="selected-category-name mb-3 fw-bold"></div>
                     <div class="row row-cols-1 row-cols-md-3 g-4" id="services-container">
                         <!-- Services will be loaded dynamically based on category -->
