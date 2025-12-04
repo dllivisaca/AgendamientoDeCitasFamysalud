@@ -306,3 +306,9 @@ body {
         white-space: normal;
     }
 }
+
+/* Logo */
+.brand-logo {
+    height: 40px;   /* Cambia a lo que necesites */
+    width: auto;
+}
