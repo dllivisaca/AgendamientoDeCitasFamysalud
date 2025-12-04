@@ -78,11 +78,11 @@
                 </div>
                 <div class="step" data-step="5">
                     <div class="step-number">5</div>
-                    <div class="step-title">Pago</div>
+                    <div class="step-title">Datos del paciente</div>
                 </div>
                 <div class="step" data-step="6">
                     <div class="step-number">6</div>
-                    <div class="step-title">Confirmación</div>
+                    <div class="step-title">Pago</div>
                 </div>
                 <div class="progress-bar-steps">
                     <div class="progress"></div>
