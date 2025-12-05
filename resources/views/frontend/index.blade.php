@@ -299,6 +299,11 @@
 
             const categories = @json($categories);
 
+            // 👇 NUEVO: mes/año actuales + días laborales del empleado
+            let currentMonth;      // 0-11
+            let currentYear;       // año completo
+            let workingWeekdays = null; // [0..6] (0=Dom,1=Lun,...)
+
             const container = $('#categories-container'); // Target the container by ID
 
             let html = '';
@@ -434,19 +439,86 @@
                 $(".employee-card").removeClass("selected");
                 $(this).addClass("selected");
 
-                const employeeId = $(this).data("employee");
+                // 1) Asegurar que el id sea numérico
+                const employeeId = Number($(this).data("employee"));
+
+                //const employeeId = $(this).data("employee");
                 // alert(employeeId);
-                const employee = employees.find(e => e.id === employeeId);
+                //const employee = employees.find(e => e.id === employeeId);
+                //const employee = employees.find(e => e.id === Number(employeeId));
+                const employee = employees.find(e => Number(e.id) === employeeId);
+
+                if (!employee) {
+                    console.error('Empleado no encontrado para id:', employeeId, employees);
+                    return;
+                }
 
                 bookingState.selectedEmployee = employee;
 
-                // Reset subsequent selections
+                 // 3) Calcular qué días de la semana trabaja
+                workingWeekdays = null;
+                try {
+                    let daysConfig = null;
+
+                    // Si viene como string JSON
+                    if (typeof employee.days === 'string' && employee.days.trim() !== '') {
+                        daysConfig = JSON.parse(employee.days);
+
+                    // Si ya viene como objeto/array desde Laravel
+                    } else if (employee.days && typeof employee.days === 'object') {
+                        daysConfig = employee.days;
+                    }
+
+                    if (daysConfig) {
+                        const map = {
+                            sunday: 0,
+                            monday: 1,
+                            tuesday: 2,
+                            wednesday: 3,
+                            thursday: 4,
+                            friday: 5,
+                            saturday: 6
+                        };
+
+                        workingWeekdays = [];
+
+                        Object.entries(daysConfig).forEach(([dayName, slots]) => {
+                            if (Array.isArray(slots) && slots.length > 0 && map.hasOwnProperty(dayName)) {
+                                workingWeekdays.push(map[dayName]);
+                            }
+                        });
+                    }
+
+                    console.log('Días laborales del profesional:', workingWeekdays);
+                } catch (e) {
+                    console.error('Error al procesar employee.days:', e, employee.days);
+                    workingWeekdays = null;
+                }
+
+                // 4) Volver a dibujar el calendario con esos días bloqueados
+                if (typeof currentMonth !== 'undefined' && typeof currentYear !== 'undefined') {
+                    renderCalendar(currentMonth, currentYear);
+                }
+
+                // Resetear selecciones posteriores
                 bookingState.selectedDate = null;
                 bookingState.selectedTime = null;
+                $(".calendar-day").removeClass("selected");
+                $(".time-slot").removeClass("selected");
 
-                // Update the calendar
-                updateCalendar();
+                // Mostrar mensaje inicial en los turnos
+                $("#time-slots-container").html(`
+                    <div class="text-center w-100 py-4">
+                        <div class="alert alert-info">
+                            <i class="bi bi-calendar-event me-2"></i>
+                            Por favor selecciona una fecha para ver los turnos disponibles
+                        </div>
+                    </div>
+                `);
             });
+                
+
+              
 
 
             // Date selection
@@ -722,8 +794,8 @@
 
             function generateCalendar() {
                 const today = new Date();
-                const currentMonth = today.getMonth();
-                const currentYear = today.getFullYear();
+                currentMonth = today.getMonth();
+                currentYear = today.getFullYear();
 
                 renderCalendar(currentMonth, currentYear);
             }
@@ -767,9 +839,24 @@
                             // Check if this date is in the past
                             const isPast = cellDate < new Date(today.setHours(0, 0, 0, 0));
 
-                            // Create the cell with appropriate classes
+                            // 👇 NUEVO: deshabilitar por disponibilidad semanal
+                            let isDisabledBySchedule = false;
+                            if (Array.isArray(workingWeekdays) && workingWeekdays.length > 0) {
+                                const weekday = cellDate.getDay(); // 0=Dom,1=Lun,...6=Sab
+                                if (!workingWeekdays.includes(weekday)) {
+                                    isDisabledBySchedule = true;
+                                }
+                            }
+
+                            // Build classes
+                            let classes = 'text-center calendar-day';
+                            if (isPast || isDisabledBySchedule) {
+                                classes += ' disabled';
+                            }
+
+                            // Create the cell
                             const cell = $(
-                                `<td class="text-center calendar-day${isPast ? ' disabled' : ''}" data-date="${formattedDate}">${date}</td>`
+                                `<td class="${classes}" data-date="${formattedDate}">${date}</td>`
                             );
 
                             row.append(cell);
@@ -791,20 +878,20 @@
                 const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto",
                     "Septiembre", "Octubre", "Noviembre", "Diciembre"
                 ];
-                let month = monthNames.indexOf(monthName);
-                let yearNum = parseInt(year);
+                currentMonth  = monthNames.indexOf(monthName);
+                currentYear = parseInt(year);
 
-                month += direction;
+                currentMonth += direction;
 
-                if (month < 0) {
-                    month = 11;
-                    yearNum--;
-                } else if (month > 11) {
-                    month = 0;
-                    yearNum++;
+                if (currentMonth < 0) {
+                    currentMonth = 11;
+                    currentYear  --;
+                } else if (currentMonth > 11) {
+                    currentMonth = 0;
+                    currentYear++;
                 }
 
-                renderCalendar(month, yearNum);
+                renderCalendar(currentMonth, currentYear);
             }
 
 
