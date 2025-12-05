@@ -79,7 +79,7 @@
                 </div>
                 <div class="step" data-step="5">
                     <div class="step-number">5</div>
-                    <div class="step-title">Datos del paciente</div>
+                    <div class="step-title">Ingreso de datos</div>
                 </div>
                 <div class="step" data-step="6">
                     <div class="step-number">6</div>
@@ -119,7 +119,7 @@
 
                 <!-- Step 4: Date and Time Selection -->
                 <div class="booking-step" id="step4">
-                    <h3 class="mb-4">Selecciona fecha y hora</h3>
+                    <h3 class="mb-4">Selecciona una fecha y hora</h3>
                     <div class="selected-employee-name mb-3 fw-bold"></div>
 
                     <div class="row">
