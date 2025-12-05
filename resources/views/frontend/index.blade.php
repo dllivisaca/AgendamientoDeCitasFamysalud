@@ -540,7 +540,7 @@
                 if (bookingState.currentStep === 5) {
                     $("#next-step").html('Confirm Booking <i class="bi bi-check-circle"></i>');
                 } else {
-                    $("#next-step").html('Next <i class="bi bi-arrow-right"></i>');
+                    $("#next-step").html('Siguiente <i class="bi bi-arrow-right"></i>');
                 }
             }
 
@@ -598,7 +598,7 @@
 
                             // Update category name display
                             $(".selected-category-name").text(
-                                `Selected Category: ${services[0]?.category?.title || ''}`);
+                                `Área seleccionada: ${services[0]?.category?.title || ''}`);
 
                             // Clear services container
                             $("#services-container").empty();

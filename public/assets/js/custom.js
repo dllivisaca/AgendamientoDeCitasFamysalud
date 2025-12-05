@@ -302,7 +302,7 @@
 
                             // Update category name display
                             $(".selected-category-name").text(
-                                `Selected Category: ${services[0]?.category?.title || ''}`);
+                                `Área seleccionada: ${services[0]?.category?.title || ''}`);
 
                             // Clear services container
                             $("#services-container").empty();
