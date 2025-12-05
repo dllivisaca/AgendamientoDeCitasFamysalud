@@ -259,7 +259,7 @@
     <footer>
         <div class="container pb-2">
             <div class="row text-center">
-            <span>Diseñado y desarrollado por <a target="_blank" href="https://www.daisyllivisaca.com">Daisy Llivisaca</a></span>
+            <span>Aplicación diseñada y desarrollada por <a target="_blank" href="https://www.daisyllivisaca.com">Daisy Llivisaca</a></span>
             </div>
         </div>
     </footer>

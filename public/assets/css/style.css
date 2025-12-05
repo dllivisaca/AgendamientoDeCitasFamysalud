@@ -181,6 +181,8 @@ body {
     opacity: 0.5;
     cursor: not-allowed;
     background-color: #f8f9fa;
+    pointer-events: none;      /* evita clics */
+    color: #b0b0b0;   
 }
 
 .summary-item {
