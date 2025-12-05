@@ -242,7 +242,7 @@
 
                 // Update next button text
                 if (bookingState.currentStep === 5) {
-                    $("#next-step").html('Confirm Booking <i class="bi bi-check-circle"></i>');
+                    $("#next-step").html('Ir a pagar <i class="bi bi-arrow-right"></i>');
                 } else {
                     $("#next-step").html('Next <i class="bi bi-arrow-right"></i>');
                 }
@@ -439,7 +439,7 @@
 
                 // Update month display
                 const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto",
-                    "Septiembre", "Octubre", "Noviembre", "Deciembre"
+                    "Septiembre", "Octubre", "Noviembre", "Diciembre"
                 ];
                 $("#current-month").text(`${monthNames[month]} ${year}`);
 
@@ -659,39 +659,44 @@
 
 
             function updateSummary() {
-                // Find the selected category
+                // Categoría seleccionada
                 const selectedCategory = categories.find(cat => cat.id == bookingState.selectedCategory);
+                $("#summary-category").text(selectedCategory ? selectedCategory.title : 'No seleccionado');
 
-                // Update summary with booking details
-                $("#summary-category").text(selectedCategory ? selectedCategory.title : 'Not selected');
-
-                // Update service info - using the stored service object
+                // Servicio
                 if (bookingState.selectedService) {
                     $("#summary-service").text(
-                        `${bookingState.selectedService.title} (${bookingState.selectedService.price})`);
-                    $("#summary-duration").text(`${bookingState.selectedEmployee.slot_duration} minutes`);
+                        `${bookingState.selectedService.title} (${bookingState.selectedService.price})`
+                    );
+                    $("#summary-duration").text(`${bookingState.selectedEmployee.slot_duration} minutos`);
                     $("#summary-price").text(bookingState.selectedService.price);
                 }
 
-                // Update employee info
+                // Profesional
                 if (bookingState.selectedEmployee) {
                     $("#summary-employee").text(bookingState.selectedEmployee.user.name);
                 }
 
-                // Update date/time info
+                // Fecha y hora
                 if (bookingState.selectedDate && bookingState.selectedTime) {
-                    const formattedDate = new Date(bookingState.selectedDate).toLocaleDateString('en-US', {
+                    const opcionesFecha = {
                         weekday: 'long',
                         year: 'numeric',
                         month: 'long',
                         day: 'numeric'
-                    });
+                    };
+
+                    // Aseguramos formato correcto añadiendo hora artificial
+                    const fecha = new Date(bookingState.selectedDate + 'T00:00:00');
+                    let fechaES = fecha.toLocaleDateString('es-ES', opcionesFecha);
+                    // Primera letra mayúscula
+                    fechaES = fechaES.charAt(0).toUpperCase() + fechaES.slice(1);
 
                     $("#summary-datetime").text(
-                        `${formattedDate} at ${bookingState.selectedTime.display || bookingState.selectedTime}`);
+                        `${fechaES} a las ${bookingState.selectedTime.display || bookingState.selectedTime}`
+                    );
                 }
             }
-
 
 
             // function submitBooking() {
@@ -734,19 +739,22 @@
                     data: bookingData,
                     success: function(response) {
                         // Update modal with booking details
-                        const formattedDate = new Date(bookingState.selectedDate).toLocaleDateString(
-                            'en-US', {
-                                weekday: 'long',
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric'
-                            });
+                        const opcionesFecha = {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                        };
+
+                        const fecha = new Date(bookingState.selectedDate + 'T00:00:00');
+                        let formattedDate = fecha.toLocaleDateString('es-ES', opcionesFecha);
+                        formattedDate = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
 
                         const bookingDetails = `
                                 <div class="mb-2"><strong>Customer:</strong> ${$("#customer-name").val()}</div>
                                 <div class="mb-2"><strong>Service:</strong> ${bookingState.selectedService.title}</div>
                                 <div class="mb-2"><strong>Staff:</strong> ${bookingState.selectedEmployee.user.name}</div>
-                                <div class="mb-2"><strong>Date & Time:</strong> ${formattedDate} at ${bookingState.selectedTime.display || bookingState.selectedTime}</div>
+                                <div class="mb-2"><strong>Fecha y hora:</strong> ${formattedDate} a las ${bookingState.selectedTime.display || bookingState.selectedTime}</div>
                                  <div class="mb-2"><strong>Amount:</strong> ${bookingState.selectedService.price}</div>
                                 <div><strong>Reference:</strong> ${response.booking_id || 'BK-' + Math.random().toString(36).substr(2, 8).toUpperCase()}</div>
                             `;

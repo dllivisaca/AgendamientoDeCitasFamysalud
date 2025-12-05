@@ -173,68 +173,68 @@
 
                 <!-- Step 5: Confirmation -->
                 <div class="booking-step" id="step5">
-                    <h3 class="mb-4">Confirm Your Booking</h3>
+                    <h3 class="mb-4">Ingreso de datos</h3>
                     <div class="card">
                         <div class="card-header bg-light">
-                            <h5 class="mb-0">Booking Summary</h5>
+                            <h5 class="mb-0">Resumen de la cita</h5>
                         </div>
                         <div class="card-body">
                             <div class="summary-item">
                                 <div class="row">
-                                    <div class="col-md-4 text-muted">Category:</div>
+                                    <div class="col-md-4 text-muted">Área de atención:</div>
                                     <div class="col-md-8" id="summary-category"></div>
                                 </div>
                             </div>
                             <div class="summary-item">
                                 <div class="row">
-                                    <div class="col-md-4 text-muted">Service:</div>
+                                    <div class="col-md-4 text-muted">Servicio:</div>
                                     <div class="col-md-8" id="summary-service"></div>
                                 </div>
                             </div>
                             <div class="summary-item">
                                 <div class="row">
-                                    <div class="col-md-4 text-muted">Staff Member:</div>
+                                    <div class="col-md-4 text-muted">Profesional:</div>
                                     <div class="col-md-8" id="summary-employee"></div>
                                 </div>
                             </div>
                             <div class="summary-item">
                                 <div class="row">
-                                    <div class="col-md-4 text-muted">Date & Time:</div>
+                                    <div class="col-md-4 text-muted">Fecha y hora:</div>
                                     <div class="col-md-8" id="summary-datetime"></div>
                                 </div>
                             </div>
                             <div class="summary-item">
                                 <div class="row">
-                                    <div class="col-md-4 text-muted">Duration:</div>
+                                    <div class="col-md-4 text-muted">Duración:</div>
                                     <div class="col-md-8" id="summary-duration"></div>
                                 </div>
                             </div>
                             <div class="summary-item">
                                 <div class="row">
-                                    <div class="col-md-4 text-muted">Price:</div>
+                                    <div class="col-md-4 text-muted">Precio:</div>
                                     <div class="col-md-8" id="summary-price"></div>
                                 </div>
                             </div>
 
                             <div class="mt-4">
-                                <h5>Your Information</h5>
+                                <h5>Ingresa los datos del paciente</h5>
                                 <form id="customer-info-form">
                                     @csrf
                                     <div class="row g-3">
                                         <div class="col-md-6">
-                                            <label for="customer-name" class="form-label">Full Name</label>
+                                            <label for="customer-name" class="form-label">Nombre completo</label>
                                             <input type="text" class="form-control" id="customer-name" required>
                                         </div>
                                         <div class="col-md-6">
-                                            <label for="customer-email" class="form-label">Email</label>
+                                            <label for="customer-email" class="form-label">Correo electrónico</label>
                                             <input type="email" class="form-control" id="customer-email" required>
                                         </div>
                                         <div class="col-md-12">
-                                            <label for="customer-phone" class="form-label">Phone</label>
+                                            <label for="customer-phone" class="form-label">Teléfono</label>
                                             <input type="tel" class="form-control" id="customer-phone" required>
                                         </div>
                                         <div class="col-12">
-                                            <label for="customer-notes" class="form-label">Notes (Optional)</label>
+                                            <label for="customer-notes" class="form-label">Comentario (Opcional)</label>
                                             <textarea class="form-control" id="customer-notes" rows="3"></textarea>
                                         </div>
                                     </div>
@@ -469,6 +469,7 @@
                         daysConfig = employee.days;
                     }
 
+                    //Cuidado al editar aquí
                     if (daysConfig) {
                         const map = {
                             sunday: 0,
@@ -610,7 +611,7 @@
 
                 // Update next button text
                 if (bookingState.currentStep === 5) {
-                    $("#next-step").html('Confirm Booking <i class="bi bi-check-circle"></i>');
+                    $("#next-step").html('Ir a pagar <i class="bi bi-arrow-right"></i>');
                 } else {
                     $("#next-step").html('Siguiente <i class="bi bi-arrow-right"></i>');
                 }
@@ -1155,14 +1156,14 @@
 
                         alert(errorMessage);
                         nextBtn.prop('disabled', false).html(
-                            'Confirm Booking <i class="bi bi-check-circle"></i>');
+                            'Ir a pagar <i class="bi bi-arrow-right"></i>');
                     },
                     complete: function() {
                         // Re-enable button if request fails
                         if (nextBtn.prop('disabled')) {
                             setTimeout(() => {
                                 nextBtn.prop('disabled', false).html(
-                                    'Confirm Booking <i class="bi bi-check-circle"></i>');
+                                    'Ir a pagar <i class="bi bi-arrow-right"></i>');
                             }, 2000);
                         }
                     }
