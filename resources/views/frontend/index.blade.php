@@ -110,7 +110,7 @@
 
                 <!-- Step 3: Employee Selection -->
                 <div class="booking-step" id="step3">
-                    <h3 class="mb-4">Select a Staff Member</h3>
+                    <h3 class="mb-4">Selecciona a un profesional</h3>
                     <div class="selected-service-name mb-3 fw-bold"></div>
                     <div class="row row-cols-1 row-cols-md-3 g-4" id="employees-container">
                         <!-- Employees will be loaded dynamically based on service -->
@@ -119,7 +119,7 @@
 
                 <!-- Step 4: Date and Time Selection -->
                 <div class="booking-step" id="step4">
-                    <h3 class="mb-4">Select Date & Time</h3>
+                    <h3 class="mb-4">Selecciona fecha y hora</h3>
                     <div class="selected-employee-name mb-3 fw-bold"></div>
 
                     <div class="row">
@@ -136,13 +136,13 @@
                                     <table class="table table-calendar">
                                         <thead>
                                             <tr>
-                                                <th>Sun</th>
-                                                <th>Mon</th>
-                                                <th>Tue</th>
-                                                <th>Wed</th>
-                                                <th>Thu</th>
-                                                <th>Fri</th>
-                                                <th>Sat</th>
+                                                <th>Dom</th>
+                                                <th>Lun</th>
+                                                <th>Mar</th>
+                                                <th>Mie</th>
+                                                <th>Jue</th>
+                                                <th>Vie</th>
+                                                <th>Sab</th>
                                             </tr>
                                         </thead>
                                         <tbody id="calendar-body">
@@ -155,14 +155,14 @@
                         <div class="col-md-6">
                             <div class="card">
                                 <div class="card-header">
-                                    <h5 class="mb-0">Available Time Slots</h5>
+                                    <h5 class="mb-0">Turnos disponibles</h5>
                                     <div id="selected-date-display" class="text-muted small"></div>
                                 </div>
                                 <div class="card-body">
                                     <div id="time-slots-container" class="d-flex flex-wrap">
                                         <!-- Time slots will be loaded dynamically -->
                                         <div class="text-center text-muted w-100 py-4">
-                                            Please select a date to view available times
+                                            Por favor selecciona una fecha para ver los turnos disponibles
                                         </div>
                                     </div>
                                 </div>
@@ -259,7 +259,7 @@
     <footer>
         <div class="container pb-2">
             <div class="row text-center">
-            <span>Designed & Developed by <a target="_blank" href="https://www.vfixtechnology.com">VFIX TECHNOLOGY</a></span>
+            <span>Diseñado y desarrollado por <a target="_blank" href="https://www.daisyllivisaca.com">Daisy Llivisaca</a></span>
             </div>
         </div>
     </footer>
@@ -549,29 +549,29 @@
                 switch (step) {
                     case 1:
                         if (!bookingState.selectedCategory) {
-                            alert("Please select a category");
+                            alert("Por favor selecciona un área de atención");
                             return false;
                         }
                         return true;
                     case 2:
                         if (!bookingState.selectedService) {
-                            alert("Please select a service");
+                            alert("Por favor selecciona un servicio");
                             return false;
                         }
                         return true;
                     case 3:
                         if (!bookingState.selectedEmployee) {
-                            alert("Please select a staff member");
+                            alert("Por favor selecciona a un profesional");
                             return false;
                         }
                         return true;
                     case 4:
                         if (!bookingState.selectedDate) {
-                            alert("Please select a date");
+                            alert("Por favor selecciona una fecha");
                             return false;
                         }
                         if (!bookingState.selectedTime) {
-                            alert("Please select a time slot");
+                            alert("Por favor selecciona un turno");
                             return false;
                         }
                         return true;
@@ -679,7 +679,7 @@
 
                             // Update service name display
                             $(".selected-service-name").html(
-                                `Selected Service: ${service.title} (${bookingState.selectedService.price})`
+                                `Servicio seleccionado: ${service.title} (${bookingState.selectedService.price})`
                                 );
 
                             // Clear employees container
@@ -698,7 +698,7 @@
                                                 }
                                             </div>
                                             <h5 class="card-title">${employee.user.name}</h5>
-                                            <p class="card-text text-muted">${employee.position || 'Professional'}</p>
+                                            <p class="card-text text-muted">${employee.position || 'Profesional'}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -735,8 +735,8 @@
                 const startingDay = firstDay.getDay(); // 0 = Sunday
 
                 // Update month display
-                const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August",
-                    "September", "October", "November", "December"
+                const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto",
+                    "Septiembre", "Octubre", "Noviembre", "Diciembre"
                 ];
                 $("#current-month").text(`${monthNames[month]} ${year}`);
 
@@ -788,8 +788,8 @@
                 const currentMonthText = $("#current-month").text();
                 const [monthName, year] = currentMonthText.split(" ");
 
-                const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August",
-                    "September", "October", "November", "December"
+                const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto",
+                    "Septiembre", "Octubre", "Noviembre", "Diciembre"
                 ];
                 let month = monthNames.indexOf(monthName);
                 let yearNum = parseInt(year);
@@ -811,7 +811,7 @@
             function updateCalendar() {
                 // Update employee name display
                 const employee = bookingState.selectedEmployee;
-                $(".selected-employee-name").text(`Selected Staff: ${employee.user.name}`);
+                $(".selected-employee-name").text(`Profesional seleccionado: ${employee.user.name}`);
 
                 // Clear previous selections
                 bookingState.selectedDate = null;
@@ -832,7 +832,7 @@
             function updateCalendar() {
                 // Update employee name display
                 const employee = bookingState.selectedEmployee;
-                $(".selected-employee-name").text(`Selected Staff: ${employee.user.name}`);
+                $(".selected-employee-name").text(`Profesional seleccionado: ${employee.user.name}`);
 
                 // Clear previous selections
                 bookingState.selectedDate = null;
@@ -845,7 +845,7 @@
                     <div class="text-center w-100 py-4">
                         <div class="alert alert-info">
                             <i class="bi bi-calendar-event me-2"></i>
-                            Please select a date to view available time slots
+                            Por favor selecciona una fecha para ver los turnos disponibles
                         </div>
                     </div>
                 `);
@@ -887,11 +887,9 @@
                     <div class="text-center py-4">
                         <div class="alert alert-warning">
                             <i class="bi bi-clock-history me-2"></i>
-                            No available slots for this date
+                            No hay turnos disponibles para esta fecha
                         </div>
-                        <button class="btn btn-sm btn-outline-primary mt-2" onclick="updateCalendar()">
-                            <i class="bi bi-arrow-left me-1"></i> Back to calendar
-                        </button>
+                        
                     </div>
                 `);
                             return;
@@ -903,8 +901,7 @@
                                 <div class="d-flex justify-content-between align-items-center">
                                     <small class="text-muted">
                                         <i class="bi bi-info-circle me-1"></i>
-                                        Each slot: ${response.slot_duration} mins
-                                        ${response.break_duration ? ` | Break: ${response.break_duration} mins` : ''}
+                                        Duración: ${response.slot_duration} minutos
                                     </small>
 
                                 </div>

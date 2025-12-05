@@ -253,29 +253,29 @@
                 switch (step) {
                     case 1:
                         if (!bookingState.selectedCategory) {
-                            alert("Please select a category");
+                            alert("Por favor selecciona un área de atención");
                             return false;
                         }
                         return true;
                     case 2:
                         if (!bookingState.selectedService) {
-                            alert("Please select a service");
+                            alert("Por favor selecciona un servicio");
                             return false;
                         }
                         return true;
                     case 3:
                         if (!bookingState.selectedEmployee) {
-                            alert("Please select a staff member");
+                            alert("Por favor selecciona a un profesional");
                             return false;
                         }
                         return true;
                     case 4:
                         if (!bookingState.selectedDate) {
-                            alert("Please select a date");
+                            alert("Por favor selecciona una fecha");
                             return false;
                         }
                         if (!bookingState.selectedTime) {
-                            alert("Please select a time slot");
+                            alert("Por favor selecciona un turno");
                             return false;
                         }
                         return true;
@@ -401,7 +401,7 @@
                                                 }
                                             </div>
                                             <h5 class="card-title">${employee.user.name}</h5>
-                                            <p class="card-text text-muted">${employee.position || 'Professional'}</p>
+                                            <p class="card-text text-muted">${employee.position || 'Profesional'}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -438,8 +438,8 @@
                 const startingDay = firstDay.getDay(); // 0 = Sunday
 
                 // Update month display
-                const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August",
-                    "September", "October", "November", "December"
+                const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto",
+                    "Septiembre", "Octubre", "Noviembre", "Deciembre"
                 ];
                 $("#current-month").text(`${monthNames[month]} ${year}`);
 
@@ -491,8 +491,8 @@
                 const currentMonthText = $("#current-month").text();
                 const [monthName, year] = currentMonthText.split(" ");
 
-                const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August",
-                    "September", "October", "November", "December"
+                const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto",
+                    "Septiembre", "Octubre", "Noviembre", "Diciembre"
                 ];
                 let month = monthNames.indexOf(monthName);
                 let yearNum = parseInt(year);
@@ -548,7 +548,7 @@
                     <div class="text-center w-100 py-4">
                         <div class="alert alert-info">
                             <i class="bi bi-calendar-event me-2"></i>
-                            Please select a date to view available time slots
+                            Por favor selecciona una fecha para ver los turnos disponibles
                         </div>
                     </div>
                 `);
@@ -590,11 +590,9 @@
                     <div class="text-center py-4">
                         <div class="alert alert-warning">
                             <i class="bi bi-clock-history me-2"></i>
-                            No available slots for this date
+                            No hay turnos disponibles para esta fecha
                         </div>
-                        <button class="btn btn-sm btn-outline-primary mt-2" onclick="updateCalendar()">
-                            <i class="bi bi-arrow-left me-1"></i> Back to calendar
-                        </button>
+                       
                     </div>
                 `);
                             return;
@@ -606,8 +604,7 @@
                                 <div class="d-flex justify-content-between align-items-center">
                                     <small class="text-muted">
                                         <i class="bi bi-info-circle me-1"></i>
-                                        Each slot: ${response.slot_duration} mins
-                                        ${response.break_duration ? ` | Break: ${response.break_duration} mins` : ''}
+                                        Duración: ${response.slot_duration} minutos
                                     </small>
 
                                 </div>
