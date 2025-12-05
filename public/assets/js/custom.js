@@ -645,7 +645,7 @@
                             <div class="text-center py-4">
                                 <div class="alert alert-danger">
                                     <i class="bi bi-exclamation-octagon me-2"></i>
-                                    Error loading availability
+                                    Error al cargar los turnos disponibles
                                 </div>
                                 <button class="btn btn-sm btn-outline-primary mt-2" onclick="updateTimeSlots('${selectedDate}')">
                                             <i class="bi bi-arrow-repeat me-1"></i> Try again
@@ -779,14 +779,15 @@
 
                         alert(errorMessage);
                         nextBtn.prop('disabled', false).html(
-                            'Confirm Booking <i class="bi bi-check-circle"></i>');
+                            'Ir a pagar <i class="bi bi-arrow-right"></i>');
+
                     },
                     complete: function() {
                         // Re-enable button if request fails
                         if (nextBtn.prop('disabled')) {
                             setTimeout(() => {
                                 nextBtn.prop('disabled', false).html(
-                                    'Confirm Booking <i class="bi bi-check-circle"></i>');
+                                    'Ir a pagar <i class="bi bi-arrow-right"></i>');
                             }, 2000);
                         }
                     }

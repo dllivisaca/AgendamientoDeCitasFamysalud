@@ -472,13 +472,13 @@
                     //Cuidado al editar aquí
                     if (daysConfig) {
                         const map = {
-                            sunday: 0,
-                            monday: 1,
-                            tuesday: 2,
-                            wednesday: 3,
-                            thursday: 4,
-                            friday: 5,
-                            saturday: 6
+                            domingo: 0,
+                            lunes: 1,
+                            martes: 2,
+                            miercoles: 3,
+                            jueves: 4,
+                            viernes: 5,
+                            sabado: 6
                         };
 
                         workingWeekdays = [];
@@ -645,6 +645,12 @@
                         }
                         if (!bookingState.selectedTime) {
                             alert("Por favor selecciona un turno");
+                            return false;
+                        }
+                        // Validar mínimo 3 horas de anticipación
+                        let startTimeStr = bookingState.selectedTime.start || bookingState.selectedTime;
+                        if (isSlotLessThan3HoursAhead(bookingState.selectedDate, startTimeStr)) {
+                            alert("Solo puedes agendar citas con al menos 3 horas de anticipación.");
                             return false;
                         }
                         return true;
@@ -939,6 +945,33 @@
                 `);
             }
 
+            // Formatea una fecha JS a YYYY-MM-DD en horario local
+            function formatLocalDate(date) {
+                const y = date.getFullYear();
+                const m = String(date.getMonth() + 1).padStart(2, '0');
+                const d = String(date.getDate()).padStart(2, '0');
+                return `${y}-${m}-${d}`;
+            }
+
+            // Devuelve true si el slot está a menos de 3 horas desde "ahora"
+            function isSlotLessThan3HoursAhead(dateStr, timeStr) {
+                if (!dateStr || !timeStr) return true;
+
+                // timeStr puede venir como "08:25" o "08:25:00"
+                let cleanTime = timeStr.trim();
+                if (/^\d{2}:\d{2}$/.test(cleanTime)) {
+                    cleanTime += ":00";
+                }
+
+                const slotDateTime = new Date(`${dateStr}T${cleanTime}`);
+                const now = new Date();
+
+                const diffMs = slotDateTime - now;
+                const diffHours = diffMs / (1000 * 60 * 60);
+
+                return diffHours < 3; // true = menos de 3 horas
+            }
+
             function updateTimeSlots(selectedDate) {
                 if (!selectedDate) {
                     $("#time-slots-container").html(`
@@ -999,8 +1032,20 @@
                         // Add each time slot
                         const $slotsContainer = $("<div class='slots-grid'></div>");
                         response.available_slots.forEach(slot => {
-                            const slotElement = $(`
-                            <div class="time-slot btn btn-outline-primary mb-2"
+                        // ¿Es hoy esta fecha?
+                        const todayStr = formatLocalDate(new Date());
+                        const isToday = (selectedDate === todayStr);
+
+                        // ¿Debe deshabilitarse por estar a menos de 3 horas?
+                        let disableByTime = false;
+                        if (isToday) {
+                            disableByTime = isSlotLessThan3HoursAhead(selectedDate, slot.start);
+                        }
+
+                        const extraClass = disableByTime ? ' disabled' : '';
+
+                        const slotElement = $(`
+                            <div class="time-slot btn btn-outline-primary mb-2${extraClass}"
                                 data-start="${slot.start}"
                                 data-end="${slot.end}"
                                 title="Select ${slot.display}"
@@ -1010,19 +1055,22 @@
                             </div>
                         `);
 
-                            slotElement.on('click', function() {
-                                $(".time-slot").removeClass("selected active");
-                                $(this).addClass("selected active");
-                                bookingState.selectedTime = {
-                                    start: $(this).data('start'),
-                                    end: $(this).data('end'),
-                                    display: $(this).text()
-                                };
-                                updateBookingSummary();
-                            });
+                        // Click local: por si quieres mantenerlo
+                        slotElement.on('click', function() {
+                            if ($(this).hasClass('disabled')) return; // seguridad extra
 
-                            $slotsContainer.append(slotElement);
+                            $(".time-slot").removeClass("selected active");
+                            $(this).addClass("selected active");
+                            bookingState.selectedTime = {
+                                start: $(this).data('start'),
+                                end: $(this).data('end'),
+                                display: $(this).text().trim()
+                            };
+                            updateBookingSummary && updateBookingSummary();
                         });
+
+                        $slotsContainer.append(slotElement);
+                    });
                         $("#time-slots-container").append($slotsContainer);
                     },
                     error: function(xhr) {
@@ -1030,7 +1078,7 @@
                             <div class="text-center py-4">
                                 <div class="alert alert-danger">
                                     <i class="bi bi-exclamation-octagon me-2"></i>
-                                    Error loading availability
+                                    Error al cargar los turnos disponibles
                                 </div>
                                 <button class="btn btn-sm btn-outline-primary mt-2" onclick="updateTimeSlots('${selectedDate}')">
                                             <i class="bi bi-arrow-repeat me-1"></i> Try again

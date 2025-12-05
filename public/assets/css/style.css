@@ -161,6 +161,7 @@ body {
     opacity: 0.5;
     cursor: not-allowed;
     background-color: #f8f9fa;
+    pointer-events: none;
 }
 
 .calendar-day {
