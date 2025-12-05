@@ -20,8 +20,8 @@ class SettingFactory extends Factory
             'bname' => 'Vfix Technology',
             'email' => 'admin@yourmail.com',
             'phone' => '+91 8447 525 204',
-            'currency' => 'INR',
-            'meta_title' => 'Vfix Technology - Advance Booking System',
+            'currency' => 'USD',
+            'meta_title' => 'FamySalud en Línea',
         ];
     }
 }

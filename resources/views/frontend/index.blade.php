@@ -34,7 +34,7 @@
                     <ul class="navbar-nav ms-auto">
                         @guest
                             <li class="nav-item">
-                                <a class="nav-link active" href="{{ route('login') }}">Login</a>
+                                <a class="nav-link active" href="{{ route('login') }}">Iniciar sesión</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="{{ route('register') }}">Register</a>
@@ -43,7 +43,7 @@
 
                         @auth
                             <li class="nav-item">
-                                <a class="nav-link" href="{{ route('dashboard') }}">Dashboard</a>
+                                <a class="nav-link" href="{{ route('dashboard') }}">Calendario</a>
                             </li>
                         @endauth
 
@@ -247,10 +247,10 @@
 
             <div class="booking-footer">
                 <button class="btn btn-outline-secondary" id="prev-step" disabled>
-                    <i class="bi bi-arrow-left"></i> Previous
+                    <i class="bi bi-arrow-left"></i> Regresar
                 </button>
                 <button class="btn btn-primary" id="next-step">
-                    Next <i class="bi bi-arrow-right"></i>
+                    Siguiente <i class="bi bi-arrow-right"></i>
                 </button>
             </div>
         </div>
