@@ -14,17 +14,6 @@ use Session;
 class UserController extends Controller
 {
 
-    protected array $dayMap = [
-    'lunes' => 'monday',
-    'martes' => 'tuesday',
-    'miércoles' => 'wednesday',
-    'miercoles' => 'wednesday',
-    'jueves' => 'thursday',
-    'viernes' => 'friday',
-    'sábado' => 'saturday',
-    'sabado' => 'saturday',
-    'domingo' => 'sunday',
-];
 
     public function index(Request $request)
     {
@@ -498,27 +487,32 @@ class UserController extends Controller
 
         foreach ($data as $day => $times) {
 
-            // 🔴 Ignorar días sin horarios reales
-            if (empty(array_filter($times))) {
-                continue;
-            }
-
-            // 🔁 Normalizar día a inglés (sin tildes)
-            $normalizedDay = $this->dayMap[$day] ?? null;
-            if (!$normalizedDay) {
+            // 🚫 Si el día no fue activado con checkbox, ignóralo
+            if (!request()->has($day) && !request()->has("days.$day")) {
                 continue;
             }
 
             $dayHours = [];
 
+           /*  for ($i = 0; $i < count($times); $i += 2) {
+                if (isset($times[$i + 1])) {
+                    $dayHours[] = $times[$i] . '-' . $times[$i + 1];
+                }
+            }
+            $result[$day] = $dayHours; */
+
             for ($i = 0; $i < count($times); $i += 2) {
-                if (!empty($times[$i]) && !empty($times[$i + 1])) {
+                if (
+                    !empty($times[$i]) &&
+                    !empty($times[$i + 1])
+                ) {
                     $dayHours[] = $times[$i] . '-' . $times[$i + 1];
                 }
             }
 
+            // ✅ solo guardar días con horarios reales
             if (!empty($dayHours)) {
-                $result[$normalizedDay] = $dayHours;
+                $result[$day] = $dayHours;
             }
         }
 
