@@ -128,6 +128,7 @@ class UserController extends Controller
 
         // Get the employee's availability (days) data if it exists and convert to an array
         $employeeDays = $user->employee->days ?? [];
+        $employeeDays = $this->normalizeDaysArray($employeeDays);
 
         // Transform availability slots
         $employeeDays = $this->transformAvailabilitySlotsForEdit($employeeDays);
@@ -487,30 +488,18 @@ class UserController extends Controller
 
         foreach ($data as $day => $times) {
 
-            // 🚫 Si el día no fue activado con checkbox, ignóralo
-            if (!request()->has($day) && !request()->has("days.$day")) {
-                continue;
-            }
+            // normalizar día (quita tildes: miércoles → miercoles, sábado → sabado)
+            $day = $this->normalizeDayKey($day);
 
             $dayHours = [];
 
-           /*  for ($i = 0; $i < count($times); $i += 2) {
-                if (isset($times[$i + 1])) {
-                    $dayHours[] = $times[$i] . '-' . $times[$i + 1];
-                }
-            }
-            $result[$day] = $dayHours; */
-
             for ($i = 0; $i < count($times); $i += 2) {
-                if (
-                    !empty($times[$i]) &&
-                    !empty($times[$i + 1])
-                ) {
+                if (!empty($times[$i]) && !empty($times[$i + 1])) {
                     $dayHours[] = $times[$i] . '-' . $times[$i + 1];
                 }
             }
 
-            // ✅ solo guardar días con horarios reales
+            // ✅ solo guardar días que tengan horarios reales
             if (!empty($dayHours)) {
                 $result[$day] = $dayHours;
             }
@@ -536,7 +525,32 @@ class UserController extends Controller
         return $employeeDays;
     }
 
+    private function normalizeDayKey(string $day): string
+    {
+        $day = mb_strtolower(trim($day), 'UTF-8');
 
+        $noAccents = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $day);
+        if ($noAccents !== false) {
+            $day = $noAccents;
+        }
+
+        // deja solo letras
+        $day = preg_replace('/[^a-z]/', '', $day);
+
+        return $day;
+    }
+
+    private function normalizeDaysArray(array $days): array
+    {
+        $out = [];
+
+        foreach ($days as $dayKey => $ranges) {
+            $normalized = $this->normalizeDayKey($dayKey);
+            $out[$normalized] = $ranges;
+        }
+
+        return $out;
+    }
 
 
 
