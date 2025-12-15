@@ -130,8 +130,15 @@ class FrontendController extends Controller
             })->toArray();
 
             // using spatie opening hours package to process data and expections
-            $openingHours = OpeningHours::create(array_merge(
+            /* $openingHours = OpeningHours::create(array_merge(
                 $employee->days,
+                ['exceptions' => $holidaysExceptions]
+            )); */
+
+            $daysInEnglish = $this->mapSpanishDaysToEnglish($employee->days ?? []);
+
+            $openingHours = OpeningHours::create(array_merge(
+                $daysInEnglish,
                 ['exceptions' => $holidaysExceptions]
             ));
 
@@ -247,5 +254,44 @@ class FrontendController extends Controller
         return $slots;
     }
 
+    private function normalizeDayKey(string $day): string
+    {
+        $day = mb_strtolower(trim($day), 'UTF-8');
 
+        $noAccents = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $day);
+        if ($noAccents !== false) {
+            $day = $noAccents;
+        }
+
+        $day = preg_replace('/[^a-z]/', '', $day);
+
+        return $day;
+    }
+
+    private function mapSpanishDaysToEnglish(array $days): array
+    {
+        $map = [
+            'lunes' => 'monday',
+            'martes' => 'tuesday',
+            'miercoles' => 'wednesday',
+            'jueves' => 'thursday',
+            'viernes' => 'friday',
+            'sabado' => 'saturday',
+            'domingo' => 'sunday',
+        ];
+
+        $out = [];
+
+        foreach ($days as $dayKey => $ranges) {
+            $normalized = $this->normalizeDayKey($dayKey);
+
+            if (!isset($map[$normalized])) {
+                continue;
+            }
+
+            $out[$map[$normalized]] = $ranges;
+        }
+
+        return $out;
+    }
 }

@@ -23,13 +23,13 @@
 
           @php
               $days = [
-                "Lunes",
-                "Martes",
-                "Miércoles",
-                "Jueves",
-                "Viernes",
-                "Sábado",
-                "Domingo",
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+                "Sunday",
               ];
           @endphp
        @foreach ($days as $day)

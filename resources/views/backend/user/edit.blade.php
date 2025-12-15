@@ -599,7 +599,7 @@ if ($usingOldInput) {
             });
 
             // Bind change and add-more events to all days
-            ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'].forEach(function(day) {
+            ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].forEach(function(day) {
                 $('#' + day).on('change', function() {
                     toggleDayFields(day);
                 }).trigger('change');

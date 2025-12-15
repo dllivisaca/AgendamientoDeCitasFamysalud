@@ -112,7 +112,7 @@ class UserController extends Controller
 
         // Available days of the week
         $days = [
-            'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo',
+            'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo',
         ];
 
         // Available slot duration steps
@@ -486,13 +486,34 @@ class UserController extends Controller
         $result = [];
 
         foreach ($data as $day => $times) {
+
+            // 🚫 Si el día no fue activado con checkbox, ignóralo
+            if (!request()->has($day) && !request()->has("days.$day")) {
+                continue;
+            }
+
             $dayHours = [];
-            for ($i = 0; $i < count($times); $i += 2) {
+
+           /*  for ($i = 0; $i < count($times); $i += 2) {
                 if (isset($times[$i + 1])) {
                     $dayHours[] = $times[$i] . '-' . $times[$i + 1];
                 }
             }
-            $result[$day] = $dayHours;
+            $result[$day] = $dayHours; */
+
+            for ($i = 0; $i < count($times); $i += 2) {
+                if (
+                    !empty($times[$i]) &&
+                    !empty($times[$i + 1])
+                ) {
+                    $dayHours[] = $times[$i] . '-' . $times[$i + 1];
+                }
+            }
+
+            // ✅ solo guardar días con horarios reales
+            if (!empty($dayHours)) {
+                $result[$day] = $dayHours;
+            }
         }
 
         return $result;

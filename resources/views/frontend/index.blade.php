@@ -139,10 +139,10 @@
                                                 <th>Dom</th>
                                                 <th>Lun</th>
                                                 <th>Mar</th>
-                                                <th>Mie</th>
+                                                <th>Mié</th>
                                                 <th>Jue</th>
                                                 <th>Vie</th>
-                                                <th>Sab</th>
+                                                <th>Sáb</th>
                                             </tr>
                                         </thead>
                                         <tbody id="calendar-body">
@@ -554,7 +554,7 @@
                     const date = $(this).data('date');
                     updateTimeSlots(date);
                 });
-                
+
                 $(".time-slot").removeClass("selected");
                 $(this).addClass("selected");
 
