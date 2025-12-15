@@ -314,11 +314,11 @@
                                 if (service.sale_price) {
                                     // If sale price exists, show both with strike-through on original price
                                     priceDisplay =
-                                        `<span class="text-decoration-line-through text-muted">${service.price}</span> <span class=" fw-bold">${service.sale_price}</span>`;
+                                        `<span class="text-decoration-line-through text-muted">${service.price}</span> <span class=" fw-bold">Pago en efectivo o transferencia bancaria: ${service.sale_price}</span>`;
                                 } else {
                                     // If no sale price, just show regular price normally
                                     priceDisplay =
-                                        `<span class="fw-bold">${service.price}</span>`;
+                                        `<span class="fw-bold">Pago en efectivo o transferencia bancaria: ${service.price}</span>`;
                                 }
 
                                 const serviceCard = `
