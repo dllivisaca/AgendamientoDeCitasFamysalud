@@ -1011,7 +1011,7 @@
                         <div class="spinner-border text-primary" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
-                        <div class="mt-2">Checking availability...</div>
+                        <div class="mt-2">Revisando disponibilidad...</div>
                     </div>
                 `);
 

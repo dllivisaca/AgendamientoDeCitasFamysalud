@@ -111,8 +111,18 @@ class UserController extends Controller
     {
 
         // Available days of the week
-        $days = [
+        /* $days = [
             'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo',
+        ]; */
+
+        $days = [
+            'lunes'     => 'Lunes',
+            'martes'    => 'Martes',
+            'miercoles' => 'Miércoles',
+            'jueves'    => 'Jueves',
+            'viernes'   => 'Viernes',
+            'sabado'    => 'Sábado',
+            'domingo'   => 'Domingo',
         ];
 
         // Available slot duration steps

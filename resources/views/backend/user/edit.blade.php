@@ -16,7 +16,7 @@
             </div>
         </div>
     </div>
-@stop
+@endsection
 
 @section('content')
     <div class="">
@@ -309,82 +309,43 @@
                                         </div>
 
                                         <div class="col-md-12">
-                                            @foreach ($days as $day)
+                                            @foreach ($days as $dayKey => $dayLabel)
                                                 <div class="row">
                                                     <div class="col-md-2">
-                                                        <div class="form-group">
-                                                            <div class="custom-control custom-switch">
-                                                                <input type="checkbox" class="custom-control-input"
-                                                                    id="{{ $day }}"
-                                                                    @if (old('days.' . $day) || isset($employeeDays[$day])) checked @endif>
-                                                                <label class="custom-control-label"
-                                                                    for="{{ $day }}">
-                                                                    {{ ucfirst($day) }}
-                                                                </label>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <!-- First Time Input Row -->
-                                                    <div class="col-md-4">
-                                                        <div class="form-group">
-                                                            <strong>From:</strong>
-                                                            <input type="time" class="form-control from"
-                                                                name="days[{{ $day }}][]"
-                                                                id="{{ $day }}From"
-                                                                value="{{ old('days.' . $day . '.0') ?? ($employeeDays[$day][0] ?? '') }}" />
+                                                        <div class="custom-control custom-switch">
+                                                            <input type="checkbox"
+                                                                class="custom-control-input"
+                                                                id="{{ $dayKey }}"
+                                                                {{ old("days.$dayKey") || isset($employeeDays[$dayKey]) ? 'checked' : '' }}>
+                                                            <label class="custom-control-label" for="{{ $dayKey }}">
+                                                                {{ $dayLabel }}
+                                                            </label>
                                                         </div>
                                                     </div>
 
                                                     <div class="col-md-4">
-                                                        <div class="form-group">
-                                                            <strong>To:</strong>
-                                                            <input type="time" class="form-control to"
-                                                                name="days[{{ $day }}][]"
-                                                                id="{{ $day }}To"
-                                                                value="{{ old('days.' . $day . '.1') ?? ($employeeDays[$day][1] ?? '') }}" />
-                                                            <div style="" id="{{ $day }}AddMore"
-                                                                class="text-right d-none text-primary">
-                                                                Add More
-                                                            </div>
+                                                        <strong>From:</strong>
+                                                        <input type="time"
+                                                            class="form-control"
+                                                            name="days[{{ $dayKey }}][]"
+                                                            id="{{ $dayKey }}From"
+                                                            value="{{ old("days.$dayKey.0") ?? ($employeeDays[$dayKey][0] ?? '') }}">
+                                                    </div>
+
+                                                    <div class="col-md-4">
+                                                        <strong>To:</strong>
+                                                        <input type="time"
+                                                            class="form-control"
+                                                            name="days[{{ $dayKey }}][]"
+                                                            id="{{ $dayKey }}To"
+                                                            value="{{ old("days.$dayKey.1") ?? ($employeeDays[$dayKey][1] ?? '') }}">
+
+                                                        <div id="{{ $dayKey }}AddMore"
+                                                            class="text-right text-primary d-none">
+                                                            Add More
                                                         </div>
                                                     </div>
                                                 </div>
-
-                                                <!-- Render Additional Rows -->
-                                                @if (old('days.' . $day) || isset($employeeDays[$day]))
-                                                    @foreach (old('days.' . $day) ?: $employeeDays[$day] as $index => $time)
-                                                        @if ($index > 1 && $index % 2 == 0)
-                                                            <div class="row additional-{{ $day }}">
-                                                                <div class="col-md-2"></div>
-
-                                                                <div class="col-md-4">
-                                                                    <div class="form-group">
-                                                                        <strong>From:</strong>
-                                                                        <input type="time" class="form-control from"
-                                                                            name="days[{{ $day }}][]"
-                                                                            value="{{ $time }}"
-                                                                            id="{{ $day }}MoreFrom" />
-                                                                    </div>
-                                                                </div>
-
-                                                                <div class="col-md-4">
-                                                                    <div class="form-group">
-                                                                        <strong>To</strong>
-                                                                        <input type="time" class="form-control to"
-                                                                            name="days[{{ $day }}][]"
-                                                                            value="{{ old('days.' . $day . '.' . ($index + 1)) ?? ($employeeDays[$day][$index + 1] ?? '') }}"
-                                                                            id="{{ $day }}" />
-                                                                        <div class="remove-field text-danger text-right">
-                                                                            Remove</div>
-                                                                    </div>
-                                                                </div>
-
-
-                                                            </div>
-                                                        @endif
-                                                    @endforeach
-                                                @endif
                                             @endforeach
                                         </div>
                                     </div>
@@ -406,7 +367,8 @@
                                                 @php
                                                     // Get holidays from old input or database
                                                     $holidaysInput = old('holidays.date', []);
-                                                    $dbHolidays = $user->employee->holidays ?? [];
+                                                    //$dbHolidays = $user->employee->holidays ?? [];
+                                                    $dbHolidays = optional($user->employee)->holidays ?? [];
                                                     $holidaysToDisplay = !empty($holidaysInput)
                                                         ? $holidaysInput
                                                         : $dbHolidays;
@@ -415,42 +377,40 @@
                                                 @forelse($holidaysToDisplay as $index => $holidayItem)
                                                     @php
                                                         // Determine if we're using old input or database data
-$usingOldInput = !empty($holidaysInput);
+                                                        $usingOldInput = !empty($holidaysInput);
 
-if ($usingOldInput) {
-    $date = old("holidays.date.$index");
-    $holiday = null;
-} else {
-    $holiday = $holidayItem;
-    $date = $holiday->date;
-    // Format date for input field if it's not already in YYYY-MM-DD format
-                                                            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+                                                        if ($usingOldInput) {
+                                                            $holiday = null;
+
+                                                            $date = old("holidays.date.$index", '');
+
+                                                            $fromTime  = old("holidays.from_time.$index", '');
+                                                            $toTime    = old("holidays.to_time.$index", '');
+                                                            $recurring = old("holidays.recurring.$index", 0);
+                                                        } else {
+                                                            $holiday = $holidayItem;
+
+                                                            $date = $holiday->date ?? '';
+
+                                                            if ($date && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
                                                                 try {
-                                                                    $date = \Carbon\Carbon::parse($date)->format(
-                                                                        'Y-m-d',
-                                                                    );
-                                                                } catch (Exception $e) {
+                                                                    $date = \Carbon\Carbon::parse($date)->format('Y-m-d');
+                                                                } catch (\Exception $e) {
                                                                     $date = '';
                                                                 }
                                                             }
-                                                        }
 
-                                                        $fromTime = old(
-                                                            "holidays.from_time.$index",
-                                                            $holiday && $holiday->hours
-                                                                ? explode('-', $holiday->hours[0])[0] ?? ''
-                                                                : '',
-                                                        );
-                                                        $toTime = old(
-                                                            "holidays.to_time.$index",
-                                                            $holiday && $holiday->hours
-                                                                ? explode('-', $holiday->hours[0])[1] ?? ''
-                                                                : '',
-                                                        );
-                                                        $recurring = old(
-                                                            "holidays.recurring.$index",
-                                                            $holiday->recurring ?? 0,
-                                                        );
+                                                            $hours0 = '';
+                                                            if ($holiday && !empty($holiday->hours) && isset($holiday->hours[0])) {
+                                                                $hours0 = $holiday->hours[0];
+                                                            }
+
+                                                            $parts = $hours0 ? explode('-', $hours0) : ['', ''];
+
+                                                            $fromTime  = old("holidays.from_time.$index", $parts[0] ?? '');
+                                                            $toTime    = old("holidays.to_time.$index",   $parts[1] ?? '');
+                                                            $recurring = old("holidays.recurring.$index", $holiday->recurring ?? 0);
+                                                        }
                                                     @endphp
                                                     <div class="row holiday-row">
                                                         <div class="col-md-4">
@@ -504,26 +464,19 @@ if ($usingOldInput) {
             </div>
             <div class="col-xs-12 col-sm-12 col-md-12 pt-2 pl-md-3">
                 <button type="submit" class="btn btn-danger"
-                    onclick="return confirm('Are you sure you want to update this user?')">Update user</button>
+                    onclick="return confirm('Are you sure you want to update this user?')">Update user
+                </button>
             </div>
-        </div>
+        </form>
     </div>
-    </div>
-    </div>
+</div>
+</div>
 
-
-
-    </form>
-    </div>
-    </div>
-    </div>
-    </div>
-
-@stop
+@endsection
 
 @section('css')
 
-@stop
+@endsection
 
 @section('js')
 
@@ -599,7 +552,7 @@ if ($usingOldInput) {
             });
 
             // Bind change and add-more events to all days
-            ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].forEach(function(day) {
+            ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'].forEach(function(day) {
                 $('#' + day).on('change', function() {
                     toggleDayFields(day);
                 }).trigger('change');
@@ -669,7 +622,4 @@ if ($usingOldInput) {
         });
     </script>
 
-
-
-
-@stop
+@endsection
