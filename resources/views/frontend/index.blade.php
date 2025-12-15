@@ -304,6 +304,16 @@
             let currentYear;       // año completo
             let workingWeekdays = null; // [0..6] (0=Dom,1=Lun,...)
 
+            // Días en español (minúsculas, sin tildes) para lógica/BD
+            const diasES = ["domingo","lunes","martes","miercoles","jueves","viernes","sabado"];
+
+            // Devuelve el día de semana en español (sin tildes) a partir de "YYYY-MM-DD"
+            function getDiaSemanaES(dateStr) {
+                // Evita problemas de zona horaria usando hora local fija
+                const d = new Date(dateStr + "T00:00:00");
+                return diasES[d.getDay()];
+            }
+
             const container = $('#categories-container'); // Target the container by ID
 
             let html = '';
@@ -469,7 +479,7 @@
                         daysConfig = employee.days;
                     }
 
-                    //Cuidado al editar aquí
+                    //Cuidado al editar aquí porque habilita clic  a todos los dias de la semana
                     if (daysConfig) {
                         const map = {
                             domingo: 0,
@@ -539,6 +549,12 @@
 
             // Time slot selection
             $(document).on("click", ".time-slot:not(.disabled)", function() {
+                // Retry button (Intentar de nuevo)
+                $(document).on('click', '.btn-retry-timeslots', function() {
+                    const date = $(this).data('date');
+                    updateTimeSlots(date);
+                });
+                
                 $(".time-slot").removeClass("selected");
                 $(this).addClass("selected");
 
@@ -986,8 +1002,9 @@
                 }
 
                 const employeeId = bookingState.selectedEmployee.id;
-                const apiDate = new Date(selectedDate).toISOString().split('T')[0];
-
+                //const apiDate = new Date(selectedDate).toISOString().split('T')[0];
+                const apiDate = selectedDate;
+                const dia_semana = getDiaSemanaES(selectedDate); // "lunes", "martes", etc.
                 // Show loading state only when actually fetching
                 $("#time-slots-container").html(`
                     <div class="text-center w-100 py-4">
@@ -1000,6 +1017,7 @@
 
                 $.ajax({
                     url: `/employees/${employeeId}/availability/${apiDate}`,
+                    data: { dia_semana: dia_semana }, // se lo mandas al backend
                     success: function(response) {
                         $("#time-slots-container").empty();
 
@@ -1080,11 +1098,12 @@
                                     <i class="bi bi-exclamation-octagon me-2"></i>
                                     Error al cargar los turnos disponibles
                                 </div>
-                                <button class="btn btn-sm btn-outline-primary mt-2" onclick="updateTimeSlots('${selectedDate}')">
-                                            <i class="bi bi-arrow-repeat me-1"></i> Try again
-                                        </button>
-                                    </div>
-                                `);
+                                <button class="btn btn-sm btn-outline-primary mt-2 btn-retry-timeslots" 
+                                    data-date="${selectedDate}">
+                                <i class="bi bi-arrow-repeat me-1"></i> Intentar de nuevo
+                                </button>
+                            </div>
+                        `);
                     }
                 });
             }
