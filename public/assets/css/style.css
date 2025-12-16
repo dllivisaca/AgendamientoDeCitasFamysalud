@@ -149,6 +149,7 @@ body {
 
 .time-slot:hover {
     background-color: rgba(78, 115, 223, 0.1);
+    color: var(--accent-color); /* azul oscuro */
 }
 
 .time-slot.selected {

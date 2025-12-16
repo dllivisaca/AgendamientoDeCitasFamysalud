@@ -1281,7 +1281,7 @@
                             <div class="time-slot btn btn-outline-primary mb-2${extraClass}"
                                 data-start="${slot.start}"
                                 data-end="${slot.end}"
-                                title="Select ${slot.display}"
+                                title="Seleccionar ${slot.display}"
                                 data-time="${slot.display}">
                                 <i class="bi bi-clock me-1"></i>
                                 ${slot.display}

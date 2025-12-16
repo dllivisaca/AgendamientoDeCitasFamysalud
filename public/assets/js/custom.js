@@ -576,7 +576,7 @@
                         <div class="spinner-border text-primary" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
-                        <div class="mt-2">Checking availability...</div>
+                        <div class="mt-2">Revisando disponibilidad...</div>
                     </div>
                 `);
 
@@ -618,7 +618,7 @@
                             <div class="time-slot btn btn-outline-primary mb-2"
                                 data-start="${slot.start}"
                                 data-end="${slot.end}"
-                                title="Select ${slot.display}"
+                                title="Seleccionar ${slot.display}"
                                 data-time="${slot.display}">
                                 <i class="bi bi-clock me-1"></i>
                                 ${slot.display}
