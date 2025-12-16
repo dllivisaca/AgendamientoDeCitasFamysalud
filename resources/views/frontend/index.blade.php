@@ -185,13 +185,13 @@
                                     @csrf
                                     <div class="row g-3">
                                         <div class="col-md-6">
-                                            <label for="customer-name" class="form-label">Nombre completo</label>
+                                            <label for="customer-name" class="form-label">Nombre completo <span class="text-danger">*</span></label>
                                             <input
                                                 type="text"
                                                 class="form-control"
                                                 id="customer-name"
                                                 name="customer_name"
-                                                placeholder="Ej: María José Pérez"
+                                                placeholder="Ej: María José Pérez González"
                                                 required
                                                 minlength="5"
                                                 pattern="^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+(?:\s+[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+)+$"
@@ -201,7 +201,7 @@
                                         </div>
 
                                         <div class="col-md-6">
-                                            <label for="patient_dob" class="form-label">Fecha de nacimiento</label>
+                                            <label for="patient_dob" class="form-label">Fecha de nacimiento<span class="text-danger">*</span></label>
                                             <input
                                                 type="date"
                                                 class="form-control"
@@ -214,7 +214,7 @@
                                         </div>
 
                                         <div class="col-md-6">
-                                            <label for="doc_type" class="form-label">Tipo de documento</label>
+                                            <label for="doc_type" class="form-label">Tipo de documento<span class="text-danger">*</span></label>
                                             <select class="form-select" id="doc_type" name="doc_type" required>
                                                 <option value="cedula" selected>Cédula (Ecuador)</option>
                                                 <option value="pasaporte">Pasaporte (Extranjero)</option>
@@ -241,7 +241,7 @@
                                         </div> -->
 
                                         <div class="col-md-6">
-                                            <label for="doc_number" class="form-label">Número de documento</label>
+                                            <label for="doc_number" class="form-label">Número de documento<span class="text-danger">*</span></label>
                                             <input
                                                 type="text"
                                                 class="form-control"
@@ -252,7 +252,7 @@
                                             </div>
                                         
                                         <div class="col-md-6">
-                                            <label for="customer-email" class="form-label">Correo electrónico</label>
+                                            <label for="customer-email" class="form-label">Correo electrónico<span class="text-danger">*</span></label>
                                             <input
                                                 type="email"
                                                 class="form-control"
@@ -267,7 +267,7 @@
                                                 <small class="text-muted">Se aceptan dominios comunes (Gmail, Outlook, Hotmail, Yahoo, etc.).</small>
                                         </div>
                                         <div class="col-md-6">
-                                            <label for="customer-phone" class="form-label">Teléfono</label>
+                                            <label for="customer-phone" class="form-label">Teléfono<span class="text-danger">*</span></label>
                                             <input
                                                 type="text"
                                                 class="form-control"
@@ -282,7 +282,7 @@
                                                 >
                                         </div>
                                         <div class="col-12">
-                                            <label for="patient_address" class="form-label">Dirección</label>
+                                            <label for="patient_address" class="form-label">Dirección<span class="text-danger">*</span></label>
                                             <input
                                                 type="text"
                                                 class="form-control"
