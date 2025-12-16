@@ -1036,13 +1036,19 @@
 
                         // Add slot duration info
                         $("#time-slots-container").append(`
-                            <div class="slot-info mb-3">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <small class="text-muted">
+                            <div class="slot-info mb-3 w-100">
+                                <div>
+                                    <small class="text-muted d-block">
                                         <i class="bi bi-info-circle me-1"></i>
                                         Duración: ${response.slot_duration} minutos
                                     </small>
+                                </div>
 
+                                <div>
+                                    <small class="text-muted d-block mt-1">
+                                        <i class="bi bi-clock me-1"></i>
+                                        Todos los horarios están en hora local de Ecuador (GMT-5)
+                                    </small>
                                 </div>
                             </div>
                         `);
