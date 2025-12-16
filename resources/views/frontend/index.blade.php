@@ -443,6 +443,13 @@
         </div>
     </footer>
 
+    <!-- Botón flotante Siguiente -->
+    <button id="next-step-floating"
+            class="btn btn-primary shadow-sm d-none"
+            type="button">
+        Siguiente <i class="bi bi-arrow-right"></i>
+    </button>
+
     <!-- Success Modal -->
     <div class="modal fade" id="bookingSuccessModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -1656,6 +1663,67 @@
                 // Go to first step
                 goToStep(1);
             }
+            // ================================
+            // BOTÓN FLOTANTE "SIGUIENTE"
+            // ================================
+            const $nextFloating = $("#next-step-floating");
+            const nextBtn = document.getElementById("next-step");
+
+            function isElementInViewport(el) {
+            if (!el) return false;
+            const r = el.getBoundingClientRect();
+            return r.top < window.innerHeight && r.bottom > 0;
+            }
+
+            function canAdvanceCurrentStep() {
+            const step = bookingState.currentStep;
+
+            if (step === 1) return !!bookingState.selectedCategory;
+            if (step === 2) return !!bookingState.selectedService;
+            if (step === 3) return !!bookingState.selectedEmployee;
+            if (step === 4) return !!bookingState.selectedDate && !!bookingState.selectedTime;
+            if (step === 5) return document.getElementById("consent_data")?.checked === true;
+
+            return false;
+            }
+
+            function updateFloatingNext() {
+            const footerVisible = isElementInViewport(nextBtn);
+            const canAdvance = canAdvanceCurrentStep();
+
+            if (canAdvance && !footerVisible && !nextBtn.disabled) {
+                $nextFloating.removeClass("d-none");
+                $nextFloating.html($("#next-step").html());
+            } else {
+                $nextFloating.addClass("d-none");
+            }
+            }
+
+            // Click del botón flotante = click real
+            $nextFloating.on("click", function () {
+            $("#next-step").trigger("click");
+            });
+
+            // Eventos que actualizan visibilidad
+            $(window).on("scroll resize", updateFloatingNext);
+
+            $(document).on(
+            "click",
+            ".category-card, .service-card, .employee-card, .calendar-day:not(.disabled), .time-slot:not(.disabled)",
+            function () {
+                setTimeout(updateFloatingNext, 0);
+            }
+            );
+
+            // Hook seguro a goToStep
+            const _goToStepOriginal = goToStep;
+            goToStep = function (step) {
+            _goToStepOriginal(step);
+            setTimeout(updateFloatingNext, 0);
+            };
+
+            // Primera evaluación
+            setTimeout(updateFloatingNext, 0);
         });
     </script>
 
