@@ -290,6 +290,176 @@ class FrontendController extends Controller
         return $slots;
     }
 
+    public function getEmployeeAvailableDates(Request $request, Employee $employee)
+    {
+        $month = (int) $request->query('month'); // 1-12
+        $year  = (int) $request->query('year');  // 2025 etc.
+
+        if (!$month || !$year) {
+            return response()->json(['error' => 'month y year son requeridos'], 400);
+        }
+
+        if (!$employee->slot_duration) {
+            return response()->json(['error' => 'Slot duration not set for this employee'], 400);
+        }
+
+        $now = now();
+        $minAllowed = $now->copy()->addHours(24);
+
+        // ✅ tu regla del sábado
+        $maxAllowedDate = $now->copy()->next(Carbon::SATURDAY)->endOfDay();
+
+        $start = Carbon::create($year, $month, 1)->startOfDay();
+        $end   = Carbon::create($year, $month, 1)->endOfMonth()->endOfDay();
+
+        // Recortar por rango permitido
+        if ($end->lt($minAllowed) || $start->gt($maxAllowedDate)) {
+            return response()->json([
+                'available_dates' => [],
+                'min_allowed' => $minAllowed->toDateTimeString(),
+                'max_allowed' => $maxAllowedDate->toDateTimeString(),
+            ]);
+        }
+
+        $start = $start->lt($minAllowed) ? $minAllowed->copy()->startOfDay() : $start;
+        $end   = $end->gt($maxAllowedDate) ? $maxAllowedDate->copy()->endOfDay() : $end;
+
+        try {
+            // ---- OpeningHours config (igual que en getEmployeeAvailability) ----
+            $daysInEnglish = $this->mapSpanishDaysToEnglish($employee->days ?? []);
+
+            // Function to ensure proper time formatting (misma lógica)
+            $formatTimeRange = function ($timeRange) {
+                if (str_contains($timeRange, 'AM') || str_contains($timeRange, 'PM')) {
+                    $timeRange = str_replace([' AM', ' PM', ' '], '', $timeRange);
+                }
+
+                $times = explode('-', $timeRange);
+                $formattedTimes = array_map(function ($time) {
+                    $parts = explode(':', $time);
+                    $hours = str_pad(trim($parts[0]), 2, '0', STR_PAD_LEFT);
+                    return $hours . ':' . $parts[1];
+                }, $times);
+
+                return implode('-', $formattedTimes);
+            };
+
+            $holidaysExceptions = $employee->holidays->mapWithKeys(function ($holiday) use ($formatTimeRange) {
+                $hours = !empty($holiday->hours)
+                    ? collect($holiday->hours)->map(function ($timeRange) use ($formatTimeRange) {
+                        return $formatTimeRange($timeRange);
+                    })->toArray()
+                    : [];
+
+                return [$holiday->date => $hours];
+            })->toArray();
+
+            $openingHours = OpeningHours::create(array_merge(
+                $daysInEnglish,
+                ['exceptions' => $holidaysExceptions]
+            ));
+
+            // ---- citas existentes del rango (para saber si un día se llenó) ----
+            $existingAppointments = Appointment::whereBetween('booking_date', [$start->toDateString(), $end->toDateString()])
+                ->where('employee_id', $employee->id)
+                ->whereNotIn('status', ['Cancelled'])
+                ->get(['booking_date', 'booking_time']);
+
+            $bookedByDate = [];
+            foreach ($existingAppointments as $appt) {
+                $times = explode(' - ', $appt->booking_time);
+                if (count($times) !== 2) continue;
+
+                $bookedByDate[$appt->booking_date][] = [
+                    'start' => Carbon::createFromFormat('g:i A', trim($times[0]))->format('H:i'),
+                    'end'   => Carbon::createFromFormat('g:i A', trim($times[1]))->format('H:i'),
+                ];
+            }
+
+            // ---- recorrer días dentro del rango permitido ----
+            $availableDates = [];
+            $cursor = $start->copy()->startOfDay();
+
+            while ($cursor->lte($end)) {
+                $dateStr = $cursor->toDateString();
+
+                $ranges = $openingHours->forDate($cursor);
+                if ($ranges->isEmpty()) {
+                    $cursor->addDay();
+                    continue;
+                }
+
+                $bookedSlots = $bookedByDate[$dateStr] ?? [];
+
+                if ($this->hasAnyAvailableSlot(
+                    $ranges,
+                    $employee->slot_duration,
+                    $employee->break_duration ?? 0,
+                    $cursor,
+                    $bookedSlots,
+                    $minAllowed
+                )) {
+                    $availableDates[] = $dateStr;
+                }
+
+                $cursor->addDay();
+            }
+
+            return response()->json([
+                'available_dates' => $availableDates,
+                'min_allowed' => $minAllowed->toDateTimeString(),
+                'max_allowed' => $maxAllowedDate->toDateTimeString(),
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Error: ' . $e->getMessage()], 500);
+        }
+    }
+
+    protected function hasAnyAvailableSlot($availableRanges, $slotDuration, $breakDuration, Carbon $date, array $bookedSlots, Carbon $minAllowed): bool
+    {
+        foreach ($availableRanges as $range) {
+            $start = Carbon::parse($date->toDateString() . ' ' . $range->start()->format('H:i'));
+            $end   = Carbon::parse($date->toDateString() . ' ' . $range->end()->format('H:i'));
+
+            if ($end->lte($minAllowed)) continue;
+
+            $current = $start->copy();
+            if ($current->lt($minAllowed)) {
+                $current = $minAllowed->copy();
+                $remainder = $current->minute % $slotDuration;
+                if ($remainder > 0) {
+                    $current->addMinutes($slotDuration - $remainder)->second(0);
+                }
+            }
+
+            while ($current->copy()->addMinutes($slotDuration)->lte($end)) {
+                $slotEnd = $current->copy()->addMinutes($slotDuration);
+
+                $conflict = false;
+                foreach ($bookedSlots as $b) {
+                    $bStart = Carbon::parse($date->toDateString() . ' ' . $b['start']);
+                    $bEnd   = Carbon::parse($date->toDateString() . ' ' . $b['end']);
+
+                    if ($current->lt($bEnd) && $slotEnd->gt($bStart)) {
+                        $conflict = true;
+                        break;
+                    }
+                }
+
+                if (!$conflict && $current->gte($minAllowed)) {
+                    return true; // ✅ con uno basta
+                }
+
+                $current->addMinutes($slotDuration + $breakDuration);
+
+                if ($current->copy()->addMinutes($slotDuration)->gt($end)) break;
+            }
+        }
+
+        return false;
+    }
+
     private function normalizeDayKey(string $day): string
     {
         $day = mb_strtolower(trim($day), 'UTF-8');

@@ -105,6 +105,10 @@ Route::get('/services/{service}/employees', [FrontendController::class, 'getEmpl
 Route::get('/employees/{employee}/availability/{date?}', [FrontendController::class, 'getEmployeeAvailability'])
     ->name('employee.availability');
 
+// get available dates for calendar (1 request per month)
+Route::get('/employees/{employee}/available-dates', [FrontendController::class, 'getEmployeeAvailableDates'])
+->name('employee.available_dates');
+
 //create appointment
 Route::post('/bookings', [AppointmentController::class, 'store'])->name('bookings.store');
 Route::get('/appointments', [AppointmentController::class, 'index'])->name('appointments')->middleware('permission:appointments.view| appointments.create | services.appointments | appointments.delete');

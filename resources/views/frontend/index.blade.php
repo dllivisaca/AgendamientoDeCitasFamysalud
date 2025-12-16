@@ -303,6 +303,7 @@
             let currentMonth;      // 0-11
             let currentYear;       // año completo
             let workingWeekdays = null; // [0..6] (0=Dom,1=Lun,...)
+            let availableDatesSet = new Set();
 
             // Días en español (minúsculas, sin tildes) para lógica/BD
             const diasES = ["domingo","lunes","martes","miercoles","jueves","viernes","sabado"];
@@ -312,6 +313,79 @@
                 // Evita problemas de zona horaria usando hora local fija
                 const d = new Date(dateStr + "T00:00:00");
                 return diasES[d.getDay()];
+            }
+
+            function fetchAvailableDatesForMonth(month, year) {
+                if (!bookingState.selectedEmployee) return;
+
+                const employeeId = bookingState.selectedEmployee.id;
+
+                // Mientras llega: bloquea todo lo clickeable (se siente instantáneo, no parpadea)
+                $("#calendar-body td.calendar-day").each(function () {
+                    const $cell = $(this);
+                    if (!$cell.hasClass("disabled")) {
+                        $cell.addClass("disabled");
+                    }
+                });
+
+                $.ajax({
+                    url: `/employees/${employeeId}/available-dates`,
+                    data: { month: month + 1, year: year }, // month JS 0-11 -> backend 1-12
+                    success: function (res) {
+                        availableDatesSet = new Set(res.available_dates || []);
+
+                        $("#calendar-body td.calendar-day").each(function () {
+                            const $cell = $(this);
+                            const dateStr = $cell.data("date");
+                            if (!dateStr) return;
+
+                            // si ya está disabled por "pasado" o "no labora", se queda disabled
+                            const lockedByRule = $cell.data("locked-by-rule") === true;
+
+                            if (lockedByRule) return;
+
+                            if (availableDatesSet.has(dateStr)) {
+                                $cell.removeClass("disabled");
+                            } else {
+                                $cell.addClass("disabled");
+                            }
+                        });
+                    },
+                    error: function () {
+                        // Si falla, por seguridad dejamos todo disabled (mejor que agendar mal)
+                    }
+                });
+            }
+
+            function markDaysWithoutSlots() {
+                if (!bookingState.selectedEmployee) return;
+
+                const employeeId = bookingState.selectedEmployee.id;
+
+                // Recorre SOLO los días visibles del calendario
+                $("#calendar-body td.calendar-day").each(function () {
+                    const $cell = $(this);
+
+                    // si ya está disabled por otras reglas (días no laborables, pasado, etc), no consultes
+                    if ($cell.hasClass("disabled")) return;
+
+                    const dateStr = $cell.data("date");
+                    if (!dateStr) return;
+
+                    $.ajax({
+                        url: `/employees/${employeeId}/availability/${dateStr}`,
+                        data: { dia_semana: getDiaSemanaES(dateStr) },
+                        success: function (response) {
+                            if (!response.available_slots || response.available_slots.length === 0) {
+                                $cell.addClass("disabled").removeClass("selected");
+                            }
+                        },
+                        error: function () {
+                            // opcional: si falla la consulta, lo deshabilitas por seguridad
+                            $cell.addClass("disabled").removeClass("selected");
+                        }
+                    });
+                });
             }
 
             const container = $('#categories-container'); // Target the container by ID
@@ -878,8 +952,9 @@
                             }
 
                             // Create the cell
+                            const lockedByRule = (isPast || isDisabledBySchedule);
                             const cell = $(
-                                `<td class="${classes}" data-date="${formattedDate}">${date}</td>`
+                            `<td class="${classes}" data-date="${formattedDate}" data-locked-by-rule="${lockedByRule}">${date}</td>`
                             );
 
                             row.append(cell);
@@ -891,6 +966,9 @@
                     if (row.children().length > 0) {
                         $("#calendar-body").append(row);
                     }
+                }
+                if (bookingState.selectedEmployee) {
+                    fetchAvailableDatesForMonth(month, year);
                 }
             }
 
