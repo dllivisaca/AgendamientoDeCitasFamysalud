@@ -11,7 +11,6 @@ use App\Models\Appointment;
 use Spatie\OpeningHours\OpeningHours;
 use Carbon\Carbon;
 use Illuminate\Support\Number;
-use Illuminate\Support\Facades\Log;
 use View;
 
 class FrontendController extends Controller
@@ -96,12 +95,23 @@ class FrontendController extends Controller
         // Use current date if not provided
         $date = $date ? Carbon::parse($date) : now();
 
-        // 🔍 LOG DE PRUEBA (AQUÍ)
-        Log::info('AVAILABILITY TIME CHECK', [
-            'now' => now()->toDateTimeString(),
-            'timezone' => config('app.timezone'),
-            'requested_date' => $date->toDateTimeString(),
-        ]);
+        $now = now();
+
+        // ✅ Máximo permitido: próximo sábado (si hoy es sábado, será el sábado siguiente)
+        $maxAllowedDate = $now->copy()->next(Carbon::SATURDAY)->endOfDay();
+
+        // Si piden una fecha más allá del máximo permitido, no devolvemos slots
+        if ($date->gt($maxAllowedDate)) {
+            return response()->json([
+                'employee_id' => $employee->id,
+                'date' => $date->toDateString(),
+                'available_slots' => [],
+                'slot_duration' => $employee->slot_duration,
+                'break_duration' => $employee->break_duration,
+                'message' => 'Fecha fuera del rango permitido',
+                'max_allowed_date' => $maxAllowedDate->toDateString(),
+            ]);
+        }
 
         // Validate slot duration exists
         if (!$employee->slot_duration) {

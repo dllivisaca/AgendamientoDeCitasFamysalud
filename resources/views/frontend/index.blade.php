@@ -1047,7 +1047,7 @@
                                 <div>
                                     <small class="text-muted d-block mt-1">
                                         <i class="bi bi-clock me-1"></i>
-                                        Todos los horarios están en hora local de Ecuador (GMT-5)
+                                        Todos los turnos están en hora local de Ecuador (GMT-5)
                                     </small>
                                 </div>
                             </div>
