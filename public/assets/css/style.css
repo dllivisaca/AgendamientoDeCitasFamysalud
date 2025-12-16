@@ -196,6 +196,18 @@ body {
   }
 }
 
+/* Cuando ya se apilan (tablets y abajo), que el calendario no se quede angosto */
+@media (max-width: 991.98px){
+  #calendar-container,
+  .calendar-container,
+  .calendar-card,
+  .calendar-wrapper,
+  .flatpickr-calendar {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
 .calendar-day {
     cursor: pointer;
     transition: all 0.2s ease;

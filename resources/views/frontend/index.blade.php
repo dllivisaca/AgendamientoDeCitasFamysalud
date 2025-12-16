@@ -123,7 +123,7 @@
                     <div class="selected-employee-name mb-3 fw-bold"></div>
 
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-lg-6">
                             <div class="card mb-4">
                                 <div class="card-header d-flex justify-content-between align-items-center">
                                     <button class="btn btn-sm btn-outline-secondary" id="prev-month"><i
