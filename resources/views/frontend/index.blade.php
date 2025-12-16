@@ -186,19 +186,102 @@
                                     <div class="row g-3">
                                         <div class="col-md-6">
                                             <label for="customer-name" class="form-label">Nombre completo</label>
-                                            <input type="text" class="form-control" id="customer-name" required>
+                                            <input
+                                                type="text"
+                                                class="form-control"
+                                                id="customer-name"
+                                                name="customer_name"
+                                                placeholder="Ej: María José Pérez"
+                                                required
+                                                minlength="5"
+                                                pattern="^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+(?:\s+[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+)+$"
+                                                title="Ingresa al menos un nombre y un apellido (solo letras y espacios)."
+                                                autocomplete="name"
+                                                >
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="patient_id" class="form-label">Cédula</label>
+                                            <input
+                                                type="text"
+                                                class="form-control"
+                                                id="patient_id"
+                                                name="patient_id"
+                                                inputmode="numeric"
+                                                autocomplete="off"
+                                                placeholder="10 dígitos (Ej: 0912345678)"
+                                                required
+                                                maxlength="10"
+                                                minlength="10"
+                                                pattern="^\d{10}$"
+                                                title="La cédula debe tener exactamente 10 dígitos (solo números)."
+                                                >
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="patient_dob" class="form-label">Fecha de nacimiento</label>
+                                            <input
+                                                type="date"
+                                                class="form-control"
+                                                id="patient_dob"
+                                                name="patient_dob"
+                                                required
+                                                title="Selecciona o escribe la fecha de nacimiento."
+                                                >
+                                                <small class="text-muted">Formato: día/mes/año</small>
                                         </div>
                                         <div class="col-md-6">
                                             <label for="customer-email" class="form-label">Correo electrónico</label>
-                                            <input type="email" class="form-control" id="customer-email" required>
+                                            <input
+                                                type="email"
+                                                class="form-control"
+                                                id="customer-email"
+                                                name="customer_email"
+                                                placeholder="Ej: nombre@gmail.com"
+                                                required
+                                                minlength="6"
+                                                title="Ingresa un correo válido (ej: nombre@gmail.com)."
+                                                autocomplete="email"
+                                                >
+                                                <small class="text-muted">Se aceptan dominios comunes (Gmail, Outlook, Hotmail, Yahoo, etc.).</small>
                                         </div>
-                                        <div class="col-md-12">
+                                        <div class="col-md-6">
                                             <label for="customer-phone" class="form-label">Teléfono</label>
-                                            <input type="tel" class="form-control" id="customer-phone" required>
+                                            <input
+                                                type="text"
+                                                class="form-control"
+                                                id="customer-phone"
+                                                name="customer_phone"
+                                                inputmode="numeric"
+                                                placeholder="Celular (10 dígitos) o convencional (7 dígitos)"
+                                                required
+                                                pattern="^\d{7}(\d{3})?$"
+                                                title="Ingresa 7 dígitos (convencional) o 10 dígitos (celular). Sin espacios ni guiones."
+                                                autocomplete="tel"
+                                                >
                                         </div>
                                         <div class="col-12">
+                                            <label for="patient_address" class="form-label">Dirección</label>
+                                            <input
+                                                type="text"
+                                                class="form-control"
+                                                id="patient_address"
+                                                name="patient_address"
+                                                placeholder="Ej: Cdla. Los Ceibos, Mz 10, Villa 5"
+                                                required
+                                                minlength="6"
+                                                title="Ingresa una dirección válida (debe contener letras; puede incluir números)."
+                                                autocomplete="street-address"
+                                                >
+                                        </div>
+                                        
+                                        <div class="col-12">
                                             <label for="customer-notes" class="form-label">Comentario (Opcional)</label>
-                                            <textarea class="form-control" id="customer-notes" rows="3"></textarea>
+                                            <textarea
+                                                class="form-control"
+                                                id="customer-notes"
+                                                name="customer_notes"
+                                                rows="3"
+                                                placeholder="Ej: Voy por primera vez / Tengo dolor desde hace 3 días / etc."
+                                            ></textarea>
                                         </div>
                                     </div>
                                 </form>
@@ -1514,6 +1597,50 @@
                 goToStep(1);
             }
         });
+    </script>
+
+    <!-- VALIDACIONES PERSONALIZADAS FORM STEP 5 -->
+    <script>
+      (function () {
+        const allowedDomains = [
+          "gmail.com", "outlook.com", "hotmail.com", "yahoo.com",
+          "live.com", "icloud.com", "proton.me", "protonmail.com"
+        ];
+
+        const nameEl = document.getElementById("customer-name");
+        const addressEl = document.getElementById("patient_address");
+        const emailEl = document.getElementById("customer-email");
+
+        if (!nameEl || !addressEl || !emailEl) return;
+
+        // Nombre: mínimo nombre + apellido, solo letras
+        nameEl.addEventListener("input", () => {
+          const v = nameEl.value.trim().replace(/\s+/g, " ");
+          const ok = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+(?:\s+[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+)+$/.test(v);
+          nameEl.setCustomValidity(
+            ok ? "" : "Ingresa al menos un nombre y un apellido (solo letras)."
+          );
+        });
+
+        // Dirección: NO puede ser solo números
+        addressEl.addEventListener("input", () => {
+          const v = addressEl.value.trim();
+          const hasLetter = /[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/.test(v);
+          addressEl.setCustomValidity(
+            hasLetter ? "" : "La dirección debe contener letras (no solo números)."
+          );
+        });
+
+        // Email: dominio permitido
+        emailEl.addEventListener("blur", () => {
+          const v = emailEl.value.trim().toLowerCase();
+          const domain = v.split("@")[1] || "";
+          const ok = allowedDomains.includes(domain);
+          emailEl.setCustomValidity(
+            ok ? "" : "Usa un correo con dominio válido (gmail, outlook, hotmail, yahoo, etc.)."
+          );
+        });
+      })();
     </script>
 
     @if ($setting->footer)
