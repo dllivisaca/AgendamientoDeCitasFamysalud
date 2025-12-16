@@ -159,7 +159,7 @@
                                     <div id="selected-date-display" class="text-muted small"></div>
                                 </div>
                                 <div class="card-body">
-                                    <div id="time-slots-container" class="d-flex flex-wrap">
+                                    <div id="time-slots-container">
                                         <!-- Time slots will be loaded dynamically -->
                                         <div class="text-center text-muted w-100 py-4">
                                             Por favor selecciona una fecha para ver los turnos disponibles

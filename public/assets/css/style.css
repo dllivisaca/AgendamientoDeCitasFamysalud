@@ -164,6 +164,31 @@ body {
     pointer-events: none;
 }
 
+/* Grid uniforme para los turnos */
+.slots-grid{
+    display: grid;
+    grid-template-columns: 1fr;      /* 1 columna en móvil */
+    gap: 10px;
+}
+
+/* 2 columnas desde pantallas medianas */
+@media (min-width: 576px){
+    .slots-grid{
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* Botón de turno: mismo tamaño siempre */
+.slots-grid .time-slot{
+    width: 100%;
+    margin: 0;               /* elimina el “descuadre” del flex */
+    min-height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;     /* evita que se parta en 2 líneas */
+}
+
 .calendar-day {
     cursor: pointer;
     transition: all 0.2s ease;
