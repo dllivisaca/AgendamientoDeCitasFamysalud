@@ -57,8 +57,8 @@
     <div class="container">
         <div class="booking-container">
             <div class="booking-header">
-                <h2><i class="bi bi-calendar-check"></i> Agenda tu cita</h2>
-                <p class="mb-0">Agenda tu cita en pocos pasos</p>
+                <h2><i class="bi bi-calendar-check"></i> Agendamiento de citas</h2>
+                <p class="mb-0">Agende una cita presencial en pocos pasos</p>
             </div>
 
             <div class="booking-steps position-relative">
@@ -94,7 +94,7 @@
             <div class="booking-content">
                 <!-- Step 1: Category Selection -->
                 <div class="booking-step active" id="step1">
-                    <h3 class="mb-4">Selecciona un área de atención</h3>
+                    <h3 class="mb-4">Seleccione el área de atención</h3>
                     <div class="row row-cols-1 row-cols-md-3 g-4" id="categories-container">
                         <!-- Categories will be inserted here by jQuery -->
                     </div>
@@ -102,7 +102,7 @@
 
                 <!-- Step 2: Service Selection -->
                 <div class="booking-step" id="step2">
-                    <h3 class="mb-4">Selecciona un servicio</h3>
+                    <h3 class="mb-4">Seleccione el servicio</h3>
                     <div class="selected-category-name mb-3 fw-bold"></div>
                     <div class="row row-cols-1 row-cols-md-3 g-4" id="services-container">
                         <!-- Services will be loaded dynamically based on category -->
@@ -111,7 +111,7 @@
 
                 <!-- Step 3: Employee Selection -->
                 <div class="booking-step" id="step3">
-                    <h3 class="mb-4">Selecciona a un profesional</h3>
+                    <h3 class="mb-4">Seleccione el profesional</h3>
                     <div class="selected-service-name mb-3 fw-bold"></div>
                     <div class="row row-cols-1 row-cols-md-3 g-4" id="employees-container">
                         <!-- Employees will be loaded dynamically based on service -->
@@ -120,7 +120,7 @@
 
                 <!-- Step 4: Date and Time Selection -->
                 <div class="booking-step" id="step4">
-                    <h3 class="mb-4">Selecciona una fecha y hora</h3>
+                    <h3 class="mb-4">Seleccione la fecha y hora</h3>
                     <div class="selected-employee-name mb-3 fw-bold"></div>
 
                     <div class="row">
@@ -163,7 +163,7 @@
                                     <div id="time-slots-container">
                                         <!-- Time slots will be loaded dynamically -->
                                         <div class="text-center text-muted w-100 py-4">
-                                            Por favor selecciona una fecha para ver los turnos disponibles
+                                            Seleccione una fecha para visualizar los turnos disponibles
                                         </div>
                                     </div>
                                 </div>
@@ -174,7 +174,7 @@
 
                 <!-- Step 5: Confirmation -->
                 <div class="booking-step" id="step5">
-                    <h3 class="mb-4">Ingreso de datos</h3>
+                    <h3 class="mb-4">Ingreso de información</h3>
                     <div class="card">
                         <!-- <div class="card-header bg-light">
                             <h5 class="mb-0">Ingresa los datos del paciente</h5>
@@ -196,7 +196,7 @@
                                                 required
                                                 minlength="5"
                                                 pattern="^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+(?:\s+[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+)+$"
-                                                title="Ingresa tus dos nombres y dos apellidos"
+                                                title="Debe registrarse los dos nombres y dos apellidos"
                                                 autocomplete="name"
                                                 >
                                         </div>
@@ -209,7 +209,7 @@
                                                 id="patient_dob"
                                                 name="patient_dob"
                                                 required
-                                                title="Selecciona o escribe la fecha de nacimiento."
+                                                title="Seleccione o escriba la fecha de nacimiento."
                                                 >
                                                 <small class="text-muted">Formato: día/mes/año</small>
                                         </div>
@@ -220,26 +220,9 @@
                                                 <option value="cedula" selected>Cédula (Ecuador)</option>
                                                 <option value="pasaporte">Pasaporte (Extranjero)</option>
                                             </select>
-                                            <small class="text-muted">Si tienes nacionalidad ecuatoriana, usa cédula. Si eres extranjero/a, usa pasaporte.</small>
-                                            </div>
-
-                                        <!-- <div class="col-md-6">
-                                            <label for="doc_number" class="form-label">Número de documento</label>
-                                            <input
-                                                type="text"
-                                                class="form-control"
-                                                id="doc_number"
-                                                name="doc_number"
-                                                inputmode="numeric"
-                                                autocomplete="off"
-                                                placeholder="10 dígitos (Ej: 0912345678)"
-                                                required
-                                                maxlength="10"
-                                                minlength="10"
-                                                pattern="^\d{10}$"
-                                                title="La cédula debe tener exactamente 10 dígitos (solo números)."
-                                                >
-                                        </div> -->
+                                            <small class="text-muted">Para personas con nacionalidad ecuatoriana se utiliza cédula. Para personas extranjeras, pasaporte.
+                                            </small>
+                                        </div>
 
                                         <div class="col-md-6">
                                             <label for="doc_number" class="form-label">Número de documento<span class="text-danger">*</span></label>
@@ -262,15 +245,17 @@
                                                 placeholder="Ej: nombre@gmail.com"
                                                 required
                                                 minlength="6"
-                                                title="Ingresa un correo válido (ej: nombre@gmail.com)."
+                                                title="Ingrese un correo válido (ej: nombre@gmail.com)."
                                                 autocomplete="email"
                                                 >
-                                                <small class="text-muted">Se aceptan dominios comunes (Gmail, Outlook, Hotmail, Yahoo, etc.).</small>
                                         </div>
                                         <div class="col-md-6">
                                             <label for="patient_phone_ui" class="form-label">Número de celular <span class="text-danger">*</span></label>
-                                            <input type="tel" class="form-control phone-input" id="patient_phone_ui" placeholder="Ej: 99 123 4567" required>
+                                            <input type="tel" class="form-control phone-input" id="patient_phone_ui" placeholder="Ej: 991234567" required title="Registre el número de celular sin el prefijo del país. Verifique que el país seleccionado sea el correcto.">
                                             <input type="hidden" id="customer-phone" name="customer_phone">
+                                            <div class="form-text">
+                                                Para Ecuador, registre el número sin el 0 inicial.
+                                            </div>
                                         </div>
                                         <div class="col-12">
                                             <label for="patient_address" class="form-label">Dirección<span class="text-danger">*</span></label>
@@ -279,10 +264,10 @@
                                                 class="form-control"
                                                 id="patient_address"
                                                 name="patient_address"
-                                                placeholder="Ej: Cdla. Los Ceibos, Mz 10, Villa 5"
+                                                placeholder="Ej: Av. Amazonas y Naciones Unidas, edificio X"
                                                 required
                                                 minlength="6"
-                                                title="Ingresa una dirección válida (debe contener letras; puede incluir números)."
+                                                title="Debe registrarse una dirección válida que contenga letras; puede incluir números."
                                                 autocomplete="street-address"
                                                 >
                                         </div>
@@ -294,7 +279,7 @@
                                                 id="customer-notes"
                                                 name="customer_notes"
                                                 rows="3"
-                                                placeholder="Ej: Voy por primera vez / Tengo dolor desde hace 3 días / etc."
+                                                placeholder="Información adicional relevante para la atención"
                                             ></textarea>
                                         </div>
                                     </div>
@@ -316,7 +301,7 @@
                                             required
                                             minlength="5"
                                             pattern="^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9]+(?:\s+[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9]+)+$"
-                                            title="Ingresa el nombre para facturación (mínimo 2 palabras)."
+                                            title="Ingrese el nombre para facturación"
                                             autocomplete="name"
                                             >
                                         </div>
@@ -328,7 +313,8 @@
                                             <option value="ruc">RUC (Ecuador)</option>
                                             <option value="pasaporte">Pasaporte (Extranjero)</option>
                                             </select>
-                                            <small class="text-muted">Si eres ecuatoriano/a usa Cédula o RUC. Si eres extranjero/a usa Pasaporte.</small>
+                                            <small class="text-muted">Para personas ecuatorianas se admite Cédula o RUC. Para personas extranjeras, Pasaporte.
+                                            </small>
                                         </div>
 
                                         <div class="col-md-6">
@@ -352,16 +338,18 @@
                                             placeholder="Ej: facturacion@gmail.com"
                                             required
                                             minlength="6"
-                                            title="Ingresa un correo válido."
+                                            title="Ingrese un correo válido (ej: facturacion@gmail.com)."
                                             autocomplete="email"
                                             >
-                                            <small class="text-muted">Se aceptan dominios comunes (Gmail, Outlook, Hotmail, Yahoo, etc.).</small>
                                         </div>
 
                                         <div class="col-md-6">
                                             <label for="billing_phone_ui" class="form-label">Número de celular <span class="text-danger">*</span></label>
-                                            <input type="tel" class="form-control phone-input" id="billing_phone_ui" placeholder="Ej: 99 123 4567" required>
+                                            <input type="tel" class="form-control phone-input" id="billing_phone_ui" placeholder="Ej: 991234567" required title="Registre el número de celular sin el prefijo del país. Verifique que el país seleccionado sea el correcto.">
                                             <input type="hidden" id="billing-phone" name="billing_phone">
+                                            <div class="form-text">
+                                                Para Ecuador, registre el número sin el 0 inicial.
+                                            </div>
                                         </div>
 
                                         <div class="col-12">
@@ -371,10 +359,10 @@
                                             class="form-control"
                                             id="billing-address"
                                             name="billing_address"
-                                            placeholder="Ej: Cdla. Los Ceibos, Mz 10, Villa 5"
+                                            placeholder="Ej: Av. Amazonas y Naciones Unidas, edificio X"
                                             required
                                             minlength="6"
-                                            title="Ingresa una dirección válida (debe contener letras; puede incluir números)."
+                                            title="Debe registrarse una dirección válida que contenga letras; puede incluir números."
                                             autocomplete="street-address"
                                             >
                                         </div>
@@ -426,22 +414,12 @@
                             <div class="form-check mt-3">
                                 <input class="form-check-input" type="checkbox" id="consent_data" name="consent_data" required>
                                 <label class="form-check-label" for="consent_data">
-                                    Autorizo el uso de mis datos personales para gestionar mi cita y recibir información relacionada.
+                                    Autorizo el uso de los datos personales proporcionados para la gestión de la cita y el envío de información relacionada.
                                     <span class="text-danger">*</span>
                                 </label>
                             </div>
                         </div>
                         
-                        <!-- <div class="card-body">
-                            
-                        </div>
-                        <div class="card-header bg-light">
-                            <h5 class="mb-0">Resumen de la cita</h5>
-                        </div>
-                        <div class="card-body">
-                            
-                        </div> -->
-
                     </div>
                 </div>
             </div>
@@ -1611,12 +1589,12 @@
                         setTimeout(resetBooking, 1000);
                     },
                     error: function(xhr) {
-                        let errorMessage = 'Booking failed. Please try again.';
+                        let errorMessage = 'Agendamiento fallido. Por favor, intente de nuevo.';
 
                         if (xhr.responseJSON && xhr.responseJSON.message) {
                             errorMessage = xhr.responseJSON.message;
                         } else if (xhr.status === 422) {
-                            errorMessage = 'Validation error: Please check your information.';
+                            errorMessage = 'Error de validación: Por favor revise la información.';
                         }
 
                         alert(errorMessage);
@@ -1676,7 +1654,7 @@
           const v = nameEl.value.trim().replace(/\s+/g, " ");
           const ok = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+(?:\s+[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+)+$/.test(v);
           nameEl.setCustomValidity(
-            ok ? "" : "Ingresa tus dos nombres y dos apellidos."
+            ok ? "" : "Debe registrarse los dos nombres y dos apellidos."
           );
         });
 
@@ -1695,7 +1673,7 @@
           const domain = v.split("@")[1] || "";
           const ok = allowedDomains.includes(domain);
           emailEl.setCustomValidity(
-            ok ? "" : "Usa un correo con dominio válido (gmail, outlook, hotmail, yahoo, etc.)."
+            ok ? "" : "Use un correo con dominio válido (gmail, outlook, hotmail, yahoo, etc.)."
           );
         });
       })();
@@ -1815,7 +1793,7 @@
             input.addEventListener("invalid", () => {
                 sync();
                 if (input.value.trim() && !iti.isValidNumber()) {
-                input.setCustomValidity("Ingresa un número de celular válido.");
+                input.setCustomValidity("Ingrese un número de celular válido.");
                 } else {
                 input.setCustomValidity("");
                 }
