@@ -222,6 +222,12 @@ body {
     color: white;
 }
 
+/* Si el día está seleccionado y paso el cursor, que el número se vea */
+.calendar-day.selected:hover {
+    background-color: rgba(78, 115, 223, 0.1); /* el celeste que ya usas */
+    color: var(--accent-color);                 /* azul oscuro */
+}
+
 .calendar-day.disabled {
     opacity: 0.5;
     cursor: not-allowed;
