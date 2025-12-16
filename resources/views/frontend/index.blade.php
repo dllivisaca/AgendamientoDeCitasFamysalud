@@ -1833,6 +1833,39 @@
 
     <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/intlTelInput.min.js"></script>
 
+    <script>
+        (function () {
+            document.addEventListener("keydown", function (e) {
+            // Solo Enter
+            if (e.key !== "Enter") return;
+
+            const target = e.target;
+
+            // ❌ No interceptar Enter en textarea
+            if (target.tagName === "TEXTAREA") return;
+
+            // ❌ No interceptar botones o submits
+            if (
+                target.tagName === "BUTTON" ||
+                target.type === "submit"
+            ) {
+                return;
+            }
+
+            const nextBtn = document.getElementById("next-step");
+
+            // ❌ Si no existe o está deshabilitado
+            if (!nextBtn || nextBtn.disabled) return;
+
+            // Evita submit por defecto
+            e.preventDefault();
+
+            // Simula clic en "Siguiente"
+            nextBtn.click();
+            });
+        })();
+    </script>
+
     @if ($setting->footer)
         {!! $setting->footer !!}
     @endif
