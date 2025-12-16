@@ -11,6 +11,7 @@ use App\Models\Appointment;
 use Spatie\OpeningHours\OpeningHours;
 use Carbon\Carbon;
 use Illuminate\Support\Number;
+use Illuminate\Support\Facades\Log;
 use View;
 
 class FrontendController extends Controller
@@ -95,6 +96,13 @@ class FrontendController extends Controller
         // Use current date if not provided
         $date = $date ? Carbon::parse($date) : now();
 
+        // 🔍 LOG DE PRUEBA (AQUÍ)
+        Log::info('AVAILABILITY TIME CHECK', [
+            'now' => now()->toDateTimeString(),
+            'timezone' => config('app.timezone'),
+            'requested_date' => $date->toDateTimeString(),
+        ]);
+
         // Validate slot duration exists
         if (!$employee->slot_duration) {
             return response()->json(['error' => 'Slot duration not set for this employee'], 400);
@@ -177,6 +185,7 @@ class FrontendController extends Controller
     {
         $slots = [];
         $now = now();
+        $minAllowed = $now->copy()->addHours(24);
         $isToday = $date->isToday();
 
         // Get existing appointments for this date and employee
@@ -198,12 +207,29 @@ class FrontendController extends Controller
             $start = Carbon::parse($date->toDateString() . ' ' . $range->start()->format('H:i'));
             $end = Carbon::parse($date->toDateString() . ' ' . $range->end()->format('H:i'));
 
+            // Si todo el rango termina antes del mínimo permitido, no sirve
+            if ($end->lte($minAllowed)) {
+                continue;
+            }
+
             // Skip if the entire range is in the past (only for today)
             if ($isToday && $end->lte($now)) {
                 continue;
             }
 
             $currentSlotStart = clone $start;
+
+            // Si el rango empieza antes del mínimo permitido, arrancamos desde $minAllowed
+            if ($currentSlotStart->lt($minAllowed)) {
+                $currentSlotStart = $minAllowed->copy();
+
+                // Redondear al siguiente intervalo (según duración del slot)
+                $minutes = $currentSlotStart->minute;
+                $remainder = $minutes % $slotDuration;
+                if ($remainder > 0) {
+                    $currentSlotStart->addMinutes($slotDuration - $remainder)->second(0);
+                }
+            }
 
             // If today and current slot start is in the past, adjust to current time
             if ($isToday && $currentSlotStart->lt($now)) {
@@ -233,7 +259,7 @@ class FrontendController extends Controller
                 }
 
                 // Only add slots that are available and in the future (for today)
-                if ($isAvailable && (!$isToday || $slotEnd->gt($now))) {
+                if ($isAvailable && $currentSlotStart->gte($minAllowed)) {
                     $slots[] = [
                         'start' => $currentSlotStart->format('H:i'),
                         'end' => $slotEnd->format('H:i'),
