@@ -305,6 +305,10 @@
             let workingWeekdays = null; // [0..6] (0=Dom,1=Lun,...)
             let availableDatesSet = new Set();
 
+            let availableDatesByMonth = {}; // cache: "YYYY-MM" => Set([...])
+            let allowedMinYM = null;        // "YYYY-MM" (desde min_allowed)
+            let allowedMaxYM = null;        // "YYYY-MM" (hasta max_allowed)
+
             // Días en español (minúsculas, sin tildes) para lógica/BD
             const diasES = ["domingo","lunes","martes","miercoles","jueves","viernes","sabado"];
 
@@ -315,44 +319,73 @@
                 return diasES[d.getDay()];
             }
 
-            function fetchAvailableDatesForMonth(month, year) {
+            function fetchAvailableDatesForMonth(month0, year, options = {}) {
                 if (!bookingState.selectedEmployee) return;
 
+                const onlyCache = options.onlyCache === true;
                 const employeeId = bookingState.selectedEmployee.id;
+                const key = ymKey(year, month0);
 
-                // Mientras llega: bloquea todo lo clickeable (se siente instantáneo, no parpadea)
-                $("#calendar-body td.calendar-day").each(function () {
-                    const $cell = $(this);
-                    if (!$cell.hasClass("disabled")) {
-                        $cell.addClass("disabled");
+                // Si ya está en caché, solo actualiza botones y listo
+                if (availableDatesByMonth[key]) {
+                    if (!onlyCache) {
+                        availableDatesSet = availableDatesByMonth[key];
                     }
-                });
+                    updateMonthNavButtons(currentMonth, currentYear);
+                    return;
+                }
+
+                // Mientras llega: bloquea flechas (evita clic “rápido”)
+                setMonthButtons(false, false);
+
+                // Solo si estamos pintando el mes actual, bloquea celdas (para evitar clics)
+                if (!onlyCache) {
+                    $("#calendar-body td.calendar-day").each(function () {
+                        const $cell = $(this);
+                        if (!$cell.hasClass("disabled")) $cell.addClass("disabled");
+                    });
+                }
 
                 $.ajax({
                     url: `/employees/${employeeId}/available-dates`,
-                    data: { month: month + 1, year: year }, // month JS 0-11 -> backend 1-12
+                    data: { month: month0 + 1, year: year },
                     success: function (res) {
-                        availableDatesSet = new Set(res.available_dates || []);
+                        const dates = res.available_dates || [];
+                        const setDates = new Set(dates);
 
-                        $("#calendar-body td.calendar-day").each(function () {
-                            const $cell = $(this);
-                            const dateStr = $cell.data("date");
-                            if (!dateStr) return;
+                        // ✅ guarda caché
+                        availableDatesByMonth[key] = setDates;
 
-                            // si ya está disabled por "pasado" o "no labora", se queda disabled
-                            const lockedByRule = $cell.data("locked-by-rule") === true;
+                        // ✅ actualiza rango permitido (min/max)
+                        allowedMinYM = parseYMFromDateTime(res.min_allowed);
+                        allowedMaxYM = parseYMFromDateTime(res.max_allowed);
 
-                            if (lockedByRule) return;
+                        // ✅ si es el mes que estamos viendo, úsalo para pintar
+                        if (!onlyCache) {
+                            availableDatesSet = setDates;
 
-                            if (availableDatesSet.has(dateStr)) {
-                                $cell.removeClass("disabled");
-                            } else {
-                                $cell.addClass("disabled");
-                            }
-                        });
+                            $("#calendar-body td.calendar-day").each(function () {
+                                const $cell = $(this);
+                                const dateStr = $cell.data("date");
+                                if (!dateStr) return;
+
+                                const lockedByRule = $cell.data("locked-by-rule") === true;
+                                if (lockedByRule) return;
+
+                                if (availableDatesSet.has(dateStr)) {
+                                    $cell.removeClass("disabled");
+                                } else {
+                                    $cell.addClass("disabled").removeClass("selected");
+                                }
+                            });
+                        }
+
+                        // ✅ actualiza flechas (con caché ya disponible)
+                        updateMonthNavButtons(currentMonth, currentYear);
                     },
                     error: function () {
-                        // Si falla, por seguridad dejamos todo disabled (mejor que agendar mal)
+                        // Si falla, deja todo bloqueado por seguridad
+                        updateMonthNavButtons(currentMonth, currentYear);
                     }
                 });
             }
@@ -538,6 +571,12 @@
                 }
 
                 bookingState.selectedEmployee = employee;
+
+                availableDatesByMonth = {};
+                availableDatesSet = new Set();
+                allowedMinYM = null;
+                allowedMaxYM = null;
+                setMonthButtons(false, false);
 
                  // 3) Calcular qué días de la semana trabaja
                 workingWeekdays = null;
@@ -974,6 +1013,7 @@
 
             function navigateMonth(direction) {
                 const currentMonthText = $("#current-month").text();
+                setMonthButtons(false, false); // bloquea mientras carga disponibilidad
                 const [monthName, year] = currentMonthText.split(" ");
 
                 const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto",
@@ -1045,6 +1085,97 @@
                 const m = String(date.getMonth() + 1).padStart(2, '0');
                 const d = String(date.getDate()).padStart(2, '0');
                 return `${y}-${m}-${d}`;
+            }
+
+            function updateMonthNavButtons(month0, year) {
+            // Si no hay empleado, no hay navegación
+            if (!bookingState.selectedEmployee) {
+                setMonthButtons(false, false);
+                return;
+            }
+
+            // Si todavía no sabemos el rango permitido (min/max), bloquea mientras llega
+            if (!allowedMinYM || !allowedMaxYM) {
+                setMonthButtons(false, false);
+                return;
+            }
+
+            const currentYM = ymKey(year, month0);
+
+            // Si solo hay 1 mes en el rango permitido, no hay flechas
+            if (allowedMinYM === allowedMaxYM) {
+                setMonthButtons(false, false);
+                return;
+            }
+
+            // Determina meses vecinos
+            const prev = prevMonth(year, month0);
+            const next = nextMonth(year, month0);
+            const prevYM = ymKey(prev.year, prev.month0);
+            const nextYM = ymKey(next.year, next.month0);
+
+            // Por rango, solo permitimos movernos entre minYM y maxYM
+            // Habilitar prev si hay un mes anterior dentro del rango y con fechas disponibles
+            // Habilitar next si hay un mes siguiente dentro del rango y con fechas disponibles
+            let prevEnabled = false;
+            let nextEnabled = false;
+
+            // Prev: solo si el mes anterior NO está antes del mínimo permitido
+            if (prevYM >= allowedMinYM && prevYM <= allowedMaxYM) {
+                const cachedPrev = availableDatesByMonth[prevYM];
+                if (cachedPrev) {
+                    prevEnabled = cachedPrev.size > 0;
+                } else {
+                    // mientras consulta, lo deja apagado para que no “parpadee”
+                    prevEnabled = false;
+                    fetchAvailableDatesForMonth(prev.month0, prev.year, { onlyCache: true });
+                }
+            }
+
+            // Next: solo si el mes siguiente NO está después del máximo permitido
+            if (nextYM >= allowedMinYM && nextYM <= allowedMaxYM) {
+                const cachedNext = availableDatesByMonth[nextYM];
+                if (cachedNext) {
+                    nextEnabled = cachedNext.size > 0;
+                } else {
+                    nextEnabled = false;
+                    fetchAvailableDatesForMonth(next.month0, next.year, { onlyCache: true });
+                }
+            }
+
+            // Regla adicional: si estás en el mes mínimo, no debes retroceder más
+            if (currentYM === allowedMinYM) prevEnabled = false;
+
+            // Regla adicional: si estás en el mes máximo, no debes avanzar más
+            if (currentYM === allowedMaxYM) nextEnabled = false;
+
+            setMonthButtons(prevEnabled, nextEnabled);
+        }
+
+            function ymKey(year, month0) {
+                return `${year}-${String(month0 + 1).padStart(2, '0')}`; // month0: 0-11
+            }
+
+            function parseYMFromDateTime(dateTimeStr) {
+                // "2025-12-16 10:00:00" o "2025-12-16T10:00:00"
+                if (!dateTimeStr) return null;
+                const d = dateTimeStr.substring(0, 10); // YYYY-MM-DD
+                return d.substring(0, 7); // YYYY-MM
+            }
+
+            function prevMonth(year, month0) {
+                if (month0 === 0) return { year: year - 1, month0: 11 };
+                return { year, month0: month0 - 1 };
+            }
+
+            function nextMonth(year, month0) {
+                if (month0 === 11) return { year: year + 1, month0: 0 };
+                return { year, month0: month0 + 1 };
+            }
+
+            function setMonthButtons(prevEnabled, nextEnabled) {
+                $("#prev-month").prop("disabled", !prevEnabled);
+                $("#next-month").prop("disabled", !nextEnabled);
             }
 
             // Devuelve true si el slot está a menos de 3 horas desde "ahora"
