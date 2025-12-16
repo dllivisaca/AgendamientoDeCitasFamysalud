@@ -14,6 +14,7 @@
         integrity="sha512-10/jx2EXwxxWqCLX/hHth/vu2KY3jCF70dCQB8TSgNjbCVAC/8vai53GfMDrO2Emgwccf2pJqxct9ehpzG+MTw=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/css/intlTelInput.css">
     @if ($setting->header)
         {!! $setting->header !!}
     @endif
@@ -267,19 +268,9 @@
                                                 <small class="text-muted">Se aceptan dominios comunes (Gmail, Outlook, Hotmail, Yahoo, etc.).</small>
                                         </div>
                                         <div class="col-md-6">
-                                            <label for="customer-phone" class="form-label">Teléfono<span class="text-danger">*</span></label>
-                                            <input
-                                                type="text"
-                                                class="form-control"
-                                                id="customer-phone"
-                                                name="customer_phone"
-                                                inputmode="numeric"
-                                                placeholder="Celular (10 dígitos) o convencional (7 dígitos)"
-                                                required
-                                                pattern="^\d{7}(\d{3})?$"
-                                                title="Ingresa 7 dígitos (convencional) o 10 dígitos (celular). Sin espacios ni guiones."
-                                                autocomplete="tel"
-                                                >
+                                            <label for="patient_phone_ui" class="form-label">Número de celular <span class="text-danger">*</span></label>
+                                            <input type="tel" class="form-control phone-input" id="patient_phone_ui" placeholder="Ej: 99 123 4567" required>
+                                            <input type="hidden" id="customer-phone" name="customer_phone">
                                         </div>
                                         <div class="col-12">
                                             <label for="patient_address" class="form-label">Dirección<span class="text-danger">*</span></label>
@@ -321,7 +312,7 @@
                                             class="form-control"
                                             id="billing-name"
                                             name="billing_name"
-                                            placeholder="Ej: Empresa XYZ S.A. / María José Pérez González"
+                                            placeholder="Ej: María José Pérez González / Empresa XYZ S.A."
                                             required
                                             minlength="5"
                                             pattern="^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9]+(?:\s+[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9]+)+$"
@@ -368,19 +359,9 @@
                                         </div>
 
                                         <div class="col-md-6">
-                                            <label for="billing-phone" class="form-label">Teléfono <span class="text-danger">*</span></label>
-                                            <input
-                                            type="text"
-                                            class="form-control"
-                                            id="billing-phone"
-                                            name="billing_phone"
-                                            inputmode="numeric"
-                                            placeholder="Celular (10 dígitos) o convencional (7 dígitos)"
-                                            required
-                                            pattern="^\d{7}(\d{3})?$"
-                                            title="Ingresa 7 dígitos (convencional) o 10 dígitos (celular). Sin espacios ni guiones."
-                                            autocomplete="tel"
-                                            >
+                                            <label for="billing_phone_ui" class="form-label">Número de celular <span class="text-danger">*</span></label>
+                                            <input type="tel" class="form-control phone-input" id="billing_phone_ui" placeholder="Ej: 99 123 4567" required>
+                                            <input type="hidden" id="billing-phone" name="billing_phone">
                                         </div>
 
                                         <div class="col-12">
@@ -398,7 +379,7 @@
                                             >
                                         </div>
                                         </div>
-                                </form>
+                            </form>
                             </div>
                           
                             
@@ -1802,6 +1783,53 @@
             applyBillingDocRules();
         })();
     </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/intlTelInput.min.js"></script>
+
+    <script>
+        (function () {
+            function setupIntlPhone(inputId, hiddenId) {
+            const input = document.getElementById(inputId);
+            const hidden = document.getElementById(hiddenId);
+            if (!input || !hidden || typeof window.intlTelInput !== "function") return;
+
+            const iti = window.intlTelInput(input, {
+                initialCountry: "ec",
+                separateDialCode: true,
+                preferredCountries: ["ec", "us", "co", "pe", "es"],
+                utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/utils.js"
+            });
+
+            function sync() {
+                // E.164: +593991234567
+                const number = iti.getNumber();
+                hidden.value = number || "";
+            }
+
+            input.addEventListener("blur", sync);
+            input.addEventListener("change", sync);
+            input.addEventListener("keyup", sync);
+            input.addEventListener("countrychange", sync);
+
+            // Validación: si no es válido, bloquea (si quieres)
+            input.addEventListener("invalid", () => {
+                sync();
+                if (input.value.trim() && !iti.isValidNumber()) {
+                input.setCustomValidity("Ingresa un número de celular válido.");
+                } else {
+                input.setCustomValidity("");
+                }
+            });
+
+            input.addEventListener("input", () => input.setCustomValidity(""));
+            }
+
+            setupIntlPhone("patient_phone_ui", "customer-phone");
+            setupIntlPhone("billing_phone_ui", "billing-phone");
+        })();
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/intlTelInput.min.js"></script>
 
     @if ($setting->footer)
         {!! $setting->footer !!}

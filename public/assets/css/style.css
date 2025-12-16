@@ -383,3 +383,35 @@ body {
     height: 40px;   /* Cambia a lo que necesites */
     width: auto;
 }
+
+.iti {
+  width: 100%;
+}
+.iti__tel-input,
+.iti input {
+  width: 100%;
+}
+
+/* intl-tel-input + Bootstrap alignment */
+.iti {
+  width: 100%;
+  display: block;
+}
+
+.iti input.form-control {
+  width: 100%;
+  padding-left: 52px !important; /* espacio para bandera/prefijo */
+}
+
+.iti--separate-dial-code .iti__selected-flag {
+  background: transparent;
+}
+
+.iti__flag-container {
+  z-index: 5;
+}
+
+/* Opcional: que el dropdown no quede detrás de cards/modals */
+.iti__country-list {
+  z-index: 9999;
+}
