@@ -199,23 +199,7 @@
                                                 autocomplete="name"
                                                 >
                                         </div>
-                                        <div class="col-md-6">
-                                            <label for="patient_id" class="form-label">Cédula</label>
-                                            <input
-                                                type="text"
-                                                class="form-control"
-                                                id="patient_id"
-                                                name="patient_id"
-                                                inputmode="numeric"
-                                                autocomplete="off"
-                                                placeholder="10 dígitos (Ej: 0912345678)"
-                                                required
-                                                maxlength="10"
-                                                minlength="10"
-                                                pattern="^\d{10}$"
-                                                title="La cédula debe tener exactamente 10 dígitos (solo números)."
-                                                >
-                                        </div>
+
                                         <div class="col-md-6">
                                             <label for="patient_dob" class="form-label">Fecha de nacimiento</label>
                                             <input
@@ -228,6 +212,45 @@
                                                 >
                                                 <small class="text-muted">Formato: día/mes/año</small>
                                         </div>
+
+                                        <div class="col-md-6">
+                                            <label for="doc_type" class="form-label">Tipo de documento</label>
+                                            <select class="form-select" id="doc_type" name="doc_type" required>
+                                                <option value="cedula" selected>Cédula (Ecuador)</option>
+                                                <option value="pasaporte">Pasaporte (Extranjero)</option>
+                                            </select>
+                                            <small class="text-muted">Si tienes nacionalidad ecuatoriana, usa cédula. Si eres extranjero/a, usa pasaporte.</small>
+                                            </div>
+
+                                        <!-- <div class="col-md-6">
+                                            <label for="doc_number" class="form-label">Número de documento</label>
+                                            <input
+                                                type="text"
+                                                class="form-control"
+                                                id="doc_number"
+                                                name="doc_number"
+                                                inputmode="numeric"
+                                                autocomplete="off"
+                                                placeholder="10 dígitos (Ej: 0912345678)"
+                                                required
+                                                maxlength="10"
+                                                minlength="10"
+                                                pattern="^\d{10}$"
+                                                title="La cédula debe tener exactamente 10 dígitos (solo números)."
+                                                >
+                                        </div> -->
+
+                                        <div class="col-md-6">
+                                            <label for="doc_number" class="form-label">Número de documento</label>
+                                            <input
+                                                type="text"
+                                                class="form-control"
+                                                id="doc_number"
+                                                name="doc_number"
+                                                required
+                                            >
+                                            </div>
+                                        
                                         <div class="col-md-6">
                                             <label for="customer-email" class="form-label">Correo electrónico</label>
                                             <input
@@ -1642,6 +1665,43 @@
         });
       })();
     </script>
+
+    <script>
+        (function () {
+            const docType = document.getElementById("doc_type");
+            const docNum  = document.getElementById("doc_number");
+            if (!docType || !docNum) return;
+
+            function applyDocRules() {
+            const type = docType.value;
+
+            if (type === "cedula") {
+                docNum.placeholder = "10 dígitos (Ej: 0912345678)";
+                docNum.inputMode = "numeric";
+                docNum.maxLength = 10;
+                docNum.minLength = 10;
+                docNum.pattern = "^\\d{10}$";
+                docNum.title = "La cédula debe tener exactamente 10 dígitos (solo números).";
+            } else {
+                docNum.placeholder = "Ej: AB1234567 (sin espacios)";
+                docNum.inputMode = "text";
+                docNum.maxLength = 15;
+                docNum.minLength = 6;
+                docNum.pattern = "^[A-Za-z0-9]{6,15}$";
+                docNum.title = "El pasaporte debe tener entre 6 y 15 caracteres (letras y/o números), sin espacios.";
+            }
+
+            docNum.setCustomValidity("");
+            }
+
+            docNum.addEventListener("input", () => {
+            docNum.value = docNum.value.replace(/\s+/g, "");
+            });
+
+            docType.addEventListener("change", applyDocRules);
+            applyDocRules();
+        })();
+        </script>
 
     @if ($setting->footer)
         {!! $setting->footer !!}
