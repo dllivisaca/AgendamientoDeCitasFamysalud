@@ -24,7 +24,7 @@
     <header class="header-section">
         <nav class="navbar navbar-expand-lg navbar-light">
             <div class="container">
-                <a class="navbar-brand" href="#">
+                <a class="navbar-brand" href="#" id="logo-reset">
                     <img src="{{ asset('img/logo1.png') }}" alt="Logo" class="brand-logo">
                     <!-- <i class="bi bi-calendar-check"></i> AppointEase -->
                 </a>
@@ -196,7 +196,7 @@
                                                 required
                                                 minlength="5"
                                                 pattern="^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+(?:\s+[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+)+$"
-                                                title="Debe registrarse los dos nombres y dos apellidos"
+                                                title="Debe registrarse al menos un nombre y un apellido."
                                                 autocomplete="name"
                                                 >
                                         </div>
@@ -861,6 +861,18 @@
 
             $("#next-month").click(function() {
                 navigateMonth(1);
+            });
+
+            // Volver al paso 1 al hacer clic en el logo
+            $("#logo-reset").on("click", function (e) {
+                e.preventDefault();
+
+                if (bookingState.selectedService || bookingState.selectedEmployee) {
+                    if (!confirm("Al volver al inicio, se mantendrá la información ingresada. ¿Desea continuar?")) {
+                        return;
+                    }
+                }
+                goToStep(1);
             });
 
             // Functions
@@ -1654,7 +1666,7 @@
           const v = nameEl.value.trim().replace(/\s+/g, " ");
           const ok = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+(?:\s+[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+)+$/.test(v);
           nameEl.setCustomValidity(
-            ok ? "" : "Debe registrarse los dos nombres y dos apellidos."
+            ok ? "" : "Debe registrarse al menos un nombre y un apellido."
           );
         });
 
