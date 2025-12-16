@@ -189,6 +189,13 @@ body {
     white-space: nowrap;     /* evita que se parta en 2 líneas */
 }
 
+/* En tablet: 1 columna para que no se aplaste el texto */
+@media (max-width: 991.98px){
+  .slots-grid{
+    grid-template-columns: 1fr;
+  }
+}
+
 .calendar-day {
     cursor: pointer;
     transition: all 0.2s ease;
