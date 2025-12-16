@@ -195,7 +195,7 @@
                                                 required
                                                 minlength="5"
                                                 pattern="^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+(?:\s+[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+)+$"
-                                                title="Ingresa al menos un nombre y un apellido (solo letras y espacios)."
+                                                title="Ingresa tus dos nombres y dos apellidos"
                                                 autocomplete="name"
                                                 >
                                         </div>
@@ -311,26 +311,93 @@
                             </div>
                             <div class="form-section">
                                 <h5 class="section-title"><i class="bi bi-receipt me-2"></i>Datos de facturación</h5>
-                                <form id="customer-info-form">
+                                <form id="billing-info-form">
                                     @csrf
                                     <div class="row g-3">
                                         <div class="col-md-6">
-                                            <label for="customer-name" class="form-label">Nombre completo</label>
-                                            <input type="text" class="form-control" id="customer-name" required>
+                                            <label for="billing-name" class="form-label">Nombre completo <span class="text-danger">*</span></label>
+                                            <input
+                                            type="text"
+                                            class="form-control"
+                                            id="billing-name"
+                                            name="billing_name"
+                                            placeholder="Ej: Empresa XYZ S.A. / María José Pérez González"
+                                            required
+                                            minlength="5"
+                                            pattern="^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9]+(?:\s+[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9]+)+$"
+                                            title="Ingresa el nombre para facturación (mínimo 2 palabras)."
+                                            autocomplete="name"
+                                            >
                                         </div>
+
                                         <div class="col-md-6">
-                                            <label for="customer-email" class="form-label">Correo electrónico</label>
-                                            <input type="email" class="form-control" id="customer-email" required>
+                                            <label for="billing-doc-type" class="form-label">Tipo de documento <span class="text-danger">*</span></label>
+                                            <select class="form-select" id="billing-doc-type" name="billing_doc_type" required>
+                                            <option value="cedula" selected>Cédula (Ecuador)</option>
+                                            <option value="ruc">RUC (Ecuador)</option>
+                                            <option value="pasaporte">Pasaporte (Extranjero)</option>
+                                            </select>
+                                            <small class="text-muted">Si eres ecuatoriano/a usa Cédula o RUC. Si eres extranjero/a usa Pasaporte.</small>
                                         </div>
-                                        <div class="col-md-12">
-                                            <label for="customer-phone" class="form-label">Teléfono</label>
-                                            <input type="tel" class="form-control" id="customer-phone" required>
+
+                                        <div class="col-md-6">
+                                            <label for="billing-doc-number" class="form-label">Número de documento <span class="text-danger">*</span></label>
+                                            <input
+                                            type="text"
+                                            class="form-control"
+                                            id="billing-doc-number"
+                                            name="billing_doc_number"
+                                            required
+                                            >
                                         </div>
+
+                                        <div class="col-md-6">
+                                            <label for="billing-email" class="form-label">Correo electrónico <span class="text-danger">*</span></label>
+                                            <input
+                                            type="email"
+                                            class="form-control"
+                                            id="billing-email"
+                                            name="billing_email"
+                                            placeholder="Ej: facturacion@gmail.com"
+                                            required
+                                            minlength="6"
+                                            title="Ingresa un correo válido."
+                                            autocomplete="email"
+                                            >
+                                            <small class="text-muted">Se aceptan dominios comunes (Gmail, Outlook, Hotmail, Yahoo, etc.).</small>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <label for="billing-phone" class="form-label">Teléfono <span class="text-danger">*</span></label>
+                                            <input
+                                            type="text"
+                                            class="form-control"
+                                            id="billing-phone"
+                                            name="billing_phone"
+                                            inputmode="numeric"
+                                            placeholder="Celular (10 dígitos) o convencional (7 dígitos)"
+                                            required
+                                            pattern="^\d{7}(\d{3})?$"
+                                            title="Ingresa 7 dígitos (convencional) o 10 dígitos (celular). Sin espacios ni guiones."
+                                            autocomplete="tel"
+                                            >
+                                        </div>
+
                                         <div class="col-12">
-                                            <label for="customer-notes" class="form-label">Comentario (Opcional)</label>
-                                            <textarea class="form-control" id="customer-notes" rows="3"></textarea>
+                                            <label for="billing-address" class="form-label">Dirección <span class="text-danger">*</span></label>
+                                            <input
+                                            type="text"
+                                            class="form-control"
+                                            id="billing-address"
+                                            name="billing_address"
+                                            placeholder="Ej: Cdla. Los Ceibos, Mz 10, Villa 5"
+                                            required
+                                            minlength="6"
+                                            title="Ingresa una dirección válida (debe contener letras; puede incluir números)."
+                                            autocomplete="street-address"
+                                            >
                                         </div>
-                                    </div>
+                                        </div>
                                 </form>
                             </div>
                           
@@ -375,8 +442,13 @@
                                     </div>
                                 </div>
                             </div>
-                            
-
+                            <div class="form-check mt-3">
+                                <input class="form-check-input" type="checkbox" id="consent_data" name="consent_data" required>
+                                <label class="form-check-label" for="consent_data">
+                                    Autorizo el uso de mis datos personales para gestionar mi cita y recibir información relacionada.
+                                    <span class="text-danger">*</span>
+                                </label>
+                            </div>
                         </div>
                         
                         <!-- <div class="card-body">
@@ -924,10 +996,11 @@
                             alert("Por favor selecciona un turno");
                             return false;
                         }
-                        // Validar mínimo 3 horas de anticipación
-                        let startTimeStr = bookingState.selectedTime.start || bookingState.selectedTime;
-                        if (isSlotLessThan3HoursAhead(bookingState.selectedDate, startTimeStr)) {
-                            alert("Solo puedes agendar citas con al menos 3 horas de anticipación.");
+                        return true;
+                    case 5:
+                        const consent = document.getElementById("consent_data");
+                        if (!consent || !consent.checked) {
+                            alert("Debes autorizar el uso de tus datos personales para continuar.");
                             return false;
                         }
                         return true;
@@ -1326,25 +1399,6 @@
                 $("#next-month").prop("disabled", !nextEnabled);
             }
 
-            // Devuelve true si el slot está a menos de 3 horas desde "ahora"
-            function isSlotLessThan3HoursAhead(dateStr, timeStr) {
-                if (!dateStr || !timeStr) return true;
-
-                // timeStr puede venir como "08:25" o "08:25:00"
-                let cleanTime = timeStr.trim();
-                if (/^\d{2}:\d{2}$/.test(cleanTime)) {
-                    cleanTime += ":00";
-                }
-
-                const slotDateTime = new Date(`${dateStr}T${cleanTime}`);
-                const now = new Date();
-
-                const diffMs = slotDateTime - now;
-                const diffHours = diffMs / (1000 * 60 * 60);
-
-                return diffHours < 3; // true = menos de 3 horas
-            }
-
             function updateTimeSlots(selectedDate) {
                 if (!selectedDate) {
                     $("#time-slots-container").html(`
@@ -1641,7 +1695,7 @@
           const v = nameEl.value.trim().replace(/\s+/g, " ");
           const ok = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+(?:\s+[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+)+$/.test(v);
           nameEl.setCustomValidity(
-            ok ? "" : "Ingresa al menos un nombre y un apellido (solo letras)."
+            ok ? "" : "Ingresa tus dos nombres y dos apellidos."
           );
         });
 
@@ -1701,7 +1755,53 @@
             docType.addEventListener("change", applyDocRules);
             applyDocRules();
         })();
-        </script>
+    </script>
+
+    <script>
+        (function () {
+            const docType = document.getElementById("billing-doc-type");
+            const docNum  = document.getElementById("billing-doc-number");
+            if (!docType || !docNum) return;
+
+            function applyBillingDocRules() {
+            const type = docType.value;
+
+            docNum.value = "";
+            docNum.setCustomValidity("");
+
+            if (type === "cedula") {
+                docNum.placeholder = "10 dígitos (Ej: 0912345678)";
+                docNum.inputMode = "numeric";
+                docNum.maxLength = 10;
+                docNum.minLength = 10;
+                docNum.pattern = "^\\d{10}$";
+                docNum.title = "La cédula debe tener exactamente 10 dígitos (solo números).";
+            } else if (type === "ruc") {
+                docNum.placeholder = "13 dígitos (Ej: 1790012345001)";
+                docNum.inputMode = "numeric";
+                docNum.maxLength = 13;
+                docNum.minLength = 13;
+                docNum.pattern = "^\\d{13}$";
+                docNum.title = "El RUC debe tener exactamente 13 dígitos (solo números).";
+            } else {
+                docNum.placeholder = "Ej: AB1234567 (sin espacios)";
+                docNum.inputMode = "text";
+                docNum.maxLength = 15;
+                docNum.minLength = 6;
+                docNum.pattern = "^[A-Za-z0-9]{6,15}$";
+                docNum.title = "El pasaporte debe tener entre 6 y 15 caracteres (letras y/o números), sin espacios.";
+            }
+            }
+
+            // quitar espacios siempre (por si pegan con espacio)
+            docNum.addEventListener("input", () => {
+            docNum.value = docNum.value.replace(/\s+/g, "");
+            });
+
+            docType.addEventListener("change", applyBillingDocRules);
+            applyBillingDocRules();
+        })();
+    </script>
 
     @if ($setting->footer)
         {!! $setting->footer !!}
