@@ -934,21 +934,28 @@
                 updateTimeSlots(date);
             });
 
-            // Time slot selection
-            $(document).on("click", ".time-slot:not(.disabled)", function() {
-                // Retry button (Intentar de nuevo)
-                $(document).on('click', '.btn-retry-timeslots', function() {
+            // Retry button – se declara UNA SOLA VEZ
+            $(document).on('click', '.btn-retry-timeslots', function() {
                     const date = $(this).data('date');
                     updateTimeSlots(date);
-                });
-
-                $(".time-slot").removeClass("selected");
-                $(this).addClass("selected");
-
-                const time = $(this).data("time");
-                bookingState.selectedTime = time;
             });
 
+            // Time slot selection
+            $(document).on("click", ".time-slot:not(.disabled)", function() {
+                $(".time-slot").removeClass("selected active");
+                $(this).addClass("selected active");
+
+                bookingState.selectedTime = {
+                    start: $(this).data("start"),
+                    end: $(this).data("end"),
+                    // lo que se ve en pantalla (ya sea convertido a la TZ del usuario o Ecuador)
+                    display: $(this).text().trim(),
+                    // opcional: por si quieres guardar también el texto “base Ecuador”
+                    display_ec: $(this).data("display-ec") || null
+                };
+
+                updateSummary && updateSummary();
+            });
             // Calendar navigation
             $("#prev-month").click(function() {
                 navigateMonth(-1);
