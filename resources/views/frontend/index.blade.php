@@ -2118,9 +2118,9 @@
                 const pDocNum  = document.getElementById("doc_number");
 
                 // Facturación
-                const bName  = document.getElementById("billing_name");   // <-- AJUSTA si aplica
-                const bEmail = document.getElementById("billing_email");  // <-- AJUSTA si aplica
-                const bAddr  = document.getElementById("billing_address");// <-- AJUSTA si aplica
+                const bName  = document.getElementById("billing-name");   // <-- AJUSTA si aplica
+                const bEmail = document.getElementById("billing-email");  // <-- AJUSTA si aplica
+                const bAddr  = document.getElementById("billing-address");// <-- AJUSTA si aplica
                 const bPhoneUI = document.getElementById("billing_phone_ui");
                 const bPhoneHidden = document.getElementById("billing-phone"); // hidden E164
 
@@ -2179,11 +2179,18 @@
                 }
 
                 function setBillingReadonly(flag) {
-                    // Si quieres que al copiar se bloquee edición:
-                    [bName, bEmail, bAddr, bPhoneUI].forEach(el => {
-                    if (!el) return;
-                    el.readOnly = !!flag;
+                    // Bloquea SOLO lo que realmente quieres bloquear
+                    [bName, bEmail, bAddr].forEach(el => {
+                        if (!el) return;
+                        el.readOnly = !!flag;
                     });
+
+                    // ✅ celular SIEMPRE editable
+                    if (bPhoneUI) bPhoneUI.readOnly = false;
+
+                    // ✅ documento SIEMPRE editable (select usa disabled, no readOnly)
+                    if (bDocType) bDocType.disabled = false;
+                    if (bDocNum)  bDocNum.readOnly = false;
                 }
 
                 // Cuando marcan/desmarcan
@@ -2208,6 +2215,19 @@
                     el.addEventListener("change", () => {
                     if (sameChk.checked && !sameChk.disabled) copyPatientToBilling();
                     });
+                });
+
+                // ✅ (PRO) Si cambia documento en FACTURACIÓN, desmarcar checkbox y desbloquear
+                function uncheckSameIfNeeded() {
+                    if (!sameChk.checked) return;
+                    sameChk.checked = false;
+                    setBillingReadonly(false);
+                }
+
+                [bDocType, bDocNum].forEach(el => {
+                    if (!el) return;
+                    el.addEventListener("change", uncheckSameIfNeeded);
+                    el.addEventListener("input", uncheckSameIfNeeded);
                 });
 
                 if (dobInput) {
