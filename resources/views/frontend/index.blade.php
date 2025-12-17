@@ -878,12 +878,46 @@
             // MODALIDAD DE LA CITA (NO AFECTA HORARIOS)
             // ================================
             $(document).on('change', 'input[name="appointment_mode"]', function () {
+
+                // 1️⃣ Guardar modalidad seleccionada
                 bookingState.appointmentMode = this.value;
 
-                console.log('Modalidad seleccionada:', bookingState.appointmentMode);
-            });
-              
+                // 2️⃣ Actualizar mensaje de zona horaria
+                const isVirtual = bookingState.appointmentMode === 'virtual';
+                const userTzLabel = getUserTimeZoneLabel();
 
+                const tzMessage = isVirtual
+                    ? `Todos los turnos están en su hora local (${userTzLabel})`
+                    : `Todos los turnos están en hora local de Ecuador (GMT-5)`;
+
+                $("#tz-info-message").html(`
+                    <i class="bi bi-clock me-1"></i> ${tzMessage}
+                `);
+
+                // 3️⃣ Si aún no hay fecha seleccionada, detener aquí
+                if (!bookingState.selectedDate) return;
+
+                // 4️⃣ Reescribir los textos de los turnos visibles
+                const userTz = getUserTimeZone();
+
+                $(".time-slot").each(function () {
+                    const $btn = $(this);
+
+                    const start = $btn.data("start");       // "09:15"
+                    const end   = $btn.data("end");         // "09:35"
+                    const ecDisplay = $btn.data("display-ec"); // "9:15 AM - 9:35 AM"
+
+                    const newText = isVirtual
+                        ? formatRangeInTimeZone(bookingState.selectedDate, start, end, userTz)
+                        : ecDisplay;
+
+                    $btn.html(`<i class="bi bi-clock me-1"></i> ${newText}`);
+                });
+
+                // 5️⃣ Quitar selección previa (seguridad UX)
+                $(".time-slot").removeClass("selected active");
+                bookingState.selectedTime = null;
+            });                  
 
             // Date selection
             $(document).on("click", ".calendar-day:not(.disabled)", function() {
@@ -1442,6 +1476,47 @@
                 $("#next-month").prop("disabled", !nextEnabled);
             }
 
+            function getUserTimeZone() {
+                // Ej: "America/Guayaquil", "America/Chicago"
+                return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+                }
+
+                function getUserTimeZoneLabel() {
+                // Intenta sacar abreviación: CST, EST, etc. (si el navegador la provee)
+                try {
+                    const tz = getUserTimeZone();
+                    const parts = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'short' })
+                    .formatToParts(new Date());
+                    const tzPart = parts.find(p => p.type === "timeZoneName");
+                    return tzPart?.value || tz;
+                } catch {
+                    return getUserTimeZone();
+                }
+                }
+
+            function normalizeTime(t) {
+                // "09:15" -> "09:15:00"
+                return (t && t.length === 5) ? `${t}:00` : t;
+                }
+
+                function formatRangeInTimeZone(dateStr, startHHMM, endHHMM, timeZone) {
+                const start = normalizeTime(startHHMM);
+                const end   = normalizeTime(endHHMM);
+
+                // Ecuador GMT-5 como base
+                const startISO = `${dateStr}T${start}-05:00`;
+                const endISO   = `${dateStr}T${end}-05:00`;
+
+                const fmt = new Intl.DateTimeFormat('en-US', {
+                    timeZone,
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                });
+
+                return `${fmt.format(new Date(startISO))} - ${fmt.format(new Date(endISO))}`;
+            }
+
             function updateTimeSlots(selectedDate) {
                 if (!selectedDate) {
                     $("#time-slots-container").html(`
@@ -1488,7 +1563,14 @@
                             return;
                         }
 
-                        // Add slot duration info
+                        // Add slot duration info (mensaje zona horaria dinámico)
+                        const isVirtual = bookingState.appointmentMode === 'virtual';
+                        const userTzLabel = getUserTimeZoneLabel();
+
+                        const tzMessage = isVirtual
+                        ? `Todos los turnos están en su hora local (${userTzLabel})`
+                        : `Todos los turnos están en hora local de Ecuador (GMT-5)`;
+
                         $("#time-slots-container").append(`
                             <div class="slot-info mb-3 w-100">
                                 <div>
@@ -1499,9 +1581,9 @@
                                 </div>
 
                                 <div>
-                                    <small class="text-muted d-block mt-1">
+                                    <small class="text-muted d-block mt-1" id="tz-info-message">
                                         <i class="bi bi-clock me-1"></i>
-                                        Todos los turnos están en hora local de Ecuador (GMT-5)
+                                        ${tzMessage}
                                     </small>
                                 </div>
                             </div>
@@ -1510,45 +1592,44 @@
                         // Add each time slot
                         const $slotsContainer = $("<div class='slots-grid'></div>");
                         response.available_slots.forEach(slot => {
-                        // ¿Es hoy esta fecha?
-                        const todayStr = formatLocalDate(new Date());
-                        const isToday = (selectedDate === todayStr);
 
-                        // ¿Debe deshabilitarse por estar a menos de 3 horas?
-                        let disableByTime = false;
-                        if (isToday) {
-                            disableByTime = isSlotLessThan3HoursAhead(selectedDate, slot.start);
-                        }
+                            // 🔹 FILTRAR SEGÚN MODALIDAD
+                            if (
+                                bookingState.appointmentMode === 'presencial' &&
+                                slot.mode && slot.mode !== 'presencial'
+                            ) {
+                                return;
+                            }
 
-                        const extraClass = disableByTime ? ' disabled' : '';
+                            if (
+                                bookingState.appointmentMode === 'virtual' &&
+                                slot.mode && slot.mode !== 'virtual'
+                            ) {
+                                return;
+                            }
 
-                        const slotElement = $(`
-                            <div class="time-slot btn btn-outline-primary mb-2${extraClass}"
-                                data-start="${slot.start}"
-                                data-end="${slot.end}"
-                                title="Seleccionar ${slot.display}"
-                                data-time="${slot.display}">
-                                <i class="bi bi-clock me-1"></i>
-                                ${slot.display}
-                            </div>
-                        `);
+                            const todayStr = formatLocalDate(new Date());
+                            const isToday = (selectedDate === todayStr);
 
-                        // Click local: por si quieres mantenerlo
-                        slotElement.on('click', function() {
-                            if ($(this).hasClass('disabled')) return; // seguridad extra
+                            let disableByTime = false;
+                            if (isToday) {
+                                disableByTime = isSlotLessThan3HoursAhead(selectedDate, slot.start);
+                            }
 
-                            $(".time-slot").removeClass("selected active");
-                            $(this).addClass("selected active");
-                            bookingState.selectedTime = {
-                                start: $(this).data('start'),
-                                end: $(this).data('end'),
-                                display: $(this).text().trim()
-                            };
-                            updateBookingSummary && updateBookingSummary();
+                            const extraClass = disableByTime ? ' disabled' : '';
+
+                            const slotElement = $(`
+                                <div class="time-slot btn btn-outline-primary mb-2${extraClass}"
+                                    data-start="${slot.start}"
+                                    data-end="${slot.end}"
+                                    data-display-ec="${slot.display}">
+                                    <i class="bi bi-clock me-1"></i>
+                                    ${slot.display}
+                                </div>
+                            `);
+
+                            $slotsContainer.append(slotElement);
                         });
-
-                        $slotsContainer.append(slotElement);
-                    });
                         $("#time-slots-container").append($slotsContainer);
                     },
                     error: function(xhr) {
