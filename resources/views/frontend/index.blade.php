@@ -2056,6 +2056,7 @@
     <script>
         (function () {
             function setupIntlPhone(inputId, hiddenId) {
+                
                 const input = document.getElementById(inputId);
                 const hidden = document.getElementById(hiddenId);
                 if (!input || !hidden || typeof window.intlTelInput !== "function") return;
@@ -2066,6 +2067,44 @@
                     preferredCountries: ["ec", "us", "co", "pe", "es"],
                     utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/utils.js"
                 });
+
+                function validateEcuadorLength() {
+                    const country = iti.getSelectedCountryData();
+                    const nationalNumber = iti.getNumber(
+                        intlTelInputUtils.numberFormat.NATIONAL
+                    ).replace(/\D/g, "");
+
+                    if (country.iso2 === "ec") {
+                        if (nationalNumber.length !== 9) {
+                            input.setCustomValidity(
+                                "Para Ecuador, el número debe tener exactamente 9 dígitos (sin el 0 inicial)."
+                            );
+                            return false;
+                        }
+                    }
+
+                    input.setCustomValidity("");
+                    return true;
+                }
+
+                function enforceEcuadorMax9() {
+                    const country = iti.getSelectedCountryData();
+
+                    // Solo aplica a Ecuador
+                    if (!country || country.iso2 !== "ec") return;
+
+                    // Lo que el usuario escribió en el input (sin símbolos)
+                    let digits = (input.value || "").replace(/\D/g, "");
+
+                    // Si escriben 0 inicial, lo quitamos
+                    if (digits.startsWith("0")) digits = digits.slice(1);
+
+                    // Limitar a 9 dígitos
+                    if (digits.length > 9) digits = digits.slice(0, 9);
+
+                    // Re-escribir el input SOLO si cambió (evita parpadeos)
+                    if (input.value !== digits) input.value = digits;
+                }
 
                 window._itiByInputId = window._itiByInputId || {};
                 window._itiByInputId[inputId] = iti;
@@ -2080,22 +2119,48 @@
                     hidden.dispatchEvent(new Event("change", { bubbles: true }));
                 }
 
-                input.addEventListener("blur", sync);
-                input.addEventListener("change", sync);
-                input.addEventListener("keyup", sync);
-                input.addEventListener("countrychange", sync);
+                input.addEventListener("blur", () => {
+                    enforceEcuadorMax9();
+                    sync();
+                    validateEcuadorLength();
+                });
+
+                input.addEventListener("keyup", () => {
+                    enforceEcuadorMax9();
+                    sync();
+                    validateEcuadorLength();
+                });
+
+                input.addEventListener("change", () => {
+                    enforceEcuadorMax9();
+                    sync();
+                    validateEcuadorLength();
+                });
+
+                input.addEventListener("countrychange", () => {
+                    enforceEcuadorMax9();
+                    sync();
+                    validateEcuadorLength();
+                });
 
                 // Validación: si no es válido, bloquea (si quieres)
                 input.addEventListener("invalid", () => {
                     sync();
+
+                    if (!validateEcuadorLength()) return;
+
                     if (input.value.trim() && !iti.isValidNumber()) {
-                    input.setCustomValidity("Ingrese un número de celular válido.");
+                        input.setCustomValidity("Ingrese un número de celular válido.");
                     } else {
-                    input.setCustomValidity("");
+                        input.setCustomValidity("");
                     }
                 });
 
-                input.addEventListener("input", () => input.setCustomValidity(""));
+                input.addEventListener("input", () => {
+                    enforceEcuadorMax9();
+                    sync();
+                    validateEcuadorLength();
+                });
             }
 
             setupIntlPhone("patient_phone_ui", "customer-phone");
