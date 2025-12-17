@@ -322,6 +322,18 @@
                                 <form id="billing-info-form">
                                     @csrf
                                     <div class="row g-3">
+                                        <!-- ✅ Copiar datos del paciente a facturación -->
+                                        <div class="col-12 mb-2" id="billing-same-wrapper">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="billing_same_as_patient">
+                                                <label class="form-check-label" for="billing_same_as_patient">
+                                                Usar los mismos datos del paciente para la facturación
+                                                </label>
+                                            </div>
+                                            <div class="form-text" id="billing-same-help" style="display:none;">
+                                                Para menores de edad, la facturación debe registrarse a nombre del representante.
+                                            </div>
+                                        </div>
                                         <div class="col-md-6">
                                             <label for="billing-name" class="form-label">Nombre completo <span class="text-danger">*</span></label>
                                             <input
@@ -2044,43 +2056,168 @@
     <script>
         (function () {
             function setupIntlPhone(inputId, hiddenId) {
-            const input = document.getElementById(inputId);
-            const hidden = document.getElementById(hiddenId);
-            if (!input || !hidden || typeof window.intlTelInput !== "function") return;
+                const input = document.getElementById(inputId);
+                const hidden = document.getElementById(hiddenId);
+                if (!input || !hidden || typeof window.intlTelInput !== "function") return;
 
-            const iti = window.intlTelInput(input, {
-                initialCountry: "ec",
-                separateDialCode: true,
-                preferredCountries: ["ec", "us", "co", "pe", "es"],
-                utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/utils.js"
-            });
+                const iti = window.intlTelInput(input, {
+                    initialCountry: "ec",
+                    separateDialCode: true,
+                    preferredCountries: ["ec", "us", "co", "pe", "es"],
+                    utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/utils.js"
+                });
 
-            function sync() {
-                // E.164: +593991234567
-                const number = iti.getNumber();
-                hidden.value = number || "";
-            }
+                window._itiByInputId = window._itiByInputId || {};
+                window._itiByInputId[inputId] = iti;
 
-            input.addEventListener("blur", sync);
-            input.addEventListener("change", sync);
-            input.addEventListener("keyup", sync);
-            input.addEventListener("countrychange", sync);
-
-            // Validación: si no es válido, bloquea (si quieres)
-            input.addEventListener("invalid", () => {
-                sync();
-                if (input.value.trim() && !iti.isValidNumber()) {
-                input.setCustomValidity("Ingrese un número de celular válido.");
-                } else {
-                input.setCustomValidity("");
+                function sync() {
+                    // E.164: +593991234567
+                    const number = iti.getNumber();
+                    hidden.value = number || "";
                 }
-            });
 
-            input.addEventListener("input", () => input.setCustomValidity(""));
+                input.addEventListener("blur", sync);
+                input.addEventListener("change", sync);
+                input.addEventListener("keyup", sync);
+                input.addEventListener("countrychange", sync);
+
+                // Validación: si no es válido, bloquea (si quieres)
+                input.addEventListener("invalid", () => {
+                    sync();
+                    if (input.value.trim() && !iti.isValidNumber()) {
+                    input.setCustomValidity("Ingrese un número de celular válido.");
+                    } else {
+                    input.setCustomValidity("");
+                    }
+                });
+
+                input.addEventListener("input", () => input.setCustomValidity(""));
             }
 
             setupIntlPhone("patient_phone_ui", "customer-phone");
             setupIntlPhone("billing_phone_ui", "billing-phone");
+
+            (function () {
+                const sameChk   = document.getElementById("billing_same_as_patient");
+                const wrapper   = document.getElementById("billing-same-wrapper");
+                const helpMinor = document.getElementById("billing-same-help");
+
+                if (!sameChk || !wrapper) return;
+
+                // 👉 Cambia este ID si tu fecha de nacimiento tiene otro id
+                const dobInput = document.getElementById("patient_dob"); // <-- AJUSTA si aplica
+
+                // Paciente
+                const pName  = document.getElementById("customer-name");   // <-- AJUSTA si aplica
+                const pEmail = document.getElementById("customer-email");  // <-- AJUSTA si aplica
+                const pAddr  = document.getElementById("patient_address");
+                const pPhoneHidden = document.getElementById("customer-phone"); // hidden E164
+
+                // (Opcional) documento del paciente
+                const pDocType = document.getElementById("doc_type");
+                const pDocNum  = document.getElementById("doc_number");
+
+                // Facturación
+                const bName  = document.getElementById("billing_name");   // <-- AJUSTA si aplica
+                const bEmail = document.getElementById("billing_email");  // <-- AJUSTA si aplica
+                const bAddr  = document.getElementById("billing_address");// <-- AJUSTA si aplica
+                const bPhoneUI = document.getElementById("billing_phone_ui");
+                const bPhoneHidden = document.getElementById("billing-phone"); // hidden E164
+
+                // (Opcional) documento de facturación
+                const bDocType = document.getElementById("billing-doc-type");
+                const bDocNum  = document.getElementById("billing-doc-number");
+
+                // Si no existen algunos IDs, no rompemos nada:
+                function safeVal(el) { return el ? (el.value || "").trim() : ""; }
+                function setVal(el, v) { if (el) el.value = v ?? ""; }
+
+                function isMinorFromDob(dobStr) {
+                    // dobStr esperado: YYYY-MM-DD
+                    if (!dobStr) return false; // si no hay DOB, no bloquees
+                    const dob = new Date(dobStr + "T00:00:00");
+                    if (isNaN(dob.getTime())) return false;
+
+                    const today = new Date();
+                    let age = today.getFullYear() - dob.getFullYear();
+                    const m = today.getMonth() - dob.getMonth();
+                    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+                    return age < 18;
+                }
+
+                function refreshMinorState() {
+                    const minor = isMinorFromDob(dobInput ? dobInput.value : "");
+                    if (minor) {
+                    sameChk.checked = false;
+                    sameChk.disabled = true;
+                    if (helpMinor) helpMinor.style.display = "block";
+                    } else {
+                    sameChk.disabled = false;
+                    if (helpMinor) helpMinor.style.display = "none";
+                    }
+                }
+
+                function copyPatientToBilling() {
+                    setVal(bName,  safeVal(pName));
+                    setVal(bEmail, safeVal(pEmail));
+                    setVal(bAddr,  safeVal(pAddr));
+
+                    // Copiar documento del paciente → facturación (opcional pero recomendado)
+                    if (pDocType && bDocType) bDocType.value = pDocType.value;
+                    if (pDocNum && bDocNum) setVal(bDocNum, safeVal(pDocNum));
+
+                    // Teléfono (hidden E164)
+                    const e164 = safeVal(pPhoneHidden);
+                    if (bPhoneHidden) bPhoneHidden.value = e164;
+
+                    const itiBilling = window._itiByInputId ? window._itiByInputId["billing_phone_ui"] : null;
+                    if (itiBilling && e164) {
+                        itiBilling.setNumber(e164);
+                    } else {
+                        setVal(bPhoneUI, e164);
+                    }
+                }
+
+                function setBillingReadonly(flag) {
+                    // Si quieres que al copiar se bloquee edición:
+                    [bName, bEmail, bAddr, bPhoneUI].forEach(el => {
+                    if (!el) return;
+                    el.readOnly = !!flag;
+                    });
+                }
+
+                // Cuando marcan/desmarcan
+                sameChk.addEventListener("change", () => {
+                    refreshMinorState();
+                    if (sameChk.disabled) return;
+
+                    if (sameChk.checked) {
+                    copyPatientToBilling();
+                    setBillingReadonly(true);
+                    } else {
+                    setBillingReadonly(false);
+                    }
+                });
+
+                // Si el usuario edita datos del paciente y el checkbox está marcado, sincroniza en vivo
+                [pName, pEmail, pAddr, pPhoneHidden].forEach(el => {
+                    if (!el) return;
+                    el.addEventListener("input", () => {
+                    if (sameChk.checked && !sameChk.disabled) copyPatientToBilling();
+                    });
+                    el.addEventListener("change", () => {
+                    if (sameChk.checked && !sameChk.disabled) copyPatientToBilling();
+                    });
+                });
+
+                if (dobInput) {
+                    dobInput.addEventListener("change", refreshMinorState);
+                    dobInput.addEventListener("input", refreshMinorState);
+                }
+
+                // Estado inicial
+                refreshMinorState();
+            })();
         })();
     </script>
 
