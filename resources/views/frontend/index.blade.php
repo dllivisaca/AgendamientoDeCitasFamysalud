@@ -58,7 +58,7 @@
         <div class="booking-container">
             <div class="booking-header">
                 <h2><i class="bi bi-calendar-check"></i> Agendamiento de citas</h2>
-                <p class="mb-0">Agende una cita presencial en pocos pasos</p>
+                <p class="mb-0">Complete el proceso en pocos pasos</p>
             </div>
 
             <div class="booking-steps position-relative">
@@ -76,7 +76,7 @@
                 </div>
                 <div class="step" data-step="4">
                     <div class="step-number">4</div>
-                    <div class="step-title">Fecha y hora</div>
+                    <div class="step-title">Modalidad, fecha y hora</div>
                 </div>
                 <div class="step" data-step="5">
                     <div class="step-number">5</div>
@@ -120,13 +120,13 @@
 
                 <!-- Step 4: Date and Time Selection -->
                 <div class="booking-step" id="step4">
-                    <h3 class="mb-4">Seleccione la fecha y hora</h3>
+                    <h3 class="mb-4">Seleccione la modalidad, fecha y hora</h3>
                     <div class="selected-employee-name mb-3 fw-bold"></div>
 
                     <!-- MODALIDAD DE LA CITA -->
                     <div class="mb-4">
                         <label class="form-label fw-bold d-block mb-2">
-                            Modalidad de la cita
+                            Modalidad de atención:
                         </label>
 
                         <div class="btn-group w-100" role="group" aria-label="Modalidad">
@@ -189,7 +189,7 @@
                                     <i class="bi bi-info-circle me-2"></i>
                                     <strong>¿Cita urgente u horario especial?</strong><br>
                                     Los turnos online se habilitan con <b>mínimo 24h</b> de anticipación. 
-                                    Para atención hoy u otro horario, contáctanos al <a href="tel:+593939034743">0939034743</a>.
+                                    Para atención hoy u otro horario, contáctenos al <a href="tel:+593939034743">0939034743</a>.
                                 </div>
                                 <div class="card-body">
                                     <div id="time-slots-container">
@@ -523,7 +523,7 @@
             1: "Área de atención · FamySalud",
             2: "Servicio · FamySalud",
             3: "Profesional · FamySalud",
-            4: "Fecha y hora · FamySalud",
+            4: "Modalidad, fecha y hora · FamySalud",
             5: "Datos del paciente · FamySalud",
             6: "Pago · FamySalud"
         };
@@ -868,7 +868,7 @@
                     <div class="text-center w-100 py-4">
                         <div class="alert alert-info">
                             <i class="bi bi-calendar-event me-2"></i>
-                            Por favor selecciona una fecha para ver los turnos disponibles
+                            Por favor seleccione una fecha para ver los turnos disponibles
                         </div>
                     </div>
                 `);
