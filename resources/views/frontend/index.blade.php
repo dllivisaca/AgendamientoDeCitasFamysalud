@@ -1669,6 +1669,30 @@
             const $nextFloating = $("#next-step-floating");
             const nextBtn = document.getElementById("next-step");
 
+            function updateFloatingPosition() {
+                // 1) Intentar anclar al título del step activo
+                const step = bookingState.currentStep;
+                const titleEl = document.querySelector(`#step${step} h3`);
+
+                // 2) Si por alguna razón no existe, usa el stepper como respaldo
+                const fallbackEl = document.querySelector(".booking-steps") || document.querySelector(".booking-header");
+
+                const refEl = titleEl || fallbackEl;
+                if (!refEl) return;
+
+                const r = refEl.getBoundingClientRect();
+
+                // ✅ Queremos que quede cerca del título (un poco más abajo)
+                const extraOffset = 60; // <-- sube/baja aquí (prueba 80 si lo quieres aún más abajo)
+                const desiredTop = Math.round(r.top + extraOffset);
+
+                // Evitar que se salga de pantalla
+                const maxTop = window.innerHeight - 90;
+                const finalTop = Math.max(12, Math.min(desiredTop, maxTop));
+
+                $nextFloating.css("top", finalTop + "px");
+            }
+
             function isElementInViewport(el) {
             if (!el) return false;
             const r = el.getBoundingClientRect();
@@ -1688,38 +1712,44 @@
             }
 
             function updateFloatingNext() {
-            const footerVisible = isElementInViewport(nextBtn);
-            const canAdvance = canAdvanceCurrentStep();
+                const footerVisible = isElementInViewport(nextBtn);
+                const canAdvance = canAdvanceCurrentStep();
 
-            if (canAdvance && !footerVisible && !nextBtn.disabled) {
-                $nextFloating.removeClass("d-none");
-                $nextFloating.html($("#next-step").html());
-            } else {
-                $nextFloating.addClass("d-none");
-            }
+                if (canAdvance && !footerVisible && !nextBtn.disabled) {
+                    $nextFloating.removeClass("d-none");
+                    $nextFloating.html($("#next-step").html());
+
+                    // 👇 NUEVO: ajusta la posición según pantalla y stepper
+                    updateFloatingPosition();
+                } else {
+                    $nextFloating.addClass("d-none");
+                }
             }
 
             // Click del botón flotante = click real
             $nextFloating.on("click", function () {
-            $("#next-step").trigger("click");
+                $("#next-step").trigger("click");
             });
 
             // Eventos que actualizan visibilidad
-            $(window).on("scroll resize", updateFloatingNext);
+            $(window).on("scroll resize", function () {
+                updateFloatingNext();
+                updateFloatingPosition();
+            });
 
             $(document).on(
-            "click",
-            ".category-card, .service-card, .employee-card, .calendar-day:not(.disabled), .time-slot:not(.disabled)",
-            function () {
-                setTimeout(updateFloatingNext, 0);
-            }
+                "click",
+                ".category-card, .service-card, .employee-card, .calendar-day:not(.disabled), .time-slot:not(.disabled)",
+                function () {
+                    setTimeout(updateFloatingNext, 0);
+                }
             );
 
             // Hook seguro a goToStep
             const _goToStepOriginal = goToStep;
-            goToStep = function (step) {
-            _goToStepOriginal(step);
-            setTimeout(updateFloatingNext, 0);
+                goToStep = function (step) {
+                _goToStepOriginal(step);
+                setTimeout(updateFloatingNext, 0);
             };
 
             // Primera evaluación

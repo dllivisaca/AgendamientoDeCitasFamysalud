@@ -417,10 +417,9 @@ body {
 }
 
 /* Botón flotante "Siguiente" */
-#next-step-floating {
+#next-step-floating{
   position: fixed;
-  top: 110px;      /* debajo del header */
-  right: 18px;
+  right: 24px;
   z-index: 2000;
   border-radius: 999px;
   padding: 10px 16px;
