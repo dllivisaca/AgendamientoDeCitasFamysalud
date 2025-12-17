@@ -283,7 +283,7 @@
                                         </div>
                                         <div class="col-md-6">
                                             <label for="patient_phone_ui" class="form-label">Número de celular <span class="text-danger">*</span></label>
-                                            <input type="tel" class="form-control phone-input" id="patient_phone_ui" placeholder="Ej: 991234567" required title="Registre el número de celular sin el prefijo del país. Verifique que el país seleccionado sea el correcto.">
+                                            <input type="tel" class="form-control phone-input" id="patient_phone_ui" placeholder="Ej: 991234567" required title="Registre el número de celular sin el prefijo del país. Verifique que el país seleccionado sea el correcto." autocomplete="tel">
                                             <input type="hidden" id="customer-phone" name="customer_phone">
                                             <div class="form-text">
                                                 Para Ecuador, registre el número sin el 0 inicial.
@@ -344,8 +344,8 @@
                                             placeholder="Ej: María José Pérez González / Empresa XYZ S.A."
                                             required
                                             minlength="5"
-                                            pattern="^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9]+(?:\s+[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9]+)+$"
-                                            title="Ingrese el nombre para facturación"
+                                            pattern="^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9]{5,}(?:\s+[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9]+)*$"
+                                            title="Ingrese el nombre para facturación (persona o empresa)."
                                             autocomplete="name"
                                             >
                                         </div>
@@ -389,7 +389,7 @@
 
                                         <div class="col-md-6">
                                             <label for="billing_phone_ui" class="form-label">Número de celular <span class="text-danger">*</span></label>
-                                            <input type="tel" class="form-control phone-input" id="billing_phone_ui" placeholder="Ej: 991234567" required title="Registre el número de celular sin el prefijo del país. Verifique que el país seleccionado sea el correcto.">
+                                            <input type="tel" class="form-control phone-input" id="billing_phone_ui" placeholder="Ej: 991234567" required title="Registre el número de celular sin el prefijo del país. Verifique que el país seleccionado sea el correcto." autocomplete="tel">
                                             <input type="hidden" id="billing-phone" name="billing_phone">
                                             <div class="form-text">
                                                 Para Ecuador, registre el número sin el 0 inicial.
@@ -2064,22 +2064,40 @@
                 const iti = window.intlTelInput(input, {
                     initialCountry: "ec",
                     separateDialCode: true,
+                    // ✅ AGREGA ESTAS DOS
+                    formatOnDisplay: false,
+                    nationalMode: true,
+
                     preferredCountries: ["ec", "us", "co", "pe", "es"],
                     utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/utils.js"
                 });
 
                 function validateEcuadorLength() {
                     const country = iti.getSelectedCountryData();
-                    const nationalNumber = iti.getNumber(
-                        intlTelInputUtils.numberFormat.NATIONAL
-                    ).replace(/\D/g, "");
+
+                    // Saca solo dígitos del input visible (así no importa si el browser mete espacios)
+                    let digits = (input.value || "").replace(/\D/g, "");
 
                     if (country.iso2 === "ec") {
-                        if (nationalNumber.length !== 9) {
-                            input.setCustomValidity(
-                                "Para Ecuador, el número debe tener exactamente 9 dígitos (sin el 0 inicial)."
-                            );
-                            return false;
+                        // Si el usuario puso 0 inicial (099...), se lo quitamos
+                        if (digits.length >= 10 && digits.startsWith("0")) {
+                        digits = digits.slice(1);
+                        }
+
+                        if (digits.startsWith("593")) digits = digits.slice(3);
+
+                        // No permitir más de 9 dígitos
+                        if (digits.length > 9) {
+                        digits = digits.slice(0, 9);
+                        }
+
+                        // 🔥 Esto hace que visualmente se vea limpio (sin espacios)
+                        if (input.value !== digits) input.value = digits;
+
+                        // Validación exacta
+                        if (digits.length !== 9) {
+                        input.setCustomValidity("Para Ecuador, el número debe tener exactamente 9 dígitos (sin el 0 inicial).");
+                        return false;
                         }
                     }
 
@@ -2095,6 +2113,9 @@
 
                     // Lo que el usuario escribió en el input (sin símbolos)
                     let digits = (input.value || "").replace(/\D/g, "");
+
+                    // Si por alguna razón el input trae el código país pegado (593xxxxxxxxx), quítalo
+                    if (digits.startsWith("593")) digits = digits.slice(3);
 
                     // Si escriben 0 inicial, lo quitamos
                     if (digits.startsWith("0")) digits = digits.slice(1);
@@ -2281,15 +2302,24 @@
                     if (pDocType && bDocType) bDocType.value = pDocType.value;
                     if (pDocNum && bDocNum) setVal(bDocNum, safeVal(pDocNum));
 
-                    // Teléfono (hidden E164)
-                    const e164 = safeVal(pPhoneHidden);
-                    if (bPhoneHidden) bPhoneHidden.value = e164;
+                    // Teléfono: copiar SOLO los 9 dígitos (Ecuador) al input visible de facturación
+                    const pPhoneUI = document.getElementById("patient_phone_ui");
+                    let phoneDigits = (pPhoneUI ? pPhoneUI.value : "").replace(/\D/g, "");
 
-                    const itiBilling = window._itiByInputId ? window._itiByInputId["billing_phone_ui"] : null;
-                    if (itiBilling && e164) {
-                        itiBilling.setNumber(e164);
-                    } else {
-                        setVal(bPhoneUI, e164);
+                    // Limpieza extra por si entra 593 o 0
+                    if (phoneDigits.startsWith("593")) phoneDigits = phoneDigits.slice(3);
+                    if (phoneDigits.startsWith("0")) phoneDigits = phoneDigits.slice(1);
+
+                    // Limitar a 9 dígitos
+                    if (phoneDigits.length > 9) phoneDigits = phoneDigits.slice(0, 9);
+
+                    // Setear el input visible (sin 593, sin espacios)
+                    if (bPhoneUI) {
+                        setVal(bPhoneUI, phoneDigits);
+
+                        // 🔥 importante: disparar eventos para que setupIntlPhone haga sync() y llene billing-phone (E.164)
+                        bPhoneUI.dispatchEvent(new Event("input", { bubbles: true }));
+                        bPhoneUI.dispatchEvent(new Event("change", { bubbles: true }));
                     }
                 }
 
