@@ -2074,6 +2074,10 @@
                     // E.164: +593991234567
                     const number = iti.getNumber();
                     hidden.value = number || "";
+
+                    // ✅ avisar que el hidden cambió (para live sync)
+                    hidden.dispatchEvent(new Event("input", { bubbles: true }));
+                    hidden.dispatchEvent(new Event("change", { bubbles: true }));
                 }
 
                 input.addEventListener("blur", sync);
@@ -2207,14 +2211,17 @@
                 });
 
                 // Si el usuario edita datos del paciente y el checkbox está marcado, sincroniza en vivo
-                [pName, pEmail, pAddr, pPhoneHidden].forEach(el => {
-                    if (!el) return;
-                    el.addEventListener("input", () => {
+                // ✅ Live sync: TODO lo del paciente que debe replicarse mientras el checkbox esté marcado
+                [pName, pEmail, pAddr, pDocType, pDocNum, pPhoneHidden].forEach(el => {
+                if (!el) return;
+
+                el.addEventListener("input", () => {
                     if (sameChk.checked && !sameChk.disabled) copyPatientToBilling();
-                    });
-                    el.addEventListener("change", () => {
+                });
+
+                el.addEventListener("change", () => {
                     if (sameChk.checked && !sameChk.disabled) copyPatientToBilling();
-                    });
+                });
                 });
 
                 // ✅ (PRO) Si cambia documento en FACTURACIÓN, desmarcar checkbox y desbloquear
