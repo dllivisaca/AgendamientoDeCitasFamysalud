@@ -439,3 +439,21 @@ body {
     transform: translateY(0);
   }
 }
+
+/* Campos bloqueados visualmente */
+.readonly-field {
+  background-color: #f3f4f6 !important;
+  border-color: #e5e7eb !important;
+  color: #6b7280 !important;
+}
+
+/* Para que el placeholder también se vea apagado */
+.readonly-field::placeholder {
+  color: #9ca3af !important;
+}
+
+/* El wrapper del intl-tel-input (por si algún día lo bloqueas) */
+.readonly-field .iti__selected-flag,
+.readonly-field .iti__country-list {
+  opacity: 0.75;
+}

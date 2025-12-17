@@ -2197,6 +2197,52 @@
                 const bDocType = document.getElementById("billing-doc-type");
                 const bDocNum  = document.getElementById("billing-doc-number");
 
+                // === Helpers visual + readonly ===
+                function setReadonlyStyle(el, isReadonly) {
+                if (!el) return;
+                el.classList.toggle("readonly-field", isReadonly);
+                }
+
+                function setBillingReadonly(flag) {
+                    // Campos bloqueados visual y funcionalmente
+                    [bName, bEmail, bAddr].forEach(el => {
+                        if (!el) return;
+                        el.readOnly = flag;
+                        el.classList.toggle("readonly-field", flag);
+                    });
+
+                    // Documento editable
+                    if (bDocType) {
+                        bDocType.disabled = false;
+                        bDocType.classList.remove("readonly-field");
+                    }
+
+                    if (bDocNum) {
+                        bDocNum.readOnly = false;
+                        bDocNum.classList.remove("readonly-field");
+                    }
+
+                    // Celular siempre editable
+                    if (bPhoneUI) {
+                        bPhoneUI.readOnly = false;
+                        bPhoneUI.classList.remove("readonly-field");
+                    }
+                }
+
+                // Llamar esto cada vez que se marque/desmarque
+                sameChk.addEventListener("change", () => {
+                setBillingReadonly(sameChk.checked);
+
+                // si tu función actual se llama copyPatientToBilling, llámala aquí
+                // (o tu función que copia/sincroniza)
+                if (sameChk.checked) {
+                    copyPatientToBilling?.();
+                }
+                });
+
+                // Inicial: por si la casilla ya viene marcada por defecto
+                setBillingReadonly(sameChk.checked);
+
                 // Si no existen algunos IDs, no rompemos nada:
                 function safeVal(el) { return el ? (el.value || "").trim() : ""; }
                 function setVal(el, v) { if (el) el.value = v ?? ""; }
@@ -2245,21 +2291,6 @@
                     } else {
                         setVal(bPhoneUI, e164);
                     }
-                }
-
-                function setBillingReadonly(flag) {
-                    // Bloquea SOLO lo que realmente quieres bloquear
-                    [bName, bEmail, bAddr].forEach(el => {
-                        if (!el) return;
-                        el.readOnly = !!flag;
-                    });
-
-                    // ✅ celular SIEMPRE editable
-                    if (bPhoneUI) bPhoneUI.readOnly = false;
-
-                    // ✅ documento SIEMPRE editable (select usa disabled, no readOnly)
-                    if (bDocType) bDocType.disabled = false;
-                    if (bDocNum)  bDocNum.readOnly = false;
                 }
 
                 // Cuando marcan/desmarcan
