@@ -159,6 +159,13 @@
                                     <h5 class="mb-0">Turnos disponibles</h5>
                                     <div id="selected-date-display" class="text-muted small"></div>
                                 </div>
+                                <!-- ALERTA SIEMPRE VISIBLE EN STEP 4 -->
+                                <div class="alert alert-info m-3 mb-0" id="urgent-help-banner">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    <strong>¿Cita urgente u horario especial?</strong><br>
+                                    Los turnos online se habilitan con <b>mínimo 24h</b> de anticipación. 
+                                    Para atención hoy u otro horario, contáctanos al <a href="tel:+593939034743">0939034743</a>.
+                                </div>
                                 <div class="card-body">
                                     <div id="time-slots-container">
                                         <!-- Time slots will be loaded dynamically -->
@@ -930,6 +937,13 @@
 
                  if (stepTitles[step]) {
                     document.title = stepTitles[step];
+                }
+
+                // Mostrar alerta de cita urgente SOLO en el paso 4
+                if (step === 4) {
+                    $("#urgent-help-banner").show();
+                } else {
+                    $("#urgent-help-banner").hide();
                 }
             }
 
