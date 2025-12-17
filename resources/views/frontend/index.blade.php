@@ -123,6 +123,31 @@
                     <h3 class="mb-4">Seleccione la fecha y hora</h3>
                     <div class="selected-employee-name mb-3 fw-bold"></div>
 
+                    <!-- MODALIDAD DE LA CITA -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold d-block mb-2">
+                            Modalidad de la cita
+                        </label>
+
+                        <div class="btn-group w-100" role="group" aria-label="Modalidad">
+                            <input type="radio" class="btn-check" name="appointment_mode"
+                                id="mode_presencial" value="presencial" checked>
+                            <label class="btn btn-outline-primary" for="mode_presencial">
+                                <i class="bi bi-geo-alt me-1"></i> Presencial
+                            </label>
+
+                            <input type="radio" class="btn-check" name="appointment_mode"
+                                id="mode_virtual" value="virtual">
+                            <label class="btn btn-outline-primary" for="mode_virtual">
+                                <i class="bi bi-camera-video me-1"></i> Virtual
+                            </label>
+                        </div>
+
+                        <!-- <small class="text-muted d-block mt-2">
+                            La modalidad puede influir en la disponibilidad de horarios.
+                        </small> -->
+                    </div>
+
                     <div class="row">
                         <div class="col-lg-6">
                             <div class="card mb-4">
@@ -417,6 +442,12 @@
                                         <div class="col-md-8" id="summary-price"></div>
                                     </div>
                                 </div>
+                                <div class="summary-item">
+                                    <div class="row">
+                                        <div class="col-md-4 text-muted">Modalidad:</div>
+                                        <div class="col-md-8" id="summary-mode"></div>
+                                    </div>
+                                </div>
                             </div>
                             <div class="form-check mt-3">
                                 <input class="form-check-input" type="checkbox" id="consent_data" name="consent_data" required>
@@ -652,7 +683,8 @@
                 selectedService: null,
                 selectedEmployee: null,
                 selectedDate: null,
-                selectedTime: null
+                selectedTime: null,
+                appointmentMode: 'presencial'
             };
 
             // Initialize the booking system
@@ -842,7 +874,14 @@
                 `);
             });
                 
+            // ================================
+            // MODALIDAD DE LA CITA (NO AFECTA HORARIOS)
+            // ================================
+            $(document).on('change', 'input[name="appointment_mode"]', function () {
+                bookingState.appointmentMode = this.value;
 
+                console.log('Modalidad seleccionada:', bookingState.appointmentMode);
+            });
               
 
 
@@ -1563,6 +1602,9 @@
                     $("#summary-datetime").text(
                         `${formattedDate} at ${bookingState.selectedTime.display || bookingState.selectedTime}`);
                 }
+                $("#summary-mode").text(
+                    bookingState.appointmentMode === 'virtual' ? 'Virtual' : 'Presencial'
+                );
             }
 
 
@@ -1586,6 +1628,7 @@
                     booking_date: bookingState.selectedDate,
                     booking_time: bookingState.selectedTime.start || bookingState.selectedTime,
                     status: 'Pending payment',
+                    appointment_mode: bookingState.appointmentMode,
                     _token: csrfToken // Include CSRF token in payload
                 };
 
