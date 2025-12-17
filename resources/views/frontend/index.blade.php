@@ -1851,8 +1851,18 @@
             if (step === 2) return !!bookingState.selectedService;
             if (step === 3) return !!bookingState.selectedEmployee;
             if (step === 4) return !!bookingState.selectedDate && !!bookingState.selectedTime;
-            if (step === 5) return document.getElementById("consent_data")?.checked === true;
+            // if (step === 5) return document.getElementById("consent_data")?.checked === true;
+            if (step === 5) {
+                const consentOk = document.getElementById("consent_data")?.checked === true;
 
+                const customerForm = document.getElementById("customer-info-form");
+                const billingForm  = document.getElementById("billing-info-form"); // si existe en tu HTML
+
+                const customerOk = customerForm ? customerForm.checkValidity() : false;
+                const billingOk  = billingForm ? billingForm.checkValidity() : true; // si no existe, no bloquea
+
+                return consentOk && customerOk && billingOk;
+                }
             return false;
             }
 
