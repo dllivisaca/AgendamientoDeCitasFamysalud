@@ -457,3 +457,16 @@ body {
 .readonly-field .iti__country-list {
   opacity: 0.75;
 }
+
+@media (max-width: 576px) {
+
+  /* Paciente */
+  #patient_address::placeholder,
+
+  /* Facturación */
+  #billing-name::placeholder,
+  #billing-address::placeholder {
+    color: transparent;
+  }
+
+}
