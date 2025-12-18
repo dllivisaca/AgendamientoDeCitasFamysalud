@@ -1127,19 +1127,24 @@
                             }
                             return true;
                         case 5: {
-                            const consent = document.getElementById("consent_data");
-                            if (!consent || !consent.checked) {
-                                alert("Debes autorizar el uso de tus datos personales para continuar.");
-                                return false;
-                            }
-
                             const customerForm = document.getElementById("customer-info-form");
                             const billingForm  = document.getElementById("billing-info-form");
 
+                            // 1) Primero: validación de formularios (esto muestra el primer error real)
                             const okCustomer = customerForm ? customerForm.reportValidity() : false;
-                            const okBilling  = billingForm ? billingForm.reportValidity() : true;
+                            if (!okCustomer) return false;
 
-                            return okCustomer && okBilling;
+                            const okBilling = billingForm ? billingForm.reportValidity() : true;
+                            if (!okBilling) return false;
+
+                            // 2) Después: consentimiento
+                            const consent = document.getElementById("consent_data");
+                            if (!consent || !consent.checked) {
+                                alert("Debes autorizar el uso de los datos personales para continuar.");
+                                return false;
+                            }
+
+                            return true;
                         }
                         default:
                             return true;
