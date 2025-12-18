@@ -471,6 +471,24 @@
                             
                         </div>
                     </div>
+                    <!-- Step 6: Payment -->
+                    <div class="booking-step" id="step6">
+                        <h3 class="mb-4">Pago</h3>
+
+                        <div class="card">
+                            <div class="card-body">
+                                <p class="mb-3">
+                                    Revisa los datos y continúa con el pago para confirmar tu cita.
+                                </p>
+
+                                <!-- Aquí puedes poner tu UI real de pago (transferencia / tarjeta / etc.) -->
+
+                                <button class="btn btn-success w-100" id="pay-now" type="button">
+                                    Confirmar y agendar <i class="bi bi-check2-circle"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="booking-footer">
@@ -539,6 +557,21 @@
                 6: "Pago · FamySalud"
             };
             $(document).ready(function() {
+
+                // ================================
+                // STEP 6: CONFIRMAR Y AGENDAR
+                // ================================
+                $("#pay-now").on("click", function () {
+
+                    // Seguridad extra: validar de nuevo step 5
+                    if (!validateStep(5)) {
+                        alert("Por favor verifica los datos antes de continuar.");
+                        return;
+                    }
+
+                    // Aquí SÍ se agenda
+                    submitBooking();
+                });
 
                 const categories = @json($categories);
 
@@ -706,21 +739,22 @@
                 $("#next-step").click(function() {
                     const currentStep = bookingState.currentStep;
 
-                    // Validate current step before proceeding
-                    if (!validateStep(currentStep)) {
+                    // Validar antes de avanzar
+                    if (!validateStep(currentStep)) return;
+
+                    // 1 → 2 → 3 → 4 → 5 normal
+                    if (currentStep < 5) {
+                        goToStep(currentStep + 1);
                         return;
                     }
 
-                    if (currentStep < 5) {
-                        goToStep(currentStep + 1);
-                    } else {
-                        // Submit booking
-                        if ($("#customer-info-form")[0].checkValidity()) {
-                            submitBooking();
-                        } else {
-                            $("#customer-info-form")[0].reportValidity();
-                        }
+                    // ✅ NUEVO: 5 → 6 (NO agendar aquí)
+                    if (currentStep === 5) {
+                        goToStep(6);
+                        return;
                     }
+
+                    // (opcional) si quisieras usar next-step también en step6, lo controlas aquí.
                 });
 
                 $("#prev-step").click(function() {
