@@ -447,12 +447,12 @@
                                             <div class="col-md-8" id="summary-duration"></div>
                                         </div>
                                     </div>
-                                    <div class="summary-item">
+                                    <!-- <div class="summary-item">
                                         <div class="row">
                                             <div class="col-md-4 text-muted">Precio:</div>
                                             <div class="col-md-8" id="summary-price"></div>
                                         </div>
-                                    </div>
+                                    </div> -->
                                     <div class="summary-item">
                                         <div class="row">
                                             <div class="col-md-4 text-muted">Modalidad:</div>
@@ -1249,9 +1249,7 @@
                                 }
 
                                 // Update service name display
-                                $(".selected-service-name").html(
-                                    `Servicio seleccionado: ${service.title} (${bookingState.selectedService.price})`
-                                    );
+                                $(".selected-service-name").html(`Servicio seleccionado: ${service.title}`);
 
                                 // Clear employees container
                                 $("#employees-container").empty();
@@ -1724,11 +1722,9 @@
                     $("#summary-category").text(selectedCategory ? selectedCategory.title : 'Not selected');
 
                     // Update service info - using the stored service object
-                    if (bookingState.selectedService) {
-                        $("#summary-service").text(
-                            `${bookingState.selectedService.title} (${bookingState.selectedService.price})`);
+                    if (bookingState.selectedService) {  
+                        $("#summary-service").text(bookingState.selectedService.title);                      
                         $("#summary-duration").text(`${bookingState.selectedEmployee.slot_duration} minutos`);
-                        $("#summary-price").text(bookingState.selectedService.price);
                     }
 
                     // Update employee info
