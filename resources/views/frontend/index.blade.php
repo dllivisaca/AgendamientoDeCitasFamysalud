@@ -344,7 +344,7 @@
                                             placeholder="Ej: María José Pérez González / Empresa XYZ S.A."
                                             required
                                             minlength="5"
-                                            pattern="^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9]{5,}(?:\s+[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9]+)*$"
+                                            pattern="^[A-Za-zÁÉÍÓÚáéíóúÑñ ]{5,}$"
                                             title="Ingrese el nombre para facturación (persona o empresa)."
                                             autocomplete="name"
                                             >
@@ -1093,13 +1093,21 @@
                             return false;
                         }
                         return true;
-                    case 5:
+                    case 5: {
                         const consent = document.getElementById("consent_data");
                         if (!consent || !consent.checked) {
                             alert("Debes autorizar el uso de tus datos personales para continuar.");
                             return false;
                         }
-                        return true;
+
+                        const customerForm = document.getElementById("customer-info-form");
+                        const billingForm  = document.getElementById("billing-info-form");
+
+                        const okCustomer = customerForm ? customerForm.reportValidity() : false;
+                        const okBilling  = billingForm ? billingForm.reportValidity() : true;
+
+                        return okCustomer && okBilling;
+                    }
                     default:
                         return true;
                 }
@@ -1868,13 +1876,39 @@
                 const consentOk = document.getElementById("consent_data")?.checked === true;
 
                 const customerForm = document.getElementById("customer-info-form");
-                const billingForm  = document.getElementById("billing-info-form"); // si existe en tu HTML
+                const billingForm  = document.getElementById("billing-info-form");
 
                 const customerOk = customerForm ? customerForm.checkValidity() : false;
-                const billingOk  = billingForm ? billingForm.checkValidity() : true; // si no existe, no bloquea
+                const billingOk  = billingForm ? billingForm.checkValidity() : true;
+
+                // 🔎 DEBUG EXACTO: qué input está bloqueando (y por qué)
+                if (!billingOk && billingForm) {
+                    const inv = billingForm.querySelector(":invalid");
+                    console.log(
+                        "[BILLING INVALID]",
+                        inv?.id,
+                        inv?.name,
+                        inv?.validationMessage,
+                        "value:",
+                        inv?.value
+                    );
+                }
+
+                if (!customerOk && customerForm) {
+                    const inv = customerForm.querySelector(":invalid");
+                    console.log(
+                        "[CUSTOMER INVALID]",
+                        inv?.id,
+                        inv?.name,
+                        inv?.validationMessage,
+                        "value:",
+                        inv?.value
+                    );
+                }
 
                 return consentOk && customerOk && billingOk;
-                }
+            }
+
             return false;
             }
 
@@ -1892,6 +1926,17 @@
                     $nextFloating.addClass("d-none");
                 }
             }
+
+            // ✅ Re-evaluar botón flotante cuando el usuario escribe en Step 5
+            $(document).on(
+            "input change",
+            "#customer-info-form input, #customer-info-form select, #customer-info-form textarea," +
+            " #billing-info-form input, #billing-info-form select, #billing-info-form textarea," +
+            " #consent_data, #billing_same_as_patient",
+            function () {
+                setTimeout(updateFloatingNext, 0);
+            }
+            );
 
             // Click del botón flotante = click real
             $nextFloating.on("click", function () {
@@ -2329,6 +2374,8 @@
                     } else {
                     setBillingReadonly(false);
                     }
+                    // 🔥 ESTA ES LA LÍNEA CLAVE
+                    setTimeout(updateFloatingNext, 0);
                 });
 
                 // Si el usuario edita datos del paciente y el checkbox está marcado, sincroniza en vivo
