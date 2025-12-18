@@ -31,53 +31,53 @@ class DashboardController extends Controller
         // Format the appointments with proper date handling
         $appointments = $query->get()->map(function ($appointment) {
             try {
-                if (!str_contains($appointment->booking_time ?? '', '-')) {
+                if (!str_contains($appointment->appointment_time ?? '', '-')) {
                     throw new \Exception("Invalid time format");
                 }
 
-                // Parse booking date
-                $bookingDate = Carbon::parse($appointment->booking_date);
+                // Parse appointment date
+                $appointmentDate = Carbon::parse($appointment->appointment_date);
 
                 // Parse start and end times
-                [$startTime, $endTime] = array_map('trim', explode('-', $appointment->booking_time));
+                [$startTime, $endTime] = array_map('trim', explode('-', $appointment->appointment_time));
 
                 // Create proper datetime objects
                 $startDateTime = Carbon::createFromFormat('h:i A', $startTime)
-                    ->setDate($bookingDate->year, $bookingDate->month, $bookingDate->day);
+                    ->setDate($appointmentDate->year, $appointmentDate->month, $appointmentDate->day);
 
                 $endDateTime = Carbon::createFromFormat('h:i A', $endTime)
-                    ->setDate($bookingDate->year, $bookingDate->month, $bookingDate->day);
+                    ->setDate($appointmentDate->year, $appointmentDate->month, $appointmentDate->day);
 
-                // Handle overnight appointments (if end time is next day)
+                // Handle overnight appointments
                 if ($endDateTime->lt($startDateTime)) {
                     $endDateTime->addDay();
                 }
 
                 return [
-                    'id' => $appointment->id, // Add appointment ID
-                    'title' => sprintf('%s - %s',
-                        $appointment->name,
+                    'id' => $appointment->id,
+                    'title' => sprintf(
+                        '%s - %s',
+                        $appointment->patient_full_name,
                         $appointment->service->title ?? 'Service'
                     ),
                     'start' => $startDateTime->toIso8601String(),
                     'end' => $endDateTime->toIso8601String(),
-                    'description' => $appointment->notes,
-                    'email' => $appointment->email,
-                    'phone' => $appointment->phone,
+                    'description' => $appointment->patient_notes,
+                    'email' => $appointment->patient_email,
+                    'phone' => $appointment->patient_phone,
                     'amount' => $appointment->amount,
                     'status' => $appointment->status,
                     'staff' => $appointment->employee->user->name ?? 'Unassigned',
                     'color' => $this->getStatusColor($appointment->status),
-                    'service_title' => $appointment->service->title ?? 'Service', // Add service title
-                    'name' => $appointment->name, // Add client name
-                    'notes' => $appointment->notes, // Add notes
+                    'service_title' => $appointment->service->title ?? 'Service',
+                    'name' => $appointment->patient_full_name,
+                    'notes' => $appointment->patient_notes,
                 ];
             } catch (\Exception $e) {
                 \Log::error("Format error for appointment {$appointment->id}: {$e->getMessage()}");
                 return null;
             }
         })->filter();
-
         return view('backend.dashboard.index', compact('appointments'));
     }
 

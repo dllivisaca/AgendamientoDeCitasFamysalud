@@ -199,17 +199,17 @@ class FrontendController extends Controller
         $isToday = $date->isToday();
 
         // Get existing appointments for this date and employee
-        $existingAppointments = Appointment::where('booking_date', $date->toDateString())
+        $existingAppointments = Appointment::where('appointment_date', $date->toDateString())
             ->where('employee_id', $employeeId)
-            ->whereNotIn('status', ['Cancelled']) // Exclude cancelled/ here could add more status to make expection
-            ->get(['booking_time']);
+            ->whereNotIn('status', ['Cancelled'])
+            ->get(['appointment_time']);
 
         // Convert existing appointments to time ranges we can compare against
         $bookedSlots = $existingAppointments->map(function ($appointment) {
-            $times = explode(' - ', $appointment->booking_time);
+            $times = explode(' - ', $appointment->appointment_time);
             return [
                 'start' => Carbon::createFromFormat('g:i A', trim($times[0]))->format('H:i'),
-                'end' => Carbon::createFromFormat('g:i A', trim($times[1]))->format('H:i')
+                'end'   => Carbon::createFromFormat('g:i A', trim($times[1]))->format('H:i'),
             ];
         })->toArray();
 
@@ -360,17 +360,17 @@ class FrontendController extends Controller
             ));
 
             // ---- citas existentes del rango (para saber si un día se llenó) ----
-            $existingAppointments = Appointment::whereBetween('booking_date', [$start->toDateString(), $end->toDateString()])
+            $existingAppointments = Appointment::whereBetween('appointment_date', [$start->toDateString(), $end->toDateString()])
                 ->where('employee_id', $employee->id)
                 ->whereNotIn('status', ['Cancelled'])
-                ->get(['booking_date', 'booking_time']);
+                ->get(['appointment_date', 'appointment_time']);
 
             $bookedByDate = [];
             foreach ($existingAppointments as $appt) {
-                $times = explode(' - ', $appt->booking_time);
+                $times = explode(' - ', $appt->appointment_time);
                 if (count($times) !== 2) continue;
 
-                $bookedByDate[$appt->booking_date][] = [
+                $bookedByDate[$appt->appointment_date][] = [
                     'start' => Carbon::createFromFormat('g:i A', trim($times[0]))->format('H:i'),
                     'end'   => Carbon::createFromFormat('g:i A', trim($times[1]))->format('H:i'),
                 ];

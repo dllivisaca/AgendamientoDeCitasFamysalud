@@ -1725,8 +1725,8 @@
                     phone: $('#customer-phone').val(),
                     notes: $('#customer-notes').val(),
                     amount: parseFloat(bookingState.selectedService.price.replace(/[^0-9.]/g, '')),
-                    booking_date: bookingState.selectedDate,
-                    booking_time: bookingState.selectedTime.start || bookingState.selectedTime,
+                    appointment_date: bookingState.selectedDate,
+                    appointment_time: bookingState.selectedTime.start || bookingState.selectedTime,
                     status: 'Pending payment',
                     appointment_mode: bookingState.appointmentMode,
                     _token: csrfToken // Include CSRF token in payload
@@ -2225,28 +2225,23 @@
                 }
 
                 function setBillingReadonly(flag) {
-                    // Campos bloqueados visual y funcionalmente
-                    [bName, bEmail, bAddr].forEach(el => {
+                    // Inputs que sí soportan readOnly
+                    [bName, bEmail, bAddr, bDocNum, bPhoneUI].forEach(el => {
                         if (!el) return;
                         el.readOnly = flag;
                         el.classList.toggle("readonly-field", flag);
                     });
 
-                    // Documento editable
+                    // Select NO soporta readonly → usamos disabled
                     if (bDocType) {
-                        bDocType.disabled = false;
-                        bDocType.classList.remove("readonly-field");
+                        bDocType.disabled = flag;
+                        bDocType.classList.toggle("readonly-field", flag);
                     }
 
-                    if (bDocNum) {
-                        bDocNum.readOnly = false;
-                        bDocNum.classList.remove("readonly-field");
-                    }
-
-                    // Celular siempre editable
+                    // Tip: si quieres que el dropdown del país (intl-tel-input) no se pueda abrir cuando está bloqueado
                     if (bPhoneUI) {
-                        bPhoneUI.readOnly = false;
-                        bPhoneUI.classList.remove("readonly-field");
+                        bPhoneUI.disabled = flag; // bloquea 100% interacción
+                        bPhoneUI.classList.toggle("readonly-field", flag);
                     }
                 }
 

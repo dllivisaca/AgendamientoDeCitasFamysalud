@@ -37,13 +37,39 @@ class AppointmentController extends Controller
             'user_id' => 'nullable|exists:users,id',
             'employee_id' => 'required|exists:employees,id',
             'service_id' => 'required|exists:services,id',
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'phone' => 'required|string|max:20',
-            'notes' => 'nullable|string',
+
+            // PACIENTE
+            'patient_full_name' => 'required|string|max:255',
+            'patient_email' => 'required|email|max:255',
+            'patient_phone' => 'required|string|max:20',
+            'patient_address' => 'nullable|string|max:255',
+            'patient_dob' => 'nullable|date',
+            'patient_doc_type' => 'nullable|string|max:20',
+            'patient_doc_number' => 'nullable|string|max:20',
+            'patient_notes' => 'nullable|string',
+
+            // FACTURACIÓN
+            'billing_name' => 'nullable|string|max:255',
+            'billing_doc_type' => 'nullable|string|max:20',
+            'billing_doc_number' => 'nullable|string|max:20',
+            'billing_address' => 'nullable|string|max:255',
+            'billing_email' => 'nullable|email|max:255',
+            'billing_phone' => 'nullable|string|max:20',
+
+            // CITA (nuevos nombres)
             'amount' => 'required|numeric',
-            'booking_date' => 'required|date',
-            'booking_time' => 'required',
+            'appointment_date' => 'required|date',
+            'appointment_time' => 'required|string',
+            'appointment_mode' => 'required|in:presencial,virtual',
+
+            // TZ
+            'patient_timezone' => 'nullable|string|max:50',
+            'patient_timezone_label' => 'nullable|string|max:20',
+
+            // CONSENTIMIENTO
+            'data_consent' => 'required|boolean',
+
+            // STATUS
             'status' => 'required|string',
         ]);
 
