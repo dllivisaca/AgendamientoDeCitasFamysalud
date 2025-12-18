@@ -510,28 +510,6 @@
                 renderCalendar(month, yearNum);
             }
 
-
-            function updateCalendar() {
-                // Update employee name display
-                const employee = bookingState.selectedEmployee;
-                $(".selected-employee-name").text(`Selected Staff: ${employee.user.name}`);
-
-                // Clear previous selections
-                bookingState.selectedDate = null;
-                bookingState.selectedTime = null;
-                $(".calendar-day").removeClass("selected");
-                $(".time-slot").removeClass("selected");
-
-                // Show loading state for time slots
-                $("#time-slots-container").html(`
-                <div class="text-center w-100 py-4">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                </div>
-            `);
-            }
-
             function updateCalendar() {
                 // Update employee name display
                 const employee = bookingState.selectedEmployee;
@@ -710,15 +688,37 @@
                 const bookingData = {
                     employee_id: bookingState.selectedEmployee.id,
                     service_id: bookingState.selectedService.id,
-                    name: $('#customer-name').val(),
-                    email: $('#customer-email').val(),
-                    phone: $('#customer-phone').val(),
-                    notes: $('#customer-notes').val(),
+
+                    // PACIENTE (IDs reales del HTML)
+                    patient_full_name: $('#patient_full_name').val(),
+                    patient_email: $('#patient_email').val(),
+                    patient_phone: $('#patient_phone').val(),           // hidden E164
+                    patient_address: $('#patient_address').val(),
+                    patient_doc_type: $('#doc_type').val(),
+                    patient_doc_number: $('#doc_number').val(),
+                    patient_dob: $('#patient_dob').val(),
+                    patient_notes: $('#patient_notes').val(),
+
+                    // FACTURACIÓN (si ya la vas a guardar)
+                    billing_full_name: $('#billing-name').val(),
+                    billing_email: $('#billing-email').val(),
+                    billing_phone: $('#billing-phone').val(),           // hidden E164
+                    billing_address: $('#billing-address').val(),
+                    billing_doc_type: $('#billing-doc-type').val(),
+                    billing_doc_number: $('#billing-doc-number').val(),
+
+                    // CITA
+                    appointment_date: bookingState.selectedDate,
+                    appointment_time: bookingState.selectedTime.start || bookingState.selectedTime,
+                    appointment_mode: bookingState.appointmentMode || 'presencial',
+
+                    // CONSENTIMIENTO (ID real)
+                    data_consent: $('#consent_data').is(':checked'),
+
                     amount: parseFloat(bookingState.selectedService.price.replace(/[^0-9.]/g, '')),
-                    booking_date: bookingState.selectedDate,
-                    booking_time: bookingState.selectedTime.start || bookingState.selectedTime,
                     status: 'Pending payment',
-                    _token: csrfToken // Include CSRF token in payload
+
+                    _token: csrfToken
                 };
 
                 // Add user_id if authenticated (using JavaScript approach)
@@ -751,7 +751,8 @@
                         formattedDate = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
 
                         const bookingDetails = `
-                                <div class="mb-2"><strong>Customer:</strong> ${$("#customer-name").val()}</div>
+                                <div class="mb-2"><strong>Paciente:</strong> ${$("#patient_full_name").val()}</div>
+                                <div class="mb-2"><strong>Facturación:</strong> ${$("#billing-name").val()}</div>
                                 <div class="mb-2"><strong>Service:</strong> ${bookingState.selectedService.title}</div>
                                 <div class="mb-2"><strong>Staff:</strong> ${bookingState.selectedEmployee.user.name}</div>
                                 <div class="mb-2"><strong>Fecha y hora:</strong> ${formattedDate} a las ${bookingState.selectedTime.display || bookingState.selectedTime}</div>

@@ -37,18 +37,21 @@ class AdminNotificationBookingUpdated extends Notification implements ShouldQueu
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-        ->greeting('Hello Admin')
-        ->subject('Booking Status Updated for: ' . $this->appointment['name'])
-        ->line('**Booking Status Updated for:**'. ' '.$this->appointment['name'])  // make content strong
-        ->line('Name: '. $this->appointment['name'])
-        ->line('Phone: '. $this->appointment['phone'])
-        ->line('Staff: '. $this->appointment->employee->user['name'])
-        ->line('Service: '. $this->appointment->service['title'])
-        ->line('Amount: '. $this->appointment['amount'])
-        ->line('Appointment Date : ' . Carbon::parse($this->appointment['booking_date'])->format('d M Y'))
-        ->line('Slot Time: '. $this->appointment['booking_time'])
-        ->line('Status: '. $this->appointment['status'])
-        ->line('Thank you for using our application !');
+            ->greeting('Hello Admin')
+            ->subject('Booking Status Updated for: ' . ($this->appointment['patient_full_name'] ?? ''))
+            ->line('**Booking Status Updated for:** ' . ($this->appointment['patient_full_name'] ?? ''))
+            ->line('Patient Name: ' . ($this->appointment['patient_full_name'] ?? ''))
+            ->line('Patient Phone: ' . ($this->appointment['patient_phone'] ?? ''))
+            ->line('Staff: ' . ($this->appointment->employee->user['name'] ?? ''))
+            ->line('Service: ' . ($this->appointment->service['title'] ?? ''))
+            ->line('Amount: ' . ($this->appointment['amount'] ?? ''))
+            ->line('Appointment Date: ' . Carbon::parse($this->appointment['appointment_date'])->format('d M Y'))
+            ->line('Slot Time: ' . ($this->appointment['appointment_time'] ?? ''))
+            ->line('Status: ' . ($this->appointment['status'] ?? ''))
+            ->line('Mode: ' . ($this->appointment['appointment_mode'] ?? ''))
+            ->line('Patient Timezone: ' . ($this->appointment['patient_timezone_label'] ?? $this->appointment['patient_timezone'] ?? ''))
+            ->line('Patient Timezone: ' . ($this->appointment['patient_timezone_label'] ?? $this->appointment['patient_timezone'] ?? ''))
+            ->line('Thank you for using our application !');
     }
 
     /**

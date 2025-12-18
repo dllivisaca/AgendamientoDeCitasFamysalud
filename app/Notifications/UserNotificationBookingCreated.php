@@ -35,21 +35,20 @@ class UserNotificationBookingCreated extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
-
-
         return (new MailMessage)
-        ->greeting('Hello '.$this->appointment['name'])
-        ->line('Thanks for your booking with us')
-        ->subject('New Booking Created' )
-        ->line('**Appointment Details:**')  // make content strong
-        ->line('Name: '. $this->appointment['name'])
-        ->line('Phone: '. $this->appointment['phone'])
-        // ->line('Category: '. $this->appointment->service->category['title'])
-        ->line('Service: '. $this->appointment->service['title'])
-        ->line('Amount: '. $this->appointment['amount'])
-        ->line('Appointment Date : ' . Carbon::parse($this->appointment['booking_date'])->format('d M Y'))
-        ->line('Slot Time: '. $this->appointment['booking_time'])
-        ->line('Thank you for using our application !');
+            ->greeting('Hello ' . ($this->appointment['patient_full_name'] ?? ''))
+            ->subject('New Booking Created')
+            ->line('Thanks for your booking with us')
+            ->line('**Appointment Details:**')
+            ->line('Name: ' . ($this->appointment['patient_full_name'] ?? ''))
+            ->line('Phone: ' . ($this->appointment['patient_phone'] ?? ''))
+            ->line('Service: ' . ($this->appointment->service['title'] ?? ''))
+            ->line('Amount: ' . ($this->appointment['amount'] ?? ''))
+            ->line('Appointment Date: ' . Carbon::parse($this->appointment['appointment_date'])->format('d M Y'))
+            ->line('Slot Time: ' . ($this->appointment['appointment_time'] ?? ''))
+            ->line('Mode: ' . ($this->appointment['appointment_mode'] ?? ''))
+            ->line('Your Timezone: ' . ($this->appointment['patient_timezone_label'] ?? $this->appointment['patient_timezone'] ?? ''))
+            ->line('Thank you for using our application !');
     }
 
     /**

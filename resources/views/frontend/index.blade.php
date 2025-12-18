@@ -218,12 +218,12 @@
                                     @csrf
                                     <div class="row g-3">
                                         <div class="col-md-6">
-                                            <label for="customer-name" class="form-label">Nombre completo <span class="text-danger">*</span></label>
+                                            <label for="patient_full_name" class="form-label">Nombre completo <span class="text-danger">*</span></label>
                                             <input
                                                 type="text"
                                                 class="form-control"
-                                                id="customer-name"
-                                                name="customer_name"
+                                                id="patient_full_name"
+                                                name="patient_full_name"
                                                 placeholder="Ej: María José Pérez González"
                                                 required
                                                 minlength="5"
@@ -268,12 +268,12 @@
                                             </div>
                                         
                                         <div class="col-md-6">
-                                            <label for="customer-email" class="form-label">Correo electrónico<span class="text-danger">*</span></label>
+                                            <label for="patient_email" class="form-label">Correo electrónico<span class="text-danger">*</span></label>
                                             <input
                                                 type="email"
                                                 class="form-control"
-                                                id="customer-email"
-                                                name="customer_email"
+                                                id="patient_email"
+                                                name="patient_email"
                                                 placeholder="Ej: nombre@gmail.com"
                                                 required
                                                 minlength="6"
@@ -284,7 +284,7 @@
                                         <div class="col-md-6">
                                             <label for="patient_phone_ui" class="form-label">Número de celular <span class="text-danger">*</span></label>
                                             <input type="tel" class="form-control phone-input" id="patient_phone_ui" placeholder="Ej: 991234567" required title="Registre el número de celular sin el prefijo del país. Verifique que el país seleccionado sea el correcto." autocomplete="tel">
-                                            <input type="hidden" id="customer-phone" name="customer_phone">
+                                            <input type="hidden" id="patient_phone" name="patient_phone">
                                             <div class="form-text">
                                                 Para Ecuador, registre el número sin el 0 inicial.
                                             </div>
@@ -305,11 +305,11 @@
                                         </div>
                                         
                                         <div class="col-12">
-                                            <label for="customer-notes" class="form-label">Comentario (Opcional)</label>
+                                            <label for="patient_notes" class="form-label">Comentario (Opcional)</label>
                                             <textarea
                                                 class="form-control"
-                                                id="customer-notes"
-                                                name="customer_notes"
+                                                id="patient_notes"
+                                                name="patient_notes"
                                                 rows="3"
                                                 placeholder="Información adicional relevante para la atención"
                                             ></textarea>
@@ -1720,10 +1720,10 @@
                 const bookingData = {
                     employee_id: bookingState.selectedEmployee.id,
                     service_id: bookingState.selectedService.id,
-                    name: $('#customer-name').val(),
-                    email: $('#customer-email').val(),
-                    phone: $('#customer-phone').val(),
-                    notes: $('#customer-notes').val(),
+                    name: $('#patient_full_name').val(),
+                    email: $('#patient_email').val(),
+                    phone: $('#patient_phone').val(),
+                    notes: $('#patient_notes').val(),
                     amount: parseFloat(bookingState.selectedService.price.replace(/[^0-9.]/g, '')),
                     appointment_date: bookingState.selectedDate,
                     appointment_time: bookingState.selectedTime.start || bookingState.selectedTime,
@@ -1759,7 +1759,7 @@
                             });
 
                         const bookingDetails = `
-                                <div class="mb-2"><strong>Customer:</strong> ${$("#customer-name").val()}</div>
+                                <div class="mb-2"><strong>Customer:</strong> ${$("#patient_full_name").val()}</div>
                                 <div class="mb-2"><strong>Service:</strong> ${bookingState.selectedService.title}</div>
                                 <div class="mb-2"><strong>Staff:</strong> ${bookingState.selectedEmployee.user.name}</div>
                                 <div class="mb-2"><strong>Date & Time:</strong> ${formattedDate} at ${bookingState.selectedTime.display || bookingState.selectedTime}</div>
@@ -1932,9 +1932,9 @@
           "live.com", "icloud.com", "proton.me", "protonmail.com"
         ];
 
-        const nameEl = document.getElementById("customer-name");
+        const nameEl = document.getElementById("patient_full_name");
         const addressEl = document.getElementById("patient_address");
-        const emailEl = document.getElementById("customer-email");
+        const emailEl = document.getElementById("patient_email");
 
         if (!nameEl || !addressEl || !emailEl) return;
 
@@ -2184,7 +2184,7 @@
                 });
             }
 
-            setupIntlPhone("patient_phone_ui", "customer-phone");
+            setupIntlPhone("patient_phone_ui", "patient_phone");
             setupIntlPhone("billing_phone_ui", "billing-phone");
 
             (function () {
@@ -2198,10 +2198,10 @@
                 const dobInput = document.getElementById("patient_dob"); // <-- AJUSTA si aplica
 
                 // Paciente
-                const pName  = document.getElementById("customer-name");   // <-- AJUSTA si aplica
-                const pEmail = document.getElementById("customer-email");  // <-- AJUSTA si aplica
+                const pName  = document.getElementById("patient_full_name");   // <-- AJUSTA si aplica
+                const pEmail = document.getElementById("patient_email");  // <-- AJUSTA si aplica
                 const pAddr  = document.getElementById("patient_address");
-                const pPhoneHidden = document.getElementById("customer-phone"); // hidden E164
+                const pPhoneHidden = document.getElementById("patient_phone"); // hidden E164
 
                 // (Opcional) documento del paciente
                 const pDocType = document.getElementById("doc_type");
