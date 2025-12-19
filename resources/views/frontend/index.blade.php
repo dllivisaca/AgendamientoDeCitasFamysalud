@@ -648,11 +648,9 @@
                         <!-- 5) Botón final -->
                         <div class="card">
                             <div class="card-body">
-                            <button class="btn btn-success w-100" id="pay-now" type="button" disabled>
-                                Continuar <i class="bi bi-arrow-right"></i>
-                            </button>
+                            <button class="btn btn-success w-100" id="pay-now" type="button" disabled></button>
                             <div class="small text-muted mt-2">
-                                Al continuar aceptas nuestros términos y políticas.
+                                Al confirmar aceptas nuestros términos y políticas.
                             </div>
                             </div>
                         </div>
@@ -1231,6 +1229,9 @@
                         // ✅ Ocultar botones globales "Siguiente" en paso 6
                         $("#next-step").addClass("d-none");
                         $("#next-step-floating").addClass("d-none");
+
+                        $("#pay-action-card").hide();
+                        $("#pay-now").prop("disabled", true).text("");
 
                         // ✅ Reset selección de pago cada vez que entras
                         bookingState.paymentMethod = null;
@@ -1998,39 +1999,52 @@
                     }
 
                     function refreshPaymentUI() {
-                    const { transfer, standard, discount } = computePaymentFigures();
-                    const method = bookingState.paymentMethod;
+                        const { transfer, standard, discount } = computePaymentFigures();
+                        const method = bookingState.paymentMethod;
 
-                    // Siempre mostramos el precio estándar
-                    $("#std-price").text(money(standard));
-
-                    if (method === "transfer") {
-                        $("#discount-row").show();
-                        $("#discount-amount").text(`-${money(discount).replace("$", "$")}`);
-                        $("#total-to-pay").text(money(transfer));
-                    } else {
-                        $("#discount-row").hide();
-                        $("#total-to-pay").text(money(standard));
-                    }
-
-                    // Mostrar / ocultar bloques
-                    $("#transfer-block").toggle(method === "transfer");
-                    $("#card-block").toggle(method === "card");
-
-                    // Botón final
-                    if (!method) {
-                        $("#pm-hint").show();
-                        $("#pay-now").prop("disabled", true).html('Continuar <i class="bi bi-arrow-right"></i>');
-                    } else {
-                        $("#pm-hint").hide();
-                        $("#pay-now").prop("disabled", false);
+                        // Siempre mostramos precio estándar
+                        $("#std-price").text(money(standard));
 
                         if (method === "transfer") {
-                        $("#pay-now").html('Registrar cita y enviar comprobante <i class="bi bi-check2-circle"></i>');
+                            $("#discount-row").show();
+                            $("#discount-amount").text(`-${money(discount)}`);
+                            $("#total-to-pay").text(money(transfer));
                         } else {
-                        $("#pay-now").html('Pagar y confirmar cita <i class="bi bi-check2-circle"></i>');
+                            $("#discount-row").hide();
+                            $("#total-to-pay").text(money(standard));
                         }
-                    }
+
+                        // Bloques de contenido
+                        $("#transfer-block").toggle(method === "transfer");
+                        $("#card-block").toggle(method === "card");
+
+                        // =========================
+                        // BOTÓN FINAL (LA CLAVE)
+                        // =========================
+                        if (!method) {
+                            // 🔴 SIN MÉTODO → NO HAY BOTÓN
+                            $("#pm-hint").show();
+                            $("#pay-now")
+                                .prop("disabled", true)
+                                .addClass("d-none")
+                                .html("");
+                        } else {
+                            // 🟢 CON MÉTODO → BOTÓN VISIBLE
+                            $("#pm-hint").hide();
+                            $("#pay-now")
+                                .prop("disabled", false)
+                                .removeClass("d-none");
+
+                            if (method === "transfer") {
+                                $("#pay-now").html(
+                                    'Registrar cita y enviar comprobante <i class="bi bi-check2-circle"></i>'
+                                );
+                            } else {
+                                $("#pay-now").html(
+                                    'Pagar y confirmar cita <i class="bi bi-check2-circle"></i>'
+                                );
+                            }
+                        }
                     }
 
                     // Valida solo lo mínimo del step6 (luego lo afinamos)
