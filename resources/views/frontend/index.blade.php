@@ -646,20 +646,21 @@
                         </div>
 
                         <!-- 5) Botón final -->
-                        <div class="card">
+                        <div class="card d-none" id="pay-action-card">
                             <div class="card-body">
-                            <button class="btn btn-success w-100" id="pay-now" type="button" disabled></button>
-                            
-                            <div id="terms-container" class="mt-3 d-none">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="accept_terms">
-                                    <label class="form-check-label" for="accept_terms">
-                                    Acepto los <a href="#" id="open-terms">Términos y condiciones</a>
-                                    </label>
+                                <button class="btn btn-success w-100" id="pay-now" type="button" disabled></button>
+
+                                <div id="terms-container" class="mt-3 d-none">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="accept_terms">
+                                        <label class="form-check-label" for="accept_terms">
+                                        Acepto los <a href="#" id="open-terms">Términos y condiciones</a>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+
                 </div>
             </div>
 
@@ -2028,34 +2029,46 @@
                         // BOTÓN FINAL (LA CLAVE)
                         // =========================
                         if (!method) {
-                            // 🔴 SIN MÉTODO → NO HAY BOTÓN
                             $("#pm-hint").show();
-                            $("#pay-now")
-                                .prop("disabled", true)
-                                .addClass("d-none")
-                                .html("");
-                            // ❌ ocultar términos
+
+                            // ✅ ocultar TODO el recuadro (evita el espacio en blanco)
+                            $("#pay-action-card").addClass("d-none");
+
+                            // reset términos/botón
                             $("#terms-container").addClass("d-none");
                             $("#accept_terms").prop("checked", false);
-                        } else {
-                            // 🟢 CON MÉTODO → BOTÓN VISIBLE
-                            $("#pm-hint").hide();
-                            $("#pay-now")
-                                .prop("disabled", false)
-                                .removeClass("d-none");
-                            // ✅ mostrar términos
-                            $("#terms-container").removeClass("d-none");
-                            if (method === "transfer") {
-                                $("#pay-now").html(
-                                    'Registrar cita y enviar comprobante <i class="bi bi-check2-circle"></i>'
-                                );
+                            $("#pay-now").html("").prop("disabled", true);
+
                             } else {
-                                $("#pay-now").html(
-                                    'Pagar y confirmar cita <i class="bi bi-check2-circle"></i>'
-                                );
+                            $("#pm-hint").hide();
+
+                            // ✅ mostrar TODO el recuadro
+                            $("#pay-action-card").removeClass("d-none");
+
+                            // mostrar términos
+                            $("#terms-container").removeClass("d-none");
+
+                            // set texto del botón según método (pero NO lo habilites aún)
+                            if (method === "transfer") {
+                                $("#pay-now").html('Registrar cita y enviar comprobante <i class="bi bi-check2-circle"></i>');
+                            } else {
+                                $("#pay-now").html('Pagar y confirmar cita <i class="bi bi-check2-circle"></i>');
                             }
+
+                            // 🔒 se habilita solo si aceptó términos
+                            syncPayButtonState();
                         }
                     }
+
+                    function syncPayButtonState() {
+                        const hasMethod = !!bookingState.paymentMethod;
+                        const accepted = $("#accept_terms").is(":checked");
+                        $("#pay-now").prop("disabled", !(hasMethod && accepted));
+                    }
+
+                    $(document).on("change", "#accept_terms", function () {
+                        syncPayButtonState();
+                    });
 
                     // Valida solo lo mínimo del step6 (luego lo afinamos)
                     function validateStep6() {
