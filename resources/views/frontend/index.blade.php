@@ -658,6 +658,12 @@
                                         </label>
                                     </div>
                                 </div>
+
+                                <!-- 👇 AGREGA ESTE BLOQUE JUSTO AQUÍ -->
+                                <div class="small text-muted mt-3 text-center" id="no-refund-note">
+                                    Al confirmar el pago, usted acepta que los pagos no son reembolsables.
+                                    Las citas pueden ser reagendadas según disponibilidad.
+                                </div>
                             </div>
                         </div>
 
