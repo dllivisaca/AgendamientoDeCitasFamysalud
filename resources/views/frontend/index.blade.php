@@ -476,7 +476,52 @@
                         <h3 class="mb-4">Pago</h3>
 
                         <!-- 1) Resumen de la cita (solo lectura) -->
-                        <div class="card mb-3">
+                        <div class="form-section">
+                            <h5 class="section-title"><i class="bi bi-card-checklist me-2"></i>Resumen de la cita</h5>
+
+                            <div class="summary-item">
+                                <div class="row">
+                                    <div class="col-md-4 text-muted">Área de atención:</div>
+                                    <div class="col-md-8" id="pay-summary-category"></div>
+                                </div>
+                            </div>
+
+                            <div class="summary-item">
+                                <div class="row">
+                                    <div class="col-md-4 text-muted">Servicio:</div>
+                                    <div class="col-md-8" id="pay-summary-service"></div>
+                                </div>
+                            </div>
+
+                            <div class="summary-item">
+                                <div class="row">
+                                    <div class="col-md-4 text-muted">Profesional:</div>
+                                    <div class="col-md-8" id="pay-summary-employee"></div>
+                                </div>
+                            </div>
+
+                            <div class="summary-item">
+                                <div class="row">
+                                    <div class="col-md-4 text-muted">Fecha y hora:</div>
+                                    <div class="col-md-8" id="pay-summary-datetime"></div>
+                                </div>
+                            </div>
+
+                            <div class="summary-item">
+                                <div class="row">
+                                    <div class="col-md-4 text-muted">Duración:</div>
+                                    <div class="col-md-8" id="pay-summary-duration"></div>
+                                </div>
+                            </div>
+
+                            <div class="summary-item">
+                                <div class="row">
+                                    <div class="col-md-4 text-muted">Modalidad:</div>
+                                    <div class="col-md-8" id="pay-summary-mode"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- <div class="card mb-3">
                             <div class="card-body">
                             <h5 class="mb-3"><i class="bi bi-card-checklist me-2"></i>Resumen de la cita</h5>
 
@@ -522,7 +567,7 @@
                                 </div>
                             </div>
                             </div>
-                        </div>
+                        </div> -->
 
                         <!-- 2) Resumen de pago (siempre visible) -->
                         <div class="card mb-3">
