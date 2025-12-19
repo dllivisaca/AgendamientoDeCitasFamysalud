@@ -1237,7 +1237,7 @@
                         $("#next-step").addClass("d-none");
                         $("#next-step-floating").addClass("d-none");
 
-                        $("#pay-action-card").hide();
+                        $("#pay-action-card").addClass("d-none").show(); // show() por si quedó un display:none viejo
                         $("#pay-now").prop("disabled", true).text("");
 
                         // ✅ Reset selección de pago cada vez que entras
@@ -2026,36 +2026,36 @@
                         $("#card-block").toggle(method === "card");
 
                         // =========================
-                        // BOTÓN FINAL (LA CLAVE)
+                        // BOTÓN FINAL + TÉRMINOS
                         // =========================
                         if (!method) {
+                            // 🔴 SIN MÉTODO
                             $("#pm-hint").show();
 
-                            // ✅ ocultar TODO el recuadro (evita el espacio en blanco)
-                            $("#pay-action-card").addClass("d-none");
+                            $("#pay-action-card").addClass("d-none").show();
 
-                            // reset términos/botón
                             $("#terms-container").addClass("d-none");
                             $("#accept_terms").prop("checked", false);
-                            $("#pay-now").html("").prop("disabled", true);
+                            $("#pay-now").prop("disabled", true).html("");
 
-                            } else {
+                        } else {
+                            // 🟢 CON MÉTODO
                             $("#pm-hint").hide();
 
-                            // ✅ mostrar TODO el recuadro
-                            $("#pay-action-card").removeClass("d-none");
-
-                            // mostrar términos
+                            $("#pay-action-card").removeClass("d-none").show();
                             $("#terms-container").removeClass("d-none");
 
-                            // set texto del botón según método (pero NO lo habilites aún)
                             if (method === "transfer") {
-                                $("#pay-now").html('Registrar cita y enviar comprobante <i class="bi bi-check2-circle"></i>');
+                                $("#pay-now").html(
+                                    'Registrar cita y enviar comprobante <i class="bi bi-check2-circle"></i>'
+                                );
                             } else {
-                                $("#pay-now").html('Pagar y confirmar cita <i class="bi bi-check2-circle"></i>');
+                                $("#pay-now").html(
+                                    'Pagar y confirmar cita <i class="bi bi-check2-circle"></i>'
+                                );
                             }
 
-                            // 🔒 se habilita solo si aceptó términos
+                            // Habilitar según términos
                             syncPayButtonState();
                         }
                     }
