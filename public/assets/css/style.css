@@ -532,3 +532,10 @@ body {
 .form-section .d-flex > span {
     color: #212529; /* negro Bootstrap */
 }
+
+/* ===== Paso 6: labels de transferencia en negro (SIN negrita) ===== */
+#step6 label,
+#step6 .form-label {
+    color: #212529 !important;   /* negro */
+    font-weight: 400 !important; /* normal, NO negrita */
+}
