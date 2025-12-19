@@ -476,3 +476,17 @@ body {
   padding-bottom: 0;
   margin-bottom: 0;
 }
+
+/* Términos y condiciones - texto justificado */
+.terms-body p,
+.terms-body li {
+    text-align: justify;
+}
+
+.text-justify {
+    text-align: justify;
+}
+
+.alert-warning {
+    line-height: 1.6;
+}

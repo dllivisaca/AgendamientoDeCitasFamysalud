@@ -603,24 +603,69 @@
 
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                <label class="form-label">Banco de origen <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="tr_bank" placeholder="Ej: Pichincha">
+                                    <label class="form-label">Banco de origen <span class="text-danger">*</span></label>                               
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        id="tr_bank"
+                                        placeholder="Ej: Banco Guayaquil"
+                                        required
+                                        minlength="3"
+                                        pattern="^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]{3,}$"
+                                        title="Mínimo 3 caracteres. Solo letras y espacios."
+                                        autocomplete="organization"
+                                    />
                                 </div>
                                 <div class="col-md-6">
-                                <label class="form-label">Titular que realizó el pago <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="tr_holder" placeholder="Nombre del titular">
+                                    <label class="form-label">Titular que realizó el pago <span class="text-danger">*</span></label>                                   
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        id="tr_holder"
+                                        placeholder="Nombre del titular"
+                                        required
+                                        minlength="5"
+                                        pattern="^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]{5,}$"
+                                        title="Mínimo 5 caracteres. Solo letras y espacios."
+                                        autocomplete="name"
+                                    />
                                 </div>
                                 <div class="col-md-6">
-                                <label class="form-label">Fecha de transferencia <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" id="tr_date">
+                                    <label class="form-label">Fecha de transferencia <span class="text-danger">*</span></label>
+                                    <input
+                                        type="date"
+                                        class="form-control"
+                                        id="tr_date"
+                                        required
+                                        title="No se permiten fechas futuras ni demasiado antiguas."
+                                    />
                                 </div>
                                 <div class="col-md-6">
-                                <label class="form-label">N° de referencia / comprobante <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="tr_ref" placeholder="Ej: 123456">
+                                    <label class="form-label">N° de referencia / comprobante <span class="text-danger">*</span></label>                                    
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        id="tr_ref"
+                                        placeholder="Ej: 1234AB"
+                                        required
+                                        minlength="4"
+                                        pattern="^[A-Za-z0-9]{4,}$"
+                                        title="Mínimo 4 caracteres. Solo letras y números, sin espacios."
+                                        autocomplete="off"
+                                    />
                                 </div>
                                 <div class="col-12">
-                                <label class="form-label">Comprobante (JPG/PNG/PDF) <span class="text-danger">*</span></label>
-                                <input type="file" class="form-control" id="tr_file" accept=".jpg,.jpeg,.png,.pdf">
+                                    <label class="form-label">Comprobante (JPG/PNG/PDF) <span class="text-danger">*</span></label>
+                                    <div class="form-text" id="tr_file_help">
+                                    Formatos permitidos: JPG, PNG o PDF. Tamaño máximo: 5MB.
+                                    </div>
+                                    <input
+                                        type="file"
+                                        class="form-control"
+                                        id="tr_file"
+                                        required
+                                        accept=".jpg,.jpeg,.png,.pdf"
+                                    >                        
                                 <div class="form-text">Tu cita se confirmará una vez validado el pago.</div>
                                 </div>
                             </div>
@@ -2079,6 +2124,66 @@
                         syncPayButtonState();
                     });
 
+                    // ================================
+                    // REGLAS EXTRA TRANSFERENCIA (STEP 6)
+                    // ================================
+                    (function initTransferDateLimits() {
+                        const dateEl = document.getElementById("tr_date");
+                        if (!dateEl) return;
+
+                        const today = new Date();
+                        const yyyy = today.getFullYear();
+                        const mm = String(today.getMonth() + 1).padStart(2, "0");
+                        const dd = String(today.getDate()).padStart(2, "0");
+                        const max = `${yyyy}-${mm}-${dd}`;
+
+                        // "No muy antiguas": ejemplo 1 año hacia atrás (ajústalo si quieres 6 meses, etc.)
+                        const past = new Date(today);
+                        past.setFullYear(today.getFullYear() - 1);
+                        const pY = past.getFullYear();
+                        const pM = String(past.getMonth() + 1).padStart(2, "0");
+                        const pD = String(past.getDate()).padStart(2, "0");
+                        const min = `${pY}-${pM}-${pD}`;
+
+                        dateEl.max = max;
+                        dateEl.min = min;
+                    })();
+
+                    function validateTransferFile() {
+                        const input = document.getElementById("tr_file");
+                        if (!input) return true;
+
+                        const file = input.files && input.files[0];
+                        if (!file) {
+                            input.setCustomValidity("Adjunta el comprobante (JPG, PNG o PDF).");
+                            return false;
+                        }
+
+                        const maxBytes = 5 * 1024 * 1024; // 5MB
+                        const allowedTypes = ["image/jpeg", "image/png", "application/pdf"];
+
+                        // Validar tamaño
+                        if (file.size > maxBytes) {
+                            input.setCustomValidity("El archivo es demasiado grande. Máximo permitido: 5MB.");
+                            return false;
+                        }
+
+                        // Validar tipo real (MIME)
+                        if (!allowedTypes.includes(file.type)) {
+                            input.setCustomValidity("Formato no permitido. Solo JPG, PNG o PDF.");
+                            return false;
+                        }
+
+                        input.setCustomValidity("");
+                        return true;
+                        }
+
+                        // Mostrar mensaje al instante cuando el usuario elige archivo
+                        $(document).on("change", "#tr_file", function () {
+                        validateTransferFile();
+                        this.reportValidity(); // muestra el mensaje si falla
+                    });
+
                     // Valida solo lo mínimo del step6 (luego lo afinamos)
                     function validateStep6() {
                     if (!bookingState.paymentMethod) {
@@ -2087,15 +2192,27 @@
                     }
 
                     if (bookingState.paymentMethod === "transfer") {
-                        const bank = $("#tr_bank").val().trim();
-                        const holder = $("#tr_holder").val().trim();
-                        const date = $("#tr_date").val().trim();
-                        const ref = $("#tr_ref").val().trim();
-                        const file = $("#tr_file")[0]?.files?.[0];
+                        const bankEl   = document.getElementById("tr_bank");
+                        const holderEl = document.getElementById("tr_holder");
+                        const dateEl   = document.getElementById("tr_date");
+                        const refEl    = document.getElementById("tr_ref");
+                        const fileEl   = document.getElementById("tr_file");
 
-                        if (!bank || !holder || !date || !ref || !file) {
-                        alert("Completa los datos de la transferencia y adjunta el comprobante.");
-                        return false;
+                        // Limpiezas básicas
+                        if (refEl) refEl.value = (refEl.value || "").replace(/\s+/g, "");
+                        if (bankEl) bankEl.value = (bankEl.value || "").replace(/\s+/g, " ").trim();
+                        if (holderEl) holderEl.value = (holderEl.value || "").replace(/\s+/g, " ").trim();
+
+                        // 1) Validación HTML nativa (required/minlength/pattern)
+                        if (bankEl && !bankEl.checkValidity())   { bankEl.reportValidity(); return false; }
+                        if (holderEl && !holderEl.checkValidity()){ holderEl.reportValidity(); return false; }
+                        if (dateEl && !dateEl.checkValidity())   { dateEl.reportValidity(); return false; }
+                        if (refEl && !refEl.checkValidity())     { refEl.reportValidity(); return false; }
+
+                        // 2) Validación de archivo (tamaño + tipo)
+                        if (!validateTransferFile()) {
+                            fileEl && fileEl.reportValidity();
+                            return false;
                         }
                     }
 
@@ -2875,7 +2992,7 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                     </div>
 
-                    <div class="modal-body">
+                    <div class="modal-body terms-body">
                         <p class="small text-muted mb-3">
                         Centro Médico FamySALUD ·
                         <a href="https://www.famysalud.com.ec" target="_blank">
@@ -2926,7 +3043,7 @@
                         el paciente declara haber leído, comprendido y aceptado las condiciones aquí descritas.
                         </p>
 
-                        <div class="alert alert-warning mt-4">
+                        <div class="alert alert-warning mt-4 text-justify">
                             <strong>Importante:</strong>
                             Los pagos no son reembolsables. Las citas pueden ser reagendadas según disponibilidad.
                         </div>
