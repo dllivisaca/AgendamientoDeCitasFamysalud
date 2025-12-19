@@ -490,3 +490,34 @@ body {
 .alert-warning {
     line-height: 1.6;
 }
+
+/* Input file estilizado (Step 6 - Transferencia) */
+.file-input-soft {
+    background-color: #ffffff; /* fondo blanco para el texto */
+    border: 1px solid #d0d5dd;
+    border-radius: 6px;
+    padding: 6px;
+}
+
+/* Botón "Seleccionar archivo" */
+.file-input-soft::file-selector-button {
+    background-color: #eef2f6;   /* gris azulado suave */
+    color: #1f2937;
+    border: 1px solid #d0d5dd;
+    padding: 8px 14px;
+    margin-right: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+/* Hover del botón */
+.file-input-soft::file-selector-button:hover {
+    background-color: #e2e8f0;
+}
+
+/* Focus */
+.file-input-soft:focus {
+    border-color: #86b7fe;
+    box-shadow: none;
+}

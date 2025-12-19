@@ -523,9 +523,10 @@
                         </div>                        
 
                         <!-- 2) Resumen de pago (siempre visible) -->
-                        <div class="card mb-3">
-                            <div class="card-body">
-                            <h5 class="mb-2"><i class="bi bi-cash-coin me-2"></i>Resumen de pago</h5>
+                        
+                        <div class="form-section">
+                            
+                            <h5 class="section-title"><i class="bi bi-cash-coin me-2"></i>Resumen de pago</h5>
 
                             <div class="small text-muted mb-3">
                                 El valor final puede variar según el método de pago seleccionado.
@@ -547,17 +548,17 @@
                                 <span class="fs-5">Total a pagar:</span>
                                 <strong class="fs-5" id="total-to-pay">$0.00</strong>
                             </div>
-                            </div>
+                            
                         </div>
 
                         <!-- 3) Método de pago -->
-                        <div class="card mb-3">
-                            <div class="card-body">
-                            <h5 class="mb-3"><i class="bi bi-credit-card-2-front me-2"></i>Método de pago</h5>
+                        <div class="form-section">
+                            
+                            <h5 class="section-title"><i class="bi bi-credit-card-2-front me-2"></i>Método de pago</h5>
 
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                <div class="border rounded p-3 h-100">
+                                <div class="border rounded p-3 h-100 bg-white">
                                     <div class="form-check">
                                     <input class="form-check-input" type="radio" name="payment_method" id="pm_card" value="card">
                                     <label class="form-check-label fw-bold" for="pm_card">Pago con tarjeta (precio estándar)</label>
@@ -569,7 +570,7 @@
                                 </div>
 
                                 <div class="col-md-6">
-                                <div class="border rounded p-3 h-100">
+                                <div class="border rounded p-3 h-100 bg-white">
                                     <div class="form-check">
                                     <input class="form-check-input" type="radio" name="payment_method" id="pm_transfer" value="transfer">
                                     <label class="form-check-label fw-bold" for="pm_transfer">Transferencia bancaria (descuento aplicado)</label>
@@ -582,15 +583,15 @@
                             </div>
 
                             <div class="alert alert-warning mt-3 mb-0" id="pm-hint">
-                                Selecciona un método de pago para continuar.
+                                Seleccione un método de pago para continuar.
                             </div>
-                            </div>
+                            
                         </div>
 
                         <!-- 4A) Transferencia -->
-                        <div class="card mb-3" id="transfer-block" style="display:none;">
-                            <div class="card-body">
-                            <h5 class="mb-3"><i class="bi bi-bank me-2"></i>Transferencia bancaria</h5>
+                        <div class="form-section" id="transfer-block" style="display:none;">
+                            
+                            <h5 class="section-title"><i class="bi bi-bank me-2"></i>Transferencia bancaria</h5>
 
                             <!-- Datos bancarios (pon aquí los reales) -->
                             <div class="alert alert-info">
@@ -661,24 +662,24 @@
                                     </div>
                                     <input
                                         type="file"
-                                        class="form-control"
+                                        class="form-control file-input-soft"
                                         id="tr_file"
                                         required
                                         accept=".jpg,.jpeg,.png,.pdf"
                                     >                        
-                                <div class="form-text">Tu cita se confirmará una vez validado el pago.</div>
+                                <div class="form-text">La cita se confirmará una vez validado el pago.</div>
                                 </div>
                             </div>
-                            </div>
+                            
                         </div>
 
                         <!-- 4B) Tarjeta -->
-                        <div class="card mb-3" id="card-block" style="display:none;">
-                            <div class="card-body">
-                            <h5 class="mb-3"><i class="bi bi-credit-card me-2"></i>Pago con tarjeta</h5>
+                        <div class="form-section" id="card-block" style="display:none;">
+                            
+                            <h5 class="section-title"><i class="bi bi-credit-card me-2"></i>Pago con tarjeta</h5>
 
                             <div class="alert alert-info">
-                                Tu pago se procesará de forma segura. (Aquí luego se integra la pasarela).
+                                Su pago se procesará de forma segura. (Aquí luego se integra la pasarela).
                             </div>
 
                             <!-- Placeholder de pasarela embebida -->
@@ -687,12 +688,12 @@
                                 Aquí irá el formulario seguro de la pasarela (Stripe/Kushki/PayPhone/etc.).
                                 </div>
                             </div>
-                            </div>
+                            
                         </div>
 
                         <!-- 5) Botón final -->
-                        <div class="card d-none" id="pay-action-card">
-                            <div class="card-body">
+                        <div class="form-section d-none" id="pay-action-card">
+                                <h5 class="section-title"><i class="bi bi-shield-check me-2"></i>Confirmación</h5>
                                 <button class="btn btn-success w-100" id="pay-now" type="button" disabled></button>
 
                                 <div id="terms-container" class="mt-3 d-none">
@@ -706,12 +707,10 @@
 
                                 <!-- 👇 AGREGA ESTE BLOQUE JUSTO AQUÍ -->
                                 <div class="small text-muted mt-3 text-center" id="no-refund-note">
-                                    Al confirmar el pago, usted acepta que los pagos no son reembolsables.
+                                    Al continuar con el proceso, usted acepta que los pagos no son reembolsables.
                                     Las citas pueden ser reagendadas según disponibilidad.
-                                </div>
-                            </div>
+                                </div>                            
                         </div>
-
                 </div>
             </div>
 
@@ -1364,29 +1363,29 @@
                     switch (step) {
                         case 1:
                             if (!bookingState.selectedCategory) {
-                                alert("Por favor selecciona un área de atención");
+                                alert("Por favor seleccione un área de atención");
                                 return false;
                             }
                             return true;
                         case 2:
                             if (!bookingState.selectedService) {
-                                alert("Por favor selecciona un servicio");
+                                alert("Por favor seleccione un servicio");
                                 return false;
                             }
                             return true;
                         case 3:
                             if (!bookingState.selectedEmployee) {
-                                alert("Por favor selecciona a un profesional");
+                                alert("Por favor seleccione a un profesional");
                                 return false;
                             }
                             return true;
                         case 4:
                             if (!bookingState.selectedDate) {
-                                alert("Por favor selecciona una fecha");
+                                alert("Por favor seleccione una fecha");
                                 return false;
                             }
                             if (!bookingState.selectedTime) {
-                                alert("Por favor selecciona un turno");
+                                alert("Por favor seleccione un turno");
                                 return false;
                             }
                             return true;
@@ -1698,7 +1697,7 @@
                         <div class="text-center w-100 py-4">
                             <div class="alert alert-info">
                                 <i class="bi bi-calendar-event me-2"></i>
-                                Por favor selecciona una fecha para ver los turnos disponibles
+                                Por favor seleccione una fecha para ver los turnos disponibles
                             </div>
                         </div>
                     `);
@@ -2187,7 +2186,7 @@
                     // Valida solo lo mínimo del step6 (luego lo afinamos)
                     function validateStep6() {
                     if (!bookingState.paymentMethod) {
-                        alert("Selecciona un método de pago para continuar.");
+                        alert("Seleccione un método de pago para continuar.");
                         return false;
                     }
 
