@@ -521,3 +521,9 @@ body {
     border-color: #86b7fe;
     box-shadow: none;
 }
+
+/* ===== Paso 6 (Payment): valores del resumen en negro ===== */
+#step6 .summary-item .row > :not(.text-muted) {
+  color: #212529 !important;  /* negro normal */
+  font-weight: 400 !important; /* normal, NO bold */
+}
