@@ -649,9 +649,7 @@
                         <div class="card">
                             <div class="card-body">
                             <button class="btn btn-success w-100" id="pay-now" type="button" disabled></button>
-                            <div class="small text-muted mt-2">
-                                Al confirmar aceptas nuestros términos y políticas.
-                            </div>
+                            
                             <div id="terms-container" class="mt-3 d-none">
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" id="accept_terms">
