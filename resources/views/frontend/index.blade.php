@@ -536,7 +536,7 @@
                                 <strong id="std-price">$0.00</strong>
                             </div>
 
-                            <div class="d-flex justify-content-between" id="discount-row" style="display:none;">
+                            <div class="d-flex justify-content-between d-none" id="discount-row">
                                 <span>Descuento por transferencia bancaria:</span>
                                 <strong id="discount-amount">-$0.00</strong>
                             </div>
@@ -1256,6 +1256,8 @@
                         $("#pm-hint").show();
                         $("#card-block").hide();
                         $("#transfer-block").hide();
+
+                        $("#discount-row").addClass("d-none");
 
                         // ✅ Cargar resumen y UI
                         fillStep6Summary();
@@ -2012,12 +2014,13 @@
                         // Siempre mostramos precio estándar
                         $("#std-price").text(money(standard));
 
-                        if (method === "transfer") {
-                            $("#discount-row").show();
+                        if (method === "transfer") {                          
+                            $("#discount-row").removeClass("d-none");
                             $("#discount-amount").text(`-${money(discount)}`);
                             $("#total-to-pay").text(money(transfer));
-                        } else {
-                            $("#discount-row").hide();
+                        } else {                            
+                            $("#discount-row").addClass("d-none");
+                            $("#discount-amount").text(`-${money(discount)}`); // opcional, por si luego quieres mantenerlo calculado
                             $("#total-to-pay").text(money(standard));
                         }
 
