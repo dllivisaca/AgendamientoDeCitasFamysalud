@@ -652,10 +652,18 @@
                             <div class="small text-muted mt-2">
                                 Al confirmar aceptas nuestros términos y políticas.
                             </div>
+                            <div id="terms-container" class="mt-3 d-none">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="accept_terms">
+                                    <label class="form-check-label" for="accept_terms">
+                                    Acepto los <a href="#" id="open-terms">Términos y condiciones</a>
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
 
                 <div class="booking-footer">
                     <button class="btn btn-outline-secondary" id="prev-step" disabled>
@@ -2028,13 +2036,17 @@
                                 .prop("disabled", true)
                                 .addClass("d-none")
                                 .html("");
+                            // ❌ ocultar términos
+                            $("#terms-container").addClass("d-none");
+                            $("#accept_terms").prop("checked", false);
                         } else {
                             // 🟢 CON MÉTODO → BOTÓN VISIBLE
                             $("#pm-hint").hide();
                             $("#pay-now")
                                 .prop("disabled", false)
                                 .removeClass("d-none");
-
+                            // ✅ mostrar términos
+                            $("#terms-container").removeClass("d-none");
                             if (method === "transfer") {
                                 $("#pay-now").html(
                                     'Registrar cita y enviar comprobante <i class="bi bi-check2-circle"></i>'
