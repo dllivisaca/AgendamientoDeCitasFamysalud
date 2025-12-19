@@ -2370,6 +2370,14 @@
                     bookingState.paymentMethod = this.value; // 'card' o 'transfer'
                     refreshPaymentUI();
                 });
+                // Abrir modal de Términos y Condiciones
+                $(document).on("click", "#open-terms", function (e) {
+                    e.preventDefault();
+                    const modal = new bootstrap.Modal(
+                        document.getElementById("termsModal")
+                    );
+                    modal.show();
+                });
             });
         </script>
 
@@ -2856,6 +2864,81 @@
         @if ($setting->footer)
             {!! $setting->footer !!}
         @endif
-    </body>
+        <!-- Modal Términos y Condiciones -->
+        <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="termsModalLabel">
+                        Términos y Condiciones
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
 
-    </html>
+                    <div class="modal-body">
+                        <p class="small text-muted mb-3">
+                        Centro Médico FamySALUD ·
+                        <a href="https://www.famysalud.com.ec" target="_blank">
+                            www.famysalud.com.ec
+                        </a>
+                        </p>
+
+                        <h6>1. Confirmación de la cita</h6>
+                        <p>
+                        La cita se considera confirmada una vez que el pago ha sido procesado correctamente o,
+                        en el caso de transferencia bancaria, cuando el comprobante ha sido enviado y validado
+                        por el Centro Médico FamySALUD.
+                        </p>
+
+                        <h6>2. Pagos y reembolsos</h6>
+                        <p>
+                        Los pagos realizados no son reembolsables.
+                        En caso de no poder asistir a la cita, el paciente podrá solicitar un reagendamiento,
+                        sujeto a disponibilidad y a las políticas vigentes del centro médico.
+                        </p>
+
+                        <h6>3. Reagendamiento de citas</h6>
+                        <p>
+                        Las solicitudes de reagendamiento deberán ser gestionadas exclusivamente a través de
+                        los canales oficiales del Centro Médico FamySALUD, los cuales se encuentran detallados
+                        en nuestra página web oficial:
+                        <a href="https://www.famysalud.com.ec" target="_blank">
+                            www.famysalud.com.ec
+                        </a>.
+                        </p>
+
+                        <h6>4. Responsabilidad del paciente</h6>
+                        <p>
+                        Es responsabilidad del paciente ingresar correctamente sus datos personales,
+                        seleccionar adecuadamente el servicio, profesional, fecha y modalidad de la cita.
+                        </p>
+
+                        <h6>5. Uso del sistema</h6>
+                        <p>
+                        Este sistema de agendamiento tiene como finalidad facilitar la reserva de citas médicas.
+                        El Centro Médico FamySALUD se reserva el derecho de validar la información proporcionada
+                        y de contactar al paciente en caso de ser necesario.
+                        </p>
+
+                        <h6>6. Aceptación de los términos</h6>
+                        <p>
+                        Al marcar la casilla “Acepto los Términos y Condiciones” y continuar con el proceso de pago,
+                        el paciente declara haber leído, comprendido y aceptado las condiciones aquí descritas.
+                        </p>
+
+                        <div class="alert alert-warning mt-4">
+                            <strong>Importante:</strong>
+                            Los pagos no son reembolsables. Las citas pueden ser reagendadas según disponibilidad.
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Cerrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
