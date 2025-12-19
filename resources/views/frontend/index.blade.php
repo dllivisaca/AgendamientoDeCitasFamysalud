@@ -520,54 +520,7 @@
                                     <div class="col-md-8" id="pay-summary-mode"></div>
                                 </div>
                             </div>
-                        </div>
-                        <!-- <div class="card mb-3">
-                            <div class="card-body">
-                            <h5 class="mb-3"><i class="bi bi-card-checklist me-2"></i>Resumen de la cita</h5>
-
-                            <div class="summary-item">
-                                <div class="row">
-                                <div class="col-md-4 text-muted">Área de atención:</div>
-                                <div class="col-md-8" id="pay-summary-category"></div>
-                                </div>
-                            </div>
-
-                            <div class="summary-item">
-                                <div class="row">
-                                <div class="col-md-4 text-muted">Servicio:</div>
-                                <div class="col-md-8" id="pay-summary-service"></div>
-                                </div>
-                            </div>
-
-                            <div class="summary-item">
-                                <div class="row">
-                                <div class="col-md-4 text-muted">Profesional:</div>
-                                <div class="col-md-8" id="pay-summary-employee"></div>
-                                </div>
-                            </div>
-
-                            <div class="summary-item">
-                                <div class="row">
-                                <div class="col-md-4 text-muted">Fecha y hora:</div>
-                                <div class="col-md-8" id="pay-summary-datetime"></div>
-                                </div>
-                            </div>
-
-                            <div class="summary-item">
-                                <div class="row">
-                                <div class="col-md-4 text-muted">Duración:</div>
-                                <div class="col-md-8" id="pay-summary-duration"></div>
-                                </div>
-                            </div>
-
-                            <div class="summary-item">
-                                <div class="row">
-                                <div class="col-md-4 text-muted">Modalidad:</div>
-                                <div class="col-md-8" id="pay-summary-mode"></div>
-                                </div>
-                            </div>
-                            </div>
-                        </div> -->
+                        </div>                        
 
                         <!-- 2) Resumen de pago (siempre visible) -->
                         <div class="card mb-3">
@@ -1275,12 +1228,34 @@
                     }
 
                     if (step === 6) {
-                        // reset selección de pago cada vez que entras (opcional)
+                        // ✅ Ocultar botones globales "Siguiente" en paso 6
+                        $("#next-step").addClass("d-none");
+                        $("#next-step-floating").addClass("d-none");
+
+                        // ✅ Reset selección de pago cada vez que entras
                         bookingState.paymentMethod = null;
                         $('input[name="payment_method"]').prop('checked', false);
 
+                        // ✅ (Si ya tienes términos) reset también
+                        $("#accept_terms").prop("checked", false);
+
+                        // ✅ Reset botón principal del paso 6
+                        $("#pay-now")
+                            .prop("disabled", true)
+                            .html('Continuar <i class="bi bi-arrow-right"></i>');
+
+                        // ✅ Mostrar hint y ocultar bloques específicos
+                        $("#pm-hint").show();
+                        $("#card-block").hide();
+                        $("#transfer-block").hide();
+
+                        // ✅ Cargar resumen y UI
                         fillStep6Summary();
                         refreshPaymentUI();
+                    } else {
+                        // ✅ En pasos 1–5 sí se usa el botón global "Siguiente"
+                        $("#next-step").removeClass("d-none");
+                        $("#next-step-floating").removeClass("d-none");
                     }
 
                     // Scroll to top of booking container
