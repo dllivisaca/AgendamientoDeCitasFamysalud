@@ -475,17 +475,187 @@
                     <div class="booking-step" id="step6">
                         <h3 class="mb-4">Pago</h3>
 
+                        <!-- 1) Resumen de la cita (solo lectura) -->
+                        <div class="card mb-3">
+                            <div class="card-body">
+                            <h5 class="mb-3"><i class="bi bi-card-checklist me-2"></i>Resumen de la cita</h5>
+
+                            <div class="summary-item">
+                                <div class="row">
+                                <div class="col-md-4 text-muted">Área de atención:</div>
+                                <div class="col-md-8" id="pay-summary-category"></div>
+                                </div>
+                            </div>
+
+                            <div class="summary-item">
+                                <div class="row">
+                                <div class="col-md-4 text-muted">Servicio:</div>
+                                <div class="col-md-8" id="pay-summary-service"></div>
+                                </div>
+                            </div>
+
+                            <div class="summary-item">
+                                <div class="row">
+                                <div class="col-md-4 text-muted">Profesional:</div>
+                                <div class="col-md-8" id="pay-summary-employee"></div>
+                                </div>
+                            </div>
+
+                            <div class="summary-item">
+                                <div class="row">
+                                <div class="col-md-4 text-muted">Fecha y hora:</div>
+                                <div class="col-md-8" id="pay-summary-datetime"></div>
+                                </div>
+                            </div>
+
+                            <div class="summary-item">
+                                <div class="row">
+                                <div class="col-md-4 text-muted">Duración:</div>
+                                <div class="col-md-8" id="pay-summary-duration"></div>
+                                </div>
+                            </div>
+
+                            <div class="summary-item">
+                                <div class="row">
+                                <div class="col-md-4 text-muted">Modalidad:</div>
+                                <div class="col-md-8" id="pay-summary-mode"></div>
+                                </div>
+                            </div>
+                            </div>
+                        </div>
+
+                        <!-- 2) Resumen de pago (siempre visible) -->
+                        <div class="card mb-3">
+                            <div class="card-body">
+                            <h5 class="mb-2"><i class="bi bi-cash-coin me-2"></i>Resumen de pago</h5>
+
+                            <div class="small text-muted mb-3">
+                                El valor final puede variar según el método de pago seleccionado.
+                            </div>
+
+                            <div class="d-flex justify-content-between">
+                                <span>Precio del servicio (estándar):</span>
+                                <strong id="std-price">$0.00</strong>
+                            </div>
+
+                            <div class="d-flex justify-content-between" id="discount-row" style="display:none;">
+                                <span>Descuento por transferencia bancaria:</span>
+                                <strong id="discount-amount">-$0.00</strong>
+                            </div>
+
+                            <hr>
+
+                            <div class="d-flex justify-content-between">
+                                <span class="fs-5">Total a pagar:</span>
+                                <strong class="fs-5" id="total-to-pay">$0.00</strong>
+                            </div>
+                            </div>
+                        </div>
+
+                        <!-- 3) Método de pago -->
+                        <div class="card mb-3">
+                            <div class="card-body">
+                            <h5 class="mb-3"><i class="bi bi-credit-card-2-front me-2"></i>Método de pago</h5>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                <div class="border rounded p-3 h-100">
+                                    <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="payment_method" id="pm_card" value="card">
+                                    <label class="form-check-label fw-bold" for="pm_card">Pago con tarjeta (precio estándar)</label>
+                                    </div>
+                                    <div class="small text-muted mt-2">
+                                    Pago inmediato y confirmación automática de la cita.
+                                    </div>
+                                </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                <div class="border rounded p-3 h-100">
+                                    <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="payment_method" id="pm_transfer" value="transfer">
+                                    <label class="form-check-label fw-bold" for="pm_transfer">Transferencia bancaria (descuento aplicado)</label>
+                                    </div>
+                                    <div class="small text-muted mt-2">
+                                    Obtén un descuento pagando por transferencia bancaria.
+                                    </div>
+                                </div>
+                                </div>
+                            </div>
+
+                            <div class="alert alert-warning mt-3 mb-0" id="pm-hint">
+                                Selecciona un método de pago para continuar.
+                            </div>
+                            </div>
+                        </div>
+
+                        <!-- 4A) Transferencia -->
+                        <div class="card mb-3" id="transfer-block" style="display:none;">
+                            <div class="card-body">
+                            <h5 class="mb-3"><i class="bi bi-bank me-2"></i>Transferencia bancaria</h5>
+
+                            <!-- Datos bancarios (pon aquí los reales) -->
+                            <div class="alert alert-info">
+                                <div><strong>Banco:</strong> TU BANCO</div>
+                                <div><strong>Tipo de cuenta:</strong> Ahorros / Corriente</div>
+                                <div><strong>Número de cuenta:</strong> 0000000000</div>
+                                <div><strong>Titular:</strong> Centro Médico FamySALUD</div>
+                                <div><strong>Identificación:</strong> 0000000000</div>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                <label class="form-label">Banco de origen <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="tr_bank" placeholder="Ej: Pichincha">
+                                </div>
+                                <div class="col-md-6">
+                                <label class="form-label">Titular que realizó el pago <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="tr_holder" placeholder="Nombre del titular">
+                                </div>
+                                <div class="col-md-6">
+                                <label class="form-label">Fecha de transferencia <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="tr_date">
+                                </div>
+                                <div class="col-md-6">
+                                <label class="form-label">N° de referencia / comprobante <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="tr_ref" placeholder="Ej: 123456">
+                                </div>
+                                <div class="col-12">
+                                <label class="form-label">Comprobante (JPG/PNG/PDF) <span class="text-danger">*</span></label>
+                                <input type="file" class="form-control" id="tr_file" accept=".jpg,.jpeg,.png,.pdf">
+                                <div class="form-text">Tu cita se confirmará una vez validado el pago.</div>
+                                </div>
+                            </div>
+                            </div>
+                        </div>
+
+                        <!-- 4B) Tarjeta -->
+                        <div class="card mb-3" id="card-block" style="display:none;">
+                            <div class="card-body">
+                            <h5 class="mb-3"><i class="bi bi-credit-card me-2"></i>Pago con tarjeta</h5>
+
+                            <div class="alert alert-info">
+                                Tu pago se procesará de forma segura. (Aquí luego se integra la pasarela).
+                            </div>
+
+                            <!-- Placeholder de pasarela embebida -->
+                            <div class="border rounded p-3 bg-light">
+                                <div class="text-muted small">
+                                Aquí irá el formulario seguro de la pasarela (Stripe/Kushki/PayPhone/etc.).
+                                </div>
+                            </div>
+                            </div>
+                        </div>
+
+                        <!-- 5) Botón final -->
                         <div class="card">
                             <div class="card-body">
-                                <p class="mb-3">
-                                    Revisa los datos y continúa con el pago para confirmar tu cita.
-                                </p>
-
-                                <!-- Aquí puedes poner tu UI real de pago (transferencia / tarjeta / etc.) -->
-
-                                <button class="btn btn-success w-100" id="pay-now" type="button">
-                                    Confirmar y agendar <i class="bi bi-check2-circle"></i>
-                                </button>
+                            <button class="btn btn-success w-100" id="pay-now" type="button" disabled>
+                                Continuar <i class="bi bi-arrow-right"></i>
+                            </button>
+                            <div class="small text-muted mt-2">
+                                Al continuar aceptas nuestros términos y políticas.
+                            </div>
                             </div>
                         </div>
                     </div>
@@ -562,14 +732,17 @@
                 // STEP 6: CONFIRMAR Y AGENDAR
                 // ================================
                 $("#pay-now").on("click", function () {
-
-                    // Seguridad extra: validar de nuevo step 5
+                    // Validar datos del paso 5 por seguridad (perfecto mantenerlo)
                     if (!validateStep(5)) {
-                        alert("Por favor verifica los datos antes de continuar.");
+                        alert("Por favor verifica tus datos antes de continuar.");
                         return;
                     }
 
-                    // Aquí SÍ se agenda
+                    // Validar step 6 (método + campos si es transferencia)
+                    if (!validateStep6()) return;
+
+                    // ✅ Por ahora: manda a crear la reserva con un status coherente.
+                    // Luego conectamos pasarela (tarjeta) y subida real de comprobante al backend.
                     submitBooking();
                 });
 
@@ -728,7 +901,8 @@
                     selectedEmployee: null,
                     selectedDate: null,
                     selectedTime: null,
-                    appointmentMode: 'presencial'
+                    appointmentMode: 'presencial',
+                    paymentMethod: null
                 };
 
                 // Initialize the booking system
@@ -1033,7 +1207,7 @@
                     // Update the step indicators
                     $(".step").removeClass("active completed");
 
-                    for (let i = 1; i <= 5; i++) {
+                    for (let i = 1; i <= 6; i++) {
                         if (i < step) {
                             $(`.step[data-step="${i}"]`).addClass("completed");
                         } else if (i === step) {
@@ -1055,6 +1229,15 @@
                         updateSummary();
                     }
 
+                    if (step === 6) {
+                        // reset selección de pago cada vez que entras (opcional)
+                        bookingState.paymentMethod = null;
+                        $('input[name="payment_method"]').prop('checked', false);
+
+                        fillStep6Summary();
+                        refreshPaymentUI();
+                    }
+
                     // Scroll to top of booking container
                     $(".booking-container")[0].scrollIntoView({
                         behavior: "smooth"
@@ -1074,7 +1257,7 @@
 
 
                 function updateProgressBar() {
-                    const progress = ((bookingState.currentStep - 1) / 4) * 100;
+                    const progress = ((bookingState.currentStep - 1) / 5) * 100;
                     $(".progress-bar-steps .progress").css("width", `${progress}%`);
                 }
 
@@ -1755,16 +1938,126 @@
                     );
                 }
 
+                function money(n) {
+                    const x = Math.round((n + Number.EPSILON) * 100) / 100;
+                    return `$${x.toFixed(2)}`;
+                    }
 
+                    // En tu app: bookingState.selectedService.price viene como texto tipo "Efectivo / Transferencia: $15.00"
+                    function getTransferAmount() {
+                    if (!bookingState.selectedService?.price) return 0;
+                    const num = parseFloat(String(bookingState.selectedService.price).replace(/[^0-9.]/g, ""));
+                    return isNaN(num) ? 0 : num;
+                    }
+
+                    function computePaymentFigures() {
+                    const transfer = getTransferAmount();      // precio con descuento (transferencia)
+                    const standard = transfer * 1.08;          // precio estándar (tarjeta)
+                    const discount = standard - transfer;      // descuento por transferencia
+                    return { transfer, standard, discount };
+                    }
+
+                    function fillStep6Summary() {
+                    const selectedCategory = categories.find(cat => cat.id == bookingState.selectedCategory);
+
+                    $("#pay-summary-category").text(selectedCategory ? selectedCategory.title : "");
+                    $("#pay-summary-service").text(bookingState.selectedService?.title || "");
+                    $("#pay-summary-employee").text(bookingState.selectedEmployee?.user?.name || "");
+                    $("#pay-summary-duration").text(
+                        bookingState.selectedEmployee?.slot_duration ? `${bookingState.selectedEmployee.slot_duration} minutos` : ""
+                    );
+                    $("#pay-summary-mode").text(bookingState.appointmentMode === "virtual" ? "Virtual" : "Presencial");
+
+                    if (bookingState.selectedDate && bookingState.selectedTime) {
+                        let formattedDate = new Date(bookingState.selectedDate + "T00:00:00")
+                        .toLocaleDateString("es-EC", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+                        formattedDate = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
+
+                        $("#pay-summary-datetime").text(`${formattedDate} a las ${bookingState.selectedTime.display || ""}`);
+                    }
+                    }
+
+                    function refreshPaymentUI() {
+                    const { transfer, standard, discount } = computePaymentFigures();
+                    const method = bookingState.paymentMethod;
+
+                    // Siempre mostramos el precio estándar
+                    $("#std-price").text(money(standard));
+
+                    if (method === "transfer") {
+                        $("#discount-row").show();
+                        $("#discount-amount").text(`-${money(discount).replace("$", "$")}`);
+                        $("#total-to-pay").text(money(transfer));
+                    } else {
+                        $("#discount-row").hide();
+                        $("#total-to-pay").text(money(standard));
+                    }
+
+                    // Mostrar / ocultar bloques
+                    $("#transfer-block").toggle(method === "transfer");
+                    $("#card-block").toggle(method === "card");
+
+                    // Botón final
+                    if (!method) {
+                        $("#pm-hint").show();
+                        $("#pay-now").prop("disabled", true).html('Continuar <i class="bi bi-arrow-right"></i>');
+                    } else {
+                        $("#pm-hint").hide();
+                        $("#pay-now").prop("disabled", false);
+
+                        if (method === "transfer") {
+                        $("#pay-now").html('Registrar cita y enviar comprobante <i class="bi bi-check2-circle"></i>');
+                        } else {
+                        $("#pay-now").html('Pagar y confirmar cita <i class="bi bi-check2-circle"></i>');
+                        }
+                    }
+                    }
+
+                    // Valida solo lo mínimo del step6 (luego lo afinamos)
+                    function validateStep6() {
+                    if (!bookingState.paymentMethod) {
+                        alert("Selecciona un método de pago para continuar.");
+                        return false;
+                    }
+
+                    if (bookingState.paymentMethod === "transfer") {
+                        const bank = $("#tr_bank").val().trim();
+                        const holder = $("#tr_holder").val().trim();
+                        const date = $("#tr_date").val().trim();
+                        const ref = $("#tr_ref").val().trim();
+                        const file = $("#tr_file")[0]?.files?.[0];
+
+                        if (!bank || !holder || !date || !ref || !file) {
+                        alert("Completa los datos de la transferencia y adjunta el comprobante.");
+                        return false;
+                        }
+                    }
+
+                    // Tarjeta: aquí luego validas con la pasarela (por ahora solo deja pasar)
+                    return true;
+                }
 
                 // function submitBooking() {
-
                 function submitBooking() {
                     // Get form data
                     const form = $('#customer-info-form');
-                    const csrfToken = form.find('input[name="_token"]').val(); // Get CSRF token from form
+                    const csrfToken = form.find('input[name="_token"]').val();
 
-                    // Prepare booking data
+                    // ✅ 1) Calcular montos/estado ANTES de armar bookingData
+                    const { transfer, standard, discount } = computePaymentFigures();
+
+                    let finalAmount = standard;
+                    let status = "Pending payment";
+
+                    if (bookingState.paymentMethod === "transfer") {
+                        finalAmount = transfer;
+                        status = "Pending verification";
+                    } else if (bookingState.paymentMethod === "card") {
+                        finalAmount = standard;
+                        status = "Pending card payment";
+                    }
+
+                    // ✅ 2) Preparar booking data ya con valores correctos
                     const bookingData = {
                         employee_id: bookingState.selectedEmployee.id,
                         service_id: bookingState.selectedService.id,
@@ -1772,21 +2065,26 @@
                         email: $('#patient_email').val(),
                         phone: $('#patient_phone').val(),
                         notes: $('#patient_notes').val(),
-                        amount: parseFloat(bookingState.selectedService.price.replace(/[^0-9.]/g, '')),
                         appointment_date: bookingState.selectedDate,
                         appointment_time: bookingState.selectedTime.start || bookingState.selectedTime,
-                        status: 'Pending payment',
                         appointment_mode: bookingState.appointmentMode,
-                        _token: csrfToken // Include CSRF token in payload
+
+                        amount: finalAmount,
+                        status: status,
+                        payment_method: bookingState.paymentMethod,
+                        payment_standard_amount: standard,
+                        payment_discount_amount: discount,
+
+                        _token: csrfToken
                     };
 
-                    // Add user_id if authenticated (using JavaScript approach)
+                    // Add user_id if authenticated
                     if (typeof currentAuthUser !== 'undefined' && currentAuthUser) {
                         bookingData.user_id = currentAuthUser.id;
                     }
 
-                    // Show loading state
-                    const nextBtn = $("#next-step");
+                    // Show loading state                    
+                    const payBtn = $("#pay-now");
                     nextBtn.prop('disabled', true).html(
                         '<span class="spinner-border spinner-border-sm" role="status"></span> Processing...'
                     );
@@ -1796,55 +2094,48 @@
                         url: '/bookings',
                         method: 'POST',
                         data: bookingData,
-                        success: function(response) {
-                            // Update modal with booking details
-                            const formattedDate = new Date(bookingState.selectedDate + "T00:00:00")
-                                .toLocaleDateString('es-EC', {
-                                    weekday: 'long',
-                                    year: 'numeric',
-                                    month: 'long',
-                                    day: 'numeric'
-                                });
+                        success: function (response) {
 
-                            const bookingDetails = `
-                                    <div class="mb-2"><strong>Customer:</strong> ${$("#patient_full_name").val()}</div>
-                                    <div class="mb-2"><strong>Service:</strong> ${bookingState.selectedService.title}</div>
-                                    <div class="mb-2"><strong>Staff:</strong> ${bookingState.selectedEmployee.user.name}</div>
-                                    <div class="mb-2"><strong>Fecha y hora:</strong> ${formattedDate} a las ${bookingState.selectedTime.display || bookingState.selectedTime}</div>
-                                    <div class="mb-2"><strong>Amount:</strong> ${bookingState.selectedService.price}</div>
-                                    <div><strong>Reference:</strong> ${response.booking_id || 'BK-' + Math.random().toString(36).substr(2, 8).toUpperCase()}</div>
-                                `;
+                        const formattedDate = new Date(bookingState.selectedDate + "T00:00:00")
+                            .toLocaleDateString('es-EC', {
+                            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+                            });
 
-                            $('#modal-booking-details').html(bookingDetails);
+                        // ✅ 3) Mostrar en modal el total real (no el precio antiguo)
+                        const bookingDetails = `
+                            <div class="mb-2"><strong>Customer:</strong> ${$("#patient_full_name").val()}</div>
+                            <div class="mb-2"><strong>Service:</strong> ${bookingState.selectedService.title}</div>
+                            <div class="mb-2"><strong>Staff:</strong> ${bookingState.selectedEmployee.user.name}</div>
+                            <div class="mb-2"><strong>Fecha y hora:</strong> ${formattedDate} a las ${bookingState.selectedTime.display || bookingState.selectedTime}</div>
+                            <div class="mb-2"><strong>Total:</strong> $${Number(finalAmount).toFixed(2)} (${bookingState.paymentMethod === 'transfer' ? 'Transferencia' : 'Tarjeta'})</div>
+                            <div><strong>Reference:</strong> ${response.booking_id || 'BK-' + Math.random().toString(36).substr(2, 8).toUpperCase()}</div>
+                        `;
 
-                            // Show success modal
-                            const successModal = new bootstrap.Modal('#bookingSuccessModal');
-                            successModal.show();
+                        $('#modal-booking-details').html(bookingDetails);
 
-                            // Reset form after delay
-                            setTimeout(resetBooking, 1000);
+                        const successModal = new bootstrap.Modal('#bookingSuccessModal');
+                        successModal.show();
+
+                        setTimeout(resetBooking, 1000);
                         },
-                        error: function(xhr) {
-                            let errorMessage = 'Agendamiento fallido. Por favor, intente de nuevo.';
+                        error: function (xhr) {
+                        let errorMessage = 'Agendamiento fallido. Por favor, intente de nuevo.';
 
-                            if (xhr.responseJSON && xhr.responseJSON.message) {
-                                errorMessage = xhr.responseJSON.message;
-                            } else if (xhr.status === 422) {
-                                errorMessage = 'Error de validación: Por favor revise la información.';
-                            }
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        } else if (xhr.status === 422) {
+                            errorMessage = 'Error de validación: Por favor revise la información.';
+                        }
 
-                            alert(errorMessage);
-                            nextBtn.prop('disabled', false).html(
-                                'Ir a pagar <i class="bi bi-arrow-right"></i>');
+                        alert(errorMessage);
+                        nextBtn.prop('disabled', false).html('Ir a pagar <i class="bi bi-arrow-right"></i>');
                         },
-                        complete: function() {
-                            // Re-enable button if request fails
-                            if (nextBtn.prop('disabled')) {
-                                setTimeout(() => {
-                                    nextBtn.prop('disabled', false).html(
-                                        'Ir a pagar <i class="bi bi-arrow-right"></i>');
-                                }, 2000);
-                            }
+                        complete: function () {
+                        if (nextBtn.prop('disabled')) {
+                            setTimeout(() => {
+                            nextBtn.prop('disabled', false).html('Ir a pagar <i class="bi bi-arrow-right"></i>');
+                            }, 2000);
+                        }
                         }
                     });
                 }
@@ -1857,7 +2148,9 @@
                         selectedService: null,
                         selectedEmployee: null,
                         selectedDate: null,
-                        selectedTime: null
+                        selectedTime: null,
+                        appointmentMode: 'presencial',
+                        paymentMethod: null
                     };
 
                     // Reset UI
@@ -2006,6 +2299,11 @@
 
                 // Primera evaluación
                 setTimeout(updateFloatingNext, 0);
+
+                $(document).on("change", 'input[name="payment_method"]', function () {
+                    bookingState.paymentMethod = this.value; // 'card' o 'transfer'
+                    refreshPaymentUI();
+                });
             });
         </script>
 
@@ -2455,8 +2753,6 @@
                 })();
             })();
         </script>
-
-        <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/intlTelInput.min.js"></script>
 
         <script>
             (function () {
