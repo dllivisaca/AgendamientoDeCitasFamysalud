@@ -527,3 +527,8 @@ body {
   color: #212529 !important;  /* negro normal */
   font-weight: 400 !important; /* normal, NO bold */
 }
+
+/* Labels del resumen de pago en negro */
+.form-section .d-flex > span {
+    color: #212529; /* negro Bootstrap */
+}
