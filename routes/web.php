@@ -12,11 +12,15 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\FrontendController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\AppointmentHoldController;
 
 use Illuminate\Http\Request;
 
 
 Auth::routes();
+
+Route::post('/appointment-holds', [AppointmentHoldController::class, 'create'])->name('appointment.holds.create');
+Route::post('/appointment-holds/release', [AppointmentHoldController::class, 'release'])->name('appointment.holds.release');
 
 Route::get('/',[FrontendController::class,'index'])->name('home');
 

@@ -1186,12 +1186,11 @@ if ($usingOldInput) {
             $('#Staff').text($(this).data('employee'));
             $('#modalStartTime').text($(this).data('start'));
             $('#Amount').text($(this).data('amount'));
-            $('#Notes').text($(this).data('notes'));
-            $('#modalStatusBadgeforEmployee').text($(this).data('status'));
+            $('#Notes').text($(this).data('notes'));            
 
-            // Set status select
+            // Set status select dropdown
             var status = $(this).data('status');
-            $('#CurrentStatus').val(status);
+            $('#modalStatusSelect').val(status);
 
             // Set colored status badge
             var statusColors = {

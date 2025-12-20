@@ -129,7 +129,7 @@
                                 </b>{{ $booking->country }}
                             </p>
                             <p class="lead mb-0"><b>Service Provider</b>: {{ $booking->employee_name }}</p>
-                            <p class="lead mb-0"><b>Booking Time</b>: {{ $booking->booking_time }}</p>
+                            <p class="lead mb-0"><b>Booking Time</b>: {{ $booking->appointment_time }}</p>
                             <p class="lead"><b>Booking Date</b>:
                                 {{ $booking->appointment_date ? date('d M Y', strtotime($booking->appointment_date)) : 'N/A' }}</p>
 
