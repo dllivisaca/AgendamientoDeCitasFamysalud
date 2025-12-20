@@ -69,12 +69,13 @@ class AppointmentHoldController extends Controller
                 DB::commit();
                 return response()->json([
                     'ok' => true,
+                    'hold_id' => $existing->id,
                     'expires_at' => $expiresAt->toDateTimeString(),
                     'renewed' => true,
                 ]);
             }
 
-            AppointmentHold::create([
+            $created = AppointmentHold::create([
                 'employee_id' => $data['employee_id'],
                 'service_id' => $data['service_id'],
                 'appointment_date' => $data['appointment_date'],
@@ -88,6 +89,7 @@ class AppointmentHoldController extends Controller
 
             return response()->json([
                 'ok' => true,
+                'hold_id' => $created->id,
                 'expires_at' => $expiresAt->toDateTimeString(),
                 'renewed' => false,
             ]);
@@ -133,5 +135,17 @@ class AppointmentHoldController extends Controller
             ->where('session_id', $sessionId)
             ->where('expires_at', '>', now())
             ->exists();
+    }
+
+    // DELETE /holds/{id}
+    public function destroy(Request $request, int $id)
+    {
+        $sessionId = $request->session()->getId();
+
+        AppointmentHold::where('id', $id)
+            ->where('session_id', $sessionId)
+            ->delete();
+
+        return response()->json(['ok' => true]);
     }
 }
