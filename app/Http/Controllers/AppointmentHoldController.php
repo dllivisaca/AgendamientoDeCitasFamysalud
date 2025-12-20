@@ -68,7 +68,7 @@ class AppointmentHoldController extends Controller
 
                 DB::commit();
                 return response()->json([
-                    'ok' => true,
+                    'success' => true,
                     'hold_id' => $existing->id,
                     'expires_at' => $expiresAt->toDateTimeString(),
                     'renewed' => true,
@@ -88,7 +88,7 @@ class AppointmentHoldController extends Controller
             DB::commit();
 
             return response()->json([
-                'ok' => true,
+                'success' => true,
                 'hold_id' => $created->id,
                 'expires_at' => $expiresAt->toDateTimeString(),
                 'renewed' => false,

@@ -20,7 +20,12 @@ use Illuminate\Http\Request;
 Auth::routes();
 
 Route::post('/appointment-holds', [AppointmentHoldController::class, 'create'])->name('appointment.holds.create');
+
 Route::post('/appointment-holds/release', [AppointmentHoldController::class, 'release'])->name('appointment.holds.release');
+
+Route::post('/holds', [AppointmentHoldController::class, 'create'])
+    ->name('holds.create');
+    
 Route::delete('/holds/{id}', [AppointmentHoldController::class, 'destroy'])->name('appointment.holds.destroy');
 
 Route::get('/',[FrontendController::class,'index'])->name('home');

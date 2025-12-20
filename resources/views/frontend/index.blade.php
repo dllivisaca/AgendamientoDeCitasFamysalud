@@ -787,7 +787,7 @@
                 $("#pay-now").on("click", function () {
                     // Validar datos del paso 5 por seguridad (perfecto mantenerlo)
                     if (!validateStep(5)) {
-                        alert("Por favor verifica tus datos antes de continuar.");
+                        alert("Por favor, verifique la información ingresada antes de continuar.");
                         return;
                     }
 
@@ -1329,7 +1329,7 @@
                         // recuperar botón
                         $btn.removeClass("disabled").html(originalHtml);
 
-                        alert("Ese turno ya no está disponible. Te muestro los turnos actualizados.");
+                        alert("Ese turno ya no está disponible. A continuación se mostrarán los turnos disponibles actualizados.");
                         updateTimeSlots(bookingState.selectedDate);
                         setTimeout(updateFloatingNext, 0);
                     });
@@ -1514,7 +1514,7 @@
                             // 2) Después: consentimiento
                             const consent = document.getElementById("consent_data");
                             if (!consent || !consent.checked) {
-                                alert("Debes autorizar el uso de los datos personales para continuar.");
+                                alert("Para continuar, debe autorizar el uso de los datos personales.");
                                 return false;
                             }
 
