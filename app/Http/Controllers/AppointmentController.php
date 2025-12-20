@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\DB;
+use App\Models\AppointmentHold;
 use App\Models\Appointment;
 use App\Models\Setting;
 use Illuminate\Http\Request;
@@ -37,6 +39,9 @@ class AppointmentController extends Controller
             'user_id' => 'nullable|exists:users,id',
             'employee_id' => 'required|exists:employees,id',
             'service_id' => 'required|exists:services,id',
+
+            // ✅ HOLD ID
+            'hold_id' => 'required|integer',
 
             // PACIENTE
             'patient_full_name' => 'required|string|max:255',
@@ -96,8 +101,51 @@ class AppointmentController extends Controller
         // Generate unique booking ID
         $validated['booking_id'] = 'BK-' . strtoupper(uniqid());
 
+        // ✅ PASO 6: validar HOLD activo
+        $sessionId = $request->session()->getId();
 
-        $appointment = Appointment::create($validated);
+        $hold = AppointmentHold::where('id', $validated['hold_id'])
+            ->where('session_id', $sessionId)
+            ->where('employee_id', $validated['employee_id'])
+            ->where('appointment_date', $validated['appointment_date'])
+            ->where('appointment_time', $validated['appointment_time'])
+            ->where('expires_at', '>', now())
+            ->first();
+
+        if (!$hold) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tu reserva expiró o ese turno ya no está disponible. Por favor selecciona el turno nuevamente.'
+            ], 409);
+        }
+
+        // ✅ Seguridad extra: evitar doble cita en el mismo turno (por si hay carrera)
+        $slotTaken = Appointment::where('employee_id', $validated['employee_id'])
+            ->where('appointment_date', $validated['appointment_date'])
+            ->where('appointment_time', $validated['appointment_time'])
+            ->where('status', '!=', 'Cancelled')
+            ->exists();
+
+        if ($slotTaken) {
+            // si por alguna razón el turno ya se convirtió en cita, liberamos hold
+            $hold->delete();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Ese turno ya no está disponible. Por favor selecciona otro.'
+            ], 409);
+        }
+
+        $appointment = null;
+
+        DB::transaction(function () use (&$appointment, $validated, $hold) {
+            unset($validated['hold_id']);
+
+            $appointment = Appointment::create($validated);
+
+            // ✅ consumir el hold
+            $hold->delete();
+        });
 
         event(new BookingCreated($appointment));
 

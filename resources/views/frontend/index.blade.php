@@ -955,8 +955,72 @@
                     selectedDate: null,
                     selectedTime: null,
                     appointmentMode: 'presencial',
-                    paymentMethod: null
+                    paymentMethod: null,
+
+                    // ✅ HOLD
+                    hold_id: null,
+                    hold_expires_at: null
                 };
+
+                // ================================
+                // ✅ HOLD HELPERS (15 minutos)
+                // ================================
+                const HOLD_TTL_MINUTES = 15;
+
+                // CSRF (ya lo tienes dentro de step5 forms)
+                function getCsrfToken() {
+                    const t = $('input[name="_token"]').first().val();
+                    return t || null;
+                }
+
+                function clearHoldState() {
+                    bookingState.hold_id = null;
+                    bookingState.hold_expires_at = null;
+                }
+
+                function releaseHoldIfAny() {
+                    if (!bookingState.hold_id) return $.Deferred().resolve().promise();
+
+                    const holdId = bookingState.hold_id;
+                    clearHoldState();
+
+                    return $.ajax({
+                        url: `/holds/${encodeURIComponent(holdId)}`,
+                        method: "DELETE",
+                        data: { _token: getCsrfToken() }
+                    }).catch(() => {});
+                }
+
+                /**
+                 * Crea hold en backend para el slot seleccionado.
+                 * Si backend dice "ya ocupado", devolvemos false.
+                 */
+                function createHoldForSelection() {
+                    if (!bookingState.selectedEmployee || !bookingState.selectedService || !bookingState.selectedDate || !bookingState.selectedTime?.start) {
+                        return $.Deferred().reject("missing_data").promise();
+                    }
+
+                    return $.ajax({
+                        url: "/holds",
+                        method: "POST",
+                        dataType: "json",
+                        data: {
+                        _token: getCsrfToken(),
+                        employee_id: bookingState.selectedEmployee.id,
+                        service_id: bookingState.selectedService.id,
+                        appointment_date: bookingState.selectedDate,
+                        appointment_time: bookingState.selectedTime.start,
+                        appointment_mode: bookingState.appointmentMode,
+                        ttl_minutes: HOLD_TTL_MINUTES
+                        }
+                    }).then((res) => {
+                        if (!res || !res.success) return $.Deferred().reject(res?.message || "hold_failed").promise();
+
+                        bookingState.hold_id = res.hold_id;
+                        bookingState.hold_expires_at = res.expires_at || null;
+                        return true;
+                    });
+                }
 
                 // Initialize the booking system
                 updateProgressBar();
@@ -1005,6 +1069,8 @@
                     bookingState.selectedDate = null;
                     bookingState.selectedTime = null;
 
+                    releaseHoldIfAny();
+
                     // Update the service step with services for this category
                     updateServicesStep(categoryId);
                 });
@@ -1033,6 +1099,8 @@
                     bookingState.selectedEmployee = null;
                     bookingState.selectedDate = null;
                     bookingState.selectedTime = null;
+
+                    releaseHoldIfAny();
 
                     // Clear previous selections UI
                     $(".employee-card").removeClass("selected");
@@ -1132,6 +1200,9 @@
                     // Resetear selecciones posteriores
                     bookingState.selectedDate = null;
                     bookingState.selectedTime = null;
+
+                    releaseHoldIfAny();
+
                     $(".calendar-day").removeClass("selected");
                     $(".time-slot").removeClass("selected");
 
@@ -1199,6 +1270,9 @@
                     const date = $(this).data("date");
                     bookingState.selectedDate = date;
 
+                    // ✅ si ya había un turno holdeado, lo libero
+                    releaseHoldIfAny();
+
                     // Reset time selection
                     bookingState.selectedTime = null;
 
@@ -1212,22 +1286,55 @@
                         updateTimeSlots(date);
                 });
 
-                // Time slot selection
+                // Time slot selection + HOLD
                 $(document).on("click", ".time-slot:not(.disabled)", function() {
-                    $(".time-slot").removeClass("selected active");
-                    $(this).addClass("selected active");
+                    const $btn = $(this);
 
-                    bookingState.selectedTime = {
-                        start: $(this).data("start"),
-                        end: $(this).data("end"),
-                        // lo que se ve en pantalla (ya sea convertido a la TZ del usuario o Ecuador)
-                        display: $(this).text().trim(),
-                        // opcional: por si quieres guardar también el texto “base Ecuador”
-                        display_ec: $(this).data("display-ec") || null
+                    // Armamos selectedTime con lo que el usuario clickeó
+                    const newSelectedTime = {
+                        start: $btn.data("start"),
+                        end: $btn.data("end"),
+                        display: $btn.text().trim(),
+                        display_ec: $btn.data("display-ec") || null
                     };
 
-                    updateSummary && updateSummary();
+                    // Guardar selección preliminar en state (pero aún NO confirmamos visualmente)
+                    bookingState.selectedTime = newSelectedTime;
+
+                    // UI: loading suave en el botón
+                    const originalHtml = $btn.html();
+                    $(".time-slot").removeClass("selected active"); // quita selección previa
+
+                    $btn.addClass("disabled").html(`<span class="spinner-border spinner-border-sm me-2"></span> Reservando...`);
+
+                    // 1) Si había hold previo, liberarlo primero
+                    releaseHoldIfAny().then(() => {
+
+                        // 2) Intentar crear hold
+                        return createHoldForSelection();
+
+                    }).then(() => {
+                        // ✅ Hold creado: ahora sí seleccionamos el turno
+                        $btn.removeClass("disabled").html(originalHtml);
+                        $btn.addClass("selected active");
+
+                        updateSummary && updateSummary();
+                        setTimeout(updateFloatingNext, 0);
+
+                    }).catch((err) => {
+                        // ❌ No se pudo crear hold: limpiar selección, recargar turnos y avisar
+                        bookingState.selectedTime = null;
+                        clearHoldState();
+
+                        // recuperar botón
+                        $btn.removeClass("disabled").html(originalHtml);
+
+                        alert("Ese turno ya no está disponible. Te muestro los turnos actualizados.");
+                        updateTimeSlots(bookingState.selectedDate);
+                        setTimeout(updateFloatingNext, 0);
+                    });
                 });
+
                 // Calendar navigation
                 $("#prev-month").click(function() {
                     navigateMonth(-1);
@@ -1386,6 +1493,10 @@
                             }
                             if (!bookingState.selectedTime) {
                                 alert("Por favor seleccione un turno");
+                                return false;
+                            }
+                            if (!bookingState.hold_id) {
+                                alert("Por favor seleccione un turno disponible (se reservará temporalmente).");
                                 return false;
                             }
                             return true;
@@ -2241,6 +2352,8 @@
 
                     // ✅ 2) Preparar booking data ya con valores correctos
                     const bookingData = {
+                        hold_id: bookingState.hold_id,   // ✅ agrega esto
+
                         employee_id: bookingState.selectedEmployee.id,
                         service_id: bookingState.selectedService.id,
                         name: $('#patient_full_name').val(),

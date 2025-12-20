@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\AppointmentHold;
 use App\Models\Category;
 use App\Models\Employee;
 use App\Models\Service;
@@ -12,6 +13,7 @@ use Spatie\OpeningHours\OpeningHours;
 use Carbon\Carbon;
 use Illuminate\Support\Number;
 use View;
+
 
 class FrontendController extends Controller
 {
@@ -96,6 +98,8 @@ class FrontendController extends Controller
         $date = $date ? Carbon::parse($date) : now();
 
         $now = now();
+
+        AppointmentHold::where('expires_at', '<', now())->delete();
 
         // ✅ Máximo permitido: próximo sábado (si hoy es sábado, será el sábado siguiente)
         $maxAllowedDate = $now->copy()->next(Carbon::SATURDAY)->endOfDay();
@@ -204,14 +208,29 @@ class FrontendController extends Controller
             ->whereNotIn('status', ['Cancelled'])
             ->get(['appointment_time']);
 
-        // Convert existing appointments to time ranges we can compare against
-        $bookedSlots = $existingAppointments->map(function ($appointment) {
-            $times = explode(' - ', $appointment->appointment_time);
+        $activeHolds = AppointmentHold::where('appointment_date', $date->toDateString())
+            ->where('employee_id', $employeeId)
+            ->where('expires_at', '>', now())
+            ->get(['appointment_time']);
+
+        $holdSlots = $activeHolds->map(function ($hold) {
+            $times = explode(' - ', $hold->appointment_time);
             return [
                 'start' => Carbon::createFromFormat('g:i A', trim($times[0]))->format('H:i'),
                 'end'   => Carbon::createFromFormat('g:i A', trim($times[1]))->format('H:i'),
             ];
         })->toArray();
+
+        $bookedSlots = array_merge(
+            $existingAppointments->map(function ($appointment) {
+                $times = explode(' - ', $appointment->appointment_time);
+                return [
+                    'start' => Carbon::createFromFormat('g:i A', trim($times[0]))->format('H:i'),
+                    'end'   => Carbon::createFromFormat('g:i A', trim($times[1]))->format('H:i'),
+                ];
+            })->toArray(),
+            $holdSlots
+        );
 
         foreach ($availableRanges as $range) {
             $start = Carbon::parse($date->toDateString() . ' ' . $range->start()->format('H:i'));
@@ -305,6 +324,7 @@ class FrontendController extends Controller
 
         $now = now();
         $minAllowed = $now->copy()->addHours(24);
+        AppointmentHold::where('expires_at', '<', now())->delete();
 
         // ✅ tu regla del sábado
         $maxAllowedDate = $now->copy()->next(Carbon::SATURDAY)->endOfDay();
@@ -365,12 +385,27 @@ class FrontendController extends Controller
                 ->whereNotIn('status', ['Cancelled'])
                 ->get(['appointment_date', 'appointment_time']);
 
+            $activeHolds = AppointmentHold::whereBetween('appointment_date', [$start->toDateString(), $end->toDateString()])
+                ->where('employee_id', $employee->id)
+                ->where('expires_at', '>', now())
+                ->get(['appointment_date', 'appointment_time']);
+
             $bookedByDate = [];
             foreach ($existingAppointments as $appt) {
                 $times = explode(' - ', $appt->appointment_time);
                 if (count($times) !== 2) continue;
 
                 $bookedByDate[$appt->appointment_date][] = [
+                    'start' => Carbon::createFromFormat('g:i A', trim($times[0]))->format('H:i'),
+                    'end'   => Carbon::createFromFormat('g:i A', trim($times[1]))->format('H:i'),
+                ];
+            }
+
+            foreach ($activeHolds as $hold) {
+                $times = explode(' - ', $hold->appointment_time);
+                if (count($times) !== 2) continue;
+
+                $bookedByDate[$hold->appointment_date][] = [
                     'start' => Carbon::createFromFormat('g:i A', trim($times[0]))->format('H:i'),
                     'end'   => Carbon::createFromFormat('g:i A', trim($times[1]))->format('H:i'),
                 ];
