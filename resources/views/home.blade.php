@@ -8,11 +8,12 @@
 
 @section('content')
 @php
-     $appointments = Appointment::whereMonth('booking_date', Carbon::now()->month)
-            ->whereYear('booking_date', Carbon::now()->year)
+     $appointments = Appointment::whereMonth('appointment_date', Carbon::now()->month)
+            ->whereYear('appointment_date', Carbon::now()->year)
             ->where('status', 'Confirmed') // Only show confirmed appointments
             ->get();
 @endphp
+
     <p>Welcome to this beautiful admin panel.</p>
     <div id="calendar"></div>
 
@@ -22,18 +23,16 @@
             events: [
                 @foreach($appointments as $appointment)
                     {
-                        title: '{{ $appointment->name }} - {{ $appointment->service->name }}',  // Appointment Name and Service
-                        start: '{{ $appointment->booking_date }}T{{ $appointment->booking_time }}', // Date + Time
-                        end: '{{ $appointment->booking_date }}T{{ \Carbon\Carbon::parse($appointment->booking_time)->addHours(1)->format('H:i') }}', // Add one hour to the appointment time for end time
-                        description: '{{ $appointment->notes }}', // Description (Optional)
-                        color: 'green', // Color for confirmed appointments
+                        title: '{{ $appointment->patient_full_name }} - {{ optional($appointment->service)->name }}',
+                        start: '{{ $appointment->appointment_date }}T{{ $appointment->appointment_time }}',
+                        end: '{{ $appointment->appointment_date }}T{{ \Carbon\Carbon::parse($appointment->appointment_time)->addHours(1)->format('H:i') }}',
+                        description: '{{ $appointment->patient_notes }}',
+                        color: 'green',
                     },
                 @endforeach
             ],
-            // Optional: Customization for the calendar
             eventClick: function(event) {
-                // If you want to show more info when clicking on an event, you can do so here.
-                alert(event.title);  // Display event title (name + service)
+                alert(event.title);
             },
         });
     });
@@ -42,15 +41,10 @@
 @stop
 
 @section('css')
-    {{-- Add here extra stylesheets --}}
-    {{-- <link rel="stylesheet" href="/css/admin_custom.css"> --}}
-    <!-- FullCalendar CSS -->
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@3.2.0/dist/fullcalendar.css" rel="stylesheet">
-
 @stop
 
 @section('js')
-    <!-- jQuery and FullCalendar JS -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@3.2.0/dist/fullcalendar.min.js"></script>

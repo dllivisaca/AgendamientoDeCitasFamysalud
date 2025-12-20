@@ -143,7 +143,7 @@
                                                 </td>
                                                 <td>
                                                     <a>
-                                                        {{ $appointment->name }}
+                                                        {{ $appointment->patient_full_name }}
                                                     </a>
                                                     <br>
                                                     <small>
@@ -151,10 +151,10 @@
                                                     </small>
                                                 </td>
                                                 <td>
-                                                    {{ $appointment->email }}
+                                                    {{ $appointment->patient_email }}
                                                 </td>
                                                 <td>
-                                                    {{ $appointment->phone }}
+                                                    {{ $appointment->patient_phone }}
                                                 </td>
                                                 <td>
                                                     {{ $appointment->employee->user->name }}
@@ -164,10 +164,10 @@
                                                     {{ $appointment->service->title ?? 'NA' }}
                                                 </td>
                                                 <td>
-                                                    {{ $appointment->booking_date }}
+                                                    {{ $appointment->appointment_date }}
                                                 </td>
                                                 <td>
-                                                    {{ $appointment->booking_time }}
+                                                    {{ $appointment->appointment_time }}
                                                 </td>
                                                 <td>
                                                     @php
@@ -183,14 +183,14 @@
                                                     <button class="btn btn-primary btn-sm py-0 px-1 view-appointment-btn"
                                                         data-toggle="modal" data-target="#appointmentModal"
                                                         data-id="{{ $appointment->id }}"
-                                                        data-name="{{ $appointment->name }}"
+                                                        data-name="{{ $appointment->patient_full_name }}"
                                                         data-service="{{ $appointment->service->title ?? 'MA' }}"
-                                                        data-email="{{ $appointment->email }}"
-                                                        data-phone="{{ $appointment->phone }}"
+                                                        data-email="{{ $appointment->patient_email }}"
+                                                        data-phone="{{ $appointment->patient_phone }}"
                                                         data-employee="{{ $appointment->employee->user->name }}"
-                                                        data-start="{{ $appointment->booking_date . ' ' . $appointment->booking_time }}"
+                                                        data-start="{{ $appointment->appointment_date . ' ' . $appointment->appointment_time }}"
                                                         data-amount="{{ $appointment->amount }}"
-                                                        data-notes="{{ $appointment->notes }}"
+                                                        data-notes="{{ $appointment->patient_notes }}"
                                                         data-status="{{ $appointment->status }}">View</button>
                                                 </td>
                                             </tr>

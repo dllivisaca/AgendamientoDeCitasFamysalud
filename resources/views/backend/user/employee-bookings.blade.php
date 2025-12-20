@@ -69,8 +69,8 @@
                                             <td>{{ $booking->first_name }} {{ $booking->last_name }}</td>
                                             <td>{{ $booking->email }}</td>
                                             <td>{{ $booking->phone }}</td>
-                                            <td>@if($booking->booking_time) {{ $booking->booking_time }} @else NA @endif</td>
-                                            <td>{{ \Carbon\Carbon::parse($booking->booking_date)->format('d, M Y') }}</td>
+                                            <td>@if($booking->appointment_time) {{ $booking->appointment_time }} @else NA @endif</td>
+                                            <td>{{ \Carbon\Carbon::parse($booking->appointment_date)->format('d, M Y') }}</td>
                                             <td>{{ $booking->employee_name }}</td>
 
 

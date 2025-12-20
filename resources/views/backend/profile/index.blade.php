@@ -817,11 +817,11 @@ if ($usingOldInput) {
                                                                     <tr>
 
                                                                         <td>{{ $loop->iteration }} </td>
-                                                                        <td>{{ $appointment->name }} </td>
+                                                                        <td>{{ $appointment->patient_full_name }} </td>
                                                                         <td>{{ $appointment->service->title }} </td>
                                                                         <td>{{ $appointment->employee->user->name }}</td>
-                                                                        <td>{{ $appointment->booking_date }}</td>
-                                                                        <td>{{ $appointment->booking_time }}</td>
+                                                                        <td>{{ $appointment->appointment_date }}</td>
+                                                                        <td>{{ $appointment->appointment_time }}</td>
                                                                         <td>
                                                                             @php
                                                                                 $statusColors = [
@@ -852,14 +852,14 @@ if ($usingOldInput) {
                                                                                 data-toggle="modal"
                                                                                 data-target="#appointmentModal"
                                                                                 data-id="{{ $appointment->id }}"
-                                                                                data-name="{{ $appointment->name }}"
+                                                                                data-name="{{ $appointment->patient_full_name }}"
                                                                                 data-service="{{ $appointment->service->title }}"
-                                                                                data-email="{{ $appointment->email }}"
-                                                                                data-phone="{{ $appointment->phone }}"
+                                                                                data-email="{{ $appointment->patient_email }}"
+                                                                                data-phone="{{ $appointment->patient_phone }}"
                                                                                 data-employee="{{ $appointment->employee->user->name }}"
-                                                                                data-start="{{ $appointment->booking_date . ' ' . $appointment->booking_time }}"
+                                                                                data-start="{{ $appointment->appointment_date . ' ' . $appointment->appointment_time }}"
                                                                                 data-amount="{{ $appointment->amount }}"
-                                                                                data-notes="{{ $appointment->notes }}"
+                                                                                data-notes="{{ $appointment->patient_notes }}"
                                                                                 data-status="{{ $appointment->status }}">View</button>
                                                                         </td>
 
@@ -905,11 +905,11 @@ if ($usingOldInput) {
                                                                     <tr>
 
                                                                         <td>{{ $loop->iteration }} </td>
-                                                                        <td>{{ $appointment->name }} </td>
+                                                                        <td>{{ $appointment->patient_full_name }} </td>
                                                                         <td>{{ $appointment->service->title }} </td>
                                                                         <td>{{ $appointment->employee->user->name }}</td>
-                                                                        <td>{{ $appointment->booking_date }}</td>
-                                                                        <td>{{ $appointment->booking_time }}</td>
+                                                                        <td>{{ $appointment->appointment_date }}</td>
+                                                                        <td>{{ $appointment->appointment_time }}</td>
                                                                         <td>
                                                                             @php
                                                                                 $statusColors = [
@@ -938,14 +938,14 @@ if ($usingOldInput) {
                                                                                 class="btn btn-primary btn-sm py-0 px-1 view-booking-btn"
                                                                                 data-toggle="modal"
                                                                                 data-target="#CustomerBookings"
-                                                                                data-name="{{ $appointment->name }}"
+                                                                                data-name="{{ $appointment->patient_full_name }}"
                                                                                 data-service="{{ $appointment->service->title }}"
                                                                                 data-staff="{{ $appointment->employee->user->name }}"
-                                                                                data-date="{{ $appointment->booking_date }}"
-                                                                                data-time="{{ $appointment->booking_time }}"
+                                                                                data-date="{{ $appointment->appointment_date }}"
+                                                                                data-time="{{ $appointment->appointment_time }}"
                                                                                 data-amount="{{ $appointment->amount }}"
                                                                                 data-status="{{ $appointment->status }}"
-                                                                                data-notes="{{ $appointment->notes }}">
+                                                                                data-notes="{{ $appointment->patient_notes }}">
                                                                                 View
                                                                             </button>
 
