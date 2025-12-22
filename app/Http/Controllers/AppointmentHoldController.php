@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Employee;
+use Carbon\Carbon;
 use App\Models\AppointmentHold;
 use App\Models\Appointment;
 use Illuminate\Http\Request;
@@ -23,17 +25,64 @@ class AppointmentHoldController extends Controller
             'employee_id' => ['required', 'integer'],
             'service_id' => ['required', 'integer'],
             'appointment_date' => ['required', 'date'],
-            'appointment_time' => ['required', 'string', 'max:255'],
+            'appointment_time' => ['required', 'string', 'max:255'], // start (H:i) o rango
+            'appointment_end_time' => ['nullable', 'string', 'max:255'], // end (H:i) opcional
         ]);
 
         $sessionId = $request->session()->getId();
         $holdMinutes = 15;
         $expiresAt = now()->addMinutes($holdMinutes);
 
+        // Normalizar start/end:
+        // - Si viene "4:45 PM - 5:05 PM" lo convertimos a H:i
+        // - Si viene start "17:10" y viene appointment_end_time "17:30", lo usamos
+        $startTime = $data['appointment_time'];
+        $endTime = $data['appointment_end_time'] ?? null;
+
+        // Caso 1: viene en formato rango "4:45 PM - 5:05 PM"
+        if (str_contains($startTime, ' - ')) {
+            [$s, $e] = array_map('trim', explode(' - ', $startTime, 2));
+
+            // Convertir a 24h si viene con AM/PM
+            if (str_contains($s, 'AM') || str_contains($s, 'PM')) {
+                $startTime = \Carbon\Carbon::createFromFormat('g:i A', $s)->format('H:i');
+                $endTime   = \Carbon\Carbon::createFromFormat('g:i A', $e)->format('H:i');
+            } else {
+                // Si ya viniera en 24h pero con rango
+                $startTime = $s;
+                $endTime   = $e;
+            }
+        } else {
+            // Caso 2: viene solo start (ej: "17:10") → aseguramos end si vino aparte
+            if ($endTime && (str_contains($endTime, 'AM') || str_contains($endTime, 'PM'))) {
+                $endTime = \Carbon\Carbon::createFromFormat('g:i A', trim($endTime))->format('H:i');
+            }
+        }
+
+        // Reasignar al array para que se guarde consistente
+        $data['appointment_time'] = $startTime;
+        $data['appointment_end_time'] = $endTime;
+
+        // Duración real del turno (minutos). Recomendado: viene del empleado.
+        // Importante: NO incluye break, solo tiempo de atención.
+        $employee = Employee::findOrFail($data['employee_id']);
+        $slotDuration = (int) ($employee->slot_duration ?? 20);
+
+        // appointment_time viene como "HH:MM"
+        $start = Carbon::createFromFormat('H:i', $data['appointment_time']);
+        $end = $start->copy()->addMinutes($slotDuration);
+
+        $startHHMM = $start->format('H:i');
+        $endHHMM = $end->format('H:i');
+
+        // Forzar que SIEMPRE se guarde el end_time calculado en backend
+        $data['appointment_time'] = $startHHMM;
+        $data['appointment_end_time'] = $endHHMM;
+
         // 1) Si ya existe una cita (no cancelada) en ese turno -> no permitir hold
         $existsAppointment = Appointment::where('employee_id', $data['employee_id'])
             ->where('appointment_date', $data['appointment_date'])
-            ->where('appointment_time', $data['appointment_time'])
+            ->where('appointment_time', $startHHMM)
             ->where('status', '!=', 'Cancelled')
             ->exists();
 
@@ -51,7 +100,7 @@ class AppointmentHoldController extends Controller
             // Si el hold del turno existe y es de la misma sesión, solo renovamos
             $existing = AppointmentHold::where('employee_id', $data['employee_id'])
                 ->where('appointment_date', $data['appointment_date'])
-                ->where('appointment_time', $data['appointment_time'])
+                ->where('appointment_time', $startHHMM)
                 ->first();
 
             if ($existing) {
@@ -64,6 +113,8 @@ class AppointmentHoldController extends Controller
                 }
 
                 $existing->expires_at = $expiresAt;
+                $existing->appointment_time = $data['appointment_time'];
+                $existing->appointment_end_time = $data['appointment_end_time'];
                 $existing->save();
 
                 DB::commit();
@@ -80,6 +131,7 @@ class AppointmentHoldController extends Controller
                 'service_id' => $data['service_id'],
                 'appointment_date' => $data['appointment_date'],
                 'appointment_time' => $data['appointment_time'],
+                'appointment_end_time' => $data['appointment_end_time'],
                 'session_id' => $sessionId,
                 'expires_at' => $expiresAt,
                 'created_at' => now(),

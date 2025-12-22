@@ -124,7 +124,7 @@ class FrontendController extends Controller
 
         try {
             // Function to ensure proper time formatting
-            function formatTimeRange($timeRange) {
+            $formatTimeRange = function ($timeRange) {
                 // Handle appointment format (e.g., "06:00 AM - 06:30 AM")
                 if (str_contains($timeRange, 'AM') || str_contains($timeRange, 'PM')) {
                     $timeRange = str_replace([' AM', ' PM', ' '], '', $timeRange);
@@ -138,13 +138,14 @@ class FrontendController extends Controller
                 }, $times);
 
                 return implode('-', $formattedTimes);
-            }
+            };
 
             // Process holidays expections
-            $holidaysExceptions = $employee->holidays->mapWithKeys(function ($holiday) {
+            // Process holidays exceptions
+            $holidaysExceptions = $employee->holidays->mapWithKeys(function ($holiday) use ($formatTimeRange) {
                 $hours = !empty($holiday->hours)
-                    ? collect($holiday->hours)->map(function ($timeRange) {
-                        return formatTimeRange($timeRange);
+                    ? collect($holiday->hours)->map(function ($timeRange) use ($formatTimeRange) {
+                        return $formatTimeRange($timeRange);
                     })->toArray()
                     : [];
 
@@ -270,28 +271,32 @@ class FrontendController extends Controller
 
             $currentSlotStart = clone $start;
 
-            // Si el rango empieza antes del mínimo permitido, arrancamos desde $minAllowed
-            if ($currentSlotStart->lt($minAllowed)) {
-                $currentSlotStart = $minAllowed->copy();
+            $cycleMinutes = (int) $slotDuration + (int) $breakDuration;
+            $anchor = $start->copy(); // el inicio real del rango disponible, como 15:40
 
-                // Redondear al siguiente intervalo (según duración del slot)
-                $minutes = $currentSlotStart->minute;
-                $remainder = $minutes % $slotDuration;
-                if ($remainder > 0) {
-                    $currentSlotStart->addMinutes($slotDuration - $remainder)->second(0);
+            $snapToCycle = function (Carbon $candidate) use ($anchor, $cycleMinutes) {
+                $candidate = $candidate->copy()->second(0);
+
+                if ($candidate->lte($anchor)) {
+                    return $anchor->copy();
                 }
+
+                $diff = $anchor->diffInMinutes($candidate);
+                $rem = $diff % $cycleMinutes;
+
+                if ($rem !== 0) {
+                    $candidate->addMinutes($cycleMinutes - $rem);
+                }
+
+                return $candidate->second(0);
+            };
+
+            if ($currentSlotStart->lt($minAllowed)) {
+                $currentSlotStart = $snapToCycle($minAllowed);
             }
 
-            // If today and current slot start is in the past, adjust to current time
             if ($isToday && $currentSlotStart->lt($now)) {
-                $currentSlotStart = clone $now;
-
-                // Round up to nearest slot interval
-                $minutes = $currentSlotStart->minute;
-                $remainder = $minutes % $slotDuration;
-                if ($remainder > 0) {
-                    $currentSlotStart->addMinutes($slotDuration - $remainder)->second(0);
-                }
+                $currentSlotStart = $snapToCycle($now);
             }
 
             while ($currentSlotStart->copy()->addMinutes($slotDuration)->lte($end)) {
@@ -500,15 +505,31 @@ class FrontendController extends Controller
             $start = Carbon::parse($date->toDateString() . ' ' . $range->start()->format('H:i'));
             $end   = Carbon::parse($date->toDateString() . ' ' . $range->end()->format('H:i'));
 
+            $cycleMinutes = (int) $slotDuration + (int) $breakDuration;
+            $anchor = $start->copy();
+
+            $snapToCycle = function (Carbon $candidate) use ($anchor, $cycleMinutes) {
+                $candidate = $candidate->copy()->second(0);
+
+                if ($candidate->lte($anchor)) {
+                    return $anchor->copy();
+                }
+
+                $diff = $anchor->diffInMinutes($candidate);
+                $rem = $diff % $cycleMinutes;
+
+                if ($rem !== 0) {
+                    $candidate->addMinutes($cycleMinutes - $rem);
+                }
+
+                return $candidate->second(0);
+            };
+
             if ($end->lte($minAllowed)) continue;
 
             $current = $start->copy();
             if ($current->lt($minAllowed)) {
-                $current = $minAllowed->copy();
-                $remainder = $current->minute % $slotDuration;
-                if ($remainder > 0) {
-                    $current->addMinutes($slotDuration - $remainder)->second(0);
-                }
+                $current = $snapToCycle($minAllowed);
             }
 
             while ($current->copy()->addMinutes($slotDuration)->lte($end)) {
