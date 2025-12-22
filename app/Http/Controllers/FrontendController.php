@@ -213,13 +213,35 @@ class FrontendController extends Controller
             ->where('expires_at', '>', now())
             ->get(['appointment_time']);
 
-        $holdSlots = $activeHolds->map(function ($hold) {
-            $times = explode(' - ', $hold->appointment_time);
-            return [
-                'start' => Carbon::createFromFormat('g:i A', trim($times[0]))->format('H:i'),
-                'end'   => Carbon::createFromFormat('g:i A', trim($times[1]))->format('H:i'),
-            ];
-        })->toArray();
+        $holdSlots = $activeHolds->map(function ($hold) use ($slotDuration) {
+            $raw = trim((string) $hold->appointment_time);
+
+            // Caso A: viene como rango "8:00 AM - 8:20 AM"
+            if (str_contains($raw, ' - ')) {
+                $times = explode(' - ', $raw);
+                if (count($times) === 2) {
+                    return [
+                        'start' => Carbon::createFromFormat('g:i A', trim($times[0]))->format('H:i'),
+                        'end'   => Carbon::createFromFormat('g:i A', trim($times[1]))->format('H:i'),
+                    ];
+                }
+            }
+
+            // Caso B: viene como "08:00" (HH:MM)
+            // En este caso asumimos que el hold bloquea un slot completo ($slotDuration)
+            try {
+                $start = Carbon::createFromFormat('H:i', $raw);
+                $end   = $start->copy()->addMinutes((int) $slotDuration);
+
+                return [
+                    'start' => $start->format('H:i'),
+                    'end'   => $end->format('H:i'),
+                ];
+            } catch (\Throwable $e) {
+                // Si algo raro llega, no romper el endpoint: ignorar hold inválido
+                return null;
+            }
+        })->filter()->values()->toArray();
 
         $bookedSlots = array_merge(
             $existingAppointments->map(function ($appointment) {
@@ -391,6 +413,8 @@ class FrontendController extends Controller
                 ->get(['appointment_date', 'appointment_time']);
 
             $bookedByDate = [];
+            $slotDuration = (int) $employee->slot_duration;
+
             foreach ($existingAppointments as $appt) {
                 $times = explode(' - ', $appt->appointment_time);
                 if (count($times) !== 2) continue;
@@ -402,13 +426,32 @@ class FrontendController extends Controller
             }
 
             foreach ($activeHolds as $hold) {
-                $times = explode(' - ', $hold->appointment_time);
-                if (count($times) !== 2) continue;
+                $raw = trim((string) $hold->appointment_time);
 
-                $bookedByDate[$hold->appointment_date][] = [
-                    'start' => Carbon::createFromFormat('g:i A', trim($times[0]))->format('H:i'),
-                    'end'   => Carbon::createFromFormat('g:i A', trim($times[1]))->format('H:i'),
-                ];
+                // Rango viejo
+                if (str_contains($raw, ' - ')) {
+                    $times = explode(' - ', $raw);
+                    if (count($times) !== 2) continue;
+
+                    $bookedByDate[$hold->appointment_date][] = [
+                        'start' => Carbon::createFromFormat('g:i A', trim($times[0]))->format('H:i'),
+                        'end'   => Carbon::createFromFormat('g:i A', trim($times[1]))->format('H:i'),
+                    ];
+                    continue;
+                }
+
+                // Formato nuevo "HH:MM" (solo inicio)
+                try {
+                    $holdStart = Carbon::createFromFormat('H:i', $raw);
+                    $holdEnd = $holdStart->copy()->addMinutes($slotDuration);
+
+                    $bookedByDate[$hold->appointment_date][] = [
+                        'start' => $holdStart->format('H:i'),
+                        'end'   => $holdEnd->format('H:i'),
+                    ];
+                } catch (\Throwable $e) {
+                    continue;
+                }
             }
 
             // ---- recorrer días dentro del rango permitido ----
