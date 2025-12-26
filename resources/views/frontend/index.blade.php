@@ -755,7 +755,7 @@
                         <h4 class="mt-3">Gracias!</h4>
                         <p>Su cita se registró correctamente.</p>
                         <div class="alert alert-info mt-3">
-                            <p class="mb-0">Le enviamos un correo con el resumen</p>
+                            <p class="mb-0">Le enviamos un correo electrónico con el resumen de su cita</p>
                         </div>
                         <div class="booking-details mt-4 text-start">
                             <h5>Detalles de la cita:</h5>
@@ -1230,13 +1230,17 @@
                     const isVirtual = bookingState.appointmentMode === 'virtual';
                     const userTzLabel = getUserTimeZoneLabel();
 
-                    const tzMessage = isVirtual
-                        ? `Todos los turnos están en su hora local (${userTzLabel})`
-                        : `Todos los turnos están en hora local de Ecuador (GMT-5)`;
-
-                    $("#tz-info-message").html(`
-                        <i class="bi bi-clock me-1"></i> ${tzMessage}
-                    `);
+                    if (isVirtual) {
+                        $("#tz-info-message").html(`
+                            <i class="bi bi-clock me-1"></i>
+                            Todos los turnos están en su hora local (${userTzLabel})
+                        `);
+                    } else {
+                        $("#tz-info-message").html(`
+                            <i class="bi bi-clock me-1"></i>
+                            Todos los turnos están en hora local de Ecuador (GMT-5) (zona horaria de Ecuador)
+                        `);
+                    }
 
                     // 3️⃣ Si aún no hay fecha seleccionada, detener aquí
                     if (!bookingState.selectedDate) return;
@@ -2465,6 +2469,36 @@
 
                             return `${hour}:${minute} ${ampm}`;
                         }
+
+                        function parseISODate(dateStr) {
+                            // Espera "YYYY-MM-DD"
+                            if (!dateStr) return null;
+                            const m = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+                            if (!m) return null;
+                            return { y: +m[1], mo: +m[2], d: +m[3] };
+                        }
+
+                        // Convierte una fecha+hora interpretada como Ecuador (UTC-5) a un objeto Date (instante real)
+                        function ecuadorLocalToDate(dateISO, timeStr) {
+                            const d = parseISODate(dateISO);
+                            if (!d || !timeStr) return null;
+
+                            const hhmm = String(timeStr).slice(0, 5); // "HH:MM"
+                            const [hh, mm] = hhmm.split(":").map(n => parseInt(n, 10));
+
+                            // Ecuador = UTC-5 => UTC = hora_ecuador + 5
+                            return new Date(Date.UTC(d.y, d.mo - 1, d.d, hh + 5, mm, 0));
+                        }
+
+                        function formatInUserTZ(dateObj, userTimeZone) {
+                            if (!dateObj) return "";
+                            return new Intl.DateTimeFormat("en-US", {
+                                hour: "numeric",
+                                minute: "2-digit",
+                                hour12: true,
+                                timeZone: userTimeZone || undefined
+                            }).format(dateObj);
+                        }
                         function money(n) {
                         const x = Math.round((Number(n) + Number.EPSILON) * 100) / 100;
                         return `$${x.toFixed(2)}`;
@@ -2482,7 +2516,14 @@
                         const endTime   = ap.appointment_end_time || bookingState?.selectedTime?.end;
 
                         const timeRangeTxt = `${formatTimeAMPM(startTime)} - ${formatTimeAMPM(endTime)}`;
-                        const tzLabel = ap.patient_timezone_label || "GMT-5 (Ecuador)";
+                        const modalityTxt = (ap.modality || ap.modalidad || "").toLowerCase();
+                        // const isPresencial = modalityTxt.includes("presencial");
+
+                       const isVirtual = (ap.appointment_mode || "").toLowerCase() === "virtual";
+
+                        const tzLabel = isVirtual
+                            ? (ap.patient_timezone_label || "GMT-5")
+                            : "GMT-5 (Ecuador)";
                         const payMethod = ap.payment_method || bookingState?.paymentMethod || "";
                         const total = ap.amount ?? null;
 
@@ -2526,7 +2567,7 @@
                             `
                             : `
                                 <div class="alert alert-success mt-3 mb-0">
-                                Le enviamos un correo con el resumen de tu cita.
+                                Le enviamos un correo electrónico con el resumen de su cita.
                                 </div>
                             `
                         }
