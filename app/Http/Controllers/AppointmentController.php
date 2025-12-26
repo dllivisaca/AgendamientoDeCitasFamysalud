@@ -145,7 +145,7 @@ class AppointmentController extends Controller
         DB::transaction(function () use (&$appointment, &$validated, $hold, $request) {
             unset($validated['hold_id']);
 
-            if (($validated['payment_method'] ?? null) === 'transfer' && $request->hasFile ('tr_file')) {
+            if (($validated['payment_method'] ?? null) === 'transfer' && $request->hasFile('tr_file')) {
                 $validated['transfer_proof_path'] = $request->file('tr_file')
                     ->store('transfer_proofs', 'public');
             }

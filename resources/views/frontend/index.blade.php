@@ -1320,7 +1320,7 @@
                         $btn.addClass("selected active");
 
                         updateSummary && updateSummary();
-                        setTimeout(updateFloatingNext, 0);
+                        setTimeout(() => window.updateFloatingNext && window.updateFloatingNext(), 0);
 
                     }).catch((err) => {
                         // ❌ No se pudo crear hold: limpiar selección, recargar turnos y avisar
@@ -1332,7 +1332,7 @@
 
                         alert("Ese turno ya no está disponible. A continuación se mostrarán los turnos disponibles actualizados.");
                         updateTimeSlots(bookingState.selectedDate);
-                        setTimeout(updateFloatingNext, 0);
+                        setTimeout(() => window.updateFloatingNext && window.updateFloatingNext(), 0);
                     });
                 });
 
@@ -2420,7 +2420,7 @@
                             <div><strong>Reserva:</strong> ${res.booking_id}</div>
                             <div><strong>Estado:</strong> ${res.appointment?.status || ""}</div>
                         `);
-                        new bootstrap.Modal("#bookingSuccessModal").show();
+                        new bootstrap.Modal(document.getElementById("bookingSuccessModal")).show();
 
                         setTimeout(resetBooking, 800);
                         },
@@ -2564,6 +2564,8 @@
                         $nextFloating.addClass("d-none");
                     }
                 }
+
+                window.updateFloatingNext = updateFloatingNext;
 
                 // ✅ Re-evaluar botón flotante cuando el usuario escribe en Step 5
                 $(document).on(
