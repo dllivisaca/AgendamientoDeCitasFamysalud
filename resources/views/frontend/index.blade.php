@@ -2451,6 +2451,20 @@
                         // soporta "14:00" o "14:00:00"
                         return String(t).slice(0, 5);
                         }
+                        function formatTimeAMPM(timeStr) {
+                            if (!timeStr) return "";
+
+                            // soporta "18:00" o "18:00:00"
+                            const [h, m] = timeStr.split(":");
+                            let hour = parseInt(h, 10);
+                            const minute = m;
+
+                            const ampm = hour >= 12 ? "PM" : "AM";
+                            hour = hour % 12;
+                            hour = hour === 0 ? 12 : hour;
+
+                            return `${hour}:${minute} ${ampm}`;
+                        }
                         function money(n) {
                         const x = Math.round((Number(n) + Number.EPSILON) * 100) / 100;
                         return `$${x.toFixed(2)}`;
@@ -2463,7 +2477,11 @@
                         const employeeName = ap.employee_name || bookingState?.selectedEmployee?.user?.name || "";
                         const modeTxt = ap.appointment_mode === "virtual" ? "Virtual" : "Presencial";
                         const dateTxt = prettyDateES(ap.appointment_date || bookingState?.selectedDate);
-                        const timeTxt = onlyHHMM(ap.appointment_time || bookingState?.selectedTime?.start);
+                        /* const timeTxt = onlyHHMM(ap.appointment_time || bookingState?.selectedTime?.start); */
+                        const startTime = ap.appointment_time || bookingState?.selectedTime?.start;
+                        const endTime   = ap.appointment_end_time || bookingState?.selectedTime?.end;
+
+                        const timeRangeTxt = `${formatTimeAMPM(startTime)} - ${formatTimeAMPM(endTime)}`;
                         const tzLabel = ap.patient_timezone_label || "GMT-5 (Ecuador)";
                         const payMethod = ap.payment_method || bookingState?.paymentMethod || "";
                         const total = ap.amount ?? null;
@@ -2492,7 +2510,7 @@
                         <div class="mb-1"><strong>Modalidad:</strong> ${modeTxt}</div>
 
                         <div class="mb-1"><strong>Fecha:</strong> ${dateTxt}</div>
-                        <div class="mb-1"><strong>Hora:</strong> ${timeTxt}</div>
+                        <div class="mb-1"><strong>Hora:</strong> ${timeRangeTxt}</div>
                         <div class="mb-3"><strong>Zona horaria:</strong> ${tzLabel}</div>
 
                         ${total !== null ? `<div class="mb-2"><strong>Total:</strong> ${money(total)}</div>` : ""}
