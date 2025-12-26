@@ -64,9 +64,20 @@ class AppointmentController extends Controller
 
             // CITA (nuevos nombres)
             'amount' => 'required|numeric',
+
+            // ✅ Montos adicionales (opcionales)
+            'amount_standard' => 'nullable|numeric',
+            'discount_amount' => 'nullable|numeric',
+
+            // ✅ Datos de transferencia (opcionales)
+            'transfer_bank_origin' => 'nullable|string|max:120',
+            'transfer_payer_name' => 'nullable|string|max:255',
+            'transfer_date' => 'nullable|date',
+            'transfer_reference' => 'nullable|string|max:120',
+
             'appointment_date' => 'required|date',
             'appointment_time' => 'required|string',
-            'appointment_end_time' => 'required|date_format:H:i',
+            'appointment_end_time' => 'required|string|max:5',
             'appointment_mode' => 'required|in:presencial,virtual',
 
             // TZ
@@ -82,6 +93,10 @@ class AppointmentController extends Controller
             'payment_method' => 'required|in:transfer,card',
             'tr_file' => 'nullable|required_if:payment_method,transfer|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
+
+        // Mapear consentimiento a columnas reales de appointments
+        $validated['terms_accepted'] = !empty($validated['data_consent']) ? 1 : 0;
+        $validated['terms_accepted_at'] = $validated['terms_accepted'] ? now() : null;
 
         unset($validated['tr_file']);
 
@@ -152,8 +167,7 @@ class AppointmentController extends Controller
             unset($validated['tr_file']);
 
             if (($validated['payment_method'] ?? null) === 'transfer' && $request->hasFile('tr_file')) {
-                $validated['transfer_proof_path'] = $request->file('tr_file')
-                    ->store('transfer_proofs', 'public');
+                $validated['transfer_receipt_path'] = $request->file('tr_file')->store('transfer_proofs', 'public');
             }
 
             $appointment = Appointment::create($validated);
@@ -209,6 +223,22 @@ class AppointmentController extends Controller
         $request->validate([
             'appointment_id' => 'required|exists:appointments,id',
             'status' => 'required|string',
+
+            // Precios (si los envías desde el front)
+            'amount_standard' => 'nullable|numeric',
+            'discount_amount' => 'nullable|numeric',
+
+            // Términos
+            'data_consent' => 'nullable|boolean',
+
+            // Transferencia (datos)
+            'transfer_bank_origin' => 'nullable|string|max:120',
+            'transfer_payer_name' => 'nullable|string|max:255',
+            'transfer_date' => 'nullable|date',
+            'transfer_reference' => 'nullable|string|max:120',
+
+            // Archivo comprobante (si el método de pago es transferencia)
+            'tr_file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
 
         $appointment = Appointment::findOrFail($request->appointment_id);
