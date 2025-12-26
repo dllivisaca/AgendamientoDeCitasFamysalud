@@ -230,7 +230,8 @@ class FrontendController extends Controller
             // Caso B: viene como "08:00" (HH:MM)
             // En este caso asumimos que el hold bloquea un slot completo ($slotDuration)
             try {
-                $start = Carbon::createFromFormat('H:i', $raw);
+                $rawStart = substr(trim((string)$raw), 0, 5); // soporta "19:00:00" y "19:00"
+                $start = Carbon::createFromFormat('H:i', $rawStart);
 
                 $endRaw = trim((string) ($hold->appointment_end_time ?? ''));
                 $endRaw = $endRaw ? substr($endRaw, 0, 5) : '';
@@ -266,7 +267,8 @@ class FrontendController extends Controller
 
                 // Caso nuevo: "14:00" + appointment_end_time
                 try {
-                    $start = Carbon::createFromFormat('H:i', $raw);
+                    $rawStart = substr(trim((string)$raw), 0, 5); // soporta "19:00:00" y "19:00"
+                    $start = Carbon::createFromFormat('H:i', $rawStart);
                     $endRaw = trim((string) ($appointment->appointment_end_time ?? ''));
                     $endRaw = substr($endRaw, 0, 5); // "15:10:00" -> "15:10"
 
@@ -445,7 +447,7 @@ class FrontendController extends Controller
             $activeHolds = AppointmentHold::whereBetween('appointment_date', [$start->toDateString(), $end->toDateString()])
                 ->where('employee_id', $employee->id)
                 ->where('expires_at', '>', now())
-                ->get(['appointment_date', 'appointment_time']);
+                ->get(['appointment_date', 'appointment_time', 'appointment_end_time']);
 
             $bookedByDate = [];
             $slotDuration = (int) $employee->slot_duration;
@@ -458,7 +460,11 @@ class FrontendController extends Controller
                     $times = explode(' - ', $raw);
                     if (count($times) !== 2) continue;
 
-                    $bookedByDate[$appt->appointment_date][] = [
+                    $dateKey = ($appt->appointment_date instanceof \Carbon\Carbon)
+                        ? $appt->appointment_date->toDateString()
+                        : substr((string)$appt->appointment_date, 0, 10);
+
+                    $bookedByDate[$dateKey][] = [
                         'start' => Carbon::createFromFormat('g:i A', trim($times[0]))->format('H:i'),
                         'end'   => Carbon::createFromFormat('g:i A', trim($times[1]))->format('H:i'),
                     ];
@@ -467,17 +473,19 @@ class FrontendController extends Controller
 
                 // Caso nuevo: HH:MM + end_time
                 try {
-                    $start = Carbon::createFromFormat('H:i', $raw);
+                    $rawStart = substr(trim((string)$raw), 0, 5); // por si llega "19:00:00"
+                    $apptStart = Carbon::createFromFormat('H:i', $rawStart);
+
                     $endRaw = trim((string) ($appt->appointment_end_time ?? ''));
                     $endRaw = $endRaw ? substr($endRaw, 0, 5) : '';
 
-                    $end = $endRaw
+                    $apptEnd = $endRaw
                         ? Carbon::createFromFormat('H:i', $endRaw)
-                        : $start->copy()->addMinutes($slotDuration); // fallback
+                        : $apptStart->copy()->addMinutes($slotDuration);
 
                     $bookedByDate[$appt->appointment_date][] = [
-                        'start' => $start->format('H:i'),
-                        'end'   => $end->format('H:i'),
+                        'start' => $apptStart->format('H:i'),
+                        'end'   => $apptEnd->format('H:i'),
                     ];
                 } catch (\Throwable $e) {
                     continue;
@@ -501,8 +509,14 @@ class FrontendController extends Controller
 
                 // Formato nuevo "HH:MM" (solo inicio)
                 try {
-                    $holdStart = Carbon::createFromFormat('H:i', $raw);
-                    $holdEnd = $holdStart->copy()->addMinutes($slotDuration);
+                    $rawStart = substr(trim((string)$raw), 0, 5);
+                    $holdStart = Carbon::createFromFormat('H:i', $rawStart);
+                    $endRaw = trim((string) ($hold->appointment_end_time ?? ''));
+                    $endRaw = $endRaw ? substr($endRaw, 0, 5) : '';
+
+                    $holdEnd = $endRaw
+                        ? Carbon::createFromFormat('H:i', $endRaw)
+                        : $holdStart->copy()->addMinutes($slotDuration);
 
                     $bookedByDate[$hold->appointment_date][] = [
                         'start' => $holdStart->format('H:i'),
