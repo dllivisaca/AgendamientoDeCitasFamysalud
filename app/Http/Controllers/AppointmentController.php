@@ -9,6 +9,7 @@ use App\Models\Setting;
 use Illuminate\Http\Request;
 use App\Events\BookingCreated;
 use App\Events\StatusUpdated;
+use Illuminate\Support\Facades\Storage; 
 
 
 class AppointmentController extends Controller
@@ -76,6 +77,9 @@ class AppointmentController extends Controller
 
             // STATUS
             'status' => 'required|string',
+
+            'payment_method' => 'required|in:transfer,card',
+            'tr_file' => 'nullable|required_if:payment_method,transfer|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
 
             // Set user_id if not provided but user is authenticated
@@ -138,8 +142,13 @@ class AppointmentController extends Controller
 
         $appointment = null;
 
-        DB::transaction(function () use (&$appointment, $validated, $hold) {
+        DB::transaction(function () use (&$appointment, &$validated, $hold, $request) {
             unset($validated['hold_id']);
+
+            if (($validated['payment_method'] ?? null) === 'transfer' && $request->hasFile ('tr_file')) {
+                $validated['transfer_proof_path'] = $request->file('tr_file')
+                    ->store('transfer_proofs', 'public');
+            }
 
             $appointment = Appointment::create($validated);
 

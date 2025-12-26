@@ -389,7 +389,7 @@
                                             <div class="col-md-6">
                                                 <label for="billing_phone_ui" class="form-label">Número de celular <span class="text-danger">*</span></label>
                                                 <input type="tel" class="form-control phone-input" id="billing_phone_ui" placeholder="Ej: 991234567" required title="Registre el número de celular sin el prefijo del país. Verifique que el país seleccionado sea el correcto." autocomplete="tel">
-                                                <input type="hidden" id="billing-phone" name="billing_phone">
+                                                <input type="hidden" id="billing-phone" name="billing-phone">
                                                 <div class="form-text">
                                                     Para Ecuador, registre el número sin el 0 inicial.
                                                 </div>
@@ -664,6 +664,7 @@
                                         type="file"
                                         class="form-control file-input-soft"
                                         id="tr_file"
+                                        name="tr_file"
                                         required
                                         accept=".jpg,.jpeg,.png,.pdf"
                                     >                        
@@ -2332,105 +2333,114 @@
 
                 // function submitBooking() {
                 function submitBooking() {
-                    // Get form data
-                    const form = $('#customer-info-form');
-                    const csrfToken = form.find('input[name="_token"]').val();
+                    const csrfToken = getCsrfToken();
 
-                    // ✅ 1) Calcular montos/estado ANTES de armar bookingData
-                    const { transfer, standard, discount } = computePaymentFigures();
-
-                    let finalAmount = standard;
-                    let status = "Pending payment";
-
-                    if (bookingState.paymentMethod === "transfer") {
-                        finalAmount = transfer;
-                        status = "Pending verification";
-                    } else if (bookingState.paymentMethod === "card") {
-                        finalAmount = standard;
-                        status = "Pending card payment";
+                    // ✅ Si no hay hold, no intentamos reservar
+                    if (!bookingState.hold_id) {
+                        alert("El turno ya no está reservado. Selecciona el horario nuevamente.");
+                        return;
                     }
 
-                    // ✅ 2) Preparar booking data ya con valores correctos
-                    const bookingData = {
-                        hold_id: bookingState.hold_id,   // ✅ agrega esto
+                    const fd = new FormData();
+                    fd.append("_token", csrfToken);
 
-                        employee_id: bookingState.selectedEmployee.id,
-                        service_id: bookingState.selectedService.id,
-                        name: $('#patient_full_name').val(),
-                        email: $('#patient_email').val(),
-                        phone: $('#patient_phone').val(),
-                        notes: $('#patient_notes').val(),
-                        appointment_date: bookingState.selectedDate,
-                        appointment_time: bookingState.selectedTime.start || bookingState.selectedTime,
-                        appointment_mode: bookingState.appointmentMode,
+                    // ✅ HOLD
+                    fd.append("hold_id", bookingState.hold_id);
 
-                        amount: finalAmount,
-                        status: status,
-                        payment_method: bookingState.paymentMethod,
-                        payment_standard_amount: standard,
-                        payment_discount_amount: discount,
+                    // Paciente (documento)
+                    fd.append("patient_doc_type", $("#doc_type").val() || "");
+                    fd.append("patient_doc_number", $("#doc_number").val() || "");
 
-                        _token: csrfToken
-                    };
+                    // ✅ IDs
+                    fd.append("employee_id", bookingState.selectedEmployee.id);
+                    fd.append("service_id", bookingState.selectedService.id);
 
-                    // Add user_id if authenticated
-                    if (typeof currentAuthUser !== 'undefined' && currentAuthUser) {
-                        bookingData.user_id = currentAuthUser.id;
+                    // ✅ CITA
+                    fd.append("appointment_date", bookingState.selectedDate);
+                    fd.append("appointment_time", bookingState.selectedTime.start || bookingState.selectedTime);
+                    fd.append("appointment_mode", bookingState.appointmentMode);
+
+                    // ✅ PACIENTE (estos nombres deben calzar con el controller)
+                    fd.append("patient_full_name", $("#patient_full_name").val());
+                    fd.append("patient_email", $("#patient_email").val());
+                    fd.append("patient_phone", $("#patient_phone").val());
+                    fd.append("patient_address", $("#patient_address").val() || "");
+                    fd.append("patient_dob", $("#patient_dob").val() || "");
+                    fd.append("patient_notes", $("#patient_notes").val() || "");
+
+                    // Facturación (IDs correctos)
+                    fd.append("billing_name", $("#billing-name").val() || "");
+                    fd.append("billing_doc_type", $("#billing-doc-type").val() || "");
+                    fd.append("billing_doc_number", $("#billing-doc-number").val() || "");
+                    fd.append("billing_address", $("#billing-address").val() || "");
+                    fd.append("billing_email", $("#billing-email").val() || "");
+                    fd.append("billing_phone", $("#billing-phone").val() || "");
+
+                    // Consentimiento (ID correcto)
+                    fd.append("data_consent", $("#consent_data").is(":checked") ? "1" : "0");
+
+                    fd.append("payment_method", bookingState.paymentMethod); // "transfer" o "card"
+
+                    // ✅ STATUS + amount (tu controller los exige)
+                    // Transferencia: pending verification / Tarjeta: pending payment (como tú prefieras)
+                    const paymentMethod = bookingState.paymentMethod; // "transfer" o "card"
+                    fd.append("status", paymentMethod === "transfer" ? "Pending verification" : "Pending payment");
+
+                    const { transfer, standard } = computePaymentFigures();
+                    fd.append("amount", String(paymentMethod === "transfer" ? transfer : standard));
+
+                    // ✅ TZ opcional
+                    fd.append("patient_timezone", Intl.DateTimeFormat().resolvedOptions().timeZone || "");
+                    fd.append("patient_timezone_label", "EC");
+
+                    // ✅ Si es transferencia: adjuntar comprobante (id del input file: tr_file)
+                    if (paymentMethod === "transfer") {
+                        const file = document.getElementById("tr_file")?.files?.[0];
+                        if (file) fd.append("tr_file", file);
+
+                        // (si tienes campos extra en el form, los puedes mandar también,
+                        // pero OJO: tu controller actual NO los valida/guarda aún)
                     }
 
-                    // Show loading state                    
-                    const payBtn = $("#pay-now");
-                    nextBtn.prop('disabled', true).html(
-                        '<span class="spinner-border spinner-border-sm" role="status"></span> Processing...'
-                    );
+                    const $btn = $("#pay-now"); // tu botón final
+                    const original = $btn.html();
+                    $btn.prop("disabled", true).html('<span class="spinner-border spinner-border-sm me-2"></span>Guardando...');
 
-                    // Submit via AJAX
                     $.ajax({
-                        url: '/bookings',
-                        method: 'POST',
-                        data: bookingData,
-                        success: function (response) {
+                        url: "/bookings",
+                        method: "POST",
+                        data: fd,
+                        processData: false,
+                        contentType: false,
+                        success: function (res) {
+                        clearHoldState(); // para no volver a intentar liberar hold
 
-                        const formattedDate = new Date(bookingState.selectedDate + "T00:00:00")
-                            .toLocaleDateString('es-EC', {
-                            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-                            });
+                        // mostrar modal OK
+                        $("#modal-booking-details").html(`
+                            <div><strong>Reserva:</strong> ${res.booking_id}</div>
+                            <div><strong>Estado:</strong> ${res.appointment?.status || ""}</div>
+                        `);
+                        new bootstrap.Modal("#bookingSuccessModal").show();
 
-                        // ✅ 3) Mostrar en modal el total real (no el precio antiguo)
-                        const bookingDetails = `
-                            <div class="mb-2"><strong>Customer:</strong> ${$("#patient_full_name").val()}</div>
-                            <div class="mb-2"><strong>Service:</strong> ${bookingState.selectedService.title}</div>
-                            <div class="mb-2"><strong>Staff:</strong> ${bookingState.selectedEmployee.user.name}</div>
-                            <div class="mb-2"><strong>Fecha y hora:</strong> ${formattedDate} a las ${bookingState.selectedTime.display || bookingState.selectedTime}</div>
-                            <div class="mb-2"><strong>Total:</strong> $${Number(finalAmount).toFixed(2)} (${bookingState.paymentMethod === 'transfer' ? 'Transferencia' : 'Tarjeta'})</div>
-                            <div><strong>Reference:</strong> ${response.booking_id || 'BK-' + Math.random().toString(36).substr(2, 8).toUpperCase()}</div>
-                        `;
-
-                        $('#modal-booking-details').html(bookingDetails);
-
-                        const successModal = new bootstrap.Modal('#bookingSuccessModal');
-                        successModal.show();
-
-                        setTimeout(resetBooking, 1000);
+                        setTimeout(resetBooking, 800);
                         },
                         error: function (xhr) {
-                        let errorMessage = 'Agendamiento fallido. Por favor, intente de nuevo.';
-
-                        if (xhr.responseJSON && xhr.responseJSON.message) {
-                            errorMessage = xhr.responseJSON.message;
-                        } else if (xhr.status === 422) {
-                            errorMessage = 'Error de validación: Por favor revise la información.';
+                        if (xhr.status === 409) {
+                            alert(xhr.responseJSON?.message || "El turno ya no está disponible (hold expiró).");
+                            clearHoldState();
+                            bookingState.selectedTime = null;
+                            updateTimeSlots(bookingState.selectedDate);
+                            goToStep(4);
+                            return;
                         }
-
-                        alert(errorMessage);
-                        nextBtn.prop('disabled', false).html('Ir a pagar <i class="bi bi-arrow-right"></i>');
+                        if (xhr.status === 422) {
+                            alert("Revisa los datos: faltan campos o hay un formato inválido.");
+                            return;
+                        }
+                        alert("No se pudo registrar la cita. Intenta nuevamente.");
                         },
                         complete: function () {
-                        if (nextBtn.prop('disabled')) {
-                            setTimeout(() => {
-                            nextBtn.prop('disabled', false).html('Ir a pagar <i class="bi bi-arrow-right"></i>');
-                            }, 2000);
-                        }
+                        $btn.prop("disabled", false).html(original);
                         }
                     });
                 }
