@@ -14,6 +14,7 @@ class AppointmentHold extends Model
         'service_id',
         'appointment_date',
         'appointment_time',
+        'appointment_end_time',
         'session_id',
         'expires_at',
         'created_at',
