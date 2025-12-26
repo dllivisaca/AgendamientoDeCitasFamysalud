@@ -1771,28 +1771,6 @@
                     renderCalendar(currentMonth, currentYear);
                 }
 
-
-                function updateCalendar() {
-                    // Update employee name display
-                    const employee = bookingState.selectedEmployee;
-                    $(".selected-employee-name").text(`Profesional seleccionado: ${employee.user.name}`);
-
-                    // Clear previous selections
-                    bookingState.selectedDate = null;
-                    bookingState.selectedTime = null;
-                    $(".calendar-day").removeClass("selected");
-                    $(".time-slot").removeClass("selected");
-
-                    // Show loading state for time slots
-                    $("#time-slots-container").html(`
-                    <div class="text-center w-100 py-4">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                    </div>
-                `);
-                }
-
                 function updateCalendar() {
                     // Update employee name display
                     const employee = bookingState.selectedEmployee;
@@ -2384,19 +2362,25 @@
                     // ✅ STATUS + amount (tu controller los exige)
                     // Transferencia: pending verification / Tarjeta: pending payment (como tú prefieras)
                     const paymentMethod = bookingState.paymentMethod; // "transfer" o "card"
-                    fd.append("status", paymentMethod === "transfer" ? "Pending verification" : "Pending payment");
+                    fd.append("status", paymentMethod === "transfer" ? "pending_verification" : "pending_payment");
 
                     const { transfer, standard } = computePaymentFigures();
-                    fd.append("amount", String(paymentMethod === "transfer" ? transfer : standard));
+                    const figures = computePaymentFigures();
+                    const amt = paymentMethod === "transfer" ? figures.transfer : figures.standard;
+                    fd.append("amount", String(isFinite(amt) ? amt : 0));
 
                     // ✅ TZ opcional
                     fd.append("patient_timezone", Intl.DateTimeFormat().resolvedOptions().timeZone || "");
-                    fd.append("patient_timezone_label", "EC");
+                    fd.append("patient_timezone_label", getUserTimeZoneLabel());
 
                     // ✅ Si es transferencia: adjuntar comprobante (id del input file: tr_file)
                     if (paymentMethod === "transfer") {
                         const file = document.getElementById("tr_file")?.files?.[0];
                         if (file) fd.append("tr_file", file);
+                        fd.append("tr_bank", $("#tr_bank").val() || "");
+                        fd.append("tr_holder", $("#tr_holder").val() || "");
+                        fd.append("tr_date", $("#tr_date").val() || "");
+                        fd.append("tr_ref", $("#tr_ref").val() || "");
 
                         // (si tienes campos extra en el form, los puedes mandar también,
                         // pero OJO: tu controller actual NO los valida/guarda aún)
@@ -2425,6 +2409,7 @@
                         setTimeout(resetBooking, 800);
                         },
                         error: function (xhr) {
+                        console.log("BOOKING ERROR", xhr.status, xhr.responseText, xhr.responseJSON);
                         if (xhr.status === 409) {
                             alert(xhr.responseJSON?.message || "El turno ya no está disponible (hold expiró).");
                             clearHoldState();
@@ -2437,7 +2422,7 @@
                             alert("Revisa los datos: faltan campos o hay un formato inválido.");
                             return;
                         }
-                        alert("No se pudo registrar la cita. Intenta nuevamente.");
+                        alert("No se pudo registrar la cita. Intente nuevamente.");
                         },
                         complete: function () {
                         $btn.prop("disabled", false).html(original);
