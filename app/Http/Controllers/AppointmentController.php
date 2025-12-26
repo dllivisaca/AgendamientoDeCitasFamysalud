@@ -66,6 +66,7 @@ class AppointmentController extends Controller
             'amount' => 'required|numeric',
             'appointment_date' => 'required|date',
             'appointment_time' => 'required|string',
+            'appointment_end_time' => 'required|date_format:H:i',
             'appointment_mode' => 'required|in:presencial,virtual',
 
             // TZ
@@ -115,6 +116,7 @@ class AppointmentController extends Controller
             ->where('employee_id', $validated['employee_id'])
             ->where('appointment_date', $validated['appointment_date'])
             ->where('appointment_time', $validated['appointment_time'])
+            ->where('appointment_end_time', $validated['appointment_end_time'])
             ->where('expires_at', '>', now())
             ->first();
 
@@ -129,6 +131,7 @@ class AppointmentController extends Controller
         $slotTaken = Appointment::where('employee_id', $validated['employee_id'])
             ->where('appointment_date', $validated['appointment_date'])
             ->where('appointment_time', $validated['appointment_time'])
+            ->where('appointment_end_time', $validated['appointment_end_time'])
             ->where('status', '!=', 'Cancelled')
             ->exists();
 

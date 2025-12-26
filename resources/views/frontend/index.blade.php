@@ -2049,16 +2049,28 @@
                             $("#time-slots-container").append($slotsContainer);
                         },
                         error: function(xhr) {
+                            console.log("AVAILABILITY ERROR", {
+                                status: xhr.status,
+                                responseText: xhr.responseText,
+                                responseJSON: xhr.responseJSON
+                            });
+
+                            const msg =
+                                xhr.responseJSON?.message ||
+                                (xhr.responseText ? xhr.responseText.slice(0, 200) : "") ||
+                                "No se pudo consultar la disponibilidad.";
+
                             $("#time-slots-container").html(`
                                 <div class="text-center py-4">
-                                    <div class="alert alert-danger">
-                                        <i class="bi bi-exclamation-octagon me-2"></i>
-                                        Error al cargar los turnos disponibles
-                                    </div>
-                                    <button class="btn btn-sm btn-outline-primary mt-2 btn-retry-timeslots" 
-                                        data-date="${selectedDate}">
+                                <div class="alert alert-danger">
+                                    <i class="bi bi-exclamation-octagon me-2"></i>
+                                    Error al cargar los turnos disponibles
+                                    <div class="small mt-2"><b>Código:</b> ${xhr.status}</div>
+                                    <div class="small text-muted mt-1" style="word-break:break-word;">${msg}</div>
+                                </div>
+                                <button class="btn btn-sm btn-outline-primary mt-2 btn-retry-timeslots" data-date="${selectedDate}">
                                     <i class="bi bi-arrow-repeat me-1"></i> Intentar de nuevo
-                                    </button>
+                                </button>
                                 </div>
                             `);
                         }
@@ -2315,7 +2327,13 @@
 
                     // ✅ Si no hay hold, no intentamos reservar
                     if (!bookingState.hold_id) {
-                        alert("El turno ya no está reservado. Selecciona el horario nuevamente.");
+                        alert("El turno ya no está reservado. Seleccione el horario nuevamente.");
+                        return;
+                    }
+
+                    // ✅ Si no hay END TIME, no enviamos (evita NULL en BD)
+                    if (!bookingState.selectedTime || !bookingState.selectedTime.end) {
+                        alert("Seleccione un horario válido nuevamente.");
                         return;
                     }
 
@@ -2336,6 +2354,7 @@
                     // ✅ CITA
                     fd.append("appointment_date", bookingState.selectedDate);
                     fd.append("appointment_time", bookingState.selectedTime.start || bookingState.selectedTime);
+                    fd.append("appointment_end_time", bookingState.selectedTime.end || "");
                     fd.append("appointment_mode", bookingState.appointmentMode);
 
                     // ✅ PACIENTE (estos nombres deben calzar con el controller)
@@ -2400,53 +2419,81 @@
                         clearHoldState(); // para no volver a intentar liberar hold
 
                         // mostrar modal OK
+                        // Helpers locales (pueden vivir dentro del success sin problema)
+                        function prettyDateES(dateStr) {
+                        if (!dateStr) return "";
+                        const d = new Date(dateStr + "T00:00:00");
+                        let s = d.toLocaleDateString("es-EC", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+                        return s.charAt(0).toUpperCase() + s.slice(1);
+                        }
+                        function onlyHHMM(t) {
+                        if (!t) return "";
+                        // soporta "14:00" o "14:00:00"
+                        return String(t).slice(0, 5);
+                        }
+                        function money(n) {
+                        const x = Math.round((Number(n) + Number.EPSILON) * 100) / 100;
+                        return `$${x.toFixed(2)}`;
+                        }
+
+                        const ap = res.appointment || {};
+                        const bookingId = res.booking_id || ap.booking_id || "";
+                        const status = ap.status || "";
+                        const serviceName = ap.service_name || bookingState?.selectedService?.title || "";
+                        const employeeName = ap.employee_name || bookingState?.selectedEmployee?.user?.name || "";
+                        const modeTxt = ap.appointment_mode === "virtual" ? "Virtual" : "Presencial";
+                        const dateTxt = prettyDateES(ap.appointment_date || bookingState?.selectedDate);
+                        const timeTxt = onlyHHMM(ap.appointment_time || bookingState?.selectedTime?.start);
+                        const tzLabel = ap.patient_timezone_label || "GMT-5 (Ecuador)";
+                        const payMethod = ap.payment_method || bookingState?.paymentMethod || "";
+                        const total = ap.amount ?? null;
+
+                        // Textos de estado más amigables (opcional)
+                        const statusNice = ({
+                        pending_verification: "Pendiente de verificación",
+                        pending_payment: "Pendiente de pago",
+                        confirmed: "Confirmada",
+                        cancelled: "Cancelada"
+                        }[status] || status);
+
                         $("#modal-booking-details").html(`
-                            <div class="mb-2">
-                                <strong>Código de reserva:</strong> ${res.booking_id}
-                            </div>
+                        <div class="mb-2">
+                            <strong>Código de reserva:</strong> <span class="badge bg-dark">${bookingId}</span>
+                        </div>
 
-                            <div class="mb-2">
-                                <strong>Estado:</strong> ${res.appointment?.status || ""}
-                            </div>
+                        <div class="mb-3">
+                            <strong>Estado:</strong> ${statusNice}
+                        </div>
 
-                            <hr>
+                        <hr>
 
-                            <div class="mb-1">
-                                <strong>Servicio:</strong> ${res.appointment?.service_name || ""}
-                            </div>
+                        <div class="mb-1"><strong>Servicio:</strong> ${serviceName}</div>
+                        <div class="mb-1"><strong>Profesional:</strong> ${employeeName}</div>
+                        <div class="mb-1"><strong>Modalidad:</strong> ${modeTxt}</div>
 
-                            <div class="mb-1">
-                                <strong>Profesional:</strong> ${res.appointment?.employee_name || ""}
-                            </div>
+                        <div class="mb-1"><strong>Fecha:</strong> ${dateTxt}</div>
+                        <div class="mb-1"><strong>Hora:</strong> ${timeTxt}</div>
+                        <div class="mb-3"><strong>Zona horaria:</strong> ${tzLabel}</div>
 
-                            <div class="mb-1">
-                                <strong>Modalidad:</strong> ${res.appointment?.appointment_mode === "virtual" ? "Virtual" : "Presencial"}
-                            </div>
+                        ${total !== null ? `<div class="mb-2"><strong>Total:</strong> ${money(total)}</div>` : ""}
 
-                            <div class="mb-1">
-                                <strong>Fecha:</strong> ${res.appointment?.appointment_date || ""}
-                            </div>
-
-                            <div class="mb-1">
-                                <strong>Hora:</strong> ${res.appointment?.appointment_time || ""}
-                            </div>
-
-                            <div class="mb-2">
-                                <strong>Zona horaria:</strong> ${res.appointment?.patient_timezone_label || "GMT-5 (Ecuador)"}
-                            </div>
-
-                            ${
-                                res.appointment?.payment_method === "transfer"
-                                ? `
-                                    <div class="alert alert-info mt-3">
-                                        <strong>Transferencia bancaria:</strong><br>
-                                        Su cita quedará <b>confirmada</b> una vez que validemos el pago.<br>
-                                        Se sugiere guardar el <b>código de reserva</b> para cualquier consulta.
-                                    </div>
-                                `
-                                : ""
-                            }
+                        ${
+                            payMethod === "transfer"
+                            ? `
+                                <div class="alert alert-info mt-3 mb-0">
+                                <strong>Transferencia bancaria:</strong><br>
+                                Su cita quedará <b>confirmada</b> una vez validemos el comprobante.<br>
+                                Guarde el <b>código de reserva</b> para cualquier consulta.
+                                </div>
+                            `
+                            : `
+                                <div class="alert alert-success mt-3 mb-0">
+                                Le enviamos un correo con el resumen de tu cita.
+                                </div>
+                            `
+                        }
                         `);
+
                         new bootstrap.Modal(document.getElementById("bookingSuccessModal")).show();
 
                         setTimeout(resetBooking, 800);

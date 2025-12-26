@@ -140,7 +140,6 @@ class FrontendController extends Controller
                 return implode('-', $formattedTimes);
             };
 
-            // Process holidays expections
             // Process holidays exceptions
             $holidaysExceptions = $employee->holidays->mapWithKeys(function ($holiday) use ($formatTimeRange) {
                 $hours = !empty($holiday->hours)
@@ -207,7 +206,7 @@ class FrontendController extends Controller
         $existingAppointments = Appointment::where('appointment_date', $date->toDateString())
             ->where('employee_id', $employeeId)
             ->whereNotIn('status', ['Cancelled'])
-            ->get(['appointment_time']);
+            ->get(['appointment_time', 'appointment_end_time']);
 
         $activeHolds = AppointmentHold::where('appointment_date', $date->toDateString())
             ->where('employee_id', $employeeId)
@@ -245,13 +244,37 @@ class FrontendController extends Controller
         })->filter()->values()->toArray();
 
         $bookedSlots = array_merge(
-            $existingAppointments->map(function ($appointment) {
-                $times = explode(' - ', $appointment->appointment_time);
-                return [
-                    'start' => Carbon::createFromFormat('g:i A', trim($times[0]))->format('H:i'),
-                    'end'   => Carbon::createFromFormat('g:i A', trim($times[1]))->format('H:i'),
-                ];
-            })->toArray(),
+            $existingAppointments->map(function ($appointment) use ($slotDuration) {
+                $raw = trim((string) $appointment->appointment_time);
+
+                // Caso viejo: "8:00 AM - 8:20 AM"
+                if (str_contains($raw, ' - ')) {
+                    $times = explode(' - ', $raw);
+                    if (count($times) === 2) {
+                        return [
+                            'start' => Carbon::createFromFormat('g:i A', trim($times[0]))->format('H:i'),
+                            'end'   => Carbon::createFromFormat('g:i A', trim($times[1]))->format('H:i'),
+                        ];
+                    }
+                }
+
+                // Caso nuevo: "14:00" + appointment_end_time
+                try {
+                    $start = Carbon::createFromFormat('H:i', $raw);
+                    $endRaw = trim((string) ($appointment->appointment_end_time ?? ''));
+
+                    $end = $endRaw
+                        ? Carbon::createFromFormat('H:i', $endRaw)
+                        : $start->copy()->addMinutes((int) $slotDuration); // fallback por si hay registros viejos sin end_time
+
+                    return [
+                        'start' => $start->format('H:i'),
+                        'end'   => $end->format('H:i'),
+                    ];
+                } catch (\Throwable $e) {
+                    return null; // no romper endpoint por datos raros
+                }
+            })->filter()->values()->toArray(),
             $holdSlots
         );
 
@@ -410,7 +433,7 @@ class FrontendController extends Controller
             $existingAppointments = Appointment::whereBetween('appointment_date', [$start->toDateString(), $end->toDateString()])
                 ->where('employee_id', $employee->id)
                 ->whereNotIn('status', ['Cancelled'])
-                ->get(['appointment_date', 'appointment_time']);
+                ->get(['appointment_date', 'appointment_time', 'appointment_end_time']);
 
             $activeHolds = AppointmentHold::whereBetween('appointment_date', [$start->toDateString(), $end->toDateString()])
                 ->where('employee_id', $employee->id)
@@ -421,13 +444,36 @@ class FrontendController extends Controller
             $slotDuration = (int) $employee->slot_duration;
 
             foreach ($existingAppointments as $appt) {
-                $times = explode(' - ', $appt->appointment_time);
-                if (count($times) !== 2) continue;
+                $raw = trim((string) $appt->appointment_time);
 
-                $bookedByDate[$appt->appointment_date][] = [
-                    'start' => Carbon::createFromFormat('g:i A', trim($times[0]))->format('H:i'),
-                    'end'   => Carbon::createFromFormat('g:i A', trim($times[1]))->format('H:i'),
-                ];
+                // Caso viejo: rango AM/PM
+                if (str_contains($raw, ' - ')) {
+                    $times = explode(' - ', $raw);
+                    if (count($times) !== 2) continue;
+
+                    $bookedByDate[$appt->appointment_date][] = [
+                        'start' => Carbon::createFromFormat('g:i A', trim($times[0]))->format('H:i'),
+                        'end'   => Carbon::createFromFormat('g:i A', trim($times[1]))->format('H:i'),
+                    ];
+                    continue;
+                }
+
+                // Caso nuevo: HH:MM + end_time
+                try {
+                    $start = Carbon::createFromFormat('H:i', $raw);
+                    $endRaw = trim((string) ($appt->appointment_end_time ?? ''));
+
+                    $end = $endRaw
+                        ? Carbon::createFromFormat('H:i', $endRaw)
+                        : $start->copy()->addMinutes($slotDuration); // fallback
+
+                    $bookedByDate[$appt->appointment_date][] = [
+                        'start' => $start->format('H:i'),
+                        'end'   => $end->format('H:i'),
+                    ];
+                } catch (\Throwable $e) {
+                    continue;
+                }
             }
 
             foreach ($activeHolds as $hold) {
