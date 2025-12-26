@@ -746,24 +746,24 @@
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header bg-success text-white">
-                        <h5 class="modal-title">Booking Confirmed!</h5>
+                        <h5 class="modal-title">¡Cita registrada!</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                             aria-label="Close"></button>
                     </div>
                     <div class="modal-body text-center p-4">
                         <i class="bi bi-check-circle text-success" style="font-size: 4rem;"></i>
-                        <h4 class="mt-3">Thank You!</h4>
-                        <p>Your appointment has been successfully booked.</p>
+                        <h4 class="mt-3">Gracias!</h4>
+                        <p>Su cita se registró correctamente.</p>
                         <div class="alert alert-info mt-3">
-                            <p class="mb-0">A confirmation email has been sent to your email address.</p>
+                            <p class="mb-0">Le enviamos un correo con el resumen</p>
                         </div>
                         <div class="booking-details mt-4 text-start">
-                            <h5>Booking Details:</h5>
+                            <h5>Detalles de la cita:</h5>
                             <div id="modal-booking-details"></div>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Cerrar</button>
                     </div>
                 </div>
             </div>
@@ -2401,8 +2401,51 @@
 
                         // mostrar modal OK
                         $("#modal-booking-details").html(`
-                            <div><strong>Reserva:</strong> ${res.booking_id}</div>
-                            <div><strong>Estado:</strong> ${res.appointment?.status || ""}</div>
+                            <div class="mb-2">
+                                <strong>Código de reserva:</strong> ${res.booking_id}
+                            </div>
+
+                            <div class="mb-2">
+                                <strong>Estado:</strong> ${res.appointment?.status || ""}
+                            </div>
+
+                            <hr>
+
+                            <div class="mb-1">
+                                <strong>Servicio:</strong> ${res.appointment?.service_name || ""}
+                            </div>
+
+                            <div class="mb-1">
+                                <strong>Profesional:</strong> ${res.appointment?.employee_name || ""}
+                            </div>
+
+                            <div class="mb-1">
+                                <strong>Modalidad:</strong> ${res.appointment?.appointment_mode === "virtual" ? "Virtual" : "Presencial"}
+                            </div>
+
+                            <div class="mb-1">
+                                <strong>Fecha:</strong> ${res.appointment?.appointment_date || ""}
+                            </div>
+
+                            <div class="mb-1">
+                                <strong>Hora:</strong> ${res.appointment?.appointment_time || ""}
+                            </div>
+
+                            <div class="mb-2">
+                                <strong>Zona horaria:</strong> ${res.appointment?.patient_timezone_label || "GMT-5 (Ecuador)"}
+                            </div>
+
+                            ${
+                                res.appointment?.payment_method === "transfer"
+                                ? `
+                                    <div class="alert alert-info mt-3">
+                                        <strong>Transferencia bancaria:</strong><br>
+                                        Su cita quedará <b>confirmada</b> una vez que validemos el pago.<br>
+                                        Se sugiere guardar el <b>código de reserva</b> para cualquier consulta.
+                                    </div>
+                                `
+                                : ""
+                            }
                         `);
                         new bootstrap.Modal(document.getElementById("bookingSuccessModal")).show();
 
