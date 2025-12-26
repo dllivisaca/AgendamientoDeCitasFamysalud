@@ -2337,6 +2337,23 @@
                         return;
                     }
 
+                    // ✅ Forzar sync de teléfonos hidden (E.164) antes de enviar
+                    try {
+                        const patientIti = window._itiByInputId?.["patient_phone_ui"];
+                        const billingIti = window._itiByInputId?.["billing_phone_ui"];
+
+                        if (patientIti && document.getElementById("patient_phone")) {
+                            document.getElementById("patient_phone").value = patientIti.getNumber() || "";
+                        }
+
+                        // OJO: tu hidden de billing es "billing-phone" (con guion)
+                        if (billingIti && document.getElementById("billing-phone")) {
+                            document.getElementById("billing-phone").value = billingIti.getNumber() || "";
+                        }
+                    } catch (e) {
+                    console.warn("Phone sync error", e);
+                    }
+
                     const fd = new FormData();
                     fd.append("_token", csrfToken);
 
@@ -2408,6 +2425,9 @@
                     const $btn = $("#pay-now"); // tu botón final
                     const original = $btn.html();
                     $btn.prop("disabled", true).html('<span class="spinner-border spinner-border-sm me-2"></span>Guardando...');
+
+                    console.log("SENDING patient_phone:", $("#patient_phone").val());
+                    console.log("SENDING billing_phone:", $("#billing-phone").val());
 
                     $.ajax({
                         url: "/bookings",
@@ -2509,7 +2529,16 @@
                             return;
                         }
                         if (xhr.status === 422) {
-                            alert("Revisa los datos: faltan campos o hay un formato inválido.");
+                            const res = xhr.responseJSON || {};
+                            const errors = res.errors || {};
+                            const firstKey = Object.keys(errors)[0];
+                            const firstMsg =
+                                (firstKey && errors[firstKey] && errors[firstKey][0]) ||
+                                res.message ||
+                                "Validación fallida (422).";
+
+                            console.log("422 VALIDATION", { message: res.message, errors });
+                            alert(firstMsg);
                             return;
                         }
                         alert("No se pudo registrar la cita. Intente nuevamente.");

@@ -211,7 +211,7 @@ class FrontendController extends Controller
         $activeHolds = AppointmentHold::where('appointment_date', $date->toDateString())
             ->where('employee_id', $employeeId)
             ->where('expires_at', '>', now())
-            ->get(['appointment_time']);
+            ->get(['appointment_time', 'appointment_end_time']);
 
         $holdSlots = $activeHolds->map(function ($hold) use ($slotDuration) {
             $raw = trim((string) $hold->appointment_time);
@@ -231,7 +231,13 @@ class FrontendController extends Controller
             // En este caso asumimos que el hold bloquea un slot completo ($slotDuration)
             try {
                 $start = Carbon::createFromFormat('H:i', $raw);
-                $end   = $start->copy()->addMinutes((int) $slotDuration);
+
+                $endRaw = trim((string) ($hold->appointment_end_time ?? ''));
+                $endRaw = $endRaw ? substr($endRaw, 0, 5) : '';
+
+                $end = $endRaw
+                    ? Carbon::createFromFormat('H:i', $endRaw)
+                    : $start->copy()->addMinutes((int) $slotDuration);
 
                 return [
                     'start' => $start->format('H:i'),
@@ -262,6 +268,7 @@ class FrontendController extends Controller
                 try {
                     $start = Carbon::createFromFormat('H:i', $raw);
                     $endRaw = trim((string) ($appointment->appointment_end_time ?? ''));
+                    $endRaw = substr($endRaw, 0, 5); // "15:10:00" -> "15:10"
 
                     $end = $endRaw
                         ? Carbon::createFromFormat('H:i', $endRaw)
@@ -462,6 +469,7 @@ class FrontendController extends Controller
                 try {
                     $start = Carbon::createFromFormat('H:i', $raw);
                     $endRaw = trim((string) ($appt->appointment_end_time ?? ''));
+                    $endRaw = $endRaw ? substr($endRaw, 0, 5) : '';
 
                     $end = $endRaw
                         ? Carbon::createFromFormat('H:i', $endRaw)
