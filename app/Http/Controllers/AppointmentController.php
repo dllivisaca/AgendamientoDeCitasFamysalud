@@ -82,6 +82,8 @@ class AppointmentController extends Controller
             'tr_file' => 'nullable|required_if:payment_method,transfer|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
 
+        unset($validated['tr_file']);
+
             // Set user_id if not provided but user is authenticated
         // if (auth()->check() && !$request->has('user_id')) {
         //     $validated['user_id'] = auth()->id();
@@ -144,6 +146,7 @@ class AppointmentController extends Controller
 
         DB::transaction(function () use (&$appointment, &$validated, $hold, $request) {
             unset($validated['hold_id']);
+            unset($validated['tr_file']);
 
             if (($validated['payment_method'] ?? null) === 'transfer' && $request->hasFile('tr_file')) {
                 $validated['transfer_proof_path'] = $request->file('tr_file')
