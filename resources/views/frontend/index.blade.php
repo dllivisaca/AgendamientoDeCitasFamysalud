@@ -2511,19 +2511,32 @@
                         const employeeName = ap.employee_name || bookingState?.selectedEmployee?.user?.name || "";
                         const modeTxt = ap.appointment_mode === "virtual" ? "Virtual" : "Presencial";
                         const dateTxt = prettyDateES(ap.appointment_date || bookingState?.selectedDate);
-                        /* const timeTxt = onlyHHMM(ap.appointment_time || bookingState?.selectedTime?.start); */
+                        const apDate = ap.appointment_date || bookingState?.selectedDate;
+
                         const startTime = ap.appointment_time || bookingState?.selectedTime?.start;
                         const endTime   = ap.appointment_end_time || bookingState?.selectedTime?.end;
 
-                        const timeRangeTxt = `${formatTimeAMPM(startTime)} - ${formatTimeAMPM(endTime)}`;
-                        const modalityTxt = (ap.modality || ap.modalidad || "").toLowerCase();
-                        // const isPresencial = modalityTxt.includes("presencial");
+                        const startHHMM = onlyHHMM(startTime);
+                        const endHHMM   = onlyHHMM(endTime);
 
-                       const isVirtual = (ap.appointment_mode || "").toLowerCase() === "virtual";
+                        const isVirtual = (ap.appointment_mode || "").toLowerCase() === "virtual";
 
+                        // ✅ Hora a mostrar: presencial = Ecuador / virtual = convertida a zona del usuario
+                        let timeRangeTxt = "";
+                        if (apDate && startHHMM && endHHMM) {
+                            timeRangeTxt = isVirtual
+                                ? formatRangeInTimeZone(apDate, startHHMM, endHHMM, getUserTimeZone())  // 👈 convierte desde Ecuador (-05)
+                                : `${formatTimeAMPM(startHHMM)} - ${formatTimeAMPM(endHHMM)}`;         // 👈 se queda Ecuador
+                        } else {
+                            // fallback por si faltara algo
+                            timeRangeTxt = `${formatTimeAMPM(startTime)} - ${formatTimeAMPM(endTime)}`;
+                        }
+
+                        // ✅ Zona horaria a mostrar
                         const tzLabel = isVirtual
-                            ? (ap.patient_timezone_label || "GMT-5")
-                            : "GMT-5 (Ecuador)";
+                            ? (ap.patient_timezone_label || getUserTimeZoneLabel())
+                            : "GMT-5 (Ecuador) (zona horaria de Ecuador)";
+                            
                         const payMethod = ap.payment_method || bookingState?.paymentMethod || "";
                         const total = ap.amount ?? null;
 
