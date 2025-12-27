@@ -2426,37 +2426,35 @@
                     fd.append("patient_timezone", Intl.DateTimeFormat().resolvedOptions().timeZone || "");
                     fd.append("patient_timezone_label", getUserTimeZoneLabel());
 
+                    console.log("DBG billing-doc-number exists?", $("#billing-doc-number").length, "val=", $("#billing-doc-number").val());
+                    console.log("DBG tr-bank exists?", $("#tr-bank").length, "val=", $("#tr-bank").val());
+                    console.log("DBG tr-holder exists?", $("#tr-holder").length, "val=", $("#tr-holder").val());
+                    console.log("DBG tr-date exists?", $("#tr-date").length, "val=", $("#tr-date").val());
+                    console.log("DBG tr-ref exists?", $("#tr-ref").length, "val=", $("#tr-ref").val());
+
                     // ✅ Si es transferencia: adjuntar comprobante (id del input file: tr_file)
                     if (paymentMethod === "transfer") {
-                        // ✅ Comprobante
+                        // archivo
                         const file = document.getElementById("tr_file")?.files?.[0];
                         if (file) fd.append("tr_file", file);
 
-                        // ✅ Enviar campos de transferencia con nombres del backend
-                        fd.append("transfer_bank_origin", ($("#tr-bank").val() || "").trim());
-                        fd.append("transfer_payer_name",  ($("#tr-holder").val() || "").trim());
+                        // valores (IDs reales con underscore)
+                        const trBank   = ($("#tr_bank").val() || "").trim();
+                        const trHolder = ($("#tr_holder").val() || "").trim();
+                        const trDateV  = ($("#tr_date").val() || "").trim(); // YA viene YYYY-MM-DD por ser type="date"
+                        const trRef    = ($("#tr_ref").val() || "").trim();
 
-                        // Fecha dd/mm/yyyy -> yyyy-mm-dd
-                        const raw = ($("#tr-date").val() || "").trim();
-                        let iso = raw;
-                        if (raw.includes("/")) {
-                            const [dd, mm, yyyy] = raw.split("/");
-                            iso = `${yyyy}-${mm.padStart(2,"0")}-${dd.padStart(2,"0")}`;
-                        }
-                        fd.append("transfer_date", iso);
+                        // nombres que espera tu BD/backend
+                        fd.append("transfer_bank_origin", trBank);
+                        fd.append("transfer_payer_name", trHolder);
+                        fd.append("transfer_date", trDateV);
+                        fd.append("transfer_reference", trRef);
 
-                        fd.append("transfer_reference", ($("#tr-ref").val() || "").trim());
-
-                        // ✅ Montos (standard y descuento)
-                        const figures = computePaymentFigures();
-                        fd.append("amount_standard", String(figures.standard ?? ""));
-                        fd.append("discount_amount", String(((figures.standard ?? 0) - (figures.transfer ?? 0)).toFixed(2)));
-
-                        // (Opcional) compatibilidad tr_*
-                        fd.append("tr_bank", $("#tr-bank").val() || "");
-                        fd.append("tr_holder", $("#tr-holder").val() || "");
-                        fd.append("tr_date", iso);
-                        fd.append("tr_ref", $("#tr-ref").val() || "");
+                        // (opcional) compatibilidad tr_* si tu controller también los usa
+                        fd.append("tr_bank", trBank);
+                        fd.append("tr_holder", trHolder);
+                        fd.append("tr_date", trDateV);
+                        fd.append("tr_ref", trRef);
                     }
 
                     const $btn = $("#pay-now"); // tu botón final
