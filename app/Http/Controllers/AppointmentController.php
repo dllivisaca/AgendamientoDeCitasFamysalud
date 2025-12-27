@@ -243,6 +243,26 @@ class AppointmentController extends Controller
 
         $appointment = Appointment::findOrFail($request->appointment_id);
         $appointment->status = $request->status;
+         // ✅ Guardar precios (si vienen)
+        $appointment->amount_standard = $request->amount_standard;
+        $appointment->discount_amount = $request->discount_amount;
+
+        // ✅ Guardar términos (si vienen)
+        if ($request->has('data_consent')) {
+            $appointment->terms_accepted = (bool) $request->data_consent;
+            $appointment->terms_accepted_at = $request->data_consent ? now() : null;
+        }
+
+        // ✅ Guardar transferencia (si viene)
+        $appointment->transfer_bank_origin = $request->transfer_bank_origin;
+        $appointment->transfer_payer_name  = $request->transfer_payer_name;
+        $appointment->transfer_date        = $request->transfer_date;
+        $appointment->transfer_reference   = $request->transfer_reference;
+
+        // ✅ Guardar archivo comprobante (si viene)
+        if ($request->hasFile('tr_file')) {
+            $appointment->transfer_receipt_path = $request->file('tr_file')->store('transfer_proofs', 'public');
+        }
         $appointment->save();
 
         event(new StatusUpdated($appointment));

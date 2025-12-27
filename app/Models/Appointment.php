@@ -8,8 +8,65 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Appointment extends Model
 {
     use SoftDeletes;
+   protected $fillable = [
+        // Relaciones
+        'user_id',
+        'employee_id',
+        'service_id',
+        'booking_id',
 
-    protected $guarded = [];
+        // Paciente
+        'patient_full_name',
+        'patient_dob',
+        'patient_doc_type',
+        'patient_doc_number',
+        'patient_email',
+        'patient_phone',
+        'patient_address',
+        'patient_notes',
+        'patient_timezone',
+        'patient_timezone_label',
+
+        // Facturación
+        'billing_name',
+        'billing_doc_type',
+        'billing_doc_number',
+        'billing_email',
+        'billing_phone',
+        'billing_address',
+
+        // Pago
+        'amount',
+        'payment_method',
+        'amount_standard',
+        'discount_amount',
+        'payment_status',
+
+        // Cita
+        'appointment_date',
+        'appointment_time',
+        'appointment_end_time',
+        'status',
+
+        // Consentimientos
+        'data_consent',
+        'terms_accepted',
+        'terms_accepted_at',
+
+        // Transferencia
+        'transfer_bank_origin',
+        'transfer_payer_name',
+        'transfer_date',
+        'transfer_reference',
+        'transfer_receipt_path',
+    ];
+
+    protected $casts = [
+        'terms_accepted' => 'boolean',
+        'data_consent' => 'boolean',
+        'terms_accepted_at' => 'datetime',
+        'transfer_date' => 'date',
+    ];
 
     public function service()
     {
