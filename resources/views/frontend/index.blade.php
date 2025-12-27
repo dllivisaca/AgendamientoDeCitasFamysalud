@@ -812,6 +812,9 @@
                 let allowedMinYM = null;        // "YYYY-MM" (desde min_allowed)
                 let allowedMaxYM = null;        // "YYYY-MM" (hasta max_allowed)
 
+                let allowedMinDate = null;      // "YYYY-MM-DD"
+                let allowedMaxDate = null;      // "YYYY-MM-DD"
+
                 // Días en español (minúsculas, sin tildes) para lógica/BD
                 const diasES = ["domingo","lunes","martes","miercoles","jueves","viernes","sabado"];
 
@@ -862,6 +865,9 @@
                             // ✅ actualiza rango permitido (min/max)
                             allowedMinYM = parseYMFromDateTime(res.min_allowed);
                             allowedMaxYM = parseYMFromDateTime(res.max_allowed);
+
+                            allowedMinDate = (res.min_allowed || "").toString().substring(0, 10) || null;
+                            allowedMaxDate = (res.max_allowed || "").toString().substring(0, 10) || null;
 
                             // ✅ si es el mes que estamos viendo, úsalo para pintar
                             if (!onlyCache) {
@@ -1712,6 +1718,11 @@
                                 const formattedDate =
                                     `${year}-${(month + 1).toString().padStart(2, '0')}-${date.toString().padStart(2, '0')}`;
 
+                                // Bloquear días fuera del rango permitido (aunque el mes esté permitido)
+                                const isOutOfAllowedRange =
+                                    (allowedMinDate && formattedDate < allowedMinDate) ||
+                                    (allowedMaxDate && formattedDate > allowedMaxDate);
+
                                 // Check if this date is in the past
                                 const isPast = cellDate < new Date(today.setHours(0, 0, 0, 0));
 
@@ -1726,12 +1737,12 @@
 
                                 // Build classes
                                 let classes = 'text-center calendar-day';
-                                if (isPast || isDisabledBySchedule) {
+                                if (isPast || isDisabledBySchedule || isOutOfAllowedRange) {
                                     classes += ' disabled';
                                 }
 
                                 // Create the cell
-                                const lockedByRule = (isPast || isDisabledBySchedule);
+                                const lockedByRule = (isPast || isDisabledBySchedule || isOutOfAllowedRange);
                                 const cell = $(
                                 `<td class="${classes}" data-date="${formattedDate}" data-locked-by-rule="${lockedByRule}">${date}</td>`
                                 );
@@ -2536,7 +2547,7 @@
                         const tzLabel = isVirtual
                             ? (ap.patient_timezone_label || getUserTimeZoneLabel())
                             : "GMT-5 (Ecuador) (zona horaria de Ecuador)";
-                            
+
                         const payMethod = ap.payment_method || bookingState?.paymentMethod || "";
                         const total = ap.amount ?? null;
 
