@@ -2422,15 +2422,12 @@
                     const amt = paymentMethod === "transfer" ? figures.transfer : figures.standard;
                     fd.append("amount", String(isFinite(amt) ? amt : 0));
 
+                    fd.append("amount_standard", String(isFinite(figures.standard) ? figures.standard : 0));
+                    fd.append("discount_amount", String(isFinite(figures.discount) ? figures.discount : 0));
+
                     // ✅ TZ opcional
                     fd.append("patient_timezone", Intl.DateTimeFormat().resolvedOptions().timeZone || "");
                     fd.append("patient_timezone_label", getUserTimeZoneLabel());
-
-                    console.log("DBG billing-doc-number exists?", $("#billing-doc-number").length, "val=", $("#billing-doc-number").val());
-                    console.log("DBG tr-bank exists?", $("#tr-bank").length, "val=", $("#tr-bank").val());
-                    console.log("DBG tr-holder exists?", $("#tr-holder").length, "val=", $("#tr-holder").val());
-                    console.log("DBG tr-date exists?", $("#tr-date").length, "val=", $("#tr-date").val());
-                    console.log("DBG tr-ref exists?", $("#tr-ref").length, "val=", $("#tr-ref").val());
 
                     // ✅ Si es transferencia: adjuntar comprobante (id del input file: tr_file)
                     if (paymentMethod === "transfer") {
@@ -2460,9 +2457,6 @@
                     const $btn = $("#pay-now"); // tu botón final
                     const original = $btn.html();
                     $btn.prop("disabled", true).html('<span class="spinner-border spinner-border-sm me-2"></span>Guardando...');
-
-                    console.log("SENDING patient_phone:", $("#patient_phone").val());
-                    console.log("SENDING billing_phone:", $("#billing-phone").val());
 
                     $.ajax({
                         url: "/bookings",
@@ -2622,7 +2616,7 @@
                         setTimeout(resetBooking, 800);
                         },
                         error: function (xhr) {
-                        console.log("BOOKING ERROR", xhr.status, xhr.responseText, xhr.responseJSON);
+
                         if (xhr.status === 409) {
                             alert(xhr.responseJSON?.message || "El turno ya no está disponible (hold expiró).");
                             clearHoldState();
