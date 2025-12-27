@@ -2370,6 +2370,36 @@
                     }
 
                     const fd = new FormData();
+
+                    // --- DEBUG-FIX: asegurar que estos campos SIEMPRE viajen en el request ---
+                    fd.append('billing_doc_number', ($('#billing-doc-number').val() ?? '').trim());
+
+                    fd.append('transfer_bank_origin', ($('#tr-bank').val() ?? '').trim());
+                    fd.append('transfer_payer_name',  ($('#tr-holder').val() ?? '').trim());
+
+                    // Convertir fecha dd/mm/yyyy -> yyyy-mm-dd (Laravel "date" lo entiende mejor)
+                    const trRaw = ($('#tr-date').val() ?? '').trim(); // ej: 27/12/2025
+                    let trISO = '';
+                    if (trRaw && trRaw.includes('/')) {
+                    const [dd, mm, yyyy] = trRaw.split('/');
+                    if (dd && mm && yyyy) trISO = `${yyyy}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}`;
+                    } else {
+                    trISO = trRaw; // por si ya viene yyyy-mm-dd
+                    }
+                    fd.append('transfer_date', trISO);
+
+                    fd.append('transfer_reference', ($('#tr-ref').val() ?? '').trim());
+
+                    // Si no los tienes calculados aún, al menos envíalos como string vacío (para verificar que viajan)
+                    fd.append('amount_standard', (window.amountStandardValue ?? ''));
+                    fd.append('discount_amount', (window.discountValue ?? ''));
+
+                    // (Opcional) también manda los tr_* por compatibilidad, pero con IDs correctos
+                    fd.append('tr_bank',   ($('#tr-bank').val() ?? '').trim());
+                    fd.append('tr_holder', ($('#tr-holder').val() ?? '').trim());
+                    fd.append('tr_date',   trISO);
+                    fd.append('tr_ref',    ($('#tr-ref').val() ?? '').trim());
+
                     fd.append("_token", csrfToken);
 
                     // ✅ HOLD
@@ -2405,6 +2435,15 @@
                     fd.append("billing_email", $("#billing-email").val() || "");
                     fd.append("billing_phone", $("#billing-phone").val() || "");
 
+                    fd.append('transfer_bank_origin', $('#tr-bank').val() || "");
+                    fd.append('transfer_payer_name',  $('#tr-holder').val() || "");
+                    fd.append('transfer_date',        $('#tr-date').val() || "");
+                    fd.append('transfer_reference',   $('#tr-ref').val() || "");
+
+                    // Si no tienes estas variables definidas aún, pon "0" por ahora para que no se caiga
+                    fd.append('amount_standard', (typeof amountStandardValue !== "undefined" ? amountStandardValue : ""));
+                    fd.append('discount_amount', (typeof discountValue !== "undefined" ? discountValue : ""));
+
                     // Consentimiento (ID correcto)
                     fd.append("data_consent", $("#consent_data").is(":checked") ? "1" : "0");
 
@@ -2428,10 +2467,10 @@
                     if (paymentMethod === "transfer") {
                         const file = document.getElementById("tr_file")?.files?.[0];
                         if (file) fd.append("tr_file", file);
-                        fd.append("tr_bank", $("#tr_bank").val() || "");
-                        fd.append("tr_holder", $("#tr_holder").val() || "");
-                        fd.append("tr_date", $("#tr_date").val() || "");
-                        fd.append("tr_ref", $("#tr_ref").val() || "");
+                        fd.append("tr_bank", $("#tr-bank").val() || "");
+                        fd.append("tr_holder", $("#tr-holder").val() || "");
+                        fd.append("tr_date", $("#tr-date").val() || "");
+                        fd.append("tr_ref", $("#tr-ref").val() || "");
 
                         // (si tienes campos extra en el form, los puedes mandar también,
                         // pero OJO: tu controller actual NO los valida/guarda aún)

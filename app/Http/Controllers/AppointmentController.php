@@ -36,6 +36,19 @@ class AppointmentController extends Controller
      */
     public function store(Request $request)
     {
+        logger()->info('BOOKINGS PAYLOAD (KEYS)', $request->only([
+            'billing_doc_number',
+            'amount_standard',
+            'discount_amount',
+            'transfer_bank_origin',
+            'transfer_payer_name',
+            'transfer_date',
+            'transfer_reference',
+            'tr_bank',
+            'tr_holder',
+            'tr_date',
+            'tr_ref',
+        ]));
         $validated = $request->validate([
             'user_id' => 'nullable|exists:users,id',
             'employee_id' => 'required|exists:employees,id',
