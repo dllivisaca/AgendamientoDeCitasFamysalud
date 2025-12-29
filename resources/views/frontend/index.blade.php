@@ -578,7 +578,7 @@
                                     <label class="form-check-label fw-bold" for="pm_transfer">Transferencia bancaria (descuento aplicado)</label>
                                     </div>
                                     <div class="small text-muted mt-2">
-                                    Obtén un descuento pagando por transferencia bancaria.
+                                    Obtenga un descuento pagando por transferencia bancaria.
                                     </div>
                                 </div>
                                 </div>
@@ -588,6 +588,26 @@
                                 Seleccione un método de pago para continuar.
                             </div>
                             
+                        </div>
+
+                        <!-- ✅ Tarjeta: Términos y condiciones (sin botón) -->
+                        <div id="card-terms-card" class="form-section" style="display:none;">
+                            <h5 class="section-title"><i class="bi bi-shield-check me-2"></i> Términos y condiciones</h5>
+
+                            <div class="text-muted mb-2">
+                                Para continuar al pago, acepte los términos y condiciones.
+                            </div>
+
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="accept_terms_card">
+                                <label class="form-check-label" for="card_terms_accepted">
+                                Acepto los <a href="#" target="_blank">Términos y condiciones</a>
+                                </label>
+                            </div>
+
+                            <small class="text-muted d-block mt-2">
+                                Al continuar con el proceso, usted acepta que los pagos no son reembolsables. Las citas pueden ser reagendadas según disponibilidad.
+                            </small>
                         </div>
 
                         <!-- 4A) Transferencia -->
@@ -686,7 +706,7 @@
                             </div>
 
                             <!-- Placeholder de pasarela embebida -->
-                            <div class="border rounded p-3 bg-light" id="payphone-container">
+                            <div class="border rounded p-3 bg-light" id="payphone-container" style="display:none;">
                                 <div id="pp-button"></div>
                                 <div class="small text-muted mt-2" id="pp-help">
                                     Al pagar, usted será redirigido/a para confirmar el resultado.
@@ -2286,9 +2306,25 @@
                                     'Registrar cita y enviar comprobante <i class="bi bi-check2-circle"></i>'
                                 );
                             } else {
-                                $("#pay-now").html(
-                                    'Pagar y confirmar cita <i class="bi bi-check2-circle"></i>'
-                                );
+                                // =========================
+                                // CARD (Payphone)
+                                // =========================
+
+                                // 1) Ocultar el bloque final de transferencia (botón verde + checkbox viejo)
+                                $("#pay-action-card").addClass("d-none");     // tarjeta no usa el botón verde
+                                $("#terms-container").addClass("d-none");     // checkbox viejo solo transferencia
+                                $("#accept_terms").prop("checked", false);
+
+                                // 2) Mostrar el contenedor NUEVO de términos para tarjeta
+                                $("#card-terms-card").removeClass("d-none").show();
+
+                                // 3) Mostrar el bloque de Payphone, pero SOLO cuando acepten términos (opción recomendada)
+                                const cardTermsOk = $("#accept_terms_card").is(":checked");
+                                $("#card-block").show(); // para que SIEMPRE se vea el contenedor de tarjeta
+                                $("#payphone-container").toggle(cardTermsOk);
+
+                                // Si aún no aceptan, oculta el formulario
+                                // (cuando lo acepten, se mostrará y ahí recién renderizas Payphone)
                             }
 
                             // Habilitar según términos
@@ -2430,6 +2466,15 @@
                 function submitBooking() {
                     const csrfToken = getCsrfToken();
 
+                    // ✅ paymentMethod primero
+                    const paymentMethod = (bookingState.paymentMethod || "").toString().trim().toLowerCase();
+
+                    if (paymentMethod === "card") {
+                        // ⚠️ Con tarjeta NO se crea la cita aquí
+                        initPayphoneCheckout(); 
+                        return;
+                    }
+
                     // ✅ Si no hay hold, no intentamos reservar
                     if (!bookingState.hold_id) {
                         alert("El turno ya no está reservado. Seleccione el horario nuevamente.");
@@ -2501,7 +2546,6 @@
                     fd.append("data_consent", $("#consent_data").is(":checked") ? "1" : "0");
 
                     // ✅ paymentMethod primero (antes de usarlo)
-                    const paymentMethod = (bookingState.paymentMethod || "").toString().trim().toLowerCase();
                     fd.append("payment_method", paymentMethod);
                     console.log("DEBUG paymentMethod:", paymentMethod);
 
@@ -2740,6 +2784,64 @@
                     });
                 }
 
+                function initPayphoneCheckout() {
+                    const figures = computePaymentFigures();
+                    const standard = figures.standard;
+
+                    // ✅ payload mínimo (tu tabla appointments exige estos 3)
+                    const payload = {
+                        booking_id: bookingState.booking_id || "", // si manejas uno
+                        appointment_mode: bookingState.appointmentMode,
+
+                        patient_full_name: $("#patient_full_name").val() || "",
+                        patient_email: $("#patient_email").val() || "",
+                        patient_phone: $("#patient_phone").val() || "",
+
+                        patient_dob: $("#patient_dob").val() || null,
+                        patient_doc_type: $("#doc_type").val() || null,
+                        patient_doc_number: $("#doc_number").val() || null,
+                        patient_address: $("#patient_address").val() || null,
+                        patient_notes: $("#patient_notes").val() || null,
+
+                        billing_name: $("#billing-name").val() || null,
+                        billing_doc_type: $("#billing-doc-type").val() || null,
+                        billing_doc_number: $("#billing-doc-number").val() || null,
+                        billing_address: $("#billing-address").val() || null,
+                        billing_email: $("#billing-email").val() || null,
+                        billing_phone: $("#billing-phone").val() || null,
+
+                        data_consent: $("#consent_data").is(":checked") ? 1 : 0,
+                        patient_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "",
+                        patient_timezone_label: getUserTimeZoneLabel(),
+                    };
+
+                    if (!payload.patient_full_name || !payload.patient_email || !payload.patient_phone) {
+                        alert("Completa nombre, correo y teléfono antes de pagar con tarjeta.");
+                        return;
+                    }
+
+                    // ✅ llama backend para crear payment_attempt + devolver token/storeId/clientTransactionId
+                    $.ajax({
+                        url: "/payments/payphone/init",
+                        method: "POST",
+                        contentType: "application/json",
+                        headers: { "X-CSRF-TOKEN": getCsrfToken() },
+                        data: JSON.stringify({
+                            appointment_hold_id: bookingState.hold_id,
+                            amount: standard,
+                            payload: payload
+                        }),
+                        success: function (res) {
+                            // 👉 aquí renderizas la cajita con res.token, res.storeId, res.clientTransactionId, etc.
+                            renderPayphoneBox(res);
+                        },
+                        error: function (xhr) {
+                            console.log(xhr.responseText);
+                            alert("No se pudo iniciar el pago con Payphone.");
+                        }
+                    });
+                }
+
                 function resetBooking() {
                     // Reset booking state
                     bookingState = {
@@ -2906,17 +3008,59 @@
                     bookingState.paymentMethod = this.value; // 'card' o 'transfer'
                     refreshPaymentUI();
 
-                    // ✅ Paso C: si elige tarjeta, inicializa Payphone con el total real (estándar)
                     if (bookingState.paymentMethod === "card") {
-                        const { standard } = computePaymentFigures(); // standard = total real con tarjeta
+                        // Tarjeta: mostrar términos (sin botón) y ocultar Payphone hasta aceptar
+                        $("#card-terms-card").show();
+                        $("#accept_terms_card").prop("checked", false);
 
-                        // Limpia el contenedor por si el usuario cambia de método y vuelve
+                        // Oculta y resetea Payphone por si cambiaron de método
+                        $("#payphone-container").hide();
                         $("#pp-button").empty();
-
-                        // Inicializa Payphone (usa tu función/SDK aquí)
-                        initPayphoneWithTotal(standard);
+                        window.__payphoneRendered = false;
+                    } else {
+                        // Transfer: asegúrate de ocultar tarjeta
+                        $("#card-terms-card").hide();
+                        $("#payphone-container").hide();
+                        $("#pp-button").empty();
+                        window.__payphoneRendered = false;
                     }
                 });
+
+                // ✅ Tarjeta: mostrar Payphone solo si aceptó términos
+                $(document).on("change", "#accept_terms_card", function () {
+                    $("#payphone-container").empty();
+                    refreshPaymentUI();
+
+                    // si ya aceptó, recién renderiza Payphone con el total real
+                    if ($(this).is(":checked")) {
+                        const { standard } = computePaymentFigures();
+                        initPayphoneWithTotal(standard);
+                    }
+
+                    if (!this.checked) {
+                        $("#payphone-container").hide();
+                        $("#pp-button").empty();
+                        window.__payphoneRendered = false;
+                        return;
+                    }
+
+                    // OJO: antes de pagar, valida que el paso 5 esté OK
+                    if (!validateStep(5)) {
+                        alert("Por favor, completa tus datos antes de continuar al pago.");
+                        $("#accept_terms_card").prop("checked", false);
+                        return;
+                    }
+
+                    $("#payphone-container").show();
+
+                    // Render solo una vez
+                    if (window.__payphoneRendered) return;
+                    window.__payphoneRendered = true;
+
+                    // Usa el total estándar real (tarjeta)
+                    initPayphoneCheckout();
+                });
+
                 // Abrir modal de Términos y Condiciones
                 $(document).on("click", "#open-terms", function (e) {
                     e.preventDefault();
@@ -2924,6 +3068,10 @@
                         document.getElementById("termsModal")
                     );
                     modal.show();
+                });
+
+                $(document).on("click", "#open-terms-card", function () {
+                    $("#termsModal").modal("show"); // o el id real de tu modal
                 });
             });
         </script>
