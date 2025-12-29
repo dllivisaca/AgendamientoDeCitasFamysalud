@@ -2279,7 +2279,8 @@
 
                         // Bloques de contenido
                         $("#transfer-block").toggle(method === "transfer");
-                        $("#card-block").toggle(method === "card");
+                        // ❗ NO lo muestres aquí, porque en CARD lo controlamos con el checkbox
+                        $("#card-block").hide();
 
                         // =========================
                         // BOTÓN FINAL + TÉRMINOS
@@ -2318,11 +2319,25 @@
                                 // 2) Mostrar el contenedor NUEVO de términos para tarjeta
                                 $("#card-terms-card").removeClass("d-none").show();
 
+                                // Reset visual de tarjeta (para que no quede “abierto” si el usuario cambió método)
+                                $("#payphone-container").hide();
+                                $("#pp-button").empty();
+                                window.__payphoneRendered = false;
+
                                 // 3) Mostrar el bloque de Payphone, pero SOLO cuando acepten términos (opción recomendada)
                                 const cardTermsOk = $("#accept_terms_card").is(":checked");
-                                $("#card-block").show(); // para que SIEMPRE se vea el contenedor de tarjeta
+
+                                // ✅ SOLO mostrar “Pago con tarjeta” cuando acepten términos
+                                $("#card-block").toggle(cardTermsOk);
+
+                                // El formulario Payphone también solo cuando acepten términos
                                 $("#payphone-container").toggle(cardTermsOk);
 
+                                if (!cardTermsOk) {
+                                    // Limpieza visual si aún no aceptan
+                                    $("#pp-button").empty();
+                                    window.__payphoneRendered = false;
+                                }
                                 // Si aún no aceptan, oculta el formulario
                                 // (cuando lo acepten, se mostrará y ahí recién renderizas Payphone)
                             }
@@ -3030,6 +3045,7 @@
                 $(document).on("change", "#accept_terms_card", function () {
                     $("#payphone-container").empty();
                     refreshPaymentUI();
+                    $("#card-block").toggle(this.checked);
 
                     // si ya aceptó, recién renderiza Payphone con el total real
                     if ($(this).is(":checked")) {
@@ -3052,13 +3068,6 @@
                     }
 
                     $("#payphone-container").show();
-
-                    // Render solo una vez
-                    if (window.__payphoneRendered) return;
-                    window.__payphoneRendered = true;
-
-                    // Usa el total estándar real (tarjeta)
-                    initPayphoneCheckout();
                 });
 
                 // Abrir modal de Términos y Condiciones
