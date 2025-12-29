@@ -706,7 +706,7 @@
                             </div>
 
                             <!-- Placeholder de pasarela embebida -->
-                            <div class="border rounded p-3 bg-light" id="payphone-container" style="display:none;">
+                            <div class="border rounded p-3 bg-light" id="payphone-container">
                                 <div id="pp-button"></div>
                                 <div class="small text-muted mt-2" id="pp-help">
                                     Al pagar, usted será redirigido/a para confirmar el resultado.
@@ -806,17 +806,26 @@
             $(document).ready(function() {
                 async function initPayphoneWithTotal(totalUSD) {
                     try {
-                        if (!totalUSD || totalUSD <= 0) return;
+                        console.log("[Payphone] initPayphoneWithTotal called with:", totalUSD);
+
+                        if (!totalUSD || totalUSD <= 0) {
+                            console.warn("[Payphone] totalUSD inválido:", totalUSD);
+                            return;
+                        }
 
                         // Convertir a centavos
                         const amountCents = Math.round(parseFloat(totalUSD) * 100);
 
                         // Necesitamos el hold_id
                         const holdId = bookingState.hold_id;
+                        console.log("[Payphone] hold_id:", holdId);
+
                         if (!holdId) {
-                        console.warn("No hay hold_id para iniciar PayPhone");
-                        return;
+                            console.warn("No hay hold_id para iniciar PayPhone");
+                            return;
                         }
+
+                        console.log("[Payphone] PPaymentButtonBox exists?:", typeof PPaymentButtonBox);
 
                         // Llamar backend para inicializar intento de pago
                         const res = await fetch("{{ route('payphone.init') }}", {
@@ -831,16 +840,19 @@
                         })
                         });
 
+                        console.log("[Payphone] init status:", res.status);
+
                         if (!res.ok) {
                         console.error("PayPhone init falló", await res.text());
                         return;
                         }
 
                         const cfg = await res.json();
+                        console.log("[Payphone] cfg:", cfg);
 
                         const container = document.getElementById("pp-button");
-                        if (!container) {
-                        console.error("No existe el div #pp-button");
+                        if (!container) {                        
+                        console.error("[Payphone] No existe el div #pp-button");
                         return;
                         }
 
@@ -858,8 +870,10 @@
                         timeZone: -5,
                         }).render("pp-button");
 
+                        console.log("[Payphone] render() called");
+
                     } catch (e) {
-                        console.error("Error PayPhone:", e);
+                        console.error("[Payphone] Error:", e);
                     }
                 }
                 // ================================
@@ -2322,19 +2336,23 @@
                                 // 3) Mostrar el bloque de Payphone, pero SOLO cuando acepten términos (opción recomendada)
                                 const cardTermsOk = $("#accept_terms_card").is(":checked");
 
-                                // ✅ SOLO mostrar “Pago con tarjeta” cuando acepten términos
+                                // 1) Mostrar/ocultar bloques según aceptación
                                 $("#card-block").toggle(cardTermsOk);
-
-                                // El formulario Payphone también solo cuando acepten términos
                                 $("#payphone-container").toggle(cardTermsOk);
 
+                                // 2) Si NO aceptan, limpiar y resetear
                                 if (!cardTermsOk) {
-                                    // Limpieza visual si aún no aceptan
-                                    $("#pp-button").empty();
-                                    window.__payphoneRendered = false;
+                                $("#pp-button").empty();
+                                window.__payphoneRendered = false;
+                                return;
                                 }
-                                // Si aún no aceptan, oculta el formulario
-                                // (cuando lo acepten, se mostrará y ahí recién renderizas Payphone)
+
+                                // 3) Si YA aceptaron, renderizar Payphone UNA vez (con el total real)
+                                if (!window.__payphoneRendered) {
+                                const { standard } = computePaymentFigures();
+                                initPayphoneWithTotal(standard);
+                                window.__payphoneRendered = true;
+                                }
                             }
 
                             // Habilitar según términos
