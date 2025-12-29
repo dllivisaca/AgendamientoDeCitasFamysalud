@@ -85,7 +85,8 @@ class AppointmentController extends Controller
             // ✅ Datos de transferencia (opcionales)
             'transfer_bank_origin' => 'nullable|string|max:120',
             'transfer_payer_name' => 'nullable|string|max:255',
-            'transfer_date' => 'nullable|date',
+            'transfer_date' => 'nullable|date|after_or_equal:' . now()->subDays(30)->toDateString()
+                 . '|before_or_equal:' . now()->addDay()->toDateString(),
             'transfer_reference' => 'nullable|string|max:120',
 
             'appointment_date' => 'required|date',
@@ -247,7 +248,8 @@ class AppointmentController extends Controller
             // Transferencia (datos)
             'transfer_bank_origin' => 'nullable|string|max:120',
             'transfer_payer_name' => 'nullable|string|max:255',
-            'transfer_date' => 'nullable|date',
+            'transfer_date' => 'nullable|date|after_or_equal:' . now()->subDays(30)->toDateString()
+                 . '|before_or_equal:' . now()->addDay()->toDateString(),
             'transfer_reference' => 'nullable|string|max:120',
 
             // Archivo comprobante (si el método de pago es transferencia)

@@ -2241,28 +2241,52 @@
                     });
 
                     // ================================
-                    // REGLAS EXTRA TRANSFERENCIA (STEP 6)
+                    // TRANSFERENCIA (STEP 6)
                     // ================================
                     (function initTransferDateLimits() {
                         const dateEl = document.getElementById("tr_date");
                         if (!dateEl) return;
 
+                        const formatYMD = (d) => {
+                            const yyyy = d.getFullYear();
+                            const mm = String(d.getMonth() + 1).padStart(2, "0");
+                            const dd = String(d.getDate()).padStart(2, "0");
+                            return `${yyyy}-${mm}-${dd}`;
+                        };
+
                         const today = new Date();
-                        const yyyy = today.getFullYear();
-                        const mm = String(today.getMonth() + 1).padStart(2, "0");
-                        const dd = String(today.getDate()).padStart(2, "0");
-                        const max = `${yyyy}-${mm}-${dd}`;
 
-                        // "No muy antiguas": ejemplo 1 año hacia atrás (ajústalo si quieres 6 meses, etc.)
-                        const past = new Date(today);
-                        past.setFullYear(today.getFullYear() - 1);
-                        const pY = past.getFullYear();
-                        const pM = String(past.getMonth() + 1).padStart(2, "0");
-                        const pD = String(past.getDate()).padStart(2, "0");
-                        const min = `${pY}-${pM}-${pD}`;
+                        // Min: 30 días atrás
+                        const minDate = new Date(today);
+                        minDate.setDate(minDate.getDate() - 30);
 
-                        dateEl.max = max;
+                        // Max: 1 día después (buffer por zona horaria)
+                        const maxDate = new Date(today);
+                        maxDate.setDate(maxDate.getDate() + 1);
+
+                        const min = formatYMD(minDate);
+                        const max = formatYMD(maxDate);
+
                         dateEl.min = min;
+                        dateEl.max = max;
+
+                        // Validación extra (por si el navegador no respeta min/max en algún caso)
+                        const validateRange = () => {
+                            const v = (dateEl.value || "").trim();
+                            if (!v) {
+                                dateEl.setCustomValidity("");
+                                return;
+                            }
+
+                            if (v < min || v > max) {
+                                dateEl.setCustomValidity(`La fecha debe estar entre ${min} y ${max}.`);
+                            } else {
+                                dateEl.setCustomValidity("");
+                            }
+                        };
+
+                        dateEl.addEventListener("change", validateRange);
+                        dateEl.addEventListener("input", validateRange);
                     })();
 
                     function validateTransferFile() {
