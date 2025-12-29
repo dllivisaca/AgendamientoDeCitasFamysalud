@@ -13,6 +13,7 @@ use App\Http\Controllers\FrontendController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AppointmentHoldController;
+use App\Http\Controllers\PayphoneController;
 
 use Illuminate\Http\Request;
 
@@ -128,4 +129,5 @@ Route::post('/appointments/update-status', [AppointmentController::class, 'updat
 //update status from dashbaord
 Route::post('/update-status', [DashboardController::class, 'updateStatus'])->name('dashboard.update.status');
 
-
+Route::post('/payments/payphone/init', [PayphoneController::class, 'init'])->name('payphone.init');
+Route::get('/payments/payphone/response', [PayphoneController::class, 'response'])->name('payphone.response');

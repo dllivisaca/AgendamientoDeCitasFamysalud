@@ -18,6 +18,8 @@
         @if ($setting->header)
             {!! $setting->header !!}
         @endif
+        <link rel="stylesheet" href="https://cdn.payphonetodoesposible.com/box/v1.1/payphone-payment-box.css">
+        <script type="module" src="https://cdn.payphonetodoesposible.com/box/v1.1/payphone-payment-box.js"></script>
     </head>
 
     <body>
@@ -680,13 +682,14 @@
                             <h5 class="section-title"><i class="bi bi-credit-card me-2"></i>Pago con tarjeta</h5>
 
                             <div class="alert alert-info">
-                                Su pago se procesará de forma segura. (Aquí luego se integra la pasarela).
+                                Su pago se procesará de forma segura.
                             </div>
 
                             <!-- Placeholder de pasarela embebida -->
-                            <div class="border rounded p-3 bg-light">
-                                <div class="text-muted small">
-                                Aquí irá el formulario seguro de la pasarela (Stripe/Kushki/PayPhone/etc.).
+                            <div class="border rounded p-3 bg-light" id="payphone-container">
+                                <div id="pp-button"></div>
+                                <div class="small text-muted mt-2" id="pp-help">
+                                    Al pagar, usted será redirigido/a para confirmar el resultado.
                                 </div>
                             </div>
                             
@@ -781,7 +784,64 @@
                 6: "Pago · FamySalud"
             };
             $(document).ready(function() {
+                async function initPayphoneWithTotal(totalUSD) {
+                    try {
+                        if (!totalUSD || totalUSD <= 0) return;
 
+                        // Convertir a centavos
+                        const amountCents = Math.round(parseFloat(totalUSD) * 100);
+
+                        // Necesitamos el hold_id
+                        const holdId = bookingState.hold_id;
+                        if (!holdId) {
+                        console.warn("No hay hold_id para iniciar PayPhone");
+                        return;
+                        }
+
+                        // Llamar backend para inicializar intento de pago
+                        const res = await fetch("{{ route('payphone.init') }}", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                        },
+                        body: JSON.stringify({
+                            appointment_hold_id: holdId,
+                            amount: parseFloat(totalUSD)
+                        })
+                        });
+
+                        if (!res.ok) {
+                        console.error("PayPhone init falló", await res.text());
+                        return;
+                        }
+
+                        const cfg = await res.json();
+
+                        const container = document.getElementById("pp-button");
+                        if (!container) {
+                        console.error("No existe el div #pp-button");
+                        return;
+                        }
+
+                        container.innerHTML = "";
+
+                        new PPaymentButtonBox({
+                        token: cfg.token,          // ⚠️ viene del backend (.env)
+                        storeId: cfg.storeId,
+                        clientTransactionId: cfg.clientTransactionId,
+                        reference: "Cita médica FamySALUD",
+                        amount: amountCents,
+                        amountWithoutTax: amountCents,
+                        currency: "USD",
+                        lang: "es",
+                        timeZone: -5,
+                        }).render("pp-button");
+
+                    } catch (e) {
+                        console.error("Error PayPhone:", e);
+                    }
+                }
                 // ================================
                 // STEP 6: CONFIRMAR Y AGENDAR
                 // ================================
@@ -794,6 +854,12 @@
 
                     // Validar step 6 (método + campos si es transferencia)
                     if (!validateStep6()) return;
+
+                    // 🚨 SI ES TARJETA → NO crear cita aquí
+                    if (bookingState.paymentMethod === "card") {
+                        alert("Para confirmar tu cita, completa el pago con PayPhone.");
+                        return;
+                    }
 
                     // ✅ Por ahora: manda a crear la reserva con un status coherente.
                     // Luego conectamos pasarela (tarjeta) y subida real de comprobante al backend.
@@ -2839,6 +2905,17 @@
                 $(document).on("change", 'input[name="payment_method"]', function () {
                     bookingState.paymentMethod = this.value; // 'card' o 'transfer'
                     refreshPaymentUI();
+
+                    // ✅ Paso C: si elige tarjeta, inicializa Payphone con el total real (estándar)
+                    if (bookingState.paymentMethod === "card") {
+                        const { standard } = computePaymentFigures(); // standard = total real con tarjeta
+
+                        // Limpia el contenedor por si el usuario cambia de método y vuelve
+                        $("#pp-button").empty();
+
+                        // Inicializa Payphone (usa tu función/SDK aquí)
+                        initPayphoneWithTotal(standard);
+                    }
                 });
                 // Abrir modal de Términos y Condiciones
                 $(document).on("click", "#open-terms", function (e) {

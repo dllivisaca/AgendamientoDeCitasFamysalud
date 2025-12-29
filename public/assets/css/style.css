@@ -539,3 +539,11 @@ body {
     color: #212529 !important;   /* negro */
     font-weight: 400 !important; /* normal, NO negrita */
 }
+
+#payphone-container {
+    max-width: 420px;   /* 👈 más pequeño */
+    margin: 0 auto;
+    padding: 4px;       /* 👈 menos aire */
+    background: transparent; /* 👈 quita el bloque visual */
+    text-align: center;
+}
