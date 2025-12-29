@@ -752,7 +752,7 @@
                     </div>
                     <div class="modal-body text-center p-4">
                         <i class="bi bi-check-circle text-success" style="font-size: 4rem;"></i>
-                        <h4 class="mt-3">Gracias!</h4>
+                        <h4 class="mt-3">¡Gracias!</h4>
                         <p>Su cita se registró correctamente.</p>
                         <div class="alert alert-info mt-3">
                             <p class="mb-0">Le enviamos un correo electrónico con el resumen de su cita</p>
@@ -2614,17 +2614,21 @@
 
                         <div class="mb-1"><strong>Fecha:</strong> ${dateTxt}</div>
                         <div class="mb-1"><strong>Hora:</strong> ${timeRangeTxt}</div>
-                        <div class="mb-3"><strong>Zona horaria:</strong> ${tzLabel}</div>
+                        <div class="mb-1"><strong>Zona horaria:</strong> ${tzLabel}</div>
 
-                        ${total !== null ? `<div class="mb-2"><strong>Total:</strong> ${money(total)}</div>` : ""}
+                        ${total !== null ? `<div class="mb-1"><strong>Total:</strong> ${money(total)}</div>` : ""}
 
                         ${
                             payMethod === "transfer"
                             ? `
-                                <div class="alert alert-info mt-3 mb-0">
-                                <strong>Transferencia bancaria:</strong><br>
-                                Su cita quedará <b>confirmada</b> una vez validemos el comprobante.<br>
-                                Guarde el <b>código de reserva</b> para cualquier consulta.
+                                <div class="alert alert-info mt-3 mb-0 text-justify">
+                                    <div class="fw-bold mb-1">Transferencia bancaria:</div>
+                                    <p class="mb-1">
+                                        Su cita quedará <b>confirmada</b> una vez validemos el comprobante.
+                                    </p>
+                                    <p class="mb-0">
+                                        Guarde el <b>código de reserva</b> para cualquier consulta.
+                                    </p>
                                 </div>
                             `
                             : `
