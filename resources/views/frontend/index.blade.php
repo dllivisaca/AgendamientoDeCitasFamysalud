@@ -2319,11 +2319,6 @@
                                 // 2) Mostrar el contenedor NUEVO de términos para tarjeta
                                 $("#card-terms-card").removeClass("d-none").show();
 
-                                // Reset visual de tarjeta (para que no quede “abierto” si el usuario cambió método)
-                                $("#payphone-container").hide();
-                                $("#pp-button").empty();
-                                window.__payphoneRendered = false;
-
                                 // 3) Mostrar el bloque de Payphone, pero SOLO cuando acepten términos (opción recomendada)
                                 const cardTermsOk = $("#accept_terms_card").is(":checked");
 
@@ -3021,29 +3016,29 @@
 
                 $(document).on("change", 'input[name="payment_method"]', function () {
                     bookingState.paymentMethod = this.value; // 'card' o 'transfer'
-                    refreshPaymentUI();
+
+                    // Reset UI tarjeta SIEMPRE que cambies método (evita estados “pegados”)
+                    $("#accept_terms_card").prop("checked", false);
+                    $("#card-block").hide();
+                    $("#payphone-container").hide();
+                    $("#pp-button").empty();
+                    window.__payphoneRendered = false;
 
                     if (bookingState.paymentMethod === "card") {
-                        // Tarjeta: mostrar términos (sin botón) y ocultar Payphone hasta aceptar
                         $("#card-terms-card").show();
-                        $("#accept_terms_card").prop("checked", false);
-
-                        // Oculta y resetea Payphone por si cambiaron de método
-                        $("#payphone-container").hide();
-                        $("#pp-button").empty();
-                        window.__payphoneRendered = false;
                     } else {
-                        // Transfer: asegúrate de ocultar tarjeta
                         $("#card-terms-card").hide();
-                        $("#payphone-container").hide();
-                        $("#pp-button").empty();
-                        window.__payphoneRendered = false;
                     }
+
+                    // 🔁 al final refresca (ya con el checkbox en false)
+                    refreshPaymentUI();
                 });
 
                 // ✅ Tarjeta: mostrar Payphone solo si aceptó términos
                 $(document).on("change", "#accept_terms_card", function () {
-                    $("#payphone-container").empty();
+                    $("#payphone-container").hide();
+                    $("#pp-button").empty();
+                    window.__payphoneRendered = false;
                     refreshPaymentUI();
                     $("#card-block").toggle(this.checked);
 
