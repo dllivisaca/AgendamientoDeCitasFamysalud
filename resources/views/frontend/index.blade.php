@@ -20,6 +20,10 @@
         @endif
         <link rel="stylesheet" href="https://cdn.payphonetodoesposible.com/box/v1.1/payphone-payment-box.css">
         <script type="module" src="https://cdn.payphonetodoesposible.com/box/v1.1/payphone-payment-box.js"></script>
+
+        <link rel="preconnect" href="https://cdn.jsdelivr.net">
+        <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+        <link rel="preload" as="script" href="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/utils.js">
     </head>
 
     <body>
@@ -3340,8 +3344,7 @@
         <!-- intl-tel-input utils -->
         <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/utils.js"></script>
 
-        <!-- ✅ intl-tel-input idioma español -->
-        <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/i18n/es/index.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/i18n/es.js"></script>
 
         <script>
             (function () {

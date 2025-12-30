@@ -547,3 +547,12 @@ body {
     background: transparent; /* 👈 quita el bloque visual */
     text-align: center;
 }
+
+/* intl-tel-input: que el dropdown responda rápido */
+.iti__country-list {
+  scroll-behavior: auto !important;
+}
+
+.iti__country, .iti__country-list {
+  transition: none !important;
+}
