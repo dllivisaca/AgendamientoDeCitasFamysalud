@@ -2654,10 +2654,20 @@
 
                         // OJO: tu hidden de billing es "billing-phone" (con guion)
                         if (billingIti && document.getElementById("billing-phone")) {
-                            document.getElementById("billing-phone").value =
+                            let bE164 =
                                 (window.intlTelInputUtils && window.intlTelInputUtils.numberFormat)
                                     ? (billingIti.getNumber(intlTelInputUtils.numberFormat.E164) || "")
                                     : (billingIti.getNumber() || "");
+
+                            // ✅ MISMA LÓGICA QUE YA TE FUNCIONÓ EN ECUADOR/PATIENT:
+                            // si por alguna razón viene sin "+", lo armamos con dialCode + dígitos
+                            if (bE164 && !bE164.startsWith("+")) {
+                                const bDial = billingIti.getSelectedCountryData?.().dialCode || "";
+                                const bDigits = bE164.replace(/\D/g, "");
+                                bE164 = (bDial && bDigits) ? (`+${bDial}${bDigits}`) : bDigits;
+                            }
+
+                            document.getElementById("billing-phone").value = bE164;
                         }
                     } catch (e) {
                     console.warn("Phone sync error", e);
