@@ -855,7 +855,17 @@
                         try {
                             const patientIti = window._itiByInputId?.["patient_phone_ui"];
                             if (patientIti && document.getElementById("patient_phone")) {
-                                document.getElementById("patient_phone").value = patientIti.getNumber() || "";
+                                let pE164 =
+                                    (window.intlTelInputUtils && window.intlTelInputUtils.numberFormat)
+                                        ? (patientIti.getNumber(intlTelInputUtils.numberFormat.E164) || "")
+                                        : (patientIti.getNumber() || "");
+
+                                if (pE164 && !pE164.startsWith("+")) {
+                                    const pDial = patientIti.getSelectedCountryData?.().dialCode || "";
+                                    const pDigits = pE164.replace(/\D/g, "");
+                                    pE164 = (pDial && pDigits) ? (`+${pDial}${pDigits}`) : pDigits;
+                                }
+                                document.getElementById("patient_phone").value = pE164;
                             }
                         } catch (e) {
                             console.warn("Phone sync error", e);
@@ -2629,12 +2639,25 @@
                         const billingIti = window._itiByInputId?.["billing_phone_ui"];
 
                         if (patientIti && document.getElementById("patient_phone")) {
-                            document.getElementById("patient_phone").value = patientIti.getNumber() || "";
+                            let pE164 =
+                                (window.intlTelInputUtils && window.intlTelInputUtils.numberFormat)
+                                    ? (patientIti.getNumber(intlTelInputUtils.numberFormat.E164) || "")
+                                    : (patientIti.getNumber() || "");
+
+                            if (pE164 && !pE164.startsWith("+")) {
+                                const pDial = patientIti.getSelectedCountryData?.().dialCode || "";
+                                const pDigits = pE164.replace(/\D/g, "");
+                                pE164 = (pDial && pDigits) ? (`+${pDial}${pDigits}`) : pDigits;
+                            }
+                            document.getElementById("patient_phone").value = pE164;
                         }
 
                         // OJO: tu hidden de billing es "billing-phone" (con guion)
                         if (billingIti && document.getElementById("billing-phone")) {
-                            document.getElementById("billing-phone").value = billingIti.getNumber() || "";
+                            document.getElementById("billing-phone").value =
+                                (window.intlTelInputUtils && window.intlTelInputUtils.numberFormat)
+                                    ? (billingIti.getNumber(intlTelInputUtils.numberFormat.E164) || "")
+                                    : (billingIti.getNumber() || "");
                         }
                     } catch (e) {
                     console.warn("Phone sync error", e);
@@ -3354,7 +3377,7 @@
                         nationalMode: true,
 
                         preferredCountries: ["ec", "us", "co", "pe", "es"],
-                        /* utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/utils.js" */
+                        utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/utils.js"
                     });
 
                     // ✅ Placeholder dinámico según país
@@ -3458,7 +3481,7 @@
                     let syncTimer = null;
 
                     function sync(immediate = false) {
-                        const number = iti.getNumber();
+                        const number = (window.intlTelInputUtils && window.intlTelInputUtils.numberFormat) ? iti.getNumber(intlTelInputUtils.numberFormat.E164) : iti.getNumber();
                         hidden.value = number || "";
 
                         // Live sync sin spam: disparamos eventos con debounce
@@ -3576,7 +3599,7 @@
                     const bEmail = document.getElementById("billing-email");  // <-- AJUSTA si aplica
                     const bAddr  = document.getElementById("billing-address");// <-- AJUSTA si aplica
                     const bPhoneUI = document.getElementById("billing_phone_ui");
-                    const bPhoneHidden = document.getElementById("billing-phone"); // hidden E164
+                    const bPhoneHidden = document.getElementById("billing_phone"); // hidden E164
 
                     // (Opcional) documento de facturación
                     const bDocType = document.getElementById("billing-doc-type");
@@ -3684,7 +3707,9 @@
                         if (phoneDigits.startsWith("0")) phoneDigits = phoneDigits.slice(1);
 
                         // Limitar a 9 dígitos
-                        if (phoneDigits.length > 9) phoneDigits = phoneDigits.slice(0, 9);
+                        if (itiPatient && itiPatient.getSelectedCountryData && itiPatient.getSelectedCountryData().iso2 === "ec") {
+                            if (phoneDigits.length > 9) phoneDigits = phoneDigits.slice(0, 9);
+                        }
 
                         // Setear el input visible (sin 593, sin espacios)
                         if (bPhoneUI) {
@@ -3710,10 +3735,7 @@
                             }
 
                             // Mantén hidden E.164 coherente
-                            if (bPhoneHidden) {
-                                // usa el E164 real que genera el plugin según la bandera actual
-                                bPhoneHidden.value = itiBilling.getNumber() || "";
-                            }
+                            if (bPhoneHidden) bPhoneHidden.value = itiBilling ? (itiBilling.getNumber() || "") : "";
                         }
                     }
 
