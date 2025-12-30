@@ -23,7 +23,6 @@
 
         <link rel="preconnect" href="https://cdn.jsdelivr.net">
         <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
-        <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/intlTelInput.min.js"></script>
         <link rel="preload" as="script" href="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/utils.js">
     </head> 
 
@@ -3309,6 +3308,9 @@
             })();
         </script>
 
+        <!-- NO BORRAR O DESAPARECE SELECTOR -->
+        <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/intlTelInput.min.js"></script>
+
         <!-- intl-tel-input utils -->
         <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/utils.js"></script>
 
@@ -3336,15 +3338,20 @@
                         localizedEs = {};
                     }
 
+                    // ✅ v19: traducir el dataset GLOBAL que usa el dropdown
+                    try {
+                        const data = window.intlTelInputGlobals.getCountryData();
+                        data.forEach(c => {
+                            if (localizedEs[c.iso2]) c.name = localizedEs[c.iso2];
+                        });
+                    } catch (e) {}
+
                     const iti = window.intlTelInput(input, {
                         initialCountry: "ec",
                         separateDialCode: true,
                         // ✅ AGREGA ESTAS DOS
                         formatOnDisplay: false,
                         nationalMode: true,
-
-                        // ✅ LISTADO EN ESPAÑOL
-                        localizedCountries: localizedEs,
 
                         preferredCountries: ["ec", "us", "co", "pe", "es"],
                         /* utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/utils.js" */
@@ -3445,19 +3452,29 @@
                     window._itiByInputId = window._itiByInputId || {};
                     window._itiByInputId[inputId] = iti;
 
-                    function sync() {
-                        // E.164: +593991234567
+                    let syncTimer = null;
+
+                    function sync(immediate = false) {
                         const number = iti.getNumber();
                         hidden.value = number || "";
 
-                        // ✅ avisar que el hidden cambió (para live sync)
-                        hidden.dispatchEvent(new Event("input", { bubbles: true }));
-                        hidden.dispatchEvent(new Event("change", { bubbles: true }));
+                        // Live sync sin spam: disparamos eventos con debounce
+                        if (immediate) {
+                            hidden.dispatchEvent(new Event("input", { bubbles: true }));
+                            hidden.dispatchEvent(new Event("change", { bubbles: true }));
+                            return;
+                        }
+
+                        clearTimeout(syncTimer);
+                        syncTimer = setTimeout(() => {
+                            hidden.dispatchEvent(new Event("input", { bubbles: true }));
+                            hidden.dispatchEvent(new Event("change", { bubbles: true }));
+                        }, 120);
                     }
 
                     input.addEventListener("blur", () => {
                         enforceEcuadorMax9();
-                        sync();
+                        sync(true);
                         validateEcuadorLength();
                     });
 
@@ -3472,16 +3489,16 @@
                         }, 150);
                     });
 
-                    input.addEventListener("change", () => {
+                    /* input.addEventListener("change", () => {
                         enforceEcuadorMax9();
                         sync();
                         validateEcuadorLength();
-                    });
+                    }); */
 
                     input.addEventListener("countrychange", () => {
                         updatePlaceholder();   // ✅ AÑADE ESTA LÍNEA
                         enforceEcuadorMax9();
-                        sync();
+                        sync(true);
                         validateEcuadorLength();
                     });
 
@@ -3500,7 +3517,7 @@
 
                     input.addEventListener("input", () => {
                         enforceEcuadorMax9();
-                        sync();
+                        sync(false);
                         validateEcuadorLength();
                     });
                 }
@@ -3654,11 +3671,19 @@
 
                         // Setear el input visible (sin 593, sin espacios)
                         if (bPhoneUI) {
-                            setVal(bPhoneUI, phoneDigits);
+                            const itiBilling = window._itiByInputId && window._itiByInputId["billing_phone_ui"];
 
-                            // 🔥 importante: disparar eventos para que setupIntlPhone haga sync() y llene billing-phone (E.164)
-                            bPhoneUI.dispatchEvent(new Event("input", { bubbles: true }));
-                            bPhoneUI.dispatchEvent(new Event("change", { bubbles: true }));
+                            // Si existe el plugin en billing, actualiza visual + E.164 sin eventos
+                            if (itiBilling) {
+                                itiBilling.setCountry("ec");
+                                itiBilling.setNumber("+593" + phoneDigits);
+                            } else {
+                                // fallback: si no hay iti por alguna razón
+                                setVal(bPhoneUI, phoneDigits);
+                            }
+
+                            // Mantén hidden E.164 coherente
+                            if (bPhoneHidden) bPhoneHidden.value = phoneDigits ? ("+593" + phoneDigits) : "";
                         }
                     }
 
