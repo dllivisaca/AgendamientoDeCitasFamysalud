@@ -810,6 +810,57 @@
                 6: "Pago · FamySalud"
             };
             $(document).ready(function() {
+                // ✅ PayPhone devuelve a tu web con parámetros en la URL.
+                // Si vienen, no regreses al Step 1: confirma y redirige a una página final.
+                (function handlePayphoneReturn() {
+                    const qp = new URLSearchParams(window.location.search);
+
+                    // PayPhone normalmente regresa algo como: ?id=XXXX&clientTransactionId=YYYY
+                    const payId = qp.get("id");
+                    const clientTx = qp.get("clientTransactionId") || qp.get("clientTxId");
+
+                    if (!payId || !clientTx) return;
+
+                    // Limpia la URL para que si refrescan, no re-dispare el confirm
+                    window.history.replaceState({}, document.title, window.location.pathname);
+
+                    // Lleva al usuario al paso 6 y muestra “confirmando…”
+                    if (typeof goToStep === "function") goToStep(6);
+
+                    $("#pay-action-card").removeClass("d-none").show();
+                    $("#pay-now")
+                        .prop("disabled", true)
+                        .html('<span class="spinner-border spinner-border-sm me-2"></span>Confirmando pago...');
+
+                    // 👇 Este endpoint lo creamos/ajustamos en backend (te digo cuál archivo me pasas en el punto 2)
+                    fetch(`/payments/payphone/confirm?id=${encodeURIComponent(payId)}&clientTransactionId=${encodeURIComponent(clientTx)}`, {
+                        method: "GET",
+                        credentials: "same-origin"
+                    })
+                    .then(async r => {
+                        const ct = r.headers.get("content-type") || "";
+                        const data = ct.includes("application/json") ? await r.json() : { ok: false, message: await r.text() };
+                        return data;
+                    })
+                    .then(data => {
+                        if (data.ok && data.redirect_url) {
+                            window.location.href = data.redirect_url;
+                            return;
+                        }
+
+                        if (data.ok) {
+                            // fallback si no mandas redirect_url
+                            alert("Pago confirmado ✅. Tu cita quedó registrada.");
+                        } else {
+                            alert(data.message || "No se pudo confirmar el pago. Si ya pagaste, escríbenos para ayudarte.");
+                            $("#pay-now").prop("disabled", false).text("Reintentar confirmación");
+                        }
+                    })
+                    .catch(() => {
+                        alert("No se pudo confirmar el pago (error de red).");
+                        $("#pay-now").prop("disabled", false).text("Reintentar confirmación");
+                    });
+                })();
 
                 $("#patient_phone_ui").on("input change blur", function () {
                     const uiVal = ($(this).val() || "").trim();
@@ -2997,8 +3048,8 @@
                         headers: { "X-CSRF-TOKEN": getCsrfToken() },
                         data: JSON.stringify({
                             appointment_hold_id: holdId,
-                            amount: parseFloat(totalUSD),
-                            payload: buildPayphonePayload()
+                            amount: parseFloat(standard),
+                            payload: payload
                         }),
                         success: function (res) {
                             // 👉 aquí renderizas la cajita con res.token, res.storeId, res.clientTransactionId, etc.

@@ -58,7 +58,27 @@
                 return redirect('/')->with('error', 'Pago no válido.');
             }
 
-            // Confirm (POST) - IMPORTANTÍSIMO (si no confirmas, pueden revertir)
+            // ✅ IMPORTANTE:
+            // Aquí ya NO confirmamos, solo reenviamos al home con los parámetros.
+            // Tu JS en index.blade.php detecta estos params y llama /payments/payphone/confirm
+            return redirect('/?id=' . urlencode((string)$id) . '&clientTransactionId=' . urlencode($clientTransactionId));
+        }
+
+        public function confirm(Request $request)
+        {
+            $request->headers->set('Accept', 'application/json');
+
+            $id = (int) $request->query('id', 0);
+            $clientTransactionId = (string) $request->query('clientTransactionId', '');
+
+            if (!$id || !$clientTransactionId) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'Pago no válido.',
+                ], 422);
+            }
+
+            // Confirm (POST)
             $confirmUrl = 'https://pay.payphonetodoesposible.com/api/button/V2/Confirm';
 
             $confirm = Http::withHeaders([
@@ -69,127 +89,130 @@
                 'clientTxId' => $clientTransactionId,
             ]);
 
-            $body = $confirm->json();
+            $body = $confirm->json() ?? [];
 
             // Guarda respuesta
             DB::table('payment_attempts')
                 ->where('client_transaction_id', $clientTransactionId)
                 ->update([
                     'provider_transaction_id' => $body['transactionId'] ?? null,
-                    'authorization_code' => $body['authorizationCode'] ?? null,
-                    'provider_status' => $body['status'] ?? ($body['transactionStatus'] ?? null),
-                    'confirm_response' => json_encode($body),
-                    'status' => ($body['transactionStatus'] ?? '') === 'Approved' ? 'approved' : 'failed',
+                    'authorization_code'      => $body['authorizationCode'] ?? null,
+                    'provider_status'         => $body['status'] ?? ($body['transactionStatus'] ?? null),
+                    'confirm_response'        => json_encode($body),
+                    'status'                  => ($body['transactionStatus'] ?? '') === 'Approved' ? 'approved' : 'failed',
+                    'updated_at'              => now(),
+                ]);
+
+            if (($body['transactionStatus'] ?? '') !== 'Approved') {
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'Pago no aprobado o cancelado.',
+                    'provider' => $body,
+                ], 200);
+            }
+
+            // Si aprobado -> crea la cita (igual que hacías antes) y responde con URL final
+            return DB::transaction(function () use ($clientTransactionId) {
+
+                $attempt = DB::table('payment_attempts')
+                    ->where('client_transaction_id', $clientTransactionId)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$attempt) {
+                    return response()->json([
+                        'ok' => false,
+                        'message' => 'No se encontró el intento de pago.',
+                    ], 404);
+                }
+
+                // Anti-duplicados
+                $exists = DB::table('appointments')
+                    ->where('client_transaction_id', $clientTransactionId)
+                    ->first();
+
+                if ($exists) {
+                    DB::table('appointment_holds')->where('id', $attempt->appointment_hold_id)->delete();
+
+                    return response()->json([
+                        'ok' => true,
+                        'redirect_url' => url('/?paid=1&booking_id=' . urlencode((string)($exists->booking_id ?? ''))),
+                        'booking_id' => $exists->booking_id ?? null,
+                    ], 200);
+                }
+
+                $hold = DB::table('appointment_holds')
+                    ->where('id', $attempt->appointment_hold_id)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$hold) {
+                    return response()->json([
+                        'ok' => false,
+                        'message' => 'El turno reservado expiró o no existe.',
+                    ], 200);
+                }
+
+                $payload = json_decode($attempt->init_response ?? '{}', true);
+
+                $bookingId = $payload['booking_id'] ?? ('BK-' . strtoupper(Str::random(12)));
+
+                DB::table('appointments')->insert([
+                    'user_id'      => $attempt->user_id,
+                    'employee_id'  => $hold->employee_id,
+                    'service_id'   => $hold->service_id,
+                    'booking_id'   => $bookingId,
+
+                    'patient_full_name' => $payload['patient_full_name'],
+                    'patient_email'     => $payload['patient_email'],
+                    'patient_phone'     => $payload['patient_phone'],
+
+                    'patient_dob'        => $payload['patient_dob'] ?? null,
+                    'patient_doc_type'   => $payload['patient_doc_type'] ?? null,
+                    'patient_doc_number' => $payload['patient_doc_number'] ?? null,
+                    'patient_address'    => $payload['patient_address'] ?? null,
+                    'patient_notes'      => $payload['patient_notes'] ?? null,
+
+                    'billing_name'       => $payload['billing_name'] ?? null,
+                    'billing_doc_type'   => $payload['billing_doc_type'] ?? null,
+                    'billing_doc_number' => $payload['billing_doc_number'] ?? null,
+                    'billing_email'      => $payload['billing_email'] ?? null,
+                    'billing_phone'      => $payload['billing_phone'] ?? null,
+                    'billing_address'    => $payload['billing_address'] ?? null,
+
+                    'amount'          => $attempt->amount,
+                    'payment_method'  => 'card',
+                    'amount_standard' => $attempt->amount,
+                    'discount_amount' => 0,
+
+                    'appointment_date'     => $hold->appointment_date,
+                    'appointment_time'     => $hold->appointment_time,
+                    'appointment_end_time' => $hold->appointment_end_time ?? null,
+                    'appointment_mode'     => $payload['appointment_mode'] ?? 'presencial',
+
+                    'patient_timezone'       => $payload['patient_timezone'] ?? null,
+                    'patient_timezone_label' => $payload['patient_timezone_label'] ?? null,
+
+                    'data_consent'      => $payload['data_consent'] ?? 0,
+                    'terms_accepted'    => 1,
+                    'terms_accepted_at' => now(),
+
+                    'status'         => 'confirmed',
+                    'payment_status' => 'paid',
+
+                    'client_transaction_id' => $clientTransactionId,
+
+                    'created_at' => now(),
                     'updated_at' => now(),
                 ]);
 
-            // Si aprobado -> aquí recién creas la cita (o la confirmas) usando appointment_hold_id
-            // TIP: recupera payment_attempts.appointment_hold_id y arma la cita desde el hold.
-            if (($body['transactionStatus'] ?? '') === 'Approved') {
+                DB::table('appointment_holds')->where('id', $hold->id)->delete();
 
-                return DB::transaction(function () use ($clientTransactionId, $id) {
-
-                    $attempt = DB::table('payment_attempts')
-                        ->where('client_transaction_id', $clientTransactionId)
-                        ->lockForUpdate()
-                        ->first();
-
-                    if (!$attempt) {
-                        return redirect('/')->with('error', 'No se encontró el intento de pago.');
-                    }
-
-                    // ✅ Anti-duplicados: si ya creaste cita para este pago, no repitas
-                    $exists = DB::table('appointments')
-                        ->where('client_transaction_id', $clientTransactionId)
-                        ->first();
-
-                    if ($exists) {
-                        // Si el hold aún existe, lo puedes borrar por limpieza
-                        DB::table('appointment_holds')->where('id', $attempt->appointment_hold_id)->delete();
-                        return redirect('/')->with('success', 'Pago aprobado. Tu cita ya estaba confirmada ✅');
-                    }
-
-                    $hold = DB::table('appointment_holds')
-                        ->where('id', $attempt->appointment_hold_id)
-                        ->lockForUpdate()
-                        ->first();
-
-                    if (!$hold) {
-                        return redirect('/')->with('error', 'El turno reservado expiró o no existe.');
-                    }
-
-                    $payload = json_decode($attempt->init_response ?? '{}', true);
-
-                    // booking_id obligatorio en tu tabla
-                    $bookingId = $payload['booking_id'] ?? ('BK-' . strtoupper(Str::random(12)));
-
-                    // ✅ Inserta en appointments con TUS columnas
-                    DB::table('appointments')->insert([
-                        // IDs base
-                        'user_id'      => $attempt->user_id,
-                        'employee_id'  => $hold->employee_id,
-                        'service_id'   => $hold->service_id,
-                        'booking_id'   => $bookingId,
-
-                        // Paciente (obligatorios en tu tabla: full_name, email, phone)
-                        'patient_full_name' => $payload['patient_full_name'],
-                        'patient_email'     => $payload['patient_email'],
-                        'patient_phone'     => $payload['patient_phone'],
-
-                        // Opcionales
-                        'patient_dob'        => $payload['patient_dob'] ?? null,
-                        'patient_doc_type'   => $payload['patient_doc_type'] ?? null,
-                        'patient_doc_number' => $payload['patient_doc_number'] ?? null,
-                        'patient_address'    => $payload['patient_address'] ?? null,
-                        'patient_notes'      => $payload['patient_notes'] ?? null,
-
-                        // Facturación
-                        'billing_name'       => $payload['billing_name'] ?? null,
-                        'billing_doc_type'   => $payload['billing_doc_type'] ?? null,
-                        'billing_doc_number' => $payload['billing_doc_number'] ?? null,
-                        'billing_email'      => $payload['billing_email'] ?? null,
-                        'billing_phone'      => $payload['billing_phone'] ?? null,
-                        'billing_address'    => $payload['billing_address'] ?? null,
-
-                        // Montos
-                        'amount'          => $attempt->amount,        // total pagado
-                        'payment_method'  => 'card',
-                        'amount_standard' => $attempt->amount,        // si tarjeta = estándar
-                        'discount_amount' => 0,
-
-                        // Fecha/hora vienen del hold
-                        'appointment_date'     => $hold->appointment_date,
-                        'appointment_time'     => $hold->appointment_time,
-                        'appointment_end_time' => $hold->appointment_end_time ?? null,
-                        'appointment_mode'     => $payload['appointment_mode'] ?? 'presencial',
-
-                        // Zona horaria
-                        'patient_timezone'       => $payload['patient_timezone'] ?? null,
-                        'patient_timezone_label' => $payload['patient_timezone_label'] ?? null,
-
-                        // Consentimientos
-                        'data_consent'      => $payload['data_consent'] ?? 0,
-                        'terms_accepted'    => 1,
-                        'terms_accepted_at' => now(),
-
-                        // Estados
-                        'status'         => 'confirmed',
-                        'payment_status' => 'paid',
-
-                        // Payphone (para trazabilidad)
-                        'client_transaction_id' => $clientTransactionId,
-
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-
-                    // ✅ Consumir el hold: eliminarlo (tu paso 6)
-                    DB::table('appointment_holds')->where('id', $hold->id)->delete();
-
-                    return redirect('/')->with('success', "Pago aprobado. Cita confirmada ✅ Código: {$bookingId}");
-                });
-            }
-
-            return redirect('/')->with('error', 'Pago no aprobado o cancelado.');
+                return response()->json([
+                    'ok' => true,
+                    'redirect_url' => url('/?paid=1&booking_id=' . urlencode($bookingId)),
+                    'booking_id' => $bookingId,
+                ], 200);
+            });
         }
     }

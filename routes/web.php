@@ -131,3 +131,4 @@ Route::post('/update-status', [DashboardController::class, 'updateStatus'])->nam
 
 Route::post('/payments/payphone/init', [PayphoneController::class, 'init'])->name('payphone.init');
 Route::get('/payments/payphone/response', [PayphoneController::class, 'response'])->name('payphone.response');
+Route::get('/payments/payphone/confirm', [PayphoneController::class, 'confirm'])->name('payphone.confirm');
