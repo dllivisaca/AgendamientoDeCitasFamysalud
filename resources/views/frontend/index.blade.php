@@ -23,8 +23,9 @@
 
         <link rel="preconnect" href="https://cdn.jsdelivr.net">
         <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+        <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/intlTelInput.min.js"></script>
         <link rel="preload" as="script" href="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/utils.js">
-    </head>
+    </head> 
 
     <body>
         <header class="header-section">
@@ -3052,31 +3053,6 @@
                     const customerOk = customerForm ? customerForm.checkValidity() : false;
                     const billingOk  = billingForm ? billingForm.checkValidity() : true;
 
-                    // 🔎 DEBUG EXACTO: qué input está bloqueando (y por qué)
-                    if (!billingOk && billingForm) {
-                        const inv = billingForm.querySelector(":invalid");
-                        console.log(
-                            "[BILLING INVALID]",
-                            inv?.id,
-                            inv?.name,
-                            inv?.validationMessage,
-                            "value:",
-                            inv?.value
-                        );
-                    }
-
-                    if (!customerOk && customerForm) {
-                        const inv = customerForm.querySelector(":invalid");
-                        console.log(
-                            "[CUSTOMER INVALID]",
-                            inv?.id,
-                            inv?.name,
-                            inv?.validationMessage,
-                            "value:",
-                            inv?.value
-                        );
-                    }
-
                     return consentOk && customerOk && billingOk;
                 }
 
@@ -3333,18 +3309,8 @@
             })();
         </script>
 
-        <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/intlTelInput.min.js"></script>
-
-        <script type="module">
-            import es from "https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/i18n/es/index.js";
-            window.intlTelInputGlobals = window.intlTelInputGlobals || {};
-            window.intlTelInputGlobals.i18n = es;
-        </script>
-
         <!-- intl-tel-input utils -->
         <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/utils.js"></script>
-
-        <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/i18n/es.js"></script>
 
         <script>
             (function () {
@@ -3354,6 +3320,22 @@
                     const hidden = document.getElementById(hiddenId);
                     if (!input || !hidden || typeof window.intlTelInput !== "function") return;
 
+                    // ✅ Nombres de países en español (sin cargar i18n externo)
+                    let localizedEs = {};
+                    try {
+                        const dn = new Intl.DisplayNames(["es"], { type: "region" });
+                        const data = (window.intlTelInputGlobals && window.intlTelInputGlobals.getCountryData)
+                            ? window.intlTelInputGlobals.getCountryData()
+                            : [];
+                        data.forEach(c => {
+                            const code = (c.iso2 || "").toUpperCase();
+                            const nameEs = dn.of(code);
+                            if (nameEs) localizedEs[c.iso2] = nameEs;
+                        });
+                    } catch (e) {
+                        localizedEs = {};
+                    }
+
                     const iti = window.intlTelInput(input, {
                         initialCountry: "ec",
                         separateDialCode: true,
@@ -3362,10 +3344,10 @@
                         nationalMode: true,
 
                         // ✅ LISTADO EN ESPAÑOL
-                        localizedCountries: (window.intlTelInputGlobals && window.intlTelInputGlobals.i18n) ? window.intlTelInputGlobals.i18n : {},
+                        localizedCountries: localizedEs,
 
                         preferredCountries: ["ec", "us", "co", "pe", "es"],
-                        utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/utils.js"
+                        /* utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/utils.js" */
                     });
 
                     // ✅ Placeholder dinámico según país
@@ -3479,10 +3461,15 @@
                         validateEcuadorLength();
                     });
 
-                    input.addEventListener("keyup", () => {
-                        enforceEcuadorMax9();
-                        sync();
-                        validateEcuadorLength();
+                    let phoneTimer = null;
+
+                    input.addEventListener("input", () => {
+                        clearTimeout(phoneTimer);
+                        phoneTimer = setTimeout(() => {
+                            enforceEcuadorMax9();
+                            sync();
+                            validateEcuadorLength();
+                        }, 150);
                     });
 
                     input.addEventListener("change", () => {
@@ -3518,8 +3505,11 @@
                     });
                 }
 
-                setupIntlPhone("patient_phone_ui", "patient_phone", "patient_phone_hint");
-                setupIntlPhone("billing_phone_ui", "billing-phone", "billing_phone_hint");
+                /* setupIntlPhone("patient_phone_ui", "patient_phone", "patient_phone_hint");
+                setupIntlPhone("billing_phone_ui", "billing-phone", "billing_phone_hint"); */
+
+                const itiPatient = setupIntlPhone("patient_phone_ui", "patient_phone", "patient_phone_hint");
+                const itiBilling = setupIntlPhone("billing_phone_ui", "billing-phone", "billing_phone_hint");
 
                 function updatePhonePlaceholder(iti, input) {
                     if (!iti || !input) return;
