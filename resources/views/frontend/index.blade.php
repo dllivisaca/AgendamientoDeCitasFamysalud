@@ -3675,15 +3675,26 @@
 
                             // Si existe el plugin en billing, actualiza visual + E.164 sin eventos
                             if (itiBilling) {
-                                itiBilling.setCountry("ec");
-                                itiBilling.setNumber("+593" + phoneDigits);
+                                // Copiar bandera del paciente (si existe), si no, Ecuador
+                                const itiPatient = window._itiByInputId && window._itiByInputId["patient_phone_ui"];
+                                const pIso2 = (itiPatient && typeof itiPatient.getSelectedCountryData === "function")
+                                    ? (itiPatient.getSelectedCountryData().iso2 || "ec")
+                                    : "ec";
+
+                                itiBilling.setCountry(pIso2);
+
+                                // Con separateDialCode, setNumber debe recibir SOLO el número nacional (sin +593)
+                                itiBilling.setNumber(phoneDigits);
                             } else {
                                 // fallback: si no hay iti por alguna razón
                                 setVal(bPhoneUI, phoneDigits);
                             }
 
                             // Mantén hidden E.164 coherente
-                            if (bPhoneHidden) bPhoneHidden.value = phoneDigits ? ("+593" + phoneDigits) : "";
+                            if (bPhoneHidden) {
+                                // usa el E164 real que genera el plugin según la bandera actual
+                                bPhoneHidden.value = itiBilling.getNumber() || "";
+                            }
                         }
                     }
 
@@ -3693,10 +3704,17 @@
                         if (sameChk.disabled) return;
 
                         if (sameChk.checked) {
-                        copyPatientToBilling();
-                        setBillingReadonly(true);
+                             copyPatientToBilling();
+
+                            // fuerza a que el plugin actualice UI/hidden si tienes listeners
+                            if (bPhoneUI) {
+                                bPhoneUI.dispatchEvent(new Event("input", { bubbles: true }));
+                                bPhoneUI.dispatchEvent(new Event("blur", { bubbles: true }));
+                            }
+
+                            setBillingReadonly(true);
                         } else {
-                        setBillingReadonly(false);
+                            setBillingReadonly(false);
                         }
                         // 🔥 ESTA ES LA LÍNEA CLAVE
                         setTimeout(updateFloatingNext, 0);
