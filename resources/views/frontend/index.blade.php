@@ -804,6 +804,24 @@
                 6: "Pago · FamySalud"
             };
             $(document).ready(function() {
+
+                $("#patient_phone_ui").on("input change blur", function () {
+                    const uiVal = ($(this).val() || "").trim();
+
+                    // Si ya viene con +, lo guardamos tal cual
+                    if (uiVal.startsWith("+")) {
+                        $("#patient_phone").val(uiVal);
+                        return;
+                    }
+
+                    // Ecuador: guardamos +593 + número (sin el 0 inicial)
+                    if (uiVal) {
+                        const digits = uiVal.replace(/\D/g, "");
+                        $("#patient_phone").val("+593" + digits);
+                    } else {
+                        $("#patient_phone").val("");
+                    }
+                });
                 async function initPayphoneWithTotal(totalUSD) {
                     try {
                         console.log("[Payphone] initPayphoneWithTotal called with:", totalUSD);
@@ -827,17 +845,34 @@
 
                         console.log("[Payphone] PPaymentButtonBox exists?:", typeof PPaymentButtonBox);
 
+                        // ✅ Forzar sync del hidden E.164 antes de init
+                        try {
+                            const patientIti = window._itiByInputId?.["patient_phone_ui"];
+                            if (patientIti && document.getElementById("patient_phone")) {
+                                document.getElementById("patient_phone").value = patientIti.getNumber() || "";
+                            }
+                        } catch (e) {
+                            console.warn("Phone sync error", e);
+                        }
+
                         // Llamar backend para inicializar intento de pago
                         const res = await fetch("{{ route('payphone.init') }}", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            "X-CSRF-TOKEN": "{{ csrf_token() }}"
-                        },
-                        body: JSON.stringify({
-                            appointment_hold_id: holdId,
-                            amount: parseFloat(totalUSD)
-                        })
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "Accept": "application/json",
+                                "X-Requested-With": "XMLHttpRequest",
+                                "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                            },
+                            body: JSON.stringify({
+                                appointment_hold_id: bookingState.hold_id,  // 👈 OJO: este nombre
+                                amount: parseFloat(totalUSD),               // 16.20
+                                payload: {
+                                patient_full_name: (document.querySelector("#patient_full_name")?.value || "").trim(),
+                                patient_email: (document.querySelector("#patient_email")?.value || "").trim(),
+                                patient_phone: (document.querySelector("#patient_phone")?.value || "").trim(),
+                                }
+                            })
                         });
 
                         console.log("[Payphone] init status:", res.status);
@@ -847,8 +882,22 @@
                         return;
                         }
 
-                        const cfg = await res.json();
-                        console.log("[Payphone] cfg:", cfg);
+                        console.log("[Payphone] init status:", res.status);
+
+                        const contentType = res.headers.get("content-type") || "";
+                        const raw = await res.text();
+
+                        if (!res.ok) {
+                        console.error("[Payphone] init NO OK:", raw);
+                        return;
+                        }
+
+                        if (!contentType.includes("application/json")) {
+                        console.error("[Payphone] init NO JSON, llegó:", raw.slice(0, 400));
+                        return;
+                        }
+
+                        const cfg = JSON.parse(raw);
 
                         const container = document.getElementById("pp-button");
                         if (!container) {                        
@@ -876,6 +925,59 @@
                         console.error("[Payphone] Error:", e);
                     }
                 }
+
+
+
+                function buildPayphonePayload() {
+                    // Paciente
+                    const patient_full_name = $("#patient_full_name").val()?.trim() || "";
+                    const patient_email     = $("#patient_email").val()?.trim() || "";
+                    const patient_phone = ($("#patient_phone").val() || "").trim();// el hidden E164
+                    const patient_dob       = $("#patient_dob").val() || null;
+
+                    // Documento paciente
+                    const patient_doc_type   = $("#doc_type").val() || null;
+                    const patient_doc_number = $("#doc_number").val()?.trim() || null;
+
+                    // Dirección / notas
+                    const patient_address = $("#patient_address").val()?.trim() || null;
+                    const patient_notes   = $("#patient_notes").val()?.trim() || null;
+
+                    // Facturación
+                    const billing_name       = $("#billing-name").val()?.trim() || "";
+                    const billing_doc_type   = $("#billing-doc-type").val() || null;
+                    const billing_doc_number = $("#billing-doc-number").val()?.trim() || null;
+                    const billing_email      = $("#billing-email").val()?.trim() || "";
+                    const billing_phone      = $("#billing-phone").val()?.trim() || ""; // ojo: tu hidden tiene id billing-phone
+                    const billing_address    = $("#billing-address").val()?.trim() || null;
+
+                    return {
+                        // si ya manejas booking_id en frontend, pásalo aquí
+                        booking_id: bookingState.booking_id || null,
+
+                        patient_full_name,
+                        patient_email,
+                        patient_phone,
+                        patient_dob,
+                        patient_doc_type,
+                        patient_doc_number,
+                        patient_address,
+                        patient_notes,
+
+                        billing_name,
+                        billing_doc_type,
+                        billing_doc_number,
+                        billing_email,
+                        billing_phone,
+                        billing_address,
+
+                        appointment_mode: bookingState.appointmentMode || "presencial",
+                        patient_timezone: bookingState.patient_timezone || null,
+                        patient_timezone_label: bookingState.patient_timezone_label || null,
+                        data_consent: $("#data-consent").is(":checked") ? 1 : 0
+                    };
+                }
+
                 // ================================
                 // STEP 6: CONFIRMAR Y AGENDAR
                 // ================================
@@ -2855,9 +2957,9 @@
                         contentType: "application/json",
                         headers: { "X-CSRF-TOKEN": getCsrfToken() },
                         data: JSON.stringify({
-                            appointment_hold_id: bookingState.hold_id,
-                            amount: standard,
-                            payload: payload
+                            appointment_hold_id: holdId,
+                            amount: parseFloat(totalUSD),
+                            payload: buildPayphonePayload()
                         }),
                         success: function (res) {
                             // 👉 aquí renderizas la cajita con res.token, res.storeId, res.clientTransactionId, etc.
