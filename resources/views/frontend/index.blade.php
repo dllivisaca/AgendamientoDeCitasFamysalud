@@ -286,9 +286,10 @@
                                                 <label for="patient_phone_ui" class="form-label">Número de celular <span class="text-danger">*</span></label>
                                                 <input type="tel" class="form-control phone-input" id="patient_phone_ui" placeholder="Ej: 991234567" required title="Registre el número de celular sin el prefijo del país. Verifique que el país seleccionado sea el correcto." autocomplete="tel">
                                                 <input type="hidden" id="patient_phone" name="patient_phone">
-                                                <div class="form-text">
+                                                <!-- <div class="form-text">
                                                     Para Ecuador, registre el número sin el 0 inicial.
-                                                </div>
+                                                </div> -->
+                                                <div class="form-text" id="patient_phone_hint"></div>
                                             </div>
                                             <div class="col-12">
                                                 <label for="patient_address" class="form-label">Dirección<span class="text-danger">*</span></label>
@@ -392,9 +393,10 @@
                                                 <label for="billing_phone_ui" class="form-label">Número de celular <span class="text-danger">*</span></label>
                                                 <input type="tel" class="form-control phone-input" id="billing_phone_ui" placeholder="Ej: 991234567" required title="Registre el número de celular sin el prefijo del país. Verifique que el país seleccionado sea el correcto." autocomplete="tel">
                                                 <input type="hidden" id="billing-phone" name="billing-phone">
-                                                <div class="form-text">
+                                                <!-- <div class="form-text">
                                                     Para Ecuador, registre el número sin el 0 inicial.
-                                                </div>
+                                                </div> -->
+                                                <div class="form-text" id="billing_phone_hint"></div>
                                             </div>
 
                                             <div class="col-12">
@@ -3329,9 +3331,15 @@
 
         <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/intlTelInput.min.js"></script>
 
+        <!-- intl-tel-input utils -->
+        <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/utils.js"></script>
+
+        <!-- ✅ intl-tel-input idioma español -->
+        <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/i18n/es/index.js"></script>
+
         <script>
             (function () {
-                function setupIntlPhone(inputId, hiddenId) {
+                function setupIntlPhone(inputId, hiddenId, hintId) {
                     
                     const input = document.getElementById(inputId);
                     const hidden = document.getElementById(hiddenId);
@@ -3347,6 +3355,27 @@
                         preferredCountries: ["ec", "us", "co", "pe", "es"],
                         utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/utils.js"
                     });
+
+                    const hintEl = hintId ? document.getElementById(hintId) : null;
+
+                function updatePhoneHint() {
+                    if (!hintEl) return;
+
+                    const country = iti.getSelectedCountryData();
+                    const iso2 = country?.iso2;
+
+                    if (iso2 === "ec") {
+                        hintEl.textContent = "Para Ecuador, registre el número sin el 0 inicial.";
+                    } else {
+                        // opción: vacío o mensaje genérico
+                        hintEl.textContent = "Verifique que el prefijo del país seleccionado sea el correcto.";
+                        // hintEl.textContent = ""; // si prefieres que no salga nada
+                    }
+                }
+
+                // ✅ ESTO va FUERA de la función
+                updatePhoneHint();
+                input.addEventListener("countrychange", updatePhoneHint);
 
                     function validateEcuadorLength() {
                         const country = iti.getSelectedCountryData();
@@ -3460,8 +3489,8 @@
                     });
                 }
 
-                setupIntlPhone("patient_phone_ui", "patient_phone");
-                setupIntlPhone("billing_phone_ui", "billing-phone");
+                setupIntlPhone("patient_phone_ui", "patient_phone", "patient_phone_hint");
+                setupIntlPhone("billing_phone_ui", "billing-phone", "billing_phone_hint");
 
                 (function () {
                     const sameChk   = document.getElementById("billing_same_as_patient");
