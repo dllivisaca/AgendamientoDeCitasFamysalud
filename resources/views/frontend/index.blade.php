@@ -3430,11 +3430,14 @@
                     function enforceEcuadorMax9() {
                         const country = iti.getSelectedCountryData();
 
-                        // Solo aplica a Ecuador
-                        if (!country || country.iso2 !== "ec") return;
-
-                        // Lo que el usuario escribió en el input (sin símbolos)
+                        // ✅ Siempre: quitar guiones/espacios y cualquier no-dígito
                         let digits = (input.value || "").replace(/\D/g, "");
+
+                        // ✅ Para cualquier país que NO sea Ecuador: SOLO dígitos (sin formateo)
+                        if (!country || country.iso2 !== "ec") {
+                            if (input.value !== digits) input.value = digits;
+                            return;
+                        }
 
                         // Si por alguna razón el input trae el código país pegado (593xxxxxxxxx), quítalo
                         if (digits.startsWith("593")) digits = digits.slice(3);
@@ -3620,6 +3623,20 @@
                     // Inicial: por si la casilla ya viene marcada por defecto
                     setBillingReadonly(sameChk.checked);
 
+                    function stripNonDigitsIfNotEC(inputEl, iti) {
+                        try {
+                            if (!inputEl || !iti || typeof iti.getSelectedCountryData !== "function") return;
+                            const iso2 = (iti.getSelectedCountryData().iso2 || "").toLowerCase();
+
+                            // ⚠️ NO tocar Ecuador
+                            if (iso2 === "ec") return;
+
+                            // Solo para otros países: quitar guiones/espacios y cualquier no-dígito del input visual
+                            const digits = (inputEl.value || "").replace(/\D/g, "");
+                            if (inputEl.value !== digits) inputEl.value = digits;
+                        } catch (e) {}
+                    }
+
                     // Si no existen algunos IDs, no rompemos nada:
                     function safeVal(el) { return el ? (el.value || "").trim() : ""; }
                     function setVal(el, v) { if (el) el.value = v ?? ""; }
@@ -3685,6 +3702,8 @@
 
                                 // Con separateDialCode, setNumber debe recibir SOLO el número nacional (sin +593)
                                 itiBilling.setNumber(phoneDigits);
+                                // ✅ NUEVO: deja el input visual sin guiones/espacios (solo dígitos)
+                                if (bPhoneUI) bPhoneUI.value = (bPhoneUI.value || "").replace(/\D/g, "");
                             } else {
                                 // fallback: si no hay iti por alguna razón
                                 setVal(bPhoneUI, phoneDigits);
