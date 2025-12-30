@@ -3331,6 +3331,12 @@
 
         <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/intlTelInput.min.js"></script>
 
+        <script type="module">
+            import es from "https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/i18n/es/index.js";
+            window.intlTelInputGlobals = window.intlTelInputGlobals || {};
+            window.intlTelInputGlobals.i18n = es;
+        </script>
+
         <!-- intl-tel-input utils -->
         <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/utils.js"></script>
 
@@ -3352,9 +3358,28 @@
                         formatOnDisplay: false,
                         nationalMode: true,
 
+                        // ✅ LISTADO EN ESPAÑOL
+                        localizedCountries: (window.intlTelInputGlobals && window.intlTelInputGlobals.i18n) ? window.intlTelInputGlobals.i18n : {},
+
                         preferredCountries: ["ec", "us", "co", "pe", "es"],
                         utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/utils.js"
                     });
+
+                    // ✅ Placeholder dinámico según país
+                    function updatePlaceholder() {
+                        const c = iti.getSelectedCountryData();
+                        const iso2 = c?.iso2 || "ec";
+
+                        if (iso2 === "ec") {
+                            input.placeholder = "Ej: 991234567";
+                        } else {
+                            // General para cualquier otro país
+                            input.placeholder = "Ej: 123456789";
+                        }
+                    }
+
+                    // set inicial
+                    updatePlaceholder();
 
                     const hintEl = hintId ? document.getElementById(hintId) : null;
 
@@ -3368,7 +3393,7 @@
                         hintEl.textContent = "Para Ecuador, registre el número sin el 0 inicial.";
                     } else {
                         // opción: vacío o mensaje genérico
-                        hintEl.textContent = "Verifique que el prefijo del país seleccionado sea el correcto.";
+                        hintEl.textContent = "Verifique que el país seleccionado sea el correcto.";
                         // hintEl.textContent = ""; // si prefieres que no salga nada
                     }
                 }
@@ -3464,6 +3489,7 @@
                     });
 
                     input.addEventListener("countrychange", () => {
+                        updatePlaceholder();   // ✅ AÑADE ESTA LÍNEA
                         enforceEcuadorMax9();
                         sync();
                         validateEcuadorLength();
@@ -3491,6 +3517,26 @@
 
                 setupIntlPhone("patient_phone_ui", "patient_phone", "patient_phone_hint");
                 setupIntlPhone("billing_phone_ui", "billing-phone", "billing_phone_hint");
+
+                function updatePhonePlaceholder(iti, input) {
+                    if (!iti || !input) return;
+
+                    const country = iti.getSelectedCountryData();
+
+                    if (!input.value.trim()) {
+                        input.placeholder = (iso2 === "ec") ? "Ej: 991234567" : "Ej: 123456789";
+                    }
+                }
+
+                // Al cargar
+                updatePhonePlaceholder(itiPatient, document.querySelector("#patient_phone_ui"));
+
+                // Cuando cambian el país
+                document
+                .querySelector("#patient_phone_ui")
+                .addEventListener("countrychange", function () {
+                    updatePhonePlaceholder(itiPatient, this);
+                });
 
                 (function () {
                     const sameChk   = document.getElementById("billing_same_as_patient");
