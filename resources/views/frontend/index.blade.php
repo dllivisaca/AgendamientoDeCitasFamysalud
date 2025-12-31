@@ -1138,6 +1138,13 @@
                             allowedMinDate = (res.min_allowed || "").toString().substring(0, 10) || null;
                             allowedMaxDate = (res.max_allowed || "").toString().substring(0, 10) || null;
 
+                            console.log("[available-dates] request YM:", key);
+                            console.log("[available-dates] dates count:", dates.length, "sample:", dates.slice(0, 5));
+                            console.log("[available-dates] min_allowed:", res.min_allowed, "max_allowed:", res.max_allowed);
+                            console.log("[available-dates] allowedMinYM/MaxYM:", allowedMinYM, allowedMaxYM);
+                            console.log("[available-dates] allowedMinDate/MaxDate:", allowedMinDate, allowedMaxDate);
+                            console.log("[available-dates] cache keys:", Object.keys(availableDatesByMonth));
+
                             // ✅ si es el mes que estamos viendo, úsalo para pintar
                             if (!onlyCache) {
                                 availableDatesSet = setDates;
@@ -2028,6 +2035,19 @@
                     }
                     if (bookingState.selectedEmployee) {
                         fetchAvailableDatesForMonth(month, year);
+                        // 🔹 Precargar mes siguiente para decidir flecha >
+                        const next = (month0 === 11)
+                            ? { month0: 0, year: year + 1 }
+                            : { month0: month0 + 1, year };
+
+                        fetchAvailableDatesForMonth(next.month0, next.year, { onlyCache: true });
+
+                        // 🔹 Precargar mes anterior para flecha <
+                        const prev = (month0 === 0)
+                            ? { month0: 11, year: year - 1 }
+                            : { month0: month0 - 1, year };
+
+                        fetchAvailableDatesForMonth(prev.month0, prev.year, { onlyCache: true });
                     }
                 }
 
@@ -2086,52 +2106,33 @@
                 }
 
                 function updateMonthNavButtons(month0, year) {
-                // Si no hay empleado, no hay navegación
-                if (!bookingState.selectedEmployee) {
-                    setMonthButtons(false, false);
-                    return;
-                }
+                    // Si no hay empleado, no hay navegación
+                    if (!bookingState.selectedEmployee) {
+                        setMonthButtons(false, false);
+                        return;
+                    }
 
-                // Si todavía no sabemos el rango permitido (min/max), bloquea mientras llega
-                if (!allowedMinYM || !allowedMaxYM) {
-                    setMonthButtons(false, false);
-                    return;
-                }
+                    // Meses vecinos
+                    const prev = prevMonth(year, month0);
+                    const next = nextMonth(year, month0);
 
-                const currentYM = ymKey(year, month0);
+                    const prevYM = ymKey(prev.year, prev.month0);
+                    const nextYM = ymKey(next.year, next.month0);
 
-                // Si solo hay 1 mes en el rango permitido, no hay flechas
-                if (allowedMinYM === allowedMaxYM) {
-                    setMonthButtons(false, false);
-                    return;
-                }
+                    let prevEnabled = false;
+                    let nextEnabled = false;
 
-                // Determina meses vecinos
-                const prev = prevMonth(year, month0);
-                const next = nextMonth(year, month0);
-                const prevYM = ymKey(prev.year, prev.month0);
-                const nextYM = ymKey(next.year, next.month0);
-
-                // Por rango, solo permitimos movernos entre minYM y maxYM
-                // Habilitar prev si hay un mes anterior dentro del rango y con fechas disponibles
-                // Habilitar next si hay un mes siguiente dentro del rango y con fechas disponibles
-                let prevEnabled = false;
-                let nextEnabled = false;
-
-                // Prev: solo si el mes anterior NO está antes del mínimo permitido
-                if (prevYM >= allowedMinYM && prevYM <= allowedMaxYM) {
+                    // Prev: habilita SOLO si el mes anterior tiene fechas disponibles (cache)
                     const cachedPrev = availableDatesByMonth[prevYM];
                     if (cachedPrev) {
                         prevEnabled = cachedPrev.size > 0;
                     } else {
-                        // mientras consulta, lo deja apagado para que no “parpadee”
+                        // mientras consulta, queda apagado
                         prevEnabled = false;
                         fetchAvailableDatesForMonth(prev.month0, prev.year, { onlyCache: true });
                     }
-                }
 
-                // Next: solo si el mes siguiente NO está después del máximo permitido
-                if (nextYM >= allowedMinYM && nextYM <= allowedMaxYM) {
+                    // Next: habilita SOLO si el mes siguiente tiene fechas disponibles (cache)
                     const cachedNext = availableDatesByMonth[nextYM];
                     if (cachedNext) {
                         nextEnabled = cachedNext.size > 0;
@@ -2139,16 +2140,9 @@
                         nextEnabled = false;
                         fetchAvailableDatesForMonth(next.month0, next.year, { onlyCache: true });
                     }
+
+                    setMonthButtons(prevEnabled, nextEnabled);
                 }
-
-                // Regla adicional: si estás en el mes mínimo, no debes retroceder más
-                if (currentYM === allowedMinYM) prevEnabled = false;
-
-                // Regla adicional: si estás en el mes máximo, no debes avanzar más
-                if (currentYM === allowedMaxYM) nextEnabled = false;
-
-                setMonthButtons(prevEnabled, nextEnabled);
-            }
 
                 function ymKey(year, month0) {
                     return `${year}-${String(month0 + 1).padStart(2, '0')}`; // month0: 0-11
