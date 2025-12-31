@@ -810,9 +810,25 @@
                 6: "Pago · FamySalud"
             };
             $(document).ready(function() {
+                // Booking state
+                let bookingState = {
+                    currentStep: 1,
+                    selectedCategory: null,
+                    selectedService: null,
+                    selectedEmployee: null,
+                    selectedDate: null,
+                    selectedTime: null,
+                    appointmentMode: 'presencial',
+                    paymentMethod: null,
+
+                    // ✅ HOLD
+                    hold_id: null,
+                    hold_expires_at: null
+                };
+
                 // ✅ PayPhone devuelve a tu web con parámetros en la URL.
                 // Si vienen, no regreses al Step 1: confirma y redirige a una página final.
-                (function handlePayphoneReturn() {
+                function handlePayphoneReturn() {
                     const qp = new URLSearchParams(window.location.search);
 
                     // PayPhone normalmente regresa algo como: ?id=XXXX&clientTransactionId=YYYY
@@ -826,6 +842,13 @@
 
                     // Lleva al usuario al paso 6 y muestra “confirmando…”
                     if (typeof goToStep === "function") goToStep(6);
+
+                    // Restaurar estado para que no salga el resumen en blanco
+                    restorePayphoneState();
+
+                    // Repintar resumen + precios (esto usa bookingState)
+                    try { updateSummary(); } catch (e) {}
+                    try { refreshPaymentUI(); } catch (e) {}
 
                     $("#pay-action-card").removeClass("d-none").show();
                     $("#pay-now")
@@ -843,24 +866,27 @@
                         return data;
                     })
                     .then(data => {
-                        if (data.ok && data.redirect_url) {
-                            window.location.href = data.redirect_url;
+                        if (data.ok) {
+                            // Limpia estado guardado porque ya terminó el flujo
+                            clearPayphoneState();
+
+                            // Mostrar el mismo pop-up que transferencia, y reset al paso 1
+                            // IMPORTANTE: tu backend debería devolver info de la cita aquí
+                            // Ideal: data.booking (o data.appointment)
+                            const modalPayload = data.booking || data.appointment || data;
+                            showBookingSuccessModalFromResponse(modalPayload, "card");
                             return;
                         }
 
-                        if (data.ok) {
-                            // fallback si no mandas redirect_url
-                            alert("Pago confirmado ✅. Tu cita quedó registrada.");
-                        } else {
-                            alert(data.message || "No se pudo confirmar el pago. Si ya pagaste, escríbenos para ayudarte.");
-                            $("#pay-now").prop("disabled", false).text("Reintentar confirmación");
-                        }
+                        // Rechazado / error
+                        $("#pay-now").prop("disabled", false).text("Reintentar confirmación");
+                        alert(data.message || "Pago rechazado o no se pudo confirmar. Intenta nuevamente.");
                     })
                     .catch(() => {
                         alert("No se pudo confirmar el pago (error de red).");
                         $("#pay-now").prop("disabled", false).text("Reintentar confirmación");
                     });
-                })();
+                }
 
                 $("#patient_phone_ui").on("input change blur", function () {
                     const uiVal = ($(this).val() || "").trim();
@@ -1229,21 +1255,46 @@
                 const employees = @json($employees);
                 // console.log(employees);
 
-                // Booking state
-                let bookingState = {
-                    currentStep: 1,
-                    selectedCategory: null,
-                    selectedService: null,
-                    selectedEmployee: null,
-                    selectedDate: null,
-                    selectedTime: null,
-                    appointmentMode: 'presencial',
-                    paymentMethod: null,
+                // =======================
+                // PayPhone: persistencia para recarga (return_url)
+                // =======================
+                const PP_STATE_KEY = "pp_state_v1";
 
-                    // ✅ HOLD
-                    hold_id: null,
-                    hold_expires_at: null
-                };
+                function savePayphoneState() {
+                    try {
+                        const state = {
+                            selectedCategory: bookingState.selectedCategory,
+                            selectedService: bookingState.selectedService,
+                            selectedEmployee: bookingState.selectedEmployee,
+                            selectedDate: bookingState.selectedDate,
+                            selectedTime: bookingState.selectedTime,
+                            appointmentMode: bookingState.appointmentMode,
+                            paymentMethod: bookingState.paymentMethod,
+                            hold_id: bookingState.hold_id,
+                            hold_expires_at: bookingState.hold_expires_at
+                        };
+                        sessionStorage.setItem(PP_STATE_KEY, JSON.stringify(state));
+                    } catch (e) {
+                        console.warn("No se pudo guardar pp_state", e);
+                    }
+                }
+
+                function restorePayphoneState() {
+                    try {
+                        const raw = sessionStorage.getItem(PP_STATE_KEY);
+                        if (!raw) return false;
+                        const state = JSON.parse(raw);
+                        Object.assign(bookingState, state);
+                        return true;
+                    } catch (e) {
+                        console.warn("No se pudo restaurar pp_state", e);
+                        return false;
+                    }
+                }
+
+                function clearPayphoneState() {
+                    sessionStorage.removeItem(PP_STATE_KEY);
+                }
 
                 // ================================
                 // ✅ HOLD HELPERS (15 minutos)
@@ -2653,6 +2704,32 @@
                     return true;
                 }
 
+                function showBookingSuccessModalFromResponse(res, payMethod) {
+                    const ap = res.appointment || {};
+                    const bookingId = res.booking_id || ap.booking_id || ap.id || "";
+                    const status = ap.status || res.status || "";
+
+                    const serviceName = (ap.service && ap.service.title) || res.service_name || "";
+                    const employeeName = (ap.employee && ap.employee.user && ap.employee.user.name) || res.employee_name || "";
+                    const modeTxt = (ap.appointment_mode || res.appointment_mode) === "virtual" ? "Virtual" : "Presencial";
+
+                    const dateTxt = ap.date || res.date || "";
+                    const timeRangeTxt = ap.time || res.time || ap.time_range || "";
+                    const tzLabel = res.patient_timezone_label || res.timezone_label || "";
+
+                    const total = (res.total !== undefined ? res.total : (res.amount !== undefined ? res.amount : null));
+
+                    const statusNice = ({
+                        pending_verification: "Pendiente de verificación",
+                        pending_payment: "Pendiente de pago",
+                        confirmed: "Confirmada",
+                        cancelled: "Cancelada"
+                    }[status] || status);
+
+                   showBookingSuccessModalFromResponse(res, "transfer");
+                    showBookingSuccessModalFromResponse(res, "card");
+                }
+
                 // function submitBooking() {
                 function submitBooking() {
                     const csrfToken = getCsrfToken();
@@ -3034,6 +3111,8 @@
                         return;
                     }
 
+                    savePayphoneState();
+
                     // ✅ llama backend para crear payment_attempt + devolver token/storeId/clientTransactionId
                     $.ajax({
                         url: "/payments/payphone/init",
@@ -3256,6 +3335,8 @@
                 $(document).on("click", "#open-terms-card", function () {
                     $("#termsModal").modal("show"); // o el id real de tu modal
                 });
+
+                handlePayphoneReturn();
             });
         </script>
 
