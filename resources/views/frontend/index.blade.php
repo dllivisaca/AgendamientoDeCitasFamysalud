@@ -840,15 +840,20 @@
                     if (window.__pp_return_handled) return;
                     window.__pp_return_handled = true;
 
-                    restorePayphoneState();
+                    const restoredOk = restorePayphoneState();
+
+                    // Asegura que el UI sepa que estamos en pago con tarjeta al volver de PayPhone
+                    bookingState.paymentMethod = "card";
 
                     // Lleva al usuario al paso 6 y muestra “confirmando…”
                     if (typeof goToStep === "function") goToStep(6);
 
-                    // Repintar resumen + precios (usa bookingState restaurado)
-                    try { fillStep6Summary(); } catch (e) {}
-                    try { updateSummary(); } catch (e) {}
-                    try { refreshPaymentUI(); } catch (e) {}
+                    // Repintar resumen + precios SOLO si se restauró bookingState
+                    if (restoredOk) {
+                        try { fillStep6Summary(); } catch (e) {}
+                        try { updateSummary(); } catch (e) {}
+                        try { refreshPaymentUI(); } catch (e) {}
+                    }
 
                     // Repintar resumen + precios (esto usa bookingState)
                     try { updateSummary(); } catch (e) {}
@@ -889,6 +894,11 @@
                             // Limpia estado guardado porque ya terminó el flujo
                             clearPayphoneState();
 
+                            // ✅ Limpia la URL (quita ?id=...&clientTransactionId=...)
+                            try {
+                                window.history.replaceState({}, document.title, window.location.pathname);
+                            } catch (e) {}
+
                             // Mostrar el mismo pop-up que transferencia, y reset al paso 1
                             // IMPORTANTE: tu backend debería devolver info de la cita aquí
                             // Ideal: data.booking (o data.appointment)
@@ -902,25 +912,57 @@
                                 totalUSD = figs?.standard?.total ?? figs?.standard ?? null;
                             } catch (e) {}
 
-                            // ✅ 3) Fallback payload desde bookingState (esto evita modal vacío)
+                            // ✅ 3) Fallback payload con los nombres de keys que SÍ lee el modal
                             const fallbackPayload = {
                                 booking_id: bs.booking_id || "",
                                 status: "confirmed",
                                 payment_status: "paid",
-                                appointment_mode: bs.appointmentMode || "Presencial",
-                                service: bs.selectedService?.title || bs.selectedService?.name || "",
-                                professional: (bs.selectedEmployee?.user?.name) || bs.selectedEmployee?.name || "",
+
+                                // el modal usa appointment_mode para decidir Virtual/Presencial
+                                appointment_mode: (bs.appointmentMode || "presencial").toString().toLowerCase(),
+
+                                // ✅ el modal lee service_name y employee_name
+                                service_name: bs.selectedService?.title || bs.selectedService?.name || "",
+                                employee_name: (bs.selectedEmployee?.user?.name) || bs.selectedEmployee?.name || "",
+
                                 date: bs.selectedDate || "",
                                 time: (typeof bs.selectedTime === "string")
                                     ? bs.selectedTime
                                     : (bs.selectedTime?.label || bs.selectedTime?.time || ""),
-                                timezone: bs.patient_timezone_label || "",
+
+                                // ✅ el modal lee timezone_label / patient_timezone_label
+                                timezone_label: bs.patient_timezone_label || bs.timezone_label || "",
+
                                 total: totalUSD
                             };
 
-                            // ✅ 4) Merge: si backend trae algo, lo sobrepone; si trae vacío, fallback manda
+                            // ✅ 4) Merge + normalización: asegurar llaves que el modal SÍ lee
                             const backendPayload = data.booking || data.appointment || data || {};
-                            const modalPayload = { ...fallbackPayload, ...backendPayload };
+                            const ap = backendPayload.appointment || backendPayload || {};
+
+                            const normalized = {
+                                booking_id: backendPayload.booking_id || ap.booking_id || ap.id || fallbackPayload.booking_id,
+                                status: ap.status || backendPayload.status || fallbackPayload.status,
+                                payment_status: ap.payment_status || backendPayload.payment_status || fallbackPayload.payment_status,
+                                appointment_mode: (ap.appointment_mode || backendPayload.appointment_mode || fallbackPayload.appointment_mode),
+
+                                service_name: (ap.service && (ap.service.title || ap.service.name)) ||
+                                            backendPayload.service_name || backendPayload.service || fallbackPayload.service_name,
+
+                                employee_name: (ap.employee && ap.employee.user && ap.employee.user.name) ||
+                                            backendPayload.employee_name || backendPayload.professional || fallbackPayload.employee_name,
+
+                                date: ap.date || backendPayload.date || fallbackPayload.date,
+                                time: ap.time || backendPayload.time || ap.time_range || fallbackPayload.time,
+
+                                timezone_label: backendPayload.patient_timezone_label ||
+                                                backendPayload.timezone_label ||
+                                                fallbackPayload.timezone_label,
+
+                                total: (backendPayload.total ?? ap.amount ?? fallbackPayload.total)
+                            };
+
+                            const modalPayload = { ...fallbackPayload, ...backendPayload, ...normalized };
 
                             // ✅ 5) Mostrar modal YA con datos
                             showBookingSuccessModalFromResponse(modalPayload, "card");
@@ -1311,7 +1353,7 @@
                 // =======================
                 // PayPhone: persistencia para recarga (return_url)
                 // =======================
-                const PP_STATE_KEY = "pp_state_v1";
+                const PP_STATE_KEY = "famysalud_pp_state_v1";
 
                 function savePayphoneState() {
                     try {
@@ -1326,7 +1368,7 @@
                             hold_id: bookingState.hold_id,
                             hold_expires_at: bookingState.hold_expires_at
                         };
-                        sessionStorage.setItem(PP_STATE_KEY, JSON.stringify(state));
+                        localStorage.setItem(PP_STATE_KEY, JSON.stringify(state));
                     } catch (e) {
                         console.warn("No se pudo guardar pp_state", e);
                     }
@@ -1334,7 +1376,7 @@
 
                 function restorePayphoneState() {
                     try {
-                        const raw = sessionStorage.getItem(PP_STATE_KEY);
+                        const raw = localStorage.getItem(PP_STATE_KEY);
                         if (!raw) return false;
                         const state = JSON.parse(raw);
                         Object.assign(bookingState, state);
@@ -1346,7 +1388,7 @@
                 }
 
                 function clearPayphoneState() {
-                    sessionStorage.removeItem(PP_STATE_KEY);
+                    localStorage.removeItem(PP_STATE_KEY);
                 }
 
                 // ================================
@@ -2765,13 +2807,22 @@
                     const bookingId = res.booking_id || ap.booking_id || ap.id || "";
                     const status = ap.status || res.status || "";
 
-                    let serviceName = (ap.service && ap.service.title) || res.service_name || "";
-                    let employeeName = (ap.employee && ap.employee.user && ap.employee.user.name) || res.employee_name || "";
+                    let serviceName =
+                        (ap.service && ap.service.title) ||
+                        res.service_name ||
+                        res.service || "";
+                    let employeeName =
+                        (ap.employee && ap.employee.user && ap.employee.user.name) ||
+                        res.employee_name ||
+                        res.professional || "";
                     const modeTxt = (ap.appointment_mode || res.appointment_mode) === "virtual" ? "Virtual" : "Presencial";
 
                     let dateTxt = ap.date || res.date || "";
                     let timeRangeTxt = ap.time || res.time || ap.time_range || "";
-                    let tzLabel = res.patient_timezone_label || res.timezone_label || "";
+                    let tzLabel =
+                        res.patient_timezone_label ||
+                        res.timezone_label ||
+                        res.timezone || "";
 
                     let total = (res.total !== undefined ? res.total : (res.amount !== undefined ? res.amount : null));
 
