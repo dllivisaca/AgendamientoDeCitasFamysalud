@@ -895,9 +895,9 @@
                             clearPayphoneState();
 
                             // ✅ Limpia la URL (quita ?id=...&clientTransactionId=...)
-                            try {
-                                window.history.replaceState({}, document.title, window.location.pathname);
-                            } catch (e) {}
+                        try {
+                            window.history.replaceState({}, document.title, window.location.pathname);
+                        } catch (e) {}
 
                             // Mostrar el mismo pop-up que transferencia, y reset al paso 1
                             // IMPORTANTE: tu backend debería devolver info de la cita aquí
@@ -3142,6 +3142,12 @@
                         const ap = res.appointment || {};
                         const bookingId = res.booking_id || ap.booking_id || "";
                         const status = ap.status || "";
+                        const statusNice = ({
+                            pending_verification: "Pendiente de verificación",
+                            pending_payment: "Pendiente de pago",
+                            confirmed: "Confirmada",
+                            cancelled: "Cancelada"
+                        }[status] || status);
                         const serviceName = ap.service_name || bookingState?.selectedService?.title || "";
                         const employeeName = ap.employee_name || bookingState?.selectedEmployee?.user?.name || "";
                         const modeTxt = ap.appointment_mode === "virtual" ? "Virtual" : "Presencial";
@@ -3173,7 +3179,7 @@
                             : "GMT-5 (Ecuador) (zona horaria de Ecuador)";
 
                         const payMethod = ap.payment_method || bookingState?.paymentMethod || "";
-                        const total = ap.amount ?? null;                        
+                        const total = ap.amount ?? null;                    
 
                         $("#modal-booking-details").html(`
                         <div class="mb-2">
