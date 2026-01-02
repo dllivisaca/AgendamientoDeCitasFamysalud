@@ -837,8 +837,8 @@
 
                     if (!payId || !clientTx) return;
 
-                    // Limpia la URL para que si refrescan, no re-dispare el confirm
-                    window.history.replaceState({}, document.title, window.location.pathname);
+                    // Restaurar estado para que no salga el resumen en blanco
+                    restorePayphoneState();
 
                     // Lleva al usuario al paso 6 y muestra “confirmando…”
                     if (typeof goToStep === "function") goToStep(6);
@@ -856,13 +856,28 @@
                         .html('<span class="spinner-border spinner-border-sm me-2"></span>Confirmando pago...');
 
                     // 👇 Este endpoint lo creamos/ajustamos en backend (te digo cuál archivo me pasas en el punto 2)
-                    fetch(`/payments/payphone/confirm?id=${encodeURIComponent(payId)}&clientTransactionId=${encodeURIComponent(clientTx)}`, {
+                    fetch(`${window.location.origin}/payments/payphone/confirm?id=${encodeURIComponent(payId)}&clientTransactionId=${encodeURIComponent(clientTx)}`, {
                         method: "GET",
-                        credentials: "same-origin"
+                        credentials: "same-origin",
+                        headers: {
+                            "Accept": "application/json",
+                            "X-Requested-With": "XMLHttpRequest"
+                        }
                     })
                     .then(async r => {
-                        const ct = r.headers.get("content-type") || "";
-                        const data = ct.includes("application/json") ? await r.json() : { ok: false, message: await r.text() };
+                        const text = await r.text();
+                        let data;
+
+                        try { data = JSON.parse(text); }
+                        catch { data = { ok: false, message: text }; }
+
+                        // si el server respondió error HTTP, lo tratamos como error
+                        if (!r.ok) {
+                            const err = new Error(`HTTP ${r.status}`);
+                            err.data = data;
+                            throw err;
+                        }
+
                         return data;
                     })
                     .then(data => {
@@ -882,8 +897,11 @@
                         $("#pay-now").prop("disabled", false).text("Reintentar confirmación");
                         alert(data.message || "Pago rechazado o no se pudo confirmar. Intenta nuevamente.");
                     })
-                    .catch(() => {
-                        alert("No se pudo confirmar el pago (error de red).");
+                    .catch((err) => {
+                        console.error("[PayPhone confirm] error:", err);
+                        console.error("[PayPhone confirm] data:", err?.data);
+
+                        alert(err?.data?.message || err?.message || "No se pudo confirmar el pago.");
                         $("#pay-now").prop("disabled", false).text("Reintentar confirmación");
                     });
                 }
@@ -2726,8 +2744,50 @@
                         cancelled: "Cancelada"
                     }[status] || status);
 
-                   showBookingSuccessModalFromResponse(res, "transfer");
-                    showBookingSuccessModalFromResponse(res, "card");
+                    $("#modal-booking-details").html(`
+                        <div class="mb-2">
+                            <strong>Código de reserva:</strong> <span class="badge bg-dark">${bookingId}</span>
+                        </div>
+
+                        <div class="mb-3">
+                            <strong>Estado:</strong> ${statusNice}
+                        </div>
+
+                        <hr>
+
+                        <div class="mb-1"><strong>Servicio:</strong> ${serviceName}</div>
+                        <div class="mb-1"><strong>Profesional:</strong> ${employeeName}</div>
+                        <div class="mb-1"><strong>Modalidad:</strong> ${modeTxt}</div>
+
+                        <div class="mb-1"><strong>Fecha:</strong> ${dateTxt}</div>
+                        <div class="mb-1"><strong>Hora:</strong> ${timeRangeTxt}</div>
+                        <div class="mb-1"><strong>Zona horaria:</strong> ${tzLabel}</div>
+
+                        ${total !== null ? `<div class="mb-1"><strong>Total:</strong> ${money(total)}</div>` : ""}
+
+                        ${
+                            payMethod === "transfer"
+                                ? `
+                                    <div class="alert alert-info mt-3 mb-0 text-justify">
+                                        <div class="fw-bold mb-1">Transferencia bancaria:</div>
+                                        <p class="mb-1">
+                                            Su cita quedará <b>confirmada</b> una vez validemos el comprobante.
+                                        </p>
+                                        <p class="mb-0">
+                                            Guarde el <b>código de reserva</b> para cualquier consulta.
+                                        </p>
+                                    </div>
+                                `
+                                : `
+                                    <div class="alert alert-success mt-3 mb-0">
+                                        Le enviamos un correo electrónico con el resumen de su cita.
+                                    </div>
+                                `
+                        }
+                    `);
+
+                    new bootstrap.Modal(document.getElementById("bookingSuccessModal")).show();
+                    setTimeout(resetBooking, 800); // igual que transferencia (pop-up y enseguida paso 1)
                 }
 
                 // function submitBooking() {
