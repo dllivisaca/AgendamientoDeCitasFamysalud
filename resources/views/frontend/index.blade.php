@@ -837,14 +837,18 @@
 
                     if (!payId || !clientTx) return;
 
-                    // Restaurar estado para que no salga el resumen en blanco
+                    if (window.__pp_return_handled) return;
+                    window.__pp_return_handled = true;
+
                     restorePayphoneState();
 
                     // Lleva al usuario al paso 6 y muestra “confirmando…”
                     if (typeof goToStep === "function") goToStep(6);
 
-                    // Restaurar estado para que no salga el resumen en blanco
-                    restorePayphoneState();
+                    // Repintar resumen + precios (usa bookingState restaurado)
+                    try { fillStep6Summary(); } catch (e) {}
+                    try { updateSummary(); } catch (e) {}
+                    try { refreshPaymentUI(); } catch (e) {}
 
                     // Repintar resumen + precios (esto usa bookingState)
                     try { updateSummary(); } catch (e) {}
@@ -888,8 +892,39 @@
                             // Mostrar el mismo pop-up que transferencia, y reset al paso 1
                             // IMPORTANTE: tu backend debería devolver info de la cita aquí
                             // Ideal: data.booking (o data.appointment)
-                            const modalPayload = data.booking || data.appointment || data;
+                            // ✅ 1) Snapshot ANTES de cualquier reset/clear
+                            const bs = JSON.parse(JSON.stringify(bookingState || {}));
+
+                            // ✅ 2) Total desde tu misma lógica (antes de limpiar estado)
+                            let totalUSD = null;
+                            try {
+                                const figs = computePaymentFigures();
+                                totalUSD = figs?.standard?.total ?? figs?.standard ?? null;
+                            } catch (e) {}
+
+                            // ✅ 3) Fallback payload desde bookingState (esto evita modal vacío)
+                            const fallbackPayload = {
+                                booking_id: bs.booking_id || "",
+                                status: "confirmed",
+                                payment_status: "paid",
+                                appointment_mode: bs.appointmentMode || "Presencial",
+                                service: bs.selectedService?.title || bs.selectedService?.name || "",
+                                professional: (bs.selectedEmployee?.user?.name) || bs.selectedEmployee?.name || "",
+                                date: bs.selectedDate || "",
+                                time: (typeof bs.selectedTime === "string")
+                                    ? bs.selectedTime
+                                    : (bs.selectedTime?.label || bs.selectedTime?.time || ""),
+                                timezone: bs.patient_timezone_label || "",
+                                total: totalUSD
+                            };
+
+                            // ✅ 4) Merge: si backend trae algo, lo sobrepone; si trae vacío, fallback manda
+                            const backendPayload = data.booking || data.appointment || data || {};
+                            const modalPayload = { ...fallbackPayload, ...backendPayload };
+
+                            // ✅ 5) Mostrar modal YA con datos
                             showBookingSuccessModalFromResponse(modalPayload, "card");
+
                             return;
                         }
 
@@ -2467,11 +2502,7 @@
                     );
                 }
 
-                function money(n) {
-                    const x = Math.round((n + Number.EPSILON) * 100) / 100;
-                    return `$${x.toFixed(2)}`;
-                    }
-
+                
                     // En tu app: bookingState.selectedService.price viene como texto tipo "Efectivo / Transferencia: $15.00"
                     function getTransferAmount() {
                     if (!bookingState.selectedService?.price) return 0;
@@ -2504,6 +2535,13 @@
 
                         $("#pay-summary-datetime").text(`${formattedDate} a las ${bookingState.selectedTime.display || ""}`);
                     }
+                    }
+
+                    // ===== helper global: formato dinero =====
+                    function money(n) {
+                        const x = Number(n);
+                        if (!Number.isFinite(x)) return "$0.00";
+                        return `$${x.toFixed(2)}`;
                     }
 
                     function refreshPaymentUI() {
@@ -2727,15 +2765,50 @@
                     const bookingId = res.booking_id || ap.booking_id || ap.id || "";
                     const status = ap.status || res.status || "";
 
-                    const serviceName = (ap.service && ap.service.title) || res.service_name || "";
-                    const employeeName = (ap.employee && ap.employee.user && ap.employee.user.name) || res.employee_name || "";
+                    let serviceName = (ap.service && ap.service.title) || res.service_name || "";
+                    let employeeName = (ap.employee && ap.employee.user && ap.employee.user.name) || res.employee_name || "";
                     const modeTxt = (ap.appointment_mode || res.appointment_mode) === "virtual" ? "Virtual" : "Presencial";
 
-                    const dateTxt = ap.date || res.date || "";
-                    const timeRangeTxt = ap.time || res.time || ap.time_range || "";
-                    const tzLabel = res.patient_timezone_label || res.timezone_label || "";
+                    let dateTxt = ap.date || res.date || "";
+                    let timeRangeTxt = ap.time || res.time || ap.time_range || "";
+                    let tzLabel = res.patient_timezone_label || res.timezone_label || "";
 
-                    const total = (res.total !== undefined ? res.total : (res.amount !== undefined ? res.amount : null));
+                    let total = (res.total !== undefined ? res.total : (res.amount !== undefined ? res.amount : null));
+
+                    // Fallbacks desde bookingState si el backend no devuelve todo
+                    try {
+                        const bs = (typeof bookingState !== "undefined") ? bookingState : null;
+
+                        if (bs) {
+                            if (!serviceName && bs.selectedService) {
+                                serviceName = bs.selectedService.title || bs.selectedService.name || "";
+                            }
+
+                            if (!employeeName && bs.selectedEmployee) {
+                                employeeName =
+                                    (bs.selectedEmployee.user && bs.selectedEmployee.user.name) ||
+                                    bs.selectedEmployee.name ||
+                                    "";
+                            }
+
+                            if (!dateTxt && bs.selectedDate) dateTxt = bs.selectedDate;
+
+                            if (!timeRangeTxt && bs.selectedTime) {
+                                timeRangeTxt = (typeof bs.selectedTime === "string")
+                                    ? bs.selectedTime
+                                    : (bs.selectedTime.label || bs.selectedTime.time || "");
+                            }
+
+                            if (!tzLabel && bs.patient_timezone_label) tzLabel = bs.patient_timezone_label;
+
+                            if (total === null) {
+                                try {
+                                    const figs = computePaymentFigures();
+                                    total = figs?.standard?.total ?? figs?.standard ?? null;
+                                } catch (e) {}
+                            }
+                        }
+                    } catch (e) {}
 
                     const statusNice = ({
                         pending_verification: "Pendiente de verificación",
@@ -3010,8 +3083,9 @@
                             }).format(dateObj);
                         }
                         function money(n) {
-                        const x = Math.round((Number(n) + Number.EPSILON) * 100) / 100;
-                        return `$${x.toFixed(2)}`;
+                            const x = Number(n);
+                            if (!Number.isFinite(x)) return "";
+                            return `$${x.toFixed(2)}`;
                         }
 
                         const ap = res.appointment || {};
@@ -3048,15 +3122,7 @@
                             : "GMT-5 (Ecuador) (zona horaria de Ecuador)";
 
                         const payMethod = ap.payment_method || bookingState?.paymentMethod || "";
-                        const total = ap.amount ?? null;
-
-                        // Textos de estado más amigables (opcional)
-                        const statusNice = ({
-                        pending_verification: "Pendiente de verificación",
-                        pending_payment: "Pendiente de pago",
-                        confirmed: "Confirmada",
-                        cancelled: "Cancelada"
-                        }[status] || status);
+                        const total = ap.amount ?? null;                        
 
                         $("#modal-booking-details").html(`
                         <div class="mb-2">
