@@ -3065,8 +3065,14 @@
                                     </div>
                                 `
                                 : `
-                                    <div class="alert alert-success mt-3 mb-0">
-                                        Le enviamos un correo electrónico con el resumen de su cita.
+                                    <div class="alert alert-info mt-3 mb-0">
+                                        <div class="fw-bold mb-1">Pago con tarjeta:</div>
+                                        <p class="mb-1">
+                                            El pago de su cita ha sido <b>recibido</b>.
+                                        </p>
+                                        <p class="mb-0">
+                                            Guarde su <b>código de reserva</b> para cualquier consulta.
+                                        </p>
                                     </div>
                                 `
                         }
