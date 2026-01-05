@@ -810,6 +810,35 @@
                 6: "Pago · FamySalud"
             };
             $(document).ready(function() {
+
+                function buildPayphonePayload() {
+                    return {
+                        booking_id: bookingState.booking_id || "",
+                        appointment_mode: bookingState.appointmentMode,
+
+                        patient_full_name: $("#patient_full_name").val() || "",
+                        patient_email: $("#patient_email").val() || "",
+                        patient_phone: $("#patient_phone").val() || "",
+
+                        patient_dob: $("#patient_dob").val() || null,
+                        patient_doc_type: $("#doc_type").val() || null,
+                        patient_doc_number: $("#doc_number").val() || null,
+                        patient_address: $("#patient_address").val() || null,
+                        patient_notes: $("#patient_notes").val() || null,
+
+                        billing_name: $("#billing-name").val() || null,
+                        billing_doc_type: $("#billing-doc-type").val() || null,
+                        billing_doc_number: $("#billing-doc-number").val() || null,
+                        billing_address: $("#billing-address").val() || null,
+                        billing_email: $("#billing-email").val() || null,
+                        billing_phone: $("#billing-phone").val() || null,
+
+                        data_consent: document.getElementById("consent_data")?.checked ? 1 : 0,
+
+                        patient_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || null,
+                        patient_timezone_label: (typeof getUserTimeZoneLabel === "function" ? getUserTimeZoneLabel() : null),
+                    };
+                }
                 // Booking state
                 let bookingState = {
                     currentStep: 1,
@@ -1069,11 +1098,7 @@
                             body: JSON.stringify({
                                 appointment_hold_id: bookingState.hold_id,  // 👈 OJO: este nombre
                                 amount: parseFloat(totalUSD),               // 16.20
-                                payload: {
-                                patient_full_name: (document.querySelector("#patient_full_name")?.value || "").trim(),
-                                patient_email: (document.querySelector("#patient_email")?.value || "").trim(),
-                                patient_phone: (document.querySelector("#patient_phone")?.value || "").trim(),
-                                }
+                                payload: buildPayphonePayload()                                
                             })
                         });
 
@@ -3057,7 +3082,7 @@
                                     <div class="alert alert-info mt-3 mb-0 text-justify">
                                         <div class="fw-bold mb-1">Transferencia bancaria:</div>
                                         <p class="mb-1">
-                                            Hemos <b>recibido</b> su comprobante de pago y lo estamos <b>validando</b>.
+                                            Su cita quedará <b>confirmada</b> una vez validemos el comprobante.Hemos <b>recibido</b> su comprobante de pago y lo estamos <b>validando</b>.
                                         </p>
                                         <p class="mb-0">
                                             Guarde su <b>código de reserva</b> para cualquier consulta.
@@ -3464,6 +3489,12 @@
 
                     savePayphoneState();
 
+                    console.log("[PayPhone INIT] payload keys:", Object.keys(payload));
+                    console.log("[PayPhone INIT] payload:", payload);
+                    console.log("[PayPhone INIT] consent_data checked:", document.getElementById("consent_data")?.checked);
+
+                    console.log("[INIT FRONT] payload keys:", Object.keys(payload));
+                    console.log("[INIT FRONT] payload json:", JSON.stringify(payload));
                     // ✅ llama backend para crear payment_attempt + devolver token/storeId/clientTransactionId
                     $.ajax({
                         url: "/payments/payphone/init",

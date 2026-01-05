@@ -87,7 +87,7 @@ class DashboardController extends Controller
         $colors = [
             'Pending payment' => '#f39c12',
             'Processing' => '#3498db',
-            'Confirmed' => '#2ecc71',
+            'Paid' => '#2ecc71',
             'Cancelled' => '#ff0000',
             'Completed' => '#008000',
             'On Hold' => '#95a5a6',
@@ -104,7 +104,7 @@ class DashboardController extends Controller
     {
         $request->validate([
             'appointment_id' => 'required|exists:appointments,id',
-            'status' => 'required|in:Pending payment,Processing,Confirmed,Cancelled,Completed,On Hold,No Show'
+            'status' => 'required|in:Pending payment,Processing,Paid,Cancelled,Completed,On Hold,No Show'
         ]);
 
         $appointment = Appointment::findOrFail($request->appointment_id);

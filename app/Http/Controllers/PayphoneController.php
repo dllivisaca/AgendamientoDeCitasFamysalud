@@ -6,6 +6,7 @@
     use Illuminate\Support\Str;
     use Illuminate\Support\Facades\DB;
     use Illuminate\Support\Facades\Http;
+    use Illuminate\Support\Facades\Log;
 
     class PayphoneController extends Controller
     {
@@ -21,6 +22,22 @@
                 'payload.patient_phone' => ['required','string'],
             ]);
 
+            $payload = $request->input('payload', []);
+
+            Log::info('[PayPhone INIT] payload keys', array_keys($payload ?? []));
+            Log::info('[PayPhone INIT] payload sample', [
+                'patient_dob' => $payload['patient_dob'] ?? null,
+                'patient_doc_type' => $payload['patient_doc_type'] ?? null,
+                'patient_doc_number' => $payload['patient_doc_number'] ?? null,
+                'patient_address' => $payload['patient_address'] ?? null,
+                'patient_notes' => $payload['patient_notes'] ?? null,
+                'billing_email' => $payload['billing_email'] ?? null,
+                'billing_phone' => $payload['billing_phone'] ?? null,
+                'patient_timezone' => $payload['patient_timezone'] ?? null,
+                'patient_timezone_label' => $payload['patient_timezone_label'] ?? null,
+                'data_consent' => $payload['data_consent'] ?? null,
+            ]);
+
             $clientTxId = (string) Str::uuid();
 
             // Payphone usa centavos
@@ -34,7 +51,7 @@
                 'client_transaction_id' => $clientTxId,
                 'amount' => $request->amount,
                 'currency' => 'USD',
-                'init_response' => json_encode($request->input('payload')), // ✅ guardamos payload
+                'init_response' => json_encode($payload), // ✅ guardamos payload completo
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -155,6 +172,25 @@
 
                 $payload = json_decode($attempt->init_response ?? '{}', true);
 
+                Log::info('[PayPhone] payload keys', array_keys($payload ?? []));
+                Log::info('[PayPhone] payload sample', [
+                    'patient_dob' => $payload['patient_dob'] ?? null,
+                    'billing_email' => $payload['billing_email'] ?? null,
+                    'billing_phone' => $payload['billing_phone'] ?? null,
+                    'data_consent' => $payload['data_consent'] ?? null,
+                    'patient_timezone' => $payload['patient_timezone'] ?? null,
+                    'patient_timezone_label' => $payload['patient_timezone_label'] ?? null,
+                ]);
+
+                $norm = function ($v) {
+                    if ($v === null) return null;
+                    if (is_string($v)) {
+                        $v = trim($v);
+                        return $v === '' ? null : $v;
+                    }
+                    return $v;
+                };
+
                 $bookingId = $payload['booking_id'] ?? ('BK-' . strtoupper(Str::random(12)));
 
                 DB::table('appointments')->insert([
@@ -167,18 +203,18 @@
                     'patient_email'     => $payload['patient_email'],
                     'patient_phone'     => $payload['patient_phone'],
 
-                    'patient_dob'        => $payload['patient_dob'] ?? null,
-                    'patient_doc_type'   => $payload['patient_doc_type'] ?? null,
-                    'patient_doc_number' => $payload['patient_doc_number'] ?? null,
-                    'patient_address'    => $payload['patient_address'] ?? null,
-                    'patient_notes'      => $payload['patient_notes'] ?? null,
+                    'patient_dob'        => $norm($payload['patient_dob'] ?? null),
+                    'patient_doc_type'   => $norm($payload['patient_doc_type'] ?? null),
+                    'patient_doc_number' => $norm($payload['patient_doc_number'] ?? null),
+                    'patient_address'    => $norm($payload['patient_address'] ?? null),
+                    'patient_notes'      => $norm($payload['patient_notes'] ?? null),
 
-                    'billing_name'       => $payload['billing_name'] ?? null,
-                    'billing_doc_type'   => $payload['billing_doc_type'] ?? null,
-                    'billing_doc_number' => $payload['billing_doc_number'] ?? null,
-                    'billing_email'      => $payload['billing_email'] ?? null,
-                    'billing_phone'      => $payload['billing_phone'] ?? null,
-                    'billing_address'    => $payload['billing_address'] ?? null,
+                    'billing_name'       => $norm($payload['billing_name'] ?? null),
+                    'billing_doc_type'   => $norm($payload['billing_doc_type'] ?? null),
+                    'billing_doc_number' => $norm($payload['billing_doc_number'] ?? null),
+                    'billing_email'      => $norm($payload['billing_email'] ?? null),
+                    'billing_phone'      => $norm($payload['billing_phone'] ?? null),
+                    'billing_address'    => $norm($payload['billing_address'] ?? null),
 
                     'amount'          => $attempt->amount,
                     'payment_method'  => 'card',
@@ -190,10 +226,16 @@
                     'appointment_end_time' => $hold->appointment_end_time ?? null,
                     'appointment_mode'     => $payload['appointment_mode'] ?? 'presencial',
 
-                    'patient_timezone'       => $payload['patient_timezone'] ?? null,
-                    'patient_timezone_label' => $payload['patient_timezone_label'] ?? null,
+                    'patient_timezone'       => $norm($payload['patient_timezone'] ?? null),
+                    'patient_timezone_label' => $norm($payload['patient_timezone_label'] ?? null),
 
-                    'data_consent'      => $payload['data_consent'] ?? 0,
+                    'data_consent' => (
+                        ($payload['data_consent'] ?? null) === true ||
+                        ($payload['data_consent'] ?? null) === 1 ||
+                        ($payload['data_consent'] ?? null) === "1" ||
+                        ($payload['data_consent'] ?? null) === "true" ||
+                        ($payload['data_consent'] ?? null) === "on"
+                    ) ? 1 : 0,
                     'terms_accepted'    => 1,
                     'terms_accepted_at' => now(),
 
