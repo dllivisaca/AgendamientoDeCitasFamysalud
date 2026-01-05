@@ -3057,10 +3057,10 @@
                                     <div class="alert alert-info mt-3 mb-0 text-justify">
                                         <div class="fw-bold mb-1">Transferencia bancaria:</div>
                                         <p class="mb-1">
-                                            Su cita quedará <b>confirmada</b> una vez validemos el comprobante.
+                                            Hemos <b>recibido</b> su comprobante de pago y lo estamos <b>validando</b>.
                                         </p>
                                         <p class="mb-0">
-                                            Guarde el <b>código de reserva</b> para cualquier consulta.
+                                            Guarde su <b>código de reserva</b> para cualquier consulta.
                                         </p>
                                     </div>
                                 `
@@ -3376,10 +3376,10 @@
                                 <div class="alert alert-info mt-3 mb-0 text-justify">
                                     <div class="fw-bold mb-1">Transferencia bancaria:</div>
                                     <p class="mb-1">
-                                        Su cita quedará <b>confirmada</b> una vez validemos el comprobante.
+                                        Hemos <b>recibido</b> su comprobante de pago y lo estamos <b>validando</b>.
                                     </p>
                                     <p class="mb-0">
-                                        Guarde el <b>código de reserva</b> para cualquier consulta.
+                                        Guarde su <b>código de reserva</b> para cualquier consulta.
                                     </p>
                                 </div>
                             `
