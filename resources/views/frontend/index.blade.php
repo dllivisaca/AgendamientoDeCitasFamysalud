@@ -811,10 +811,32 @@
             };
             $(document).ready(function() {
 
+                // Booking state
+                let bookingState = {
+                    currentStep: 1,
+                    selectedCategory: null,
+                    selectedService: null,
+                    selectedEmployee: null,
+                    selectedDate: null,
+                    selectedTime: null,
+                    appointmentMode: 'presencial',
+                    paymentMethod: null,
+                    patient_timezone: null,
+                    patient_timezone_label: null,
+                    data_consent: 0,
+
+                    // ✅ HOLD
+                    hold_id: null,
+                    hold_expires_at: null
+                };
+
                 // ✅ Persistir consentimiento en bookingState
                 $("#consent_data").on("change", function () {
                     bookingState.data_consent = this.checked ? 1 : 0;
                 });
+
+                // ✅ Inicializar (por si ya viene marcado y nunca dispara "change")
+                bookingState.data_consent = $("#consent_data").is(":checked") ? 1 : 0;
 
                 function buildPayphonePayload() {
                     return {
@@ -868,21 +890,7 @@
                         })(),
                     };
                 }
-                // Booking state
-                let bookingState = {
-                    currentStep: 1,
-                    selectedCategory: null,
-                    selectedService: null,
-                    selectedEmployee: null,
-                    selectedDate: null,
-                    selectedTime: null,
-                    appointmentMode: 'presencial',
-                    paymentMethod: null,
-
-                    // ✅ HOLD
-                    hold_id: null,
-                    hold_expires_at: null
-                };
+                
 
                 // ✅ PayPhone devuelve a tu web con parámetros en la URL.
                 // Si vienen, no regreses al Step 1: confirma y redirige a una página final.
@@ -1228,9 +1236,9 @@
                         billing_address,
 
                         appointment_mode: bookingState.appointmentMode || "presencial",
-                        patient_timezone: bookingState.patient_timezone || null,
-                        patient_timezone_label: bookingState.patient_timezone_label || null,
-                        data_consent: $("#data-consent").is(":checked") ? 1 : 0
+                        patient_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || null,
+                        patient_timezone_label: (typeof getUserTimeZoneLabel === "function" ? getUserTimeZoneLabel() : null),
+                        data_consent: $("#consent_data").is(":checked") ? 1 : 0
                     };
                 }
 
@@ -3543,32 +3551,48 @@
                     // ✅ Construye el payload en el instante exacto del init (evita que quede viejo / pisado)
                     const payloadToSend = { ...(payload || {}) };
 
-                    // ✅ Consentimiento: leerlo en el instante exacto (y si no existe el checkbox, respeta bookingState)
+                    // ✅ Consentimiento: SIEMPRE tomarlo del bookingState (fallback al checkbox si existe)
                     payloadToSend.data_consent = (
-                    bookingState?.data_consent === 1 ||
-                    document.getElementById("consent_data")?.checked === true
+                        bookingState?.data_consent === 1 ||
+                        document.getElementById("consent_data")?.checked === true
                     ) ? 1 : 0;
 
-                    // ✅ Timezone IANA del usuario (fallback a GMT offset)
-                    try {
-                    payloadToSend.patient_timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || null;
-                    } catch (e) {
-                    payloadToSend.patient_timezone = null;
-                    }
-                    if (!payloadToSend.patient_timezone) {
-                    const off = -new Date().getTimezoneOffset() / 60;
-                    payloadToSend.patient_timezone = `GMT${off >= 0 ? "+" : ""}${off}`;
-                    }
+                    // ✅ Timezone según modalidad
+                    const mode = (payloadToSend.appointment_mode || bookingState.appointmentMode || "").toString().toLowerCase();
 
-                    // ✅ Label corto (CST/CDT/GMT-5, etc.) con fallback
-                    try {
-                    const parts = new Intl.DateTimeFormat("en-US", { timeZoneName: "short" }).formatToParts(new Date());
-                    payloadToSend.patient_timezone_label = parts.find(p => p.type === "timeZoneName")?.value || null;
-                    } catch (e) {
-                    payloadToSend.patient_timezone_label = null;
-                    }
-                    if (!payloadToSend.patient_timezone_label) {
-                    payloadToSend.patient_timezone_label = payloadToSend.patient_timezone;
+                    if (mode === "presencial") {
+                        // Presencial => Ecuador fijo
+                        payloadToSend.patient_timezone = "America/Guayaquil";
+                        payloadToSend.patient_timezone_label = "GMT-5 (Ecuador)";
+                    } else {
+                        // Virtual => timezone del usuario (IANA) + label corto (CST/CDT/etc)
+                        // IANA
+                        try {
+                            payloadToSend.patient_timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || null;
+                        } catch (e) {
+                            payloadToSend.patient_timezone = null;
+                        }
+
+                        // fallback a GMT offset si no hay IANA
+                        if (!payloadToSend.patient_timezone) {
+                            const off = -new Date().getTimezoneOffset() / 60;
+                            payloadToSend.patient_timezone = `GMT${off >= 0 ? "+" : ""}${off}`;
+                        }
+
+                        // label corto (CST, CDT, etc)
+                        try {
+                            const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                            const parts = new Intl.DateTimeFormat("en-US", { timeZone: tz, timeZoneName: "short" })
+                                .formatToParts(new Date());
+                            payloadToSend.patient_timezone_label = parts.find(p => p.type === "timeZoneName")?.value || null;
+                        } catch (e) {
+                            payloadToSend.patient_timezone_label = null;
+                        }
+
+                        // fallback: si no hay label corto, usa el mismo timezone
+                        if (!payloadToSend.patient_timezone_label) {
+                            payloadToSend.patient_timezone_label = payloadToSend.patient_timezone;
+                        }
                     }
 
                     // ✅ Debug (temporal)
