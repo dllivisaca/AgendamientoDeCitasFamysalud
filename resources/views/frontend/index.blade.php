@@ -2912,7 +2912,8 @@
                         (ap.employee && ap.employee.user && ap.employee.user.name) ||
                         res.employee_name ||
                         res.professional || "";
-                    const modeTxt = (ap.appointment_mode || res.appointment_mode) === "virtual" ? "Virtual" : "Presencial";
+                    const isVirtual = (ap.appointment_mode || res.appointment_mode) === "virtual";
+                    const modeTxt = isVirtual ? "Virtual" : "Presencial";
 
                     let dateTxt = ap.date || res.date || "";
                     // ✅ Si viene en formato YYYY-MM-DD, formatear a: "Martes, 6 de enero de 2026"
@@ -2932,20 +2933,41 @@
                     // ⏰ Hora: usar bookingState cuando es pago con tarjeta
                     let timeRangeTxt = ap.time || res.time || ap.time_range || "";
 
-                    if (
-                        (!timeRangeTxt || timeRangeTxt.trim() === "") &&
-                        payMethod === "card" &&
-                        bookingState.selectedTime
-                    ) {
-                        timeRangeTxt =
-                            bookingState.selectedTime.display_ec ||
-                            bookingState.selectedTime.display ||
-                            `${bookingState.selectedTime.start} - ${bookingState.selectedTime.end}`;
+                    // Si es pago con tarjeta, preferimos el rango formateado desde bookingState
+                    if (payMethod === "card" && bookingState.selectedTime) {
+                        // Presencial => hora Ecuador (display_ec)
+                        if (!isVirtual) {
+                            timeRangeTxt =
+                                bookingState.selectedTime.display_ec ||
+                                bookingState.selectedTime.display ||
+                                `${bookingState.selectedTime.start} - ${bookingState.selectedTime.end}`;
+                        } else {
+                            // Virtual => hora del usuario (display)
+                            timeRangeTxt =
+                                bookingState.selectedTime.display ||
+                                bookingState.selectedTime.display_ec ||
+                                `${bookingState.selectedTime.start} - ${bookingState.selectedTime.end}`;
+                        }
                     }
+
+                    // 🌍 Zona horaria (primero lo que venga del backend)
                     let tzLabel =
                         res.patient_timezone_label ||
                         res.timezone_label ||
                         res.timezone || "";
+
+                    // Override por modalidad:
+                    // Presencial => SIEMPRE Ecuador
+                    if (!isVirtual) {
+                        tzLabel = "GMT-5 (Ecuador) (zona horaria de Ecuador)";
+                    } else {
+                        // Virtual => zona horaria del usuario
+                        if (!tzLabel) {
+                            try {
+                                tzLabel = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+                            } catch (e) {}
+                        }
+                    }
 
                     let total = (res.total !== undefined ? res.total : (res.amount !== undefined ? res.amount : null));
 
