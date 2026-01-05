@@ -95,6 +95,18 @@
                 ], 422);
             }
 
+            // ✅ PASO 1: validar que el intento exista ANTES de llamar a PayPhone
+            $attempt = DB::table('payment_attempts')
+                ->where('client_transaction_id', $clientTransactionId)
+                ->first();
+
+            if (!$attempt) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'No existe un intento de pago iniciado para este clientTransactionId.',
+                ], 404);
+            }
+
             // Confirm (POST)
             $confirmUrl = 'https://pay.payphonetodoesposible.com/api/button/V2/Confirm';
 
@@ -125,6 +137,69 @@
                     'ok' => false,
                     'message' => 'Pago no aprobado o cancelado.',
                     'provider' => $body,
+                ], 200);
+            }
+
+            // ✅ PASO 2: Validar monto y moneda contra lo esperado (payment_attempts)
+            $attemptCheck = DB::table('payment_attempts')
+                ->where('client_transaction_id', $clientTransactionId)
+                ->first();
+
+            if (!$attemptCheck) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'No existe el intento de pago para validar monto/moneda.',
+                ], 404);
+            }
+
+            // PayPhone devuelve amount y currency en confirm
+            $ppAmount   = isset($body['amount']) ? (float) $body['amount'] : null;
+            $ppCurrency = isset($body['currency']) ? strtoupper((string) $body['currency']) : null;
+
+            $expectedAmount   = (float) $attemptCheck->amount;
+            // Tú SIEMPRE guardas USD en init(), así que lo dejamos fijo:
+            $expectedCurrency = 'USD';
+
+            /**
+             * Normalizar monto por si PayPhone lo devuelve en centavos:
+             * Ej: expected = 16.20, provider = 1620  -> 1620/100 = 16.20
+             */
+            $ppAmountNormalized = $ppAmount;
+            if ($ppAmount !== null) {
+                // Si viene "demasiado grande" comparado al esperado, probamos /100
+                if ($ppAmount > ($expectedAmount * 10) && abs(($ppAmount / 100) - $expectedAmount) < 0.01) {
+                    $ppAmountNormalized = $ppAmount / 100;
+                }
+            }
+
+            // Comparación de monto con tolerancia mínima por decimales
+            $amountOk = ($ppAmountNormalized !== null) && (abs($ppAmountNormalized - $expectedAmount) < 0.01);
+
+            // Moneda: si PayPhone no manda currency, asumimos USD (porque tu intento es USD)
+            $currencyOk = ($ppCurrency === null) || ($ppCurrency === $expectedCurrency);
+
+            if (!$amountOk || !$currencyOk) {
+                // Marca el intento como fallo por mismatch y guarda confirm_response (ya lo guardas arriba, igual actualizamos status)
+                DB::table('payment_attempts')
+                    ->where('client_transaction_id', $clientTransactionId)
+                    ->update([
+                        'status' => 'failed',
+                        'provider_status' => 'mismatch_amount_currency',
+                        'updated_at' => now(),
+                    ]);
+
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'Pago aprobado, pero monto/moneda no coinciden con lo esperado.',
+                    'expected' => [
+                        'amount' => $expectedAmount,
+                        'currency' => $expectedCurrency,
+                    ],
+                    'provider' => [
+                        'amount_raw' => $ppAmount,
+                        'amount_normalized' => $ppAmountNormalized,
+                        'currency' => $ppCurrency,
+                    ],
                 ], 200);
             }
 
@@ -167,6 +242,35 @@
                     return response()->json([
                         'ok' => false,
                         'message' => 'El turno reservado expiró o no existe.',
+                    ], 200);
+                }
+
+                // ✅ PASO 3: Validar que el hold esté "activo" (no expirado) y sea consistente
+
+                // 3.B) El hold debe tener los datos del slot completos
+                $missing = [];
+                if (empty($hold->employee_id)) $missing[] = 'employee_id';
+                if (empty($hold->service_id)) $missing[] = 'service_id';
+                if (empty($hold->appointment_date)) $missing[] = 'appointment_date';
+                if (empty($hold->appointment_time)) $missing[] = 'appointment_time';
+                if (empty($hold->appointment_end_time)) $missing[] = 'appointment_end_time';
+
+                if (!empty($missing)) {
+                    return response()->json([
+                        'ok' => false,
+                        'message' => 'El hold existe pero está incompleto (slot inválido).',
+                        'missing' => $missing,
+                    ], 200);
+                }
+
+                // 3.A) Validar expiración real usando expires_at
+                if (!empty($hold->expires_at) && now()->greaterThan(\Carbon\Carbon::parse($hold->expires_at))) {
+                    // Opcional: borrar el hold expirado para limpiar
+                    DB::table('appointment_holds')->where('id', $hold->id)->delete();
+
+                    return response()->json([
+                        'ok' => false,
+                        'message' => 'El turno reservado expiró.',
                     ], 200);
                 }
 
