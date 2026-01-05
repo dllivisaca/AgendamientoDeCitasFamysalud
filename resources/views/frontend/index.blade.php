@@ -842,6 +842,12 @@
 
                     const restoredOk = restorePayphoneState();
 
+                    console.log("[Payphone RETURN] restoredOk =", restoredOk);
+                    console.log("[Payphone RETURN] bookingState.selectedService =", bookingState.selectedService);
+                    console.log("[Payphone RETURN] bookingState.selectedEmployee =", bookingState.selectedEmployee);
+                    console.log("[Payphone RETURN] bookingState.selectedDate =", bookingState.selectedDate);
+                    console.log("[Payphone RETURN] bookingState.selectedTime =", bookingState.selectedTime);
+
                     // Asegura que el UI sepa que estamos en pago con tarjeta al volver de PayPhone
                     bookingState.paymentMethod = "card";
 
@@ -1041,6 +1047,14 @@
                             }
                         } catch (e) {
                             console.warn("Phone sync error", e);
+                        }
+
+                        // ✅ Guardar estado ANTES de salir a PayPhone (para poder restaurar al volver)
+                        try {
+                            savePayphoneState();
+                            console.log("[Payphone] pp_state guardado OK antes de init");
+                        } catch (e) {
+                            console.warn("[Payphone] no se pudo guardar pp_state antes de init", e);
                         }
 
                         // Llamar backend para inicializar intento de pago
@@ -1357,7 +1371,12 @@
 
                 function savePayphoneState() {
                     try {
+                        // ✅ snapshot de montos justo antes de salir a PayPhone
+                        let figures = null;
+                        try { figures = computePaymentFigures(); } catch(e) { figures = null; }
+
                         const state = {
+                            // estado del flujo
                             selectedCategory: bookingState.selectedCategory,
                             selectedService: bookingState.selectedService,
                             selectedEmployee: bookingState.selectedEmployee,
@@ -1366,8 +1385,34 @@
                             appointmentMode: bookingState.appointmentMode,
                             paymentMethod: bookingState.paymentMethod,
                             hold_id: bookingState.hold_id,
-                            hold_expires_at: bookingState.hold_expires_at
+                            hold_expires_at: bookingState.hold_expires_at,
+
+                            // ✅ snapshot de montos
+                            figures,
+
+                            // ✅ snapshot de formularios (porque al volver de PayPhone la página recarga)
+                            forms: {
+                                patient_full_name: $("#patient_full_name").val() || "",
+                                patient_email: $("#patient_email").val() || "",
+                                patient_phone: $("#patient_phone").val() || "",
+
+                                patient_dob: $("#patient_dob").val() || "",
+                                patient_doc_type: $("#doc_type").val() || "",
+                                patient_doc_number: $("#doc_number").val() || "",
+                                patient_address: $("#patient_address").val() || "",
+                                patient_notes: $("#patient_notes").val() || "",
+
+                                billing_name: $("#billing-name").val() || "",
+                                billing_doc_type: $("#billing-doc-type").val() || "",
+                                billing_doc_number: $("#billing-doc-number").val() || "",
+                                billing_address: $("#billing-address").val() || "",
+                                billing_email: $("#billing-email").val() || "",
+                                billing_phone: $("#billing-phone").val() || "",
+
+                                consent_data: $("#consent_data").is(":checked") ? 1 : 0
+                            }
                         };
+
                         localStorage.setItem(PP_STATE_KEY, JSON.stringify(state));
                     } catch (e) {
                         console.warn("No se pudo guardar pp_state", e);
@@ -1378,8 +1423,59 @@
                     try {
                         const raw = localStorage.getItem(PP_STATE_KEY);
                         if (!raw) return false;
+
                         const state = JSON.parse(raw);
+
+                        // 1) Restaurar bookingState
                         Object.assign(bookingState, state);
+
+                        // ✅ Rehidratar objetos para que los resúmenes vuelvan a pintarse
+                        try {
+                            // Service
+                            if (bookingState.selectedService && typeof bookingState.selectedService !== "object") {
+                                const sid = bookingState.selectedService;
+                                bookingState.selectedService = (services || []).find(s => String(s.id) === String(sid)) || null;
+                            }
+
+                            // Employee
+                            if (bookingState.selectedEmployee && typeof bookingState.selectedEmployee !== "object") {
+                                const eid = bookingState.selectedEmployee;
+                                bookingState.selectedEmployee = (employees || []).find(e => String(e.id) === String(eid)) || null;
+                            }
+                        } catch (e) {
+                            console.warn("[Payphone] rehydrate failed", e);
+                        }
+
+                        console.log("[Payphone] restore ok, bookingState:", bookingState);
+
+                        // 2) Restaurar formularios si existen
+                        if (state.forms) {
+                            $("#patient_full_name").val(state.forms.patient_full_name || "");
+                            $("#patient_email").val(state.forms.patient_email || "");
+                            $("#patient_phone").val(state.forms.patient_phone || "");
+
+                            $("#patient_dob").val(state.forms.patient_dob || "");
+                            $("#doc_type").val(state.forms.patient_doc_type || "");
+                            $("#doc_number").val(state.forms.patient_doc_number || "");
+                            $("#patient_address").val(state.forms.patient_address || "");
+                            $("#patient_notes").val(state.forms.patient_notes || "");
+
+                            $("#billing-name").val(state.forms.billing_name || "");
+                            $("#billing-doc-type").val(state.forms.billing_doc_type || "");
+                            $("#billing-doc-number").val(state.forms.billing_doc_number || "");
+                            $("#billing-address").val(state.forms.billing_address || "");
+                            $("#billing-email").val(state.forms.billing_email || "");
+                            $("#billing-phone").val(state.forms.billing_phone || "");
+
+                            $("#consent_data").prop("checked", String(state.forms.consent_data) === "1");
+                        }
+
+                        // 3) (Opcional pero útil) si tenías snapshot de montos, úsalo como respaldo visual
+                        //    El cálculo real lo sigues haciendo con computePaymentFigures().
+                        if (state.figures) {
+                            bookingState._pp_figures = state.figures;
+                        }
+
                         return true;
                     } catch (e) {
                         console.warn("No se pudo restaurar pp_state", e);
@@ -1849,6 +1945,7 @@
 
                         $("#discount-row").addClass("d-none");
 
+                        console.log("[Payphone RETURN] About to fillStep6Summary()");
                         // ✅ Cargar resumen y UI
                         fillStep6Summary();
                         refreshPaymentUI();
