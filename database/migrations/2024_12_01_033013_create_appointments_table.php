@@ -27,7 +27,7 @@ return new class extends Migration
             $table->decimal('amount', 8, 2);
             $table->date('booking_date');
             $table->string('booking_time');
-            $table->enum('status',['Pending payment','Processing','Confirmed','Cancelled','Completed','On Hold','Rescheduled','No Show']);
+            $table->enum('status',['Pending payment','Processing','Paid','Cancelled','Completed','On Hold','Rescheduled','No Show']);
             $table->json('other')->nullable();
             $table->softDeletes();
             $table->timestamps();

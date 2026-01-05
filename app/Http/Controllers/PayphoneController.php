@@ -197,7 +197,7 @@
                     'terms_accepted'    => 1,
                     'terms_accepted_at' => now(),
 
-                    'status'         => 'confirmed',
+                    'status'         => 'paid',
                     'payment_status' => 'paid',
 
                     'client_transaction_id' => $clientTransactionId,

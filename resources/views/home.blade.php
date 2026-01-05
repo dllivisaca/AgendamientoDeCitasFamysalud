@@ -10,7 +10,7 @@
 @php
      $appointments = Appointment::whereMonth('appointment_date', Carbon::now()->month)
             ->whereYear('appointment_date', Carbon::now()->year)
-            ->where('status', 'Confirmed') // Only show confirmed appointments
+            ->where('status', 'Paid') // Only show confirmed appointments
             ->get();
 @endphp
 

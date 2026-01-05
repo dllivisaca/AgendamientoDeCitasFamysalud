@@ -67,7 +67,7 @@
                             <select name="status" class="form-control" id="modalStatusSelect">
                                 <option value="Pending payment">Pending payment</option>
                                 <option value="Processing">Processing</option>
-                                <option value="Confirmed">Confirmed</option>
+                                <option value="Paid">Paid</option>
                                 <option value="Cancelled">Cancelled</option>
                                 <option value="Completed">Completed</option>
                                 <option value="On Hold">On Hold</option>
@@ -220,7 +220,7 @@
     var statusColors = {
         'Pending payment': '#f39c12',
         'Processing': '#3498db',
-        'Confirmed': '#2ecc71',
+        'Paid': '#2ecc71',
         'Cancelled': '#ff0000',
         'Completed': '#008000',
         'On Hold': '#95a5a6',

@@ -572,7 +572,7 @@
                                     <label class="form-check-label fw-bold" for="pm_card">Pago con tarjeta (precio estándar)</label>
                                     </div>
                                     <div class="small text-muted mt-2">
-                                    Pago inmediato y confirmación automática de la cita.
+                                    Pago inmediato y registro automático de la cita.
                                     </div>
                                 </div>
                                 </div>
@@ -921,7 +921,7 @@
                             // ✅ 3) Fallback payload con los nombres de keys que SÍ lee el modal
                             const fallbackPayload = {
                                 booking_id: bs.booking_id || "",
-                                status: "confirmed",
+                                status: "paid",
                                 payment_status: "paid",
 
                                 // el modal usa appointment_mode para decidir Virtual/Presencial
@@ -2956,16 +2956,33 @@
                         res.timezone_label ||
                         res.timezone || "";
 
-                    // Override por modalidad:
-                    // Presencial => SIEMPRE Ecuador
+                    // Helper: convertir IANA -> abreviatura (CST, EST, etc.)
+                    function getShortTZ() {
+                        try {
+                            const parts = new Intl.DateTimeFormat("en-US", {
+                                timeZoneName: "short"
+                            }).formatToParts(new Date());
+
+                            const tzPart = parts.find(p => p.type === "timeZoneName");
+                            return tzPart ? tzPart.value : "";
+                        } catch (e) {
+                            return "";
+                        }
+                    }
+
+                    // Override por modalidad
                     if (!isVirtual) {
+                        // Presencial => Ecuador fijo
                         tzLabel = "GMT-5 (Ecuador) (zona horaria de Ecuador)";
                     } else {
-                        // Virtual => zona horaria del usuario
+                        // Virtual => abreviatura del usuario (CST, EST, etc.)
                         if (!tzLabel) {
-                            try {
-                                tzLabel = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
-                            } catch (e) {}
+                            const shortTZ = getShortTZ();
+                            tzLabel = shortTZ || "";
+                        } else {
+                            // Si viene algo como America/Chicago, convertirlo a CST
+                            const shortTZ = getShortTZ();
+                            tzLabel = shortTZ || tzLabel;
                         }
                     }
 
@@ -3009,7 +3026,7 @@
                     const statusNice = ({
                         pending_verification: "Pendiente de verificación",
                         pending_payment: "Pendiente de pago",
-                        confirmed: "Confirmada",
+                        paid: "Pagada",
                         cancelled: "Cancelada"
                     }[status] || status);
 
