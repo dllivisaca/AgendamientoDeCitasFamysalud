@@ -19,7 +19,7 @@
     <div class="{{ $auth_type ?? 'login' }}-box">
 
         {{-- Logo --}}
-        <div class="{{ $auth_type ?? 'login' }}-logo">
+        <div class="{{ $auth_type ?? 'login' }}-logo text-center mb-3">
             <a href="{{ $dashboard_url }}">
 
                 {{-- Logo Image --}}
@@ -36,12 +36,12 @@
                             height="{{ config('adminlte.auth_logo.img.height') }}"
                          @endif>
                 @else
-                    <img src="{{ asset(config('adminlte.logo_img')) }}"
-                         alt="{{ config('adminlte.logo_img_alt') }}" height="50">
+                    <img src="{{ asset('img/logo1.png') }}"
+                        alt="FamySALUD" style="max-height: 70px; width: auto;">
                 @endif
 
                 {{-- Logo Label --}}
-                {!! config('adminlte.logo', '<b>Admin</b>LTE') !!}
+                
 
             </a>
         </div>

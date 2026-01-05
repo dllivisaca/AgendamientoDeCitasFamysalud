@@ -96,13 +96,13 @@
 
 
    <footer class="main-footer @if(Route::is('login','register','password.confirm','password.update','password.reset','password.request')) mx-auto mt-5 @endif ">
-    <strong>© Copyright 2017 - {{ date('Y') }}, Developed by
-      <a target="_blank" href="https://www.vfixtechnology.com">VFIX TECHNOLOGY</a>.
+    <strong>© Copyright 2025 - {{ date('Y') }}, Aplicación diseñada y desarrollada por
+      <a target="_blank" href="https://www.daisyllivisaca.com">Daisy Llivisaca</a>.
     </strong>
-    All rights reserved.
-    <div class="float-right d-none d-sm-inline-block">
+    Todos los derechos reservados. 
+    <!-- <div class="float-right d-none d-sm-inline-block">
       <b>Version</b> 1.0.1
-    </div>
+    </div> -->
   </footer>
 
     {{-- Base Scripts (depends on Laravel asset bundling tool) --}}
