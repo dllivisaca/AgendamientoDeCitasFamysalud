@@ -811,6 +811,11 @@
             };
             $(document).ready(function() {
 
+                // ✅ Persistir consentimiento en bookingState
+                $("#consent_data").on("change", function () {
+                    bookingState.data_consent = this.checked ? 1 : 0;
+                });
+
                 function buildPayphonePayload() {
                     return {
                         booking_id: bookingState.booking_id || "",
@@ -833,10 +838,34 @@
                         billing_email: $("#billing-email").val() || null,
                         billing_phone: $("#billing-phone").val() || null,
 
-                        data_consent: document.getElementById("consent_data")?.checked ? 1 : 0,
+                        data_consent: (bookingState.data_consent === 1 || document.getElementById("consent_data")?.checked === true) ? 1 : 0,
 
-                        patient_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || null,
-                        patient_timezone_label: (typeof getUserTimeZoneLabel === "function" ? getUserTimeZoneLabel() : null),
+                        patient_timezone: (function () {
+                            try {
+                                const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                                if (tz) return tz;
+                            } catch (e) {}
+                            // fallback tipo GMT-5
+                            const off = -new Date().getTimezoneOffset() / 60;
+                            return `GMT${off >= 0 ? "+" : ""}${off}`;
+                        })(),
+
+                        patient_timezone_label: (function () {
+                            // Intento 1: abreviatura corta (si el navegador la da)
+                            try {
+                                const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                                if (tz) {
+                                const parts = new Intl.DateTimeFormat("en-US", { timeZone: tz, timeZoneName: "short" })
+                                    .formatToParts(new Date());
+                                const short = parts.find(p => p.type === "timeZoneName")?.value;
+                                if (short) return short;
+                                }
+                            } catch (e) {}
+
+                            // fallback tipo GMT-5
+                            const off = -new Date().getTimezoneOffset() / 60;
+                            return `GMT${off >= 0 ? "+" : ""}${off}`;
+                        })(),
                     };
                 }
                 // Booking state
@@ -3489,12 +3518,61 @@
 
                     savePayphoneState();
 
-                    console.log("[PayPhone INIT] payload keys:", Object.keys(payload));
-                    console.log("[PayPhone INIT] payload:", payload);
-                    console.log("[PayPhone INIT] consent_data checked:", document.getElementById("consent_data")?.checked);
+                    const pp = buildPayphonePayload();
+                    console.log("[PP FRONT] data_consent:", pp.data_consent);
+                    console.log("[PP FRONT] tz:", pp.patient_timezone, "label:", pp.patient_timezone_label);
 
-                    console.log("[INIT FRONT] payload keys:", Object.keys(payload));
-                    console.log("[INIT FRONT] payload json:", JSON.stringify(payload));
+                    console.log("[PP] bookingState.data_consent =", bookingState.data_consent);
+
+                    // ✅ TZ del usuario (IANA) + label corto (CST/CDT/GMT-5, etc.)
+                    try {
+                        payload.patient_timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || null;
+                    } catch (e) {
+                        payload.patient_timezone = null;
+                    }
+
+                    try {
+                        const parts = new Intl.DateTimeFormat("en-US", { timeZoneName: "short" }).formatToParts(new Date());
+                        payload.patient_timezone_label = parts.find(p => p.type === "timeZoneName")?.value || null;
+                    } catch (e) {
+                        payload.patient_timezone_label = null;
+                    }
+
+                    console.log("[INIT] consent:", payload.data_consent, "tz:", payload.patient_timezone, "label:", payload.patient_timezone_label);
+
+                    // ✅ Construye el payload en el instante exacto del init (evita que quede viejo / pisado)
+                    const payloadToSend = { ...(payload || {}) };
+
+                    // ✅ Consentimiento: leerlo en el instante exacto (y si no existe el checkbox, respeta bookingState)
+                    payloadToSend.data_consent = (
+                    bookingState?.data_consent === 1 ||
+                    document.getElementById("consent_data")?.checked === true
+                    ) ? 1 : 0;
+
+                    // ✅ Timezone IANA del usuario (fallback a GMT offset)
+                    try {
+                    payloadToSend.patient_timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || null;
+                    } catch (e) {
+                    payloadToSend.patient_timezone = null;
+                    }
+                    if (!payloadToSend.patient_timezone) {
+                    const off = -new Date().getTimezoneOffset() / 60;
+                    payloadToSend.patient_timezone = `GMT${off >= 0 ? "+" : ""}${off}`;
+                    }
+
+                    // ✅ Label corto (CST/CDT/GMT-5, etc.) con fallback
+                    try {
+                    const parts = new Intl.DateTimeFormat("en-US", { timeZoneName: "short" }).formatToParts(new Date());
+                    payloadToSend.patient_timezone_label = parts.find(p => p.type === "timeZoneName")?.value || null;
+                    } catch (e) {
+                    payloadToSend.patient_timezone_label = null;
+                    }
+                    if (!payloadToSend.patient_timezone_label) {
+                    payloadToSend.patient_timezone_label = payloadToSend.patient_timezone;
+                    }
+
+                    // ✅ Debug (temporal)
+                    console.log("[PP INIT] consent:", payloadToSend.data_consent, "tz:", payloadToSend.patient_timezone, "label:", payloadToSend.patient_timezone_label);
                     // ✅ llama backend para crear payment_attempt + devolver token/storeId/clientTransactionId
                     $.ajax({
                         url: "/payments/payphone/init",
@@ -3504,7 +3582,7 @@
                         data: JSON.stringify({
                             appointment_hold_id: holdId,
                             amount: parseFloat(standard),
-                            payload: payload
+                            payload: payloadToSend
                         }),
                         success: function (res) {
                             // 👉 aquí renderizas la cajita con res.token, res.storeId, res.clientTransactionId, etc.
@@ -3584,6 +3662,7 @@
                 // if (step === 5) return document.getElementById("consent_data")?.checked === true;
                 if (step === 5) {
                     const consentOk = document.getElementById("consent_data")?.checked === true;
+                    bookingState.data_consent = consentOk ? 1 : 0;
 
                     const customerForm = document.getElementById("customer-info-form");
                     const billingForm  = document.getElementById("billing-info-form");
