@@ -2915,6 +2915,20 @@
                     const modeTxt = (ap.appointment_mode || res.appointment_mode) === "virtual" ? "Virtual" : "Presencial";
 
                     let dateTxt = ap.date || res.date || "";
+                    // ✅ Si viene en formato YYYY-MM-DD, formatear a: "Martes, 6 de enero de 2026"
+                    try {
+                        if (/^\d{4}-\d{2}-\d{2}$/.test(dateTxt)) {
+                            let d = new Date(dateTxt + "T00:00:00");
+                            let formatted = d.toLocaleDateString("es-EC", {
+                                weekday: "long",
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric"
+                            });
+                            dateTxt = formatted.charAt(0).toUpperCase() + formatted.slice(1);
+                        }
+                    } catch (e) {}
+
                     let timeRangeTxt = ap.time || res.time || ap.time_range || "";
                     let tzLabel =
                         res.patient_timezone_label ||
