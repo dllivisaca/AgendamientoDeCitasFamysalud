@@ -2929,7 +2929,19 @@
                         }
                     } catch (e) {}
 
+                    // ⏰ Hora: usar bookingState cuando es pago con tarjeta
                     let timeRangeTxt = ap.time || res.time || ap.time_range || "";
+
+                    if (
+                        (!timeRangeTxt || timeRangeTxt.trim() === "") &&
+                        payMethod === "card" &&
+                        bookingState.selectedTime
+                    ) {
+                        timeRangeTxt =
+                            bookingState.selectedTime.display_ec ||
+                            bookingState.selectedTime.display ||
+                            `${bookingState.selectedTime.start} - ${bookingState.selectedTime.end}`;
+                    }
                     let tzLabel =
                         res.patient_timezone_label ||
                         res.timezone_label ||
