@@ -354,8 +354,24 @@
                 `${formatTime(startTime)} – ${formatTime(endTime)}`;
 
             $('#modalDateTime').text(`${formattedDate} · ${formattedTime}`);
-            $('#modalAmount').text($(this).data('amount'));
-            $('#modalNotes').text($(this).data('notes'));
+            const amount = $(this).data('amount');
+
+            $('#modalAmount').text(
+                amount !== null && amount !== undefined && amount !== ''
+                    ? `$${parseFloat(amount).toFixed(2)}`
+                    : 'N/A'
+            );
+            const notes = $(this).data('notes');
+
+            if (notes && notes.trim() !== '') {
+                $('#modalNotes')
+                    .text(notes)
+                    .removeClass('text-muted font-italic small');
+            } else {
+                $('#modalNotes')
+                    .text('No se registraron notas')
+                    .addClass('text-muted font-italic small');
+            }
 
             // Set status select dropdown
             var status = $(this).data('status');
