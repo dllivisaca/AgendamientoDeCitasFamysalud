@@ -63,6 +63,21 @@
                 line-height: 1.1;
             }
         }
+
+        /* Botón Iniciar sesión con esquinas suavemente redondeadas */
+        .login-page .btn-primary {
+            border-radius: 4px;
+        }
+
+        /* Footer copyright con esquinas suavemente redondeadas */
+        .login-page .main-footer {
+            border-radius: 4px;
+        }
+
+        /* Eliminar header vacío del card en login */
+        .login-page .card-header:empty {
+            display: none;
+        }
     </style>
 @stop
 
@@ -103,7 +118,7 @@
 
             {{-- Card Header (logo solamente) --}}
             <div class="card-header text-center">
-                <div class="mb-2">
+                <div>
                     <img src="{{ asset('img/logo1.png') }}"
                         alt="FamySALUD"
                         style="max-width: 240px; width: 100%; height: auto;">
