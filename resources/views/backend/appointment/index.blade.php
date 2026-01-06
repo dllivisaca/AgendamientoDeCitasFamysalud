@@ -326,12 +326,17 @@
             const startTime = $(this).data('start-time');
             const endTime = $(this).data('end-time');
 
-            // Formatear fecha (día mes año)
-            const formattedDate = new Date(date).toLocaleDateString('es-EC', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric'
-            });
+            // ✅ Parsear YYYY-MM-DD sin que se corra por zona horaria
+            let formattedDate = 'N/A';
+            if (date) {
+                const [y, m, d] = String(date).split('-').map(Number);
+                const dateObj = new Date(y, (m || 1) - 1, d || 1); // local (sin UTC shift)
+                formattedDate = dateObj.toLocaleDateString('es-EC', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric'
+                });
+            }
 
             // Función para hora AM/PM
             function formatTime(time) {
