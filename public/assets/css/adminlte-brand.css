@@ -1,20 +1,77 @@
-/* ====== FamySALUD - Brand Logo Center Fix ====== */
+/* ====== FamySALUD – Brand Logo Center Fix ====== */
 
-/* Asegura referencia para el absoluto */
-.brand-link.logo-switch {
+/* El contenedor del brand */
+.brand-link.logo-switch{
   position: relative;
+  display: flex;
+  align-items: center;
 }
 
-/* CENTRAR logo grande (logo-xl) cuando sidebar está ABIERTO */
-.brand-link.logo-switch .logo-xl {
-  left: 50% !important;
-  transform: translateX(-50%) !important;
-  right: auto !important;
+/* ===================== ABIERTO ===================== */
+/* ABIERTO: mostrar XL, ocultar XS */
+.sidebar-mini:not(.sidebar-collapse) .brand-link.logo-switch{
+  justify-content: center !important;
 }
 
-/* (Opcional) Centrar también el logo pequeño (logo-xs) cuando está COLAPSADO */
-.brand-link.logo-switch .logo-xs {
-  left: 50% !important;
-  transform: translateX(-50%) !important;
-  right: auto !important;
+.sidebar-mini:not(.sidebar-collapse) .brand-link.logo-switch img.logo-xl{
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.sidebar-mini:not(.sidebar-collapse) .brand-link.logo-switch img.logo-xs{
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+/* ==================== COLAPSADO ==================== */
+/* COLAPSADO: centrar el contenido del brand */
+.sidebar-mini.sidebar-collapse .brand-link.logo-switch{
+  justify-content: center !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* COLAPSADO: mostrar XS, ocultar XL */
+.sidebar-mini.sidebar-collapse .brand-link.logo-switch img.logo-xs{
+  opacity: 1 !important;
+  visibility: visible !important;
+
+  /* ✅ esto es lo que normalmente lo “empuja” a la derecha */
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+
+  /* por si hereda float/display raros */
+  float: none !important;
+  display: block !important;
+}
+
+.sidebar-mini.sidebar-collapse .brand-link.logo-switch img.logo-xl{
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+/* ====== ABIERTO: centrar TODO el brand (logo XL + texto) ====== */
+.sidebar-mini:not(.sidebar-collapse) .brand-link.logo-switch{
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  /* AdminLTE empuja a la izquierda con padding */
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* Quitar floats/márgenes que rompen el centrado */
+.sidebar-mini:not(.sidebar-collapse) .brand-link.logo-switch img.logo-xl{
+  float: none !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  position: static !important;
+  display: block !important;
+}
+
+/* Si el texto también viene con márgenes raros, normalízalo */
+.sidebar-mini:not(.sidebar-collapse) .brand-link.logo-switch .brand-text{
+  float: none !important;
+  margin-left: .5rem !important; /* separación bonita logo-texto */
 }

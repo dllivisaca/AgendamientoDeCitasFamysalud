@@ -68,11 +68,10 @@ return [
     
     // ✅ Sidebar COLAPSADO / MINI (logo pequeño - FamySaludXS)
     'logo_img' => 'img/logo-famysalud-xs.png',
-    'logo_img_class' => 'brand-image img-circle elevation-3',
+    'logo_img_class' => 'brand-image img-circle elevation-3 logo-xs',
 
-    // ✅ Sidebar ABIERTO (logo grande)
     'logo_img_xl' => 'img/logo1.png',
-    'logo_img_xl_class' => 'brand-image-xs float-none d-block mx-auto',
+    'logo_img_xl_class' => 'brand-image-xs logo-xl',
 
     // Texto alternativo accesible
     'logo_img_alt' => 'FamySALUD',
