@@ -34,10 +34,10 @@
                         <img src="{{ asset('img/logo1.png') }}" alt="Logo" class="brand-logo">
                         <!-- <i class="bi bi-calendar-check"></i> AppointEase -->
                     </a>
-                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <!-- <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                         <span class="navbar-toggler-icon"></span>
-                    </button>
-                    <div class="collapse navbar-collapse" id="navbarNav">
+                    </button> -->
+                    <div class="navbar-collapse" id="navbarNav">
                         <ul class="navbar-nav ms-auto">
                             @guest
                                 <li class="nav-item">
