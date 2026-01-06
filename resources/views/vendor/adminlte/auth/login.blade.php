@@ -57,12 +57,17 @@
 
         {{-- Password field --}}
         <div class="input-group mb-3">
-            <input type="password" name="password" class="form-control @error('password') is-invalid @enderror"
-                   placeholder="{{ __('adminlte::adminlte.password') }}">
+            <input type="password"
+                name="password"
+                id="password"
+                class="form-control @error('password') is-invalid @enderror"
+                placeholder="{{ __('adminlte::adminlte.password') }}">
 
             <div class="input-group-append">
-                <div class="input-group-text">
-                    <span class="fas fa-lock {{ config('adminlte.classes_auth_icon', '') }}"></span>
+                <div class="input-group-text toggle-password"
+                    style="cursor: pointer;"
+                    title="Mostrar / ocultar contraseña">
+                    <span id="togglePasswordIcon" class="fas fa-eye"></span>
                 </div>
             </div>
 
@@ -87,7 +92,6 @@
             <div class="col-12 col-sm-5 d-sm-flex align-items-sm-center">
                 <button type="submit"
                         class="btn btn-block text-nowrap {{ config('adminlte.classes_auth_btn', 'btn-flat btn-primary') }}">
-                    <span class="fas fa-sign-in-alt"></span>
                     {{ __('adminlte::adminlte.sign_in') }}
                 </button>
             </div>
@@ -99,7 +103,7 @@
 @section('auth_footer')
     {{-- Password reset link --}}
     @if($password_reset_url)
-        <p class="my-0">
+        <p class="my-0 text-center">
             <a href="{{ $password_reset_url }}">
                 {{ __('adminlte::adminlte.i_forgot_my_password') }}
             </a>
