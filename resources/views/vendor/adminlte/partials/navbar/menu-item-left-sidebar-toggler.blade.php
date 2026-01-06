@@ -15,7 +15,7 @@
 </li>
 <li class="nav-item">
     <a class="nav-link"  target="_blank" href="{{ route('home')}}"
-        <i class="fas fa-bars"> Go to website</i>
+        <i class="fas fa-bars"> Ir a la aplicación</i>
         <span class="sr-only">{{ __('adminlte::adminlte.toggle_navigation') }}</span>
     </a>
 </li>

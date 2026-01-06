@@ -70,7 +70,7 @@ return [
     'logo_img' => 'img/logo-famysalud-xs.png',
     'logo_img_class' => 'brand-image img-circle elevation-3 logo-xs',
 
-    'logo_img_xl' => 'img/logo1.png',
+    'logo_img_xl' => 'img/logo-famysalud-xs.png',
     'logo_img_xl_class' => 'brand-image-xs logo-xl',
 
     // Texto alternativo accesible
@@ -320,7 +320,7 @@ return [
         // Navbar items:
         [
             'type' => 'navbar-search',
-            'text' => 'search',
+            'text' => 'Buscar',
             'topnav_right' => false,
         ],
         [
@@ -331,17 +331,17 @@ return [
         // Sidebar items:
         [
             'type' => 'sidebar-menu-search',
-            'text' => 'search',
+            'text' => 'Buscar',
         ],
 
         [
-            'text' => 'Dashboard',
+            'text' => 'Panel principal',
             'route' => 'home',
             'icon' => 'fas fa-fw fa-home',
             'route' => 'dashboard'
         ],
         [
-            'text' => ' All Appointments',
+            'text' => ' Todas las citas',
             'route' => 'appointments',
             'icon' => 'fas fa-calendar-check',
             'can'  => 'appointments.view | appointments.create | appointments.edit | appointments.delete',

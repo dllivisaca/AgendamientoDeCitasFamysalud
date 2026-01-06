@@ -3,7 +3,7 @@
 @section('title', 'Dashboard')
 
 @section('content_header')
-    <h1>Appointments</h1>
+    <h1>Citas</h1>
     @if (session('success'))
         <div class="alert alert-success alert-dismissable mt-2">
             <button type="button" class="close" data-dismiss="alert" aria-label="Close">
@@ -162,6 +162,23 @@
             opacity: 1;
             z-index: 1000 !important;
         }
+
+        /* ===== Capitalizar textos del calendario ===== */
+
+        /* Mes y año (ej: enero 2026 → Enero 2026) */
+        .fc-center h2 {
+        text-transform: capitalize;
+        }
+
+        /* Días de la semana (lun. → Lun.) */
+        .fc-day-header {
+        text-transform: capitalize;
+        }
+
+        /* ===== Centrar texto del footer ===== */
+        .main-footer {
+        text-align: center !important;
+        }
     </style>
 @stop
 
@@ -169,6 +186,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@3.10.2/dist/fullcalendar.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@3.10.2/dist/locale/es.js"></script>
 
 
     <script>
@@ -180,6 +198,7 @@
 
             // Initialize calendar
             $('#calendar').fullCalendar({
+                locale: 'es',
                 header: {
                     left: 'prev,next today',
                     center: 'title',
@@ -209,7 +228,7 @@
     $('#modalStaff').text(calEvent.staff || 'N/A');
     $('#modalAmount').text(calEvent.amount || 'N/A');
     $('#modalNotes').text(calEvent.description || calEvent.notes || 'N/A');
-    $('#modalStartTime').text(moment(calEvent.start).format('MMMM D, YYYY h:mm A'));
+    moment(calEvent.start).locale('es').format('D [de] MMMM [de] YYYY HH:mm')
     $('#modalEndTime').text(calEvent.end ? moment(calEvent.end).format('MMMM D, YYYY h:mm A') : 'N/A');
 
     // Get the status from the calendar event

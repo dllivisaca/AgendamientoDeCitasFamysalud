@@ -52,7 +52,7 @@
 
                             @auth
                                 <li class="nav-item">
-                                    <a class="nav-link" href="{{ route('dashboard') }}">Calendario</a>
+                                    <a class="nav-link active login-link" href="{{ route('dashboard') }}">Panel principal</a>
                                 </li>
                             @endauth
 

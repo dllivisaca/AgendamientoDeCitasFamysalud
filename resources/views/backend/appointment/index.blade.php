@@ -1,6 +1,6 @@
 @extends('adminlte::page')
 
-@section('title', 'All Appointments')
+@section('title', 'Todas las citas')
 
 @section('content_header')
     <div class="row mb-2">
