@@ -105,7 +105,7 @@
                                                 Profesional
                                             </th>
                                             <th style="width: 12%">
-                                                Área de atención
+                                                Área
                                             </th>
 
                                             <th style="width: 10%">
@@ -138,6 +138,18 @@
                                                 'On Hold' => '#95a5a6',
                                                 'Rescheduled' => '#f1c40f',
                                                 'No Show' => '#e67e22',
+                                            ];
+
+                                            $statusLabels = [
+                                                'Pending payment' => 'Pendiente de pago',
+                                                'Processing' => 'Procesando',
+                                                'Paid' => 'Pagada',
+                                                'Cancelled' => 'Cancelado',
+                                                'Completed' => 'Completado',
+                                                'On Hold' => 'En espera',
+                                                'Rescheduled' => 'Reprogramado',
+                                                'No Show' => 'No asistió',
+                                                'pending_verification' => 'Pendiente de verificación',
                                             ];
                                         @endphp
                                         @foreach ($appointments as $appointment)
@@ -174,19 +186,54 @@
                                                     {{ $appointment->service->title ?? 'NA' }}
                                                 </td>
                                                 <td>
-                                                    {{ $appointment->appointment_date }}
+                                                    {{ \Carbon\Carbon::parse($appointment->appointment_date)->translatedFormat('d M Y') }}
                                                 </td>
                                                 <td>
-                                                    {{ $appointment->appointment_time }}
+                                                    {{ 
+                                                        \Carbon\Carbon::parse($appointment->appointment_time)->format('g:i A')
+                                                    }}
+                                                    -
+                                                    {{
+                                                        \Carbon\Carbon::parse($appointment->appointment_end_time)->format('g:i A')
+                                                    }}
                                                 </td>
                                                 <td>
                                                     @php
-                                                        $status = $appointment->status;
+                                                        $rawStatus = $appointment->status;
+
+                                                        // Normalizar el status para evitar problemas de mayúsculas/minúsculas
+                                                        $status = strtolower(str_replace(' ', '_', $rawStatus));
+
+                                                        $statusColors = [
+                                                            'pending_payment' => '#f39c12',
+                                                            'processing' => '#3498db',
+                                                            'paid' => '#2ecc71',
+                                                            'cancelled' => '#ff0000',
+                                                            'completed' => '#008000',
+                                                            'on_hold' => '#95a5a6',
+                                                            'rescheduled' => '#f1c40f',
+                                                            'no_show' => '#e67e22',
+                                                            'pending_verification' => '#7f8c8d',
+                                                        ];
+
+                                                        $statusLabels = [
+                                                            'pending_payment' => 'Pendiente de pago',
+                                                            'processing' => 'Procesando',
+                                                            'paid' => 'Pagada',
+                                                            'cancelled' => 'Cancelada',
+                                                            'completed' => 'Completada',
+                                                            'on_hold' => 'En espera',
+                                                            'rescheduled' => 'Reprogramada',
+                                                            'no_show' => 'No asistió',
+                                                            'pending_verification' => 'Pendiente de verificación',
+                                                        ];
+
                                                         $color = $statusColors[$status] ?? '#7f8c8d';
+                                                        $label = $statusLabels[$status] ?? 'Estado desconocido';
                                                     @endphp
                                                     <span class="badge px-2 py-1"
                                                         style="background-color: {{ $color }}; color: white;">
-                                                        {{ $status }}
+                                                        {{ $label }}
                                                     </span>
                                                 </td>
                                                 <td>
@@ -201,7 +248,7 @@
                                                         data-start="{{ $appointment->appointment_date . ' ' . $appointment->appointment_time }}"
                                                         data-amount="{{ $appointment->amount }}"
                                                         data-notes="{{ $appointment->patient_notes }}"
-                                                        data-status="{{ $appointment->status }}">View</button>
+                                                        data-status="{{ $appointment->status }}">Ver detalles</button>
                                                 </td>
                                             </tr>
                                         @endforeach
