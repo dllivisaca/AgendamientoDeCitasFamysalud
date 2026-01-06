@@ -28,17 +28,46 @@
                     </div>
 
                     <div class="modal-body">
-                        <p><strong>Paciente:</strong> <span id="modalAppointmentName">N/A</span></p>
-                        <p><strong>Área de atención:</strong> <span id="modalArea">N/A</span></p>
-                        <p><strong>Servicio:</strong> <span id="modalService">N/A</span></p>
+
+                        {{-- =========================
+                            SECCIÓN 1 (NO COLAPSABLE)
+                            Resumen de la cita
+                        ========================== --}}
+                        <div class="p-3 mb-3 rounded border bg-light">
+                            <h6 class="mb-3 font-weight-bold text-primary">Resumen de la cita</h6>
+
+                            <p class="mb-2"><strong>Paciente:</strong> <span id="modalAppointmentName">N/A</span></p>
+                            <p class="mb-2"><strong>Área de atención:</strong> <span id="modalArea">N/A</span></p>
+                            <p class="mb-2"><strong>Servicio:</strong> <span id="modalService">N/A</span></p>
+                            <p class="mb-2"><strong>Profesional:</strong> <span id="modalStaff">N/A</span></p>
+                            <p class="mb-2"><strong>Fecha y hora de la cita:</strong> <span id="modalDateTime">N/A</span></p>
+
+                            <div class="d-flex flex-wrap align-items-center" style="gap: 10px;">
+                                <div>
+                                    <strong>Estado de la cita:</strong>
+                                    <span id="modalStatusBadge">N/A</span>
+                                </div>
+
+                                <div>
+                                    <strong>Estado del pago:</strong>
+                                    <span id="modalPaymentStatusBadge">
+                                        <span class="badge px-2 py-1" style="background-color:#95a5a6;color:white;">N/A</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- =========================
+                            RESTO DEL MODAL (NO BORRAR)
+                            Se queda debajo tal cual
+                        ========================== --}}
                         <p><strong>Correo:</strong> <span id="modalEmail">N/A</span></p>
                         <p><strong>Teléfono:</strong> <span id="modalPhone">N/A</span></p>
-                        <p><strong>Profesional:</strong> <span id="modalStaff">N/A</span></p>
-                        <p><strong>Fecha y hora:</strong>  <span id="modalDateTime">N/A</span></p>
+
                         <p><strong>Total:</strong> <span id="modalAmount">N/A</span></p>
                         <p><strong>Notas:</strong> <span id="modalNotes">N/A</span></p>
-                        <p><strong>Estado actual:</strong> <span id="modalStatusBadge">N/A</span></p>
 
+                        <p><strong>Estado actual:</strong> <span id="modalStatusBadgeLegacy">N/A</span></p>
 
                         <div class="form-group ">
                             <label><strong>Estado:</strong></label>
@@ -415,8 +444,14 @@
             const badgeColor = statusColors[normalizedStatus] || '#7f8c8d';
             const badgeLabel = statusLabels[normalizedStatus] || 'Estado desconocido';
 
-            $('#modalStatusBadge').html(
-                `<span class="badge px-2 py-1" style="background-color: ${badgeColor}; color: white;">${badgeLabel}</span>`
+            const badgeHtml = `<span class="badge px-2 py-1" style="background-color: ${badgeColor}; color: white;">${badgeLabel}</span>`;
+
+            $('#modalStatusBadge').html(badgeHtml);
+            $('#modalStatusBadgeLegacy').html(badgeHtml);
+
+            // Por ahora, estado del pago queda N/A hasta que lo conectemos a tus campos reales
+            $('#modalPaymentStatusBadge').html(
+                `<span class="badge px-2 py-1" style="background-color:#95a5a6;color:white;">N/A</span>`
             );
         });
     </script>
