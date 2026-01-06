@@ -78,6 +78,26 @@
         .login-page .card-header:empty {
             display: none;
         }
+
+        /* Footer responsive y centrado (como el card) */
+        .login-page .main-footer {
+            width: calc(100% - 24px);   /* deja aire a los lados */
+            max-width: 720px;           /* no se estira infinito en pantallas grandes */
+            margin: 20px auto 0;        /* centrado */
+            padding: 14px 18px;         /* respiración interna */
+            border-radius: 4px;         /* el redondeo que ya querías */
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        /* Extra: en pantallas muy pequeñas, un poco menos padding */
+        @media (max-width: 360px) {
+            .login-page .main-footer {
+                width: calc(100% - 16px);
+                padding: 12px 12px;
+                font-size: 0.92rem;
+            }
+        }
     </style>
 @stop
 
