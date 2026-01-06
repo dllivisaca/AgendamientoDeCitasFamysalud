@@ -5,7 +5,7 @@
 @section('content_header')
     <div class="row mb-2">
         <div class="col-sm-6">
-            <h1>All Apointments</h1>
+            <h1>Todas las citas</h1>
         </div>
 
     </div>
@@ -21,33 +21,33 @@
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Appointment Details</h5>
+                        <h5 class="modal-title">Detalles de la cita</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
 
                     <div class="modal-body">
-                        <p><strong>Client:</strong> <span id="modalAppointmentName">N/A</span></p>
-                        <p><strong>Service:</strong> <span id="modalService">N/A</span></p>
-                        <p><strong>Email:</strong> <span id="modalEmail">N/A</span></p>
-                        <p><strong>Phone:</strong> <span id="modalPhone">N/A</span></p>
-                        <p><strong>Staff:</strong> <span id="modalStaff">N/A</span></p>
+                        <p><strong>Paciente:</strong> <span id="modalAppointmentName">N/A</span></p>
+                        <p><strong>Servicio:</strong> <span id="modalService">N/A</span></p>
+                        <p><strong>Correo:</strong> <span id="modalEmail">N/A</span></p>
+                        <p><strong>Teléfono:</strong> <span id="modalPhone">N/A</span></p>
+                        <p><strong>Profesional:</strong> <span id="modalStaff">N/A</span></p>
                         <p><strong>Start:</strong> <span id="modalStartTime">N/A</span></p>
-                        <p><strong>Amount:</strong> <span id="modalAmount">N/A</span></p>
-                        <p><strong>Notes:</strong> <span id="modalNotes">N/A</span></p>
-                        <p><strong>Current Status:</strong> <span id="modalStatusBadge">N/A</span></p>
+                        <p><strong>Total:</strong> <span id="modalAmount">N/A</span></p>
+                        <p><strong>Notas:</strong> <span id="modalNotes">N/A</span></p>
+                        <p><strong>Estado actual:</strong> <span id="modalStatusBadge">N/A</span></p>
 
 
                         <div class="form-group ">
-                            <label><strong>Status:</strong></label>
+                            <label><strong>Estado:</strong></label>
                             <select name="status" class="form-control" id="modalStatusSelect">
-                                <option value="Pending payment">Pending payment</option>
-                                <option value="Processing">Processing</option>
-                                <option value="Paid">Paid</option>
-                                <option value="Cancelled">Cancelled</option>
-                                <option value="Completed">Completed</option>
-                                <option value="On Hold">On Hold</option>
+                                <option value="Pending payment">Pendiente de pago</option>
+                                <option value="Processing">Procesando</option>
+                                <option value="Paid">Pagado</option>
+                                <option value="Cancelled">Cancelado</option>
+                                <option value="Completed">Completado</option>
+                                <option value="On Hold">En espera</option>
                                 {{-- <option value="Rescheduled">Rescheduled</option> --}}
                                 <option value="No Show">No Show</option>
                             </select>
@@ -55,9 +55,9 @@
                     </div>
 
                     <div class="modal-footer">
-                        <button type="submit" onclick="return confirm('Are you sure you want to update booking status?')"
-                            class="btn btn-danger">Update Status</button>
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="submit" onclick="return confirm('¿Estás seguro que quieres actualizar el estado de la cita?')"
+                            class="btn btn-danger">Actualizar estado</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
                     </div>
 
                 </div>
@@ -91,35 +91,39 @@
                                                 #
                                             </th>
                                             <th style="width: 15%">
-                                                User
+                                                Paciente
                                             </th>
+                                            {{-- 
                                             <th style="width: 15%">
-                                                Email
+                                                Correo
+                                            </th>
+                                            --}}
+                                            <th style="width: 10%">
+                                                Teléfono
                                             </th>
                                             <th style="width: 10%">
-                                                Phone
+                                                Profesional
                                             </th>
-                                            <th style="width: 10%">
-                                                Staff
+                                            <th style="width: 12%">
+                                                Área de atención
                                             </th>
 
-
                                             <th style="width: 10%">
-                                                Service
+                                                Servicio
                                             </th>
                                             <th style="width: 10%">
-                                                Date
+                                                Fecha
                                             </th>
                                             <th style="width: 10%">
-                                                Time
+                                                Hora
                                             </th>
 
 
                                             <th style="width: 15%" class="text-center">
-                                                Status
+                                                Estado
                                             </th>
                                             <th style="width: 18%">
-                                                Action
+                                                Acción
                                             </th>
                                         </tr>
                                     </thead>
@@ -145,21 +149,27 @@
                                                     <a>
                                                         {{ $appointment->patient_full_name }}
                                                     </a>
+                                                    {{-- 
                                                     <br>
                                                     <small>
                                                         {{ $appointment->created_at->format('d M Y') }}
                                                     </small>
+                                                    --}}
                                                 </td>
+                                                {{--
                                                 <td>
                                                     {{ $appointment->patient_email }}
                                                 </td>
+                                                --}}
                                                 <td>
                                                     {{ $appointment->patient_phone }}
                                                 </td>
                                                 <td>
                                                     {{ $appointment->employee->user->name }}
                                                 </td>
-
+                                                <td>
+                                                    {{ $appointment->service->category->title ?? 'NA' }}
+                                                </td>
                                                 <td>
                                                     {{ $appointment->service->title ?? 'NA' }}
                                                 </td>
@@ -227,9 +237,22 @@
     <script>
         $(document).ready(function() {
             $('#myTable').DataTable({
-                responsive: true
+                responsive: true,
+                language: {
+                    lengthMenu: "Mostrar _MENU_ registros",
+                    search: "Buscar:",
+                    info: "Mostrando registros _START_–_END_ de _TOTAL_",
+                    infoEmpty: "Mostrando 0 a 0 de 0 registros",
+                    infoFiltered: "(filtrado de _MAX_ registros totales)",
+                    zeroRecords: "No se encontraron resultados",
+                    paginate: {
+                        first: "Primero",
+                        last: "Último",
+                        next: "Siguiente",
+                        previous: "Anterior"
+                    }
+                }
             });
-
         });
     </script>
 

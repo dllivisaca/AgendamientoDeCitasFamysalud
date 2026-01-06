@@ -75,3 +75,13 @@
   float: none !important;
   margin-left: .5rem !important; /* separación bonita logo-texto */
 }
+
+.main-footer{
+  text-align: center !important;
+}
+
+.main-footer .float-right,
+.main-footer .float-left{
+  float: none !important;
+  text-align: center !important;
+}

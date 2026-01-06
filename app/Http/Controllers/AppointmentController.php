@@ -17,7 +17,7 @@ class AppointmentController extends Controller
 
     public function index()
     {
-        $appointments = Appointment::latest()->get();
+        $appointments = Appointment::with(['service.category', 'employee.user'])->latest()->get();
         // dd($appointments); // for debugging only
         return view('backend.appointment.index', compact('appointments'));
     }
