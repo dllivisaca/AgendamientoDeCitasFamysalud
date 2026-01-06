@@ -41,7 +41,7 @@
                         <ul class="navbar-nav ms-auto">
                             @guest
                                 <li class="nav-item">
-                                    <a class="nav-link active" href="{{ route('login') }}">Iniciar sesión</a>
+                                    <a class="nav-link active login-link" href="{{ route('login') }}">Iniciar sesión</a>
                                 </li>
                                 @if(false)
                                     <li class="nav-item">

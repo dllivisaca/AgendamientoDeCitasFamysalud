@@ -556,3 +556,17 @@ body {
 .iti__country, .iti__country-list {
   transition: none !important;
 }
+
+.login-link {
+    color: #2563eb !important;        /* azul médico moderno */
+    border: 1px solid #2563eb;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+}
+
+.login-link:hover {
+    background-color: #2563eb;
+    color: #ffffff !important;
+}
