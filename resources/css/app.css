@@ -1,3 +1,25 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ================================
+   AdminLTE – Center Brand Logo
+   ================================ */
+
+/* Centrar el contenedor del brand */
+.main-sidebar .brand-link {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+/* Quitar posicionamiento forzado de AdminLTE */
+.main-sidebar .brand-link .brand-image,
+.main-sidebar .brand-link .brand-image-xs {
+  position: static !important;
+  left: auto !important;
+  top: auto !important;
+  float: none !important;
+  margin: 0 auto !important;
+  display: block !important;
+}

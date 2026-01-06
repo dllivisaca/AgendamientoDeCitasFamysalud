@@ -1,0 +1,20 @@
+/* ====== FamySALUD - Brand Logo Center Fix ====== */
+
+/* Asegura referencia para el absoluto */
+.brand-link.logo-switch {
+  position: relative;
+}
+
+/* CENTRAR logo grande (logo-xl) cuando sidebar está ABIERTO */
+.brand-link.logo-switch .logo-xl {
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  right: auto !important;
+}
+
+/* (Opcional) Centrar también el logo pequeño (logo-xs) cuando está COLAPSADO */
+.brand-link.logo-switch .logo-xs {
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  right: auto !important;
+}

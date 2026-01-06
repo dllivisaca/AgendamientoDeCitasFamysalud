@@ -63,12 +63,19 @@ return [
     |
     */
 
-    'logo' => '<strong>' . env('APP_NAME') . '</strong>',
-    'logo_img' => '',
+    // Sin texto, solo logo en imagen
+    'logo' => '',
+    
+    // ✅ Sidebar COLAPSADO / MINI (logo pequeño - FamySaludXS)
+    'logo_img' => 'img/logo-famysalud-xs.png',
     'logo_img_class' => 'brand-image img-circle elevation-3',
-    'logo_img_xl' => null,
-    'logo_img_xl_class' => 'brand-image-xs',
-    'logo_img_alt' => '',
+
+    // ✅ Sidebar ABIERTO (logo grande)
+    'logo_img_xl' => 'img/logo1.png',
+    'logo_img_xl_class' => 'brand-image-xs float-none d-block mx-auto',
+
+    // Texto alternativo accesible
+    'logo_img_alt' => 'FamySALUD',
 
     /*
     |--------------------------------------------------------------------------
@@ -285,6 +292,18 @@ return [
     'laravel_asset_bundling' => false,
     'laravel_css_path' => 'css/app.css',
     'laravel_js_path' => 'js/app.js',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Custom Stylesheets
+    |--------------------------------------------------------------------------
+    |
+    | CSS adicional a cargar en el panel AdminLTE.
+    |
+    */
+    'custom_css' => [
+        'assets/css/adminlte-brand.css',
+    ],
 
     /*
     |--------------------------------------------------------------------------

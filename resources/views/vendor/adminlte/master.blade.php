@@ -19,6 +19,7 @@
     </title>
 
     {{-- Custom stylesheets (pre AdminLTE) --}}
+    <link rel="stylesheet" href="{{ asset('assets/css/adminlte-brand.css') }}">
     @yield('adminlte_css_pre')
 
     {{-- Base Stylesheets (depends on Laravel asset bundling tool) --}}
@@ -63,6 +64,7 @@
 
     {{-- Custom Stylesheets (post AdminLTE) --}}
     @yield('adminlte_css')
+    <link rel="stylesheet" href="{{ asset('assets/css/adminlte-brand.css') }}">
 
     {{-- Favicon --}}
     @if(config('adminlte.use_ico_only'))
@@ -86,6 +88,11 @@
         <meta name="msapplication-TileColor" content="#ffffff">
         <meta name="msapplication-TileImage" content="{{ asset('favicon/ms-icon-144x144.png') }}">
     @endif
+
+    {{-- ✅ Force load AdminLTE custom_css --}}
+    @foreach(config('adminlte.custom_css', []) as $css)
+        <link rel="stylesheet" href="{{ asset($css) }}">
+    @endforeach
 
 </head>
 
