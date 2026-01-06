@@ -18,7 +18,9 @@ use App\Http\Controllers\PayphoneController;
 use Illuminate\Http\Request;
 
 
-Auth::routes();
+Auth::routes([
+    'register' => false
+]);
 
 Route::post('/appointment-holds', [AppointmentHoldController::class, 'create'])->name('appointment.holds.create');
 
