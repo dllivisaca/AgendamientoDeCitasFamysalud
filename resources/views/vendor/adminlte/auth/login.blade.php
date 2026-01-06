@@ -18,7 +18,7 @@
     @php( $password_reset_url = $password_reset_url ? url($password_reset_url) : '' )
 @endif
 
-@section('auth_header', __('adminlte::adminlte.login_message'))
+<!-- @section('auth_header', __('adminlte::adminlte.login_message')) -->
 
 @section('auth_body')
 @if (count($errors) > 0)

@@ -94,22 +94,14 @@
         {{-- Card Box --}}
         <div class="card {{ config('adminlte.classes_auth_card', 'card-outline card-primary') }}">
 
-            {{-- Card Header --}}
-            @hasSection('auth_header')
-                <div class="card-header {{ config('adminlte.classes_auth_header', '') }} text-center">
-
-                    {{-- Logo dentro del card --}}
-                    <div class="mb-2">
-                        <img src="{{ asset('img/logo1.png') }}"
-                            alt="FamySALUD"
-                            style="max-width: 240px; width: 100%; height: auto;">
-                    </div>
-
-                    <h3 class="card-title float-none text-center mb-0">
-                        @yield('auth_header')
-                    </h3>
+            {{-- Card Header (logo solamente) --}}
+            <div class="card-header text-center">
+                <div class="mb-2">
+                    <img src="{{ asset('img/logo1.png') }}"
+                        alt="FamySALUD"
+                        style="max-width: 240px; width: 100%; height: auto;">
                 </div>
-            @endif
+            </div>
 
             {{-- Card Body --}}
             <div class="card-body {{ $auth_type ?? 'login' }}-card-body {{ config('adminlte.classes_auth_body', '') }}">
