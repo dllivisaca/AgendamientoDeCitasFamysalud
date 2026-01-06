@@ -139,9 +139,11 @@
             {{-- Card Header (logo solamente) --}}
             <div class="card-header text-center">
                 <div>
-                    <img src="{{ asset('img/logo1.png') }}"
-                        alt="FamySALUD"
-                        style="max-width: 240px; width: 100%; height: auto;">
+                    <a href="{{ route('home') }}" style="display: inline-block;">
+                        <img src="{{ asset('img/logo1.png') }}"
+                            alt="FamySALUD"
+                            style="max-width: 240px; width: 100%; height: auto; cursor: pointer;">
+                    </a>
                 </div>
             </div>
 
