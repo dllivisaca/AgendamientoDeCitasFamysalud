@@ -377,21 +377,46 @@
             var status = $(this).data('status');
             $('#modalStatusSelect').val(status);
 
-            // Set status badge
-            var statusColors = {
-                'Pending payment': '#f39c12',
-                'Processing': '#3498db',
-                'Paid': '#2ecc71',
-                'Cancelled': '#ff0000',
-                'Completed': '#008000',
-                'On Hold': '#95a5a6',
-                'Rescheduled': '#f1c40f',
-                'No Show': '#e67e22',
+            // Set status badge (EN -> ES, sin guiones bajos)
+            let rawStatus = $(this).data('status');
+
+            // Normaliza: "Paid" -> "paid", "Pending payment" -> "pending_payment", "pending_verification" se queda igual
+            let normalizedStatus = String(rawStatus || '')
+                .trim()
+                .toLowerCase()
+                .replace(/\s+/g, '_');
+
+            // Colores por status normalizado
+            const statusColors = {
+                pending_payment: '#f39c12',
+                processing: '#3498db',
+                paid: '#2ecc71',
+                cancelled: '#ff0000',
+                completed: '#008000',
+                on_hold: '#95a5a6',
+                rescheduled: '#f1c40f',
+                no_show: '#e67e22',
+                pending_verification: '#7f8c8d',
             };
 
-            var badgeColor = statusColors[status] || '#7f8c8d';
+            // Etiquetas en español por status normalizado
+            const statusLabels = {
+                pending_payment: 'Pendiente de pago',
+                processing: 'Procesando',
+                paid: 'Pagada',
+                cancelled: 'Cancelada',
+                completed: 'Completada',
+                on_hold: 'En espera',
+                rescheduled: 'Reprogramada',
+                no_show: 'No asistió',
+                pending_verification: 'Pendiente de verificación',
+            };
+
+            const badgeColor = statusColors[normalizedStatus] || '#7f8c8d';
+            const badgeLabel = statusLabels[normalizedStatus] || 'Estado desconocido';
+
             $('#modalStatusBadge').html(
-                `<span class="badge px-2 py-1" style="background-color: ${badgeColor}; color: white;">${status}</span>`
+                `<span class="badge px-2 py-1" style="background-color: ${badgeColor}; color: white;">${badgeLabel}</span>`
             );
         });
     </script>
