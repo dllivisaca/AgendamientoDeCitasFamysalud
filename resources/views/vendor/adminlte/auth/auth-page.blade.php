@@ -56,6 +56,13 @@
             position: relative;
             z-index: 1;
         }
+
+        @media (min-width: 576px) {
+            .login-page .icheck-primary label {
+                margin-bottom: 0;
+                line-height: 1.1;
+            }
+        }
     </style>
 @stop
 

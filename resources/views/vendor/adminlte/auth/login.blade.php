@@ -75,7 +75,7 @@
 
         {{-- Login field --}}
         <div class="row">
-            <div class="col-12 col-sm-7 mb-2 mb-sm-0">
+            <div class="col-12 col-sm-7 mb-2 mb-sm-0 d-sm-flex align-items-sm-center">
                 <div class="icheck-primary" title="{{ __('adminlte::adminlte.remember_me_hint') }}">
                     <input type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
                     <label for="remember">
@@ -84,7 +84,7 @@
                 </div>
             </div>
 
-            <div class="col-12 col-sm-5">
+            <div class="col-12 col-sm-5 d-sm-flex align-items-sm-center">
                 <button type="submit"
                         class="btn btn-block text-nowrap {{ config('adminlte.classes_auth_btn', 'btn-flat btn-primary') }}">
                     <span class="fas fa-sign-in-alt"></span>
@@ -106,12 +106,12 @@
         </p>
     @endif
 
-    {{-- Register link --}}
-    @if($register_url)
+    {{-- Register link (deshabilitado por ahora) --}}
+    {{-- @if($register_url)
         <p class="my-0">
             <a href="{{ $register_url }}">
                 {{ __('adminlte::adminlte.register_a_new_membership') }}
             </a>
         </p>
-    @endif
+    @endif --}}
 @stop
