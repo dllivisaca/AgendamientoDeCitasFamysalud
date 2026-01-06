@@ -1,6 +1,6 @@
 @extends('adminlte::page')
 
-@section('title', 'Dashboard')
+@section('title', 'Panel de inicio · FamySalud')
 
 @section('content_header')
     <h1>Citas</h1>

@@ -1,6 +1,6 @@
 @extends('adminlte::page')
 
-@section('title', 'Todas las citas')
+@section('title', 'Todas las citas · FamySalud')
 
 @section('content_header')
     <div class="row mb-2">
@@ -18,7 +18,7 @@
         <input type="hidden" name="appointment_id" id="modalAppointmentId">
 
         <div class="modal fade" id="appointmentModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
+            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Detalles de la cita</h5>
@@ -29,11 +29,12 @@
 
                     <div class="modal-body">
                         <p><strong>Paciente:</strong> <span id="modalAppointmentName">N/A</span></p>
+                        <p><strong>Área de atención:</strong> <span id="modalArea">N/A</span></p>
                         <p><strong>Servicio:</strong> <span id="modalService">N/A</span></p>
                         <p><strong>Correo:</strong> <span id="modalEmail">N/A</span></p>
                         <p><strong>Teléfono:</strong> <span id="modalPhone">N/A</span></p>
                         <p><strong>Profesional:</strong> <span id="modalStaff">N/A</span></p>
-                        <p><strong>Start:</strong> <span id="modalStartTime">N/A</span></p>
+                        <p><strong>Fecha y hora:</strong>  <span id="modalDateTime">N/A</span></p>
                         <p><strong>Total:</strong> <span id="modalAmount">N/A</span></p>
                         <p><strong>Notas:</strong> <span id="modalNotes">N/A</span></p>
                         <p><strong>Estado actual:</strong> <span id="modalStatusBadge">N/A</span></p>
@@ -241,10 +242,15 @@
                                                         data-toggle="modal" data-target="#appointmentModal"
                                                         data-id="{{ $appointment->id }}"
                                                         data-name="{{ $appointment->patient_full_name }}"
-                                                        data-service="{{ $appointment->service->title ?? 'MA' }}"
+                                                        data-area="{{ $appointment->service->category->title ?? 'No definida' }}"
+                                                        data-service="{{ 
+                                                        $appointment->service->title ?? 'MA' }}"
                                                         data-email="{{ $appointment->patient_email }}"
                                                         data-phone="{{ $appointment->patient_phone }}"
                                                         data-employee="{{ $appointment->employee->user->name }}"
+                                                        data-date="{{ $appointment->appointment_date }}"
+                                                        data-start-time="{{ $appointment->appointment_time }}"
+                                                        data-end-time="{{ $appointment->appointment_end_time }}"
                                                         data-start="{{ $appointment->appointment_date . ' ' . $appointment->appointment_time }}"
                                                         data-amount="{{ $appointment->amount }}"
                                                         data-notes="{{ $appointment->patient_notes }}"
@@ -310,11 +316,39 @@
             // Set modal fields
             $('#modalAppointmentId').val($(this).data('id'));
             $('#modalAppointmentName').text($(this).data('name'));
+            $('#modalArea').text($(this).data('area'));
             $('#modalService').text($(this).data('service'));
             $('#modalEmail').text($(this).data('email'));
             $('#modalPhone').text($(this).data('phone'));
             $('#modalStaff').text($(this).data('employee'));
-            $('#modalStartTime').text($(this).data('start'));
+            // Fecha y horas
+            const date = $(this).data('date');
+            const startTime = $(this).data('start-time');
+            const endTime = $(this).data('end-time');
+
+            // Formatear fecha (día mes año)
+            const formattedDate = new Date(date).toLocaleDateString('es-EC', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            });
+
+            // Función para hora AM/PM
+            function formatTime(time) {
+                const [hours, minutes] = time.split(':');
+                const dateObj = new Date();
+                dateObj.setHours(hours, minutes);
+                return dateObj.toLocaleTimeString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                });
+            }
+
+            const formattedTime =
+                `${formatTime(startTime)} – ${formatTime(endTime)}`;
+
+            $('#modalDateTime').text(`${formattedDate} · ${formattedTime}`);
             $('#modalAmount').text($(this).data('amount'));
             $('#modalNotes').text($(this).data('notes'));
 
