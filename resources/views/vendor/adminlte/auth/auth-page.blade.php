@@ -11,6 +11,29 @@
 @section('adminlte_css')
     @stack('css')
     @yield('css')
+
+    <style>
+        /* Evita que el logo se corte en pantallas pequeñas */
+        .login-logo, .register-logo {
+            padding: 0 10px;
+            overflow: visible;
+        }
+
+        /* Imagen del logo responsive */
+        .auth-logo {
+            max-width: 100%;
+            height: auto;
+            max-height: 80px;
+            display: inline-block;
+        }
+
+        /* En pantallas MUY pequeñas, reduce un poco el alto */
+        @media (max-width: 260px) {
+            .auth-logo {
+                max-height: 60px;
+            }
+        }
+    </style>
 @stop
 
 @section('classes_body'){{ ($auth_type ?? 'login') . '-page' }}@stop
@@ -37,7 +60,8 @@
                          @endif>
                 @else
                     <img src="{{ asset('img/logo1.png') }}"
-                        alt="FamySALUD" style="max-height: 70px; width: auto;">
+                        alt="FamySALUD"
+                        class="auth-logo">
                 @endif
 
                 {{-- Logo Label --}}
