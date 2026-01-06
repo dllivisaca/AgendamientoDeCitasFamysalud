@@ -33,6 +33,29 @@
                 max-height: 60px;
             }
         }
+
+        /* ===== Fondo rotativo SOLO para login ===== */
+        body.login-page {
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            transition: background-image .8s ease-in-out;
+        }
+
+        /* Overlay para que el card siempre sea legible */
+        body.login-page::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.35); /* ajusta: 0.25 más claro, 0.45 más oscuro */
+            z-index: 0;
+        }
+
+        /* Asegura que el contenido esté encima del overlay */
+        .login-box, .register-box {
+            position: relative;
+            z-index: 1;
+        }
     </style>
 @stop
 
@@ -42,7 +65,7 @@
     <div class="{{ $auth_type ?? 'login' }}-box">
 
         {{-- Logo --}}
-        <div class="{{ $auth_type ?? 'login' }}-logo text-center mb-3">
+        <!-- <div class="{{ $auth_type ?? 'login' }}-logo text-center mb-3">
             <a href="{{ $dashboard_url }}">
 
                 {{-- Logo Image --}}
@@ -63,20 +86,26 @@
                         alt="FamySALUD"
                         class="auth-logo">
                 @endif
-
-                {{-- Logo Label --}}
                 
 
             </a>
-        </div>
+        </div> -->
 
         {{-- Card Box --}}
         <div class="card {{ config('adminlte.classes_auth_card', 'card-outline card-primary') }}">
 
             {{-- Card Header --}}
             @hasSection('auth_header')
-                <div class="card-header {{ config('adminlte.classes_auth_header', '') }}">
-                    <h3 class="card-title float-none text-center">
+                <div class="card-header {{ config('adminlte.classes_auth_header', '') }} text-center">
+
+                    {{-- Logo dentro del card --}}
+                    <div class="mb-2">
+                        <img src="{{ asset('img/logo1.png') }}"
+                            alt="FamySALUD"
+                            style="max-width: 240px; width: 100%; height: auto;">
+                    </div>
+
+                    <h3 class="card-title float-none text-center mb-0">
                         @yield('auth_header')
                     </h3>
                 </div>
@@ -102,4 +131,33 @@
 @section('adminlte_js')
     @stack('js')
     @yield('js')
+
+    <script>
+        (function () {
+            // Solo aplicar en login-page
+            if (!document.body.classList.contains('login-page')) return;
+
+            const images = [
+                "{{ asset('img/login/bg1.jpg') }}",
+                "{{ asset('img/login/bg2.jpg') }}",
+                "{{ asset('img/login/bg3.jpg') }}"
+            ];
+
+            let index = 0;
+
+            // Precarga para evitar parpadeo
+            images.forEach(src => { const im = new Image(); im.src = src; });
+
+            function setBackground(i) {
+                document.body.style.backgroundImage = `url('${images[i]}')`;
+            }
+
+            setBackground(index);
+
+            setInterval(() => {
+                index = (index + 1) % images.length;
+                setBackground(index);
+            }, 5000);
+        })();
+    </script>
 @stop
