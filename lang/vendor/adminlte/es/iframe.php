@@ -14,11 +14,11 @@ return [
     */
 
     'btn_close' => 'Cerrar',
-    'btn_close_active' => 'Cerrar Activa',
-    'btn_close_all' => 'Cerrar Todas',
-    'btn_close_all_other' => 'Cerrar Las Demás',
-    'tab_empty' => 'Ninguna pestaña seleccionada!',
+    'btn_close_active' => 'Cerrar pestaña activa',
+    'btn_close_all' => 'Cerrar todas',
+    'btn_close_all_other' => 'Cerrar las demás',
+    'tab_empty' => 'No hay ninguna pestaña seleccionada',
     'tab_home' => 'Inicio',
-    'tab_loading' => 'Cargando pestaña',
+    'tab_loading' => 'Cargando pestaña...',
 
 ];

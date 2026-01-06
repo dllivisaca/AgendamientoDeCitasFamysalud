@@ -1,5 +1,5 @@
 @extends('adminlte::auth.auth-page', ['auth_type' => 'login'])
-
+@section('title', 'Recuperar contraseña · FamySalud')
 @php( $password_email_url = View::getSection('password_email_url') ?? config('adminlte.password_email_url', 'password/email') )
 
 @if (config('adminlte.use_route_url', false))
