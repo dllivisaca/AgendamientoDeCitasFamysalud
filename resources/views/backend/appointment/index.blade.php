@@ -363,11 +363,9 @@
             No se pudo cargar el comprobante.
             </div>
 
-            <div class="text-center">
-            <img id="receiptImg"
-                src=""
-                alt="Comprobante"
-                style="max-width:100%; height:auto; display:none; border-radius:6px;">
+            <div id="receiptViewer">
+                <img id="receiptImg" src="" alt="Comprobante">
+                <iframe id="receiptPdf" src="" title="Comprobante PDF"></iframe>
             </div>
         </div>
 
@@ -623,10 +621,95 @@
 
 @section('css')
 <style>
-  /* ✅ ancho cómodo para comprobantes (responsive) */
-  .modal-dialog.modal-receipt {
+  /* ✅ Modal de comprobante: tamaño fijo al viewport (no gigante) */
+    .modal-dialog.modal-receipt{
     max-width: 900px;
-  }
+    width: calc(100% - 2rem);
+    margin: 1rem auto;
+    }
+
+    /* ✅ El modal ocupa alto fijo del viewport (esto sí "amarra" el flex) */
+    #transferReceiptModal .modal-content{
+    height: calc(100vh - 2rem);     /* <-- antes era max-height */
+    display: flex;
+    flex-direction: column;
+    }
+
+    /* ✅ IMPORTANTE en flex: permite que el body se encoja y calcule bien */
+    #transferReceiptModal .modal-body{
+    flex: 1 1 auto;
+    min-height: 0;                 /* <-- clave */
+    overflow: hidden;              /* el scroll lo maneja el visor */
+    padding: 12px;
+    }
+
+    /* ✅ Visor interno ocupa todo el body */
+    #receiptViewer{
+    width: 100%;
+    height: 100%;
+    min-height: 0;                 /* <-- clave */
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    }
+
+    /* ✅ Imagen: SIEMPRE encaja completa */
+    #receiptViewer img{
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    display: none;
+    border-radius: 6px;
+    }
+
+    /* ✅ PDF: ocupa todo el visor */
+    #receiptViewer iframe{
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: none;
+    border-radius: 6px;
+    }
+
+    /* ✅ Header y footer quedan “fijos”, body usa el espacio restante */
+    #transferReceiptModal .modal-body{
+    flex: 1 1 auto;
+    overflow: hidden; /* el scroll lo maneja el visor */
+    padding: 12px;
+    }
+
+    /* ✅ Visor interno (scroll solo si hace falta) */
+    #receiptViewer{
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    }
+
+    /* ✅ Imagen: encaja completa sin agrandar el modal */
+    #receiptViewer img{
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    display: none;
+    border-radius: 6px;
+    }
+
+    /* ✅ PDF: ocupa todo el visor */
+    #receiptViewer iframe{
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: none;
+    border-radius: 6px;
+    }
 </style>
 @stop
 
@@ -1037,17 +1120,22 @@
 
                 // Comprobante (link/botón)
                 if (tReceiptPath && String(tReceiptPath).trim() !== '') {
-                    const appointmentId = $(this).data('id'); // <-- tu data-id ya existe
+                    const appointmentId = $(this).data('id'); 
                     const protectedUrl = `/admin/appointments/${appointmentId}/transfer-receipt`;
+
+                    // ✅ Detectar tipo por el path REAL guardado (no por la URL protegida)
+                    const path = String(tReceiptPath).trim().toLowerCase();
+                    const fileType = path.endsWith('.pdf') ? 'pdf' : 'image';
 
                     $('#modalTransferReceipt').html(
                         `<button type="button"
-                            class="btn btn-outline-primary btn-sm js-open-receipt-modal"
-                            data-url="${protectedUrl}">
-                            Ver comprobante
+                        class="btn btn-outline-primary btn-sm js-open-receipt-modal"
+                        data-url="${protectedUrl}"
+                        data-filetype="${fileType}">
+                        Ver comprobante
                         </button>`
                     );
-                } else {
+                    } else {
                     $('#modalTransferReceipt').html(
                         `<span class="text-muted font-italic small">N/A</span>`
                     );
@@ -1136,8 +1224,11 @@
 
             // Reset UI
             $('#receiptError').hide();
-            $('#receiptImg').hide().attr('src', '');
             $('#receiptLoading').show();
+
+            // Reset visor (IMG + PDF)
+            $('#receiptImg').hide().attr('src', '');
+            $('#receiptPdf').hide().attr('src', '');
 
             // Botón "Pantalla completa"
             $('#receiptOpenNewTab').attr('href', url);
@@ -1145,19 +1236,30 @@
             // ✅ URL para descargar
             $('#receiptDownloadBtn').data('url', url);
 
-            // Cargar imagen
+            // Detectar PDF por extensión (si tu URL termina en .pdf)
+            const fileType = String($(this).data('filetype') || '').toLowerCase();
+            const isPdf = (fileType === 'pdf');
+
+            if (isPdf) {
+            // PDF: lo mostramos en iframe
+            $('#receiptLoading').hide();
+            $('#receiptPdf').attr('src', url).show();
+            } else {
+            // Imagen: onload/onerror
             const img = $('#receiptImg')[0];
+
             img.onload = function () {
-            $('#receiptLoading').hide();
-            $('#receiptImg').show();
-            };
-            img.onerror = function () {
-            $('#receiptLoading').hide();
-            $('#receiptError').show();
+                $('#receiptLoading').hide();
+                $('#receiptImg').show();
             };
 
-            // Set src (route protegida que ya te funciona)
+            img.onerror = function () {
+                $('#receiptLoading').hide();
+                $('#receiptError').show();
+            };
+
             $('#receiptImg').attr('src', url);
+            }
 
             // Mostrar modal
             $('#transferReceiptModal').modal('show');
@@ -1196,9 +1298,10 @@
                 const blobUrl = window.URL.createObjectURL(blob);
 
                 // extensión según MIME
-                const ext = (blob.type && blob.type.includes('png')) ? 'png'
-                        : (blob.type && blob.type.includes('jpeg')) ? 'jpg'
-                        : 'jpg';
+                const ext = (blob.type && blob.type.includes('pdf')) ? 'pdf'
+                    : (blob.type && blob.type.includes('png')) ? 'png'
+                    : (blob.type && blob.type.includes('jpeg')) ? 'jpg'
+                    : 'bin';
 
                 // nombre del archivo (simple y útil)
                 const now = new Date();
