@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 use App\Events\BookingCreated;
 use App\Events\StatusUpdated;
 use Illuminate\Support\Facades\Storage; 
-
+use Illuminate\Support\Facades\Auth;
 
 class AppointmentController extends Controller
 {
@@ -234,9 +234,20 @@ class AppointmentController extends Controller
 
     public function updateStatus(Request $request)
     {
+        logger()->info('UPDATE STATUS HIT', [
+            'user_id' => auth()->id(),
+            'payload' => request()->all(),
+            'route_name' => request()->route() ? request()->route()->getName() : null,
+            'url' => request()->fullUrl(),
+            'method' => request()->method(),
+        ]);
         $request->validate([
             'appointment_id' => 'required|exists:appointments,id',
             'status' => 'required|string',
+
+            // ✅ Validación de transferencia (desde tu modal)
+            'transfer_validation_status' => 'nullable|in:validated,rejected',
+            'transfer_validation_notes'  => 'nullable|string|required_if:transfer_validation_status,rejected',
 
             // Precios (si los envías desde el front)
             'amount_standard' => 'nullable|numeric',
@@ -258,9 +269,44 @@ class AppointmentController extends Controller
 
         $appointment = Appointment::findOrFail($request->appointment_id);
         $appointment->status = $request->status;
+
+        logger()->info('UPDATE STATUS APPOINTMENT', [
+            'id' => $appointment->id ?? null,
+            'payment_method_db' => $appointment->payment_method ?? null,
+            'status_before' => $appointment->status ?? null,
+            'payment_status_before' => $appointment->payment_status ?? null,
+        ]);
+
+        // ✅ Solo si el método de pago es transferencia, aplicar validación admin
+        $pm = strtolower(trim((string) ($appointment->payment_method ?? ''))); // "transfer" | "card"
+        $validation = strtolower(trim((string) ($request->transfer_validation_status ?? ''))); // validated | rejected | ""
+
+        if ($pm === 'transfer' && in_array($validation, ['validated', 'rejected'], true)) {
+
+            // Guarda auditoría de validación
+            $appointment->transfer_validated_at = now();
+            $appointment->transfer_validated_by = Auth::id(); // user logueado (admin/mod/employee)
+            $appointment->transfer_validation_notes = $request->transfer_validation_notes;
+
+            // Reglas de negocio (según tu texto del modal):
+            // - Validada => cita "Paid" y pago "paid"
+            // - Rechazada => cita "On Hold" y pago "pending"
+            if ($validation === 'validated') {
+                $appointment->status = 'Paid';
+                $appointment->payment_status = 'paid';
+            } else { // rejected
+                $appointment->status = 'On Hold';
+                $appointment->payment_status = 'pending';
+            }
+        }
+
          // ✅ Guardar precios (si vienen)
-        $appointment->amount_standard = $request->amount_standard;
-        $appointment->discount_amount = $request->discount_amount;
+        if ($request->has('amount_standard')) {
+            $appointment->amount_standard = $request->amount_standard;
+        }
+        if ($request->has('discount_amount')) {
+            $appointment->discount_amount = $request->discount_amount;
+        }
 
         // ✅ Guardar términos (si vienen)
         if ($request->has('data_consent')) {

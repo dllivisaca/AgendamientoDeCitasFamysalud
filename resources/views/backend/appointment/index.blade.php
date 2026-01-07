@@ -18,6 +18,7 @@
         <input type="hidden" name="appointment_id" id="modalAppointmentId">
         <input type="hidden" name="transfer_validation_status" id="modalTransferValidationStatusInput" value="">
         <input type="hidden" name="transfer_validation_notes" id="modalTransferValidationNotesInput" value="">
+        <input type="hidden" id="modalPaymentMethodRaw" value="">
 
         <div class="modal fade" id="appointmentModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
@@ -444,6 +445,30 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
                 <strong>{{ session('success') }}</strong>
+            </div>
+        @endif
+
+        @if (session('error'))
+            <div class="alert alert-danger alert-dismissable">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <strong>{{ session('error') }}</strong>
+            </div>
+        @endif
+
+        @if ($errors->any())
+            <div class="alert alert-danger alert-dismissable">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+
+                <strong>Errores:</strong>
+                <ul class="mb-0">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
             </div>
         @endif
         <!-- Content Header (Page header) -->
@@ -1023,6 +1048,13 @@
 
             // ===== SECCIÓN 5: Información de pago (DINÁMICA) =====
             const paymentMethodRaw = $(this).data('payment-method');          // "card" | "transfer"
+            // ✅ Guardar método real (según BD) para que el submit detecte bien
+            $('#modalPaymentMethodRaw').val(paymentMethodRaw ? String(paymentMethodRaw).trim().toLowerCase() : '');
+            console.log('--- OPEN MODAL ---');
+            console.log('[appointment_id]', $(this).data('id'));
+            console.log('[payment-method data-*]', paymentMethodRaw);
+            console.log('[pmRaw hidden now]', $('#modalPaymentMethodRaw').val());
+            console.log('------------------');
             const clientTxIdRaw = $(this).data('client-transaction-id');      // largo
             const paymentStatusRaw = $(this).data('payment-status');          // lo que tengas guardado
             const amountRaw = $(this).data('amount');                         // ya existe
@@ -1305,12 +1337,25 @@
 
         // ✅ Antes de enviar el form: valida reglas y llena hidden inputs
         $(document).on('submit', '#appointmentStatusForm', function (e) {
-            const pm = String($('#modalTransferMethodLabel').text() || '').trim().toLowerCase();
-            // OJO: tu label muestra "Transferencia" / "Tarjeta"
-            const isTransfer = (pm === 'transferencia');
+            console.log('================= SUBMIT appointmentStatusForm =================');
+            console.log('[FORM action]', $('#appointmentStatusForm').attr('action'));
+            console.log('[FORM method]', $('#appointmentStatusForm').attr('method'));
+            console.log('[appointment_id]', $('#modalAppointmentId').val());
+            console.log('[status select]', $('#modalStatusSelect').val());
+            console.log('[pmRaw hidden]', $('#modalPaymentMethodRaw').val());
+            console.log('[select validation]', $('#modalTransferValidationSelect').val());
+            console.log('[notes textarea]', $('#modalTransferValidationNotes').val());
+            console.log('[hidden transfer_validation_status]', $('#modalTransferValidationStatusInput').val());
+            console.log('[hidden transfer_validation_notes]', $('#modalTransferValidationNotesInput').val());
+            console.log('===============================================================');
+            // ✅ Usa el valor real de BD: "transfer" | "card"
+            const pmRaw = String($('#modalPaymentMethodRaw').val() || '').trim().toLowerCase();
+            const isTransfer = (pmRaw === 'transfer');
 
             if (!isTransfer) {
-                // Si no es transferencia, no forzamos nada
+                // Si no es transferencia, NO mandamos nada extra
+                $('#modalTransferValidationStatusInput').val('');
+                $('#modalTransferValidationNotesInput').val('');
                 return true;
             }
 
@@ -1324,7 +1369,7 @@
                 return false;
             }
 
-            // Llenar hidden inputs para backend
+            // ✅ Llenar hidden inputs para backend
             $('#modalTransferValidationStatusInput').val(v);   // "" | validated | rejected
             $('#modalTransferValidationNotesInput').val(notes);
 
