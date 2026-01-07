@@ -673,43 +673,6 @@
     display: none;
     border-radius: 6px;
     }
-
-    /* ✅ Header y footer quedan “fijos”, body usa el espacio restante */
-    #transferReceiptModal .modal-body{
-    flex: 1 1 auto;
-    overflow: hidden; /* el scroll lo maneja el visor */
-    padding: 12px;
-    }
-
-    /* ✅ Visor interno (scroll solo si hace falta) */
-    #receiptViewer{
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    }
-
-    /* ✅ Imagen: encaja completa sin agrandar el modal */
-    #receiptViewer img{
-    max-width: 100%;
-    max-height: 100%;
-    width: auto;
-    height: auto;
-    object-fit: contain;
-    display: none;
-    border-radius: 6px;
-    }
-
-    /* ✅ PDF: ocupa todo el visor */
-    #receiptViewer iframe{
-    width: 100%;
-    height: 100%;
-    border: 0;
-    display: none;
-    border-radius: 6px;
-    }
 </style>
 @stop
 
@@ -1221,55 +1184,58 @@
         // ✅ Abrir modal del comprobante (delegado)
         $(document).on('click', '.js-open-receipt-modal', function () {
             const url = $(this).data('url');
-
-            // Reset UI
-            $('#receiptError').hide();
-            $('#receiptLoading').show();
-
-            // Reset visor (IMG + PDF)
-            $('#receiptImg').hide().attr('src', '');
-            $('#receiptPdf').hide().attr('src', '');
-
-            // Botón "Pantalla completa"
-            $('#receiptOpenNewTab').attr('href', url);
-
-            // ✅ URL para descargar
-            $('#receiptDownloadBtn').data('url', url);
-
-            // Detectar PDF por extensión (si tu URL termina en .pdf)
             const fileType = String($(this).data('filetype') || '').toLowerCase();
             const isPdf = (fileType === 'pdf');
 
+            // ✅ Reset UI SIEMPRE
+            $('#receiptError').hide();
+            $('#receiptLoading').show();
+
+            // ✅ Reset visor
+            $('#receiptPdf').hide().attr('src', 'about:blank');
+
+            // ✅ Matar handlers viejos y resetear IMG
+            const $img = $('#receiptImg');
+            $img.off('load error');                 // <--- clave
+            $img.hide().attr('src', '');
+
+            // Botones
+            $('#receiptOpenNewTab').attr('href', url);
+            $('#receiptDownloadBtn').data('url', url);
+
             if (isPdf) {
-            // PDF: lo mostramos en iframe
-            $('#receiptLoading').hide();
-            $('#receiptPdf').attr('src', url).show();
-            } else {
-            // Imagen: onload/onerror
-            const img = $('#receiptImg')[0];
-
-            img.onload = function () {
+                // ✅ PDF: nunca mostrar error (solo ocultarlo)
+                $('#receiptError').hide();
                 $('#receiptLoading').hide();
-                $('#receiptImg').show();
-            };
+                $('#receiptPdf').attr('src', url).show();
+            } else {
+                // ✅ IMG: attach handlers nuevos
+                $img.on('load', function () {
+                $('#receiptError').hide();
+                $('#receiptLoading').hide();
+                $img.show();
+                });
 
-            img.onerror = function () {
+                $img.on('error', function () {
                 $('#receiptLoading').hide();
                 $('#receiptError').show();
-            };
+                });
 
-            $('#receiptImg').attr('src', url);
+                $img.attr('src', url);
             }
 
-            // Mostrar modal
             $('#transferReceiptModal').modal('show');
         });
 
-        // ✅ Fix: cuando se cierra el modal del comprobante, mantener "modal-open"
-        // (porque sigues dentro del modal de la cita)
         $('#transferReceiptModal').on('hidden.bs.modal', function () {
+            // ✅ limpiar estado visual para la próxima apertura
+            $('#receiptError').hide();
+            $('#receiptLoading').hide();
+            $('#receiptImg').hide().attr('src', '');
+            $('#receiptPdf').hide().attr('src', 'about:blank');
+
             if ($('#appointmentModal').hasClass('show')) {
-            $('body').addClass('modal-open');
+                $('body').addClass('modal-open');
             }
         });
     </script>
