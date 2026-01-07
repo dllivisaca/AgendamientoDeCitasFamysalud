@@ -438,7 +438,32 @@
             const tz = $(this).data('timezone');
             const tzLabel = $(this).data('timezone-label');
 
-            $('#modalDocType').text(docType ? String(docType) : 'N/A');
+            // Formatear tipo de documento: Cédula / Pasaporte / RUC
+            let docTypeFinal = 'N/A';
+
+            if (docType && String(docType).trim() !== '') {
+                const raw = String(docType).trim();
+
+                // Normalizar para comparar (sin tildes y en minúsculas)
+                const normalized = raw
+                    .toLowerCase()
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, ''); // quita tildes
+
+                if (normalized === 'cedula') {
+                    docTypeFinal = 'Cédula';
+                } else if (normalized === 'ruc') {
+                    docTypeFinal = 'RUC';
+                } else {
+                    // Capitalizar cada palabra (por si viene "pasaporte" o "pasaporte diplomático")
+                    docTypeFinal = normalized
+                        .split(/\s+/)
+                        .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+                        .join(' ');
+                }
+            }
+
+            $('#modalDocType').text(docTypeFinal);
             $('#modalDocNumber').text(docNumber ? String(docNumber) : 'N/A');
             $('#modalAddress').text(address ? String(address) : 'N/A');
 
