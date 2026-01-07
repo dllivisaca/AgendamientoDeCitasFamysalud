@@ -162,6 +162,67 @@
                         </div>
 
                         {{-- =========================
+                            SECCIÓN 4 (COLAPSABLE)
+                            Datos de facturación (2 columnas)
+                            Abierta por defecto si es distinta al paciente
+                        ========================== --}}
+                        <div class="p-3 mb-3 rounded border bg-light">
+                            <a class="d-flex align-items-center justify-content-between text-decoration-none"
+                            data-toggle="collapse"
+                            href="#collapseBillingData"
+                            role="button"
+                            aria-expanded="false"
+                            aria-controls="collapseBillingData">
+                                <h6 class="mb-0 font-weight-bold text-primary">Datos de facturación</h6>
+                                <span class="text-muted"><i class="fas fa-chevron-down"></i></span>
+                            </a>
+
+                            {{-- Texto sutil cuando facturación = paciente --}}
+                            <div id="modalBillingSameNote" class="small text-muted font-italic mt-1" style="display:none;">
+                                Se usaron los mismos datos del paciente
+                            </div>
+
+                            <div class="collapse mt-3" id="collapseBillingData">
+                                <div class="row">
+                                    <div class="col-md-6 mb-2">
+                                        <div class="small text-muted">Nombre para facturación</div>
+                                        <div class="text-dark" id="modalBillingName">N/A</div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-2">
+                                        <div class="small text-muted">Tipo de documento</div>
+                                        <div class="text-dark" id="modalBillingDocType">N/A</div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-2">
+                                        <div class="small text-muted">Número de documento</div>
+                                        <div class="text-dark" id="modalBillingDocNumber">N/A</div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-2">
+                                        <div class="small text-muted">Correo de facturación</div>
+                                        <div class="text-dark" id="modalBillingEmail">N/A</div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-2">
+                                        <div class="small text-muted">Teléfono de facturación</div>
+                                        <div class="text-dark" id="modalBillingPhone">N/A</div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-2">
+                                        <div class="small text-muted">Dirección de facturación</div>
+                                        <div class="text-dark" id="modalBillingAddress">N/A</div>
+                                    </div>
+
+                                    <div class="col-md-12 mb-0">
+                                        <div class="small text-muted">Zona horaria de facturación</div>
+                                        <div class="text-dark" id="modalBillingTimezone">N/A</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- =========================
                             RESTO DEL MODAL (NO BORRAR)
                             Se queda debajo tal cual
                         ========================== --}}
@@ -389,6 +450,14 @@
                                                         data-amount="{{ $appointment->amount }}"
                                                         data-notes="{{ $appointment->patient_notes }}"
                                                         data-appointment-mode="{{ $appointment->appointment_mode }}"
+                                                        data-billing-name="{{ $appointment->billing_name ?? '' }}"
+                                                        data-billing-doc-type="{{ $appointment->billing_doc_type ?? '' }}"
+                                                        data-billing-doc-number="{{ $appointment->billing_doc_number ?? '' }}"
+                                                        data-billing-email="{{ $appointment->billing_email ?? '' }}"
+                                                        data-billing-phone="{{ $appointment->billing_phone ?? '' }}"
+                                                        data-billing-address="{{ $appointment->billing_address ?? '' }}"
+                                                        data-billing-timezone="{{ $appointment->billing_timezone ?? '' }}"
+                                                        data-billing-timezone-label="{{ $appointment->billing_timezone_label ?? '' }}"
                                                         data-created-at="{{ $appointment->created_at }}"
                                                         data-status="{{ $appointment->status }}">Ver detalles</button>
                                                 </td>
@@ -576,6 +645,129 @@
                 }
             }
             $('#modalCreatedAt').text(createdAtFinal);
+
+            // ===== Helpers =====
+            function normalizeValue(v) {
+                return String(v || '')
+                    .trim()
+                    .toLowerCase()
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')  // quita tildes
+                    .replace(/\s+/g, ' ');
+            }
+
+            function formatDocTypeLabel(docType) {
+                let out = 'N/A';
+                if (docType && String(docType).trim() !== '') {
+                    const raw = String(docType).trim();
+                    const normalized = raw
+                        .toLowerCase()
+                        .normalize('NFD')
+                        .replace(/[\u0300-\u036f]/g, '');
+
+                    if (normalized === 'cedula') out = 'Cédula';
+                    else if (normalized === 'ruc') out = 'RUC';
+                    else {
+                        out = normalized
+                            .split(/\s+/)
+                            .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+                            .join(' ');
+                    }
+                }
+                return out;
+            }
+
+            function formatTimezone(tz, tzLabel) {
+                let tzFormatted = tz ? String(tz).replace('-', '/') : '';
+                let final = 'N/A';
+
+                if (tzFormatted && tzLabel) final = `${tzFormatted} (${tzLabel})`;
+                else if (tzFormatted) final = tzFormatted;
+                else if (tzLabel) final = `(${tzLabel})`;
+
+                return final;
+            }
+
+            // ===== SECCIÓN 4: Datos de facturación =====
+
+            // Paciente (ya existen en tu modal / data-*)
+            const pName = $(this).data('name') || '';
+            const pEmail = $(this).data('email') || '';
+            const pPhone = $(this).data('phone') || '';
+            const pDocTypeRaw = $(this).data('doc-type') || '';
+            const pDocNumber = $(this).data('doc-number') || '';
+            const pAddress = $(this).data('address') || '';
+            const pTz = $(this).data('timezone') || '';
+            const pTzLabel = $(this).data('timezone-label') || '';
+
+            const patientTzFinal = formatTimezone(pTz, pTzLabel);
+
+            // Facturación (data-*)
+            const bNameRaw = $(this).data('billing-name');
+            const bDocTypeRaw = $(this).data('billing-doc-type');
+            const bDocNumberRaw = $(this).data('billing-doc-number');
+            const bEmailRaw = $(this).data('billing-email');
+            const bPhoneRaw = $(this).data('billing-phone');
+            const bAddressRaw = $(this).data('billing-address');
+            const bTzRaw = $(this).data('billing-timezone');
+            const bTzLabelRaw = $(this).data('billing-timezone-label');
+
+            // Si facturación viene vacío, mostramos paciente (pero igual se mantiene sección separada)
+            const billingName = (bNameRaw && String(bNameRaw).trim() !== '') ? String(bNameRaw) : String(pName || 'N/A');
+            const billingDocType = (bDocTypeRaw && String(bDocTypeRaw).trim() !== '') ? String(bDocTypeRaw) : String(pDocTypeRaw || '');
+            const billingDocNumber = (bDocNumberRaw && String(bDocNumberRaw).trim() !== '') ? String(bDocNumberRaw) : String(pDocNumber || 'N/A');
+            const billingEmail = (bEmailRaw && String(bEmailRaw).trim() !== '') ? String(bEmailRaw) : String(pEmail || 'N/A');
+            const billingPhone = (bPhoneRaw && String(bPhoneRaw).trim() !== '') ? String(bPhoneRaw) : String(pPhone || 'N/A');
+            const billingAddress = (bAddressRaw && String(bAddressRaw).trim() !== '') ? String(bAddressRaw) : String(pAddress || 'N/A');
+
+            const billingTzFinal = (() => {
+                const hasBtz = bTzRaw && String(bTzRaw).trim() !== '';
+                const hasBtzLabel = bTzLabelRaw && String(bTzLabelRaw).trim() !== '';
+                if (hasBtz || hasBtzLabel) return formatTimezone(bTzRaw, bTzLabelRaw);
+                return patientTzFinal || 'N/A';
+            })();
+
+            // Pintar en el modal
+            $('#modalBillingName').text(billingName || 'N/A');
+            $('#modalBillingDocType').text(formatDocTypeLabel(billingDocType));
+            $('#modalBillingDocNumber').text(billingDocNumber || 'N/A');
+            $('#modalBillingEmail').text(billingEmail || 'N/A');
+            $('#modalBillingPhone').text(billingPhone || 'N/A');
+            $('#modalBillingAddress').text(billingAddress || 'N/A');
+            $('#modalBillingTimezone').text(billingTzFinal || 'N/A');
+
+            // Determinar si facturación es distinta al paciente
+            const billingFieldsFilled =
+                (bNameRaw && String(bNameRaw).trim() !== '') ||
+                (bDocTypeRaw && String(bDocTypeRaw).trim() !== '') ||
+                (bDocNumberRaw && String(bDocNumberRaw).trim() !== '') ||
+                (bEmailRaw && String(bEmailRaw).trim() !== '') ||
+                (bPhoneRaw && String(bPhoneRaw).trim() !== '') ||
+                (bAddressRaw && String(bAddressRaw).trim() !== '') ||
+                (bTzRaw && String(bTzRaw).trim() !== '') ||
+                (bTzLabelRaw && String(bTzLabelRaw).trim() !== '');
+
+            let isDifferent = false;
+
+            if (billingFieldsFilled) {
+                // Compara campo a campo (normalizado)
+                if (normalizeValue(billingName) !== normalizeValue(pName)) isDifferent = true;
+                if (normalizeValue(formatDocTypeLabel(billingDocType)) !== normalizeValue(formatDocTypeLabel(pDocTypeRaw))) isDifferent = true;
+                if (normalizeValue(billingDocNumber) !== normalizeValue(pDocNumber)) isDifferent = true;
+                if (normalizeValue(billingEmail) !== normalizeValue(pEmail)) isDifferent = true;
+                if (normalizeValue(billingPhone) !== normalizeValue(pPhone)) isDifferent = true;
+                if (normalizeValue(billingAddress) !== normalizeValue(pAddress)) isDifferent = true;
+                if (normalizeValue(billingTzFinal) !== normalizeValue(patientTzFinal)) isDifferent = true;
+            }
+
+            // Mostrar nota y abrir/cerrar colapso según regla UX
+            if (isDifferent) {
+                $('#modalBillingSameNote').hide();
+                $('#collapseBillingData').collapse('show'); // abierta por defecto si es distinta
+            } else {
+                $('#modalBillingSameNote').show();          // “Se usaron los mismos datos del paciente”
+                $('#collapseBillingData').collapse('hide'); // cerrada por defecto si es igual
+            }
 
             const amount = $(this).data('amount');
 
