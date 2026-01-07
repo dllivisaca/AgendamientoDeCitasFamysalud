@@ -984,9 +984,11 @@
 
                 // Comprobante (link/botón)
                 if (tReceiptPath && String(tReceiptPath).trim() !== '') {
-                    const url = String(tReceiptPath).trim();
+                    const appointmentId = $(this).data('id'); // <-- tu data-id ya existe
+                    const protectedUrl = `/admin/appointments/${appointmentId}/transfer-receipt`;
+
                     $('#modalTransferReceipt').html(
-                        `<a href="${url}" target="_blank" class="btn btn-outline-primary btn-sm">
+                        `<a href="${protectedUrl}" target="_blank" class="btn btn-outline-primary btn-sm">
                             Ver comprobante
                         </a>`
                     );

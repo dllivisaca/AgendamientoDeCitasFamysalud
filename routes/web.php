@@ -14,6 +14,7 @@ use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AppointmentHoldController;
 use App\Http\Controllers\PayphoneController;
+use App\Http\Controllers\Admin\TransferReceiptController;
 
 use Illuminate\Http\Request;
 
@@ -34,6 +35,10 @@ Route::delete('/holds/{id}', [AppointmentHoldController::class, 'destroy'])->nam
 Route::get('/',[FrontendController::class,'index'])->name('home');
 
 Route::middleware(['auth'])->group(function () {
+
+    Route::get('/admin/appointments/{appointment}/transfer-receipt', [TransferReceiptController::class, 'show'])
+    ->middleware('permission:appointments.view')
+    ->name('admin.appointments.transfer_receipt');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
