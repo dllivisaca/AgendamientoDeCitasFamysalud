@@ -39,37 +39,37 @@
                             <div class="row">
                                 <div class="col-md-6 mb-2">
                                     <div class="small text-muted">Paciente</div>
-                                    <div class="font-weight-bold" id="modalAppointmentName">N/A</div>
+                                    <div class="text-dark" id="modalAppointmentName">N/A</div>
                                 </div>
 
                                 <div class="col-md-6 mb-2">
                                     <div class="small text-muted">Profesional</div>
-                                    <div class="font-weight-bold" id="modalStaff">N/A</div>
+                                    <div class="text-dark" id="modalStaff">N/A</div>
                                 </div>
 
                                 <div class="col-md-6 mb-2">
                                     <div class="small text-muted">Área de atención</div>
-                                    <div class="font-weight-bold" id="modalArea">N/A</div>
+                                    <div class="text-dark" id="modalArea">N/A</div>
                                 </div>
 
                                 <div class="col-md-6 mb-2">
                                     <div class="small text-muted">Servicio</div>
-                                    <div class="font-weight-bold" id="modalService">N/A</div>
+                                    <div class="text-dark" id="modalService">N/A</div>
                                 </div>
 
                                 <div class="col-md-12 mb-2">
                                     <div class="small text-muted">Fecha y hora de la cita</div>
-                                    <div class="font-weight-bold" id="modalDateTime">N/A</div>
+                                    <div class="text-dark" id="modalDateTime">N/A</div>
                                 </div>
 
                                 <div class="col-md-6 mb-0">
                                     <div class="small text-muted">Estado de la cita</div>
-                                    <div class="font-weight-bold" id="modalStatusBadge">N/A</div>
+                                    <div class="text-dark" id="modalStatusBadge">N/A</div>
                                 </div>
 
                                 <div class="col-md-6 mb-0">
                                     <div class="small text-muted">Estado del pago</div>
-                                    <div class="font-weight-bold" id="modalPaymentStatusBadge">
+                                    <div class="text-dark" id="modalPaymentStatusBadge">
                                         <span class="badge px-2 py-1" style="background-color:#95a5a6;color:white;">N/A</span>
                                     </div>
                                 </div>
@@ -95,37 +95,37 @@
                                 <div class="row">
                                     <div class="col-md-6 mb-2">
                                         <div class="small text-muted">Nombre del paciente</div>
-                                        <div class="font-weight-bold" id="modalPatientFullName">N/A</div>
+                                        <div class="text-dark" id="modalPatientFullName">N/A</div>
                                     </div>
 
                                     <div class="col-md-6 mb-2">
                                         <div class="small text-muted">Tipo de documento</div>
-                                        <div class="font-weight-bold" id="modalDocType">N/A</div>
+                                        <div class="text-dark" id="modalDocType">N/A</div>
                                     </div>
 
                                     <div class="col-md-6 mb-2">
                                         <div class="small text-muted">Número de documento</div>
-                                        <div class="font-weight-bold" id="modalDocNumber">N/A</div>
+                                        <div class="text-dark" id="modalDocNumber">N/A</div>
                                     </div>
 
                                     <div class="col-md-6 mb-2">
                                         <div class="small text-muted">Correo</div>
-                                        <div class="font-weight-bold" id="modalEmail">N/A</div>
+                                        <div class="text-dark" id="modalEmail">N/A</div>
                                     </div>
 
                                     <div class="col-md-6 mb-2">
                                         <div class="small text-muted">Teléfono</div>
-                                        <div class="font-weight-bold" id="modalPhone">N/A</div>
+                                        <div class="text-dark" id="modalPhone">N/A</div>
                                     </div>
 
                                     <div class="col-md-6 mb-2">
                                         <div class="small text-muted">Dirección</div>
-                                        <div class="font-weight-bold" id="modalAddress">N/A</div>
+                                        <div class="text-dark" id="modalAddress">N/A</div>
                                     </div>
 
                                     <div class="col-md-12 mb-0">
                                         <div class="small text-muted">Zona horaria del paciente</div>
-                                        <div class="font-weight-bold" id="modalPatientTimezone">N/A</div>
+                                        <div class="text-dark" id="modalPatientTimezone">N/A</div>
                                     </div>
                                 </div>
                             </div>
