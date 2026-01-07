@@ -958,23 +958,26 @@
                 $('#modalTransferPayerName').text(tPayerName ? String(tPayerName) : 'N/A');
                 $('#modalTransferReference').text(tReference ? String(tReference) : 'N/A');
 
-                // Fecha (si viene YYYY-MM-DD la formateamos bonito)
+                // Fecha (solo fecha, sin hora)
                 let transferDateFinal = 'N/A';
                 if (tDateRaw && String(tDateRaw).trim() !== '') {
                     const s = String(tDateRaw).trim();
 
-                    // Si viene "YYYY-MM-DD"
-                    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
-                        const [yy, mm, dd] = s.split('-').map(Number);
-                        const dObj = new Date(yy, (mm || 1) - 1, dd || 1);
-                        transferDateFinal = dObj.toLocaleDateString('es-EC', {
+                    // Toma solo la parte de fecha (por si viene "YYYY-MM-DD HH:MM:SS")
+                    const datePart = s.split(' ')[0]; // "2025-12-12"
+
+                    // Si datePart es "YYYY-MM-DD", formateamos bonito
+                    if (/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
+                        const [yy, mm, dd] = datePart.split('-').map(Number);
+                        const dObj = new Date(yy, (mm || 1) - 1, dd || 1); // sin UTC shift
+                        transferDateFinal = new Intl.DateTimeFormat('es-EC', {
                             day: '2-digit',
                             month: 'short',
                             year: 'numeric'
-                        });
+                        }).format(dObj).toLowerCase();
                     } else {
-                        // Si viene en otro formato, lo mostramos tal cual
-                        transferDateFinal = s;
+                        // Si viene rarito, igual mostramos solo lo que haya como "datePart"
+                        transferDateFinal = datePart || s;
                     }
                 }
                 $('#modalTransferDate').text(transferDateFinal);
