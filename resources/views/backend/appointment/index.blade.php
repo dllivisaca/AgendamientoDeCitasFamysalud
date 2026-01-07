@@ -345,10 +345,13 @@
 
                                     <div class="col-md-12 mb-0" id="transferValidationNotesWrapper" style="display:none;">
                                         <div class="small text-muted">
-                                            Observaciones <span id="transferNotesRequired" class="text-danger" style="display:none;">(obligatorias)</span>
+                                            Observaciones
+                                            <span id="transferNotesOptional" class="text-muted" style="display:none;">(opcional)</span>
+                                            <span id="transferNotesRequired" class="text-danger" style="display:none;">(obligatorias)</span>
                                         </div>
+
                                         <textarea class="form-control form-control-sm" id="modalTransferValidationNotes" rows="2"
-                                            placeholder="Ej: El comprobante no coincide con el monto / Falta referencia / OK, confirmado en el banco."></textarea>
+                                            placeholder="Ej: Escribe una observación..."></textarea>
                                     </div>
                                 </div>
                             </div>
@@ -1267,20 +1270,36 @@
         $(document).on('change', '#modalTransferValidationSelect', function () {
             const v = String($(this).val() || '').trim().toLowerCase();
 
+            const $notes = $('#modalTransferValidationNotes');
+
+            // Placeholders dinámicos
+            const phValidated = 'Ej: OK, confirmado en el banco.';
+            const phRejected  = 'Ej: El comprobante no coincide con el monto / Falta referencia.';
+
             if (v === 'validated' || v === 'rejected') {
                 $('#transferValidationNotesWrapper').show();
 
-                // Rechazada -> notas obligatorias
                 if (v === 'rejected') {
+                    // Rechazada => obligatorio + placeholder "rechazo"
                     $('#transferNotesRequired').show();
+                    $('#transferNotesOptional').hide();
+                    $notes.attr('placeholder', phRejected);
                 } else {
+                    // Validada => opcional + placeholder "ok banco"
                     $('#transferNotesRequired').hide();
+                    $('#transferNotesOptional').show();
+                    $notes.attr('placeholder', phValidated);
                 }
+
             } else {
-                // Sin revisar
+                // Sin revisar => ocultar todo y limpiar
                 $('#transferValidationNotesWrapper').hide();
                 $('#transferNotesRequired').hide();
-                $('#modalTransferValidationNotes').val('');
+                $('#transferNotesOptional').hide();
+                $('#transferNotesOptional').hide();
+                $('#modalTransferValidationNotes').attr('placeholder', 'Ej: Escribe una observación...');
+                $notes.val('');
+                $notes.attr('placeholder', 'Ej: Escribe una observación...');
             }
         });
 
