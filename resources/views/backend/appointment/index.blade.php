@@ -372,11 +372,16 @@
         </div>
 
         <div class="modal-footer">
+            <button type="button" class="btn btn-success" id="receiptDownloadBtn">
+                Descargar
+            </button>
+
             <a href="#" target="_blank" id="receiptOpenNewTab" class="btn btn-primary">
-            Pantalla completa
+                Pantalla completa
             </a>
+
             <button type="button" class="btn btn-secondary" data-dismiss="modal">
-            Cerrar
+                Cerrar
             </button>
         </div>
 
@@ -1137,6 +1142,9 @@
             // Botón "Pantalla completa"
             $('#receiptOpenNewTab').attr('href', url);
 
+            // ✅ URL para descargar
+            $('#receiptDownloadBtn').data('url', url);
+
             // Cargar imagen
             const img = $('#receiptImg')[0];
             img.onload = function () {
@@ -1160,6 +1168,57 @@
         $('#transferReceiptModal').on('hidden.bs.modal', function () {
             if ($('#appointmentModal').hasClass('show')) {
             $('body').addClass('modal-open');
+            }
+        });
+    </script>
+
+    <script>
+        // ✅ Descargar comprobante desde el modal (usa la misma URL protegida)
+        $(document).on('click', '#receiptDownloadBtn', async function () {
+            const url = $(this).data('url');
+            if (!url) return;
+
+            const $btn = $(this);
+            const oldText = $btn.text();
+
+            try {
+                $btn.prop('disabled', true).text('Descargando...');
+
+                const res = await fetch(url, {
+                    method: 'GET',
+                    credentials: 'same-origin',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+
+                const blob = await res.blob();
+                const blobUrl = window.URL.createObjectURL(blob);
+
+                // extensión según MIME
+                const ext = (blob.type && blob.type.includes('png')) ? 'png'
+                        : (blob.type && blob.type.includes('jpeg')) ? 'jpg'
+                        : 'jpg';
+
+                // nombre del archivo (simple y útil)
+                const now = new Date();
+                const pad = (n) => String(n).padStart(2, '0');
+                const fileName = `comprobante_transferencia_${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.${ext}`;
+
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+
+                window.URL.revokeObjectURL(blobUrl);
+
+            } catch (err) {
+                console.error('Download error:', err);
+                alert('No se pudo descargar el comprobante. Prueba con "Pantalla completa" y descarga desde la pestaña.');
+            } finally {
+                $btn.prop('disabled', false).text(oldText);
             }
         });
     </script>
