@@ -31,28 +31,47 @@
 
                         {{-- =========================
                             SECCIÓN 1 (NO COLAPSABLE)
-                            Resumen de la cita
+                            Resumen de la cita (2 columnas)
                         ========================== --}}
                         <div class="p-3 mb-3 rounded border bg-light">
                             <h6 class="mb-3 font-weight-bold text-primary">Resumen de la cita</h6>
 
-                            <p class="mb-2"><strong>Paciente:</strong> <span id="modalAppointmentName">N/A</span></p>
-                            <p class="mb-2"><strong>Área de atención:</strong> <span id="modalArea">N/A</span></p>
-                            <p class="mb-2"><strong>Servicio:</strong> <span id="modalService">N/A</span></p>
-                            <p class="mb-2"><strong>Profesional:</strong> <span id="modalStaff">N/A</span></p>
-                            <p class="mb-2"><strong>Fecha y hora de la cita:</strong> <span id="modalDateTime">N/A</span></p>
-
-                            <div class="d-flex flex-wrap align-items-center" style="gap: 10px;">
-                                <div>
-                                    <strong>Estado de la cita:</strong>
-                                    <span id="modalStatusBadge">N/A</span>
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    <div class="small text-muted">Paciente</div>
+                                    <div class="font-weight-bold" id="modalAppointmentName">N/A</div>
                                 </div>
 
-                                <div>
-                                    <strong>Estado del pago:</strong>
-                                    <span id="modalPaymentStatusBadge">
+                                <div class="col-md-6 mb-2">
+                                    <div class="small text-muted">Profesional</div>
+                                    <div class="font-weight-bold" id="modalStaff">N/A</div>
+                                </div>
+
+                                <div class="col-md-6 mb-2">
+                                    <div class="small text-muted">Área de atención</div>
+                                    <div class="font-weight-bold" id="modalArea">N/A</div>
+                                </div>
+
+                                <div class="col-md-6 mb-2">
+                                    <div class="small text-muted">Servicio</div>
+                                    <div class="font-weight-bold" id="modalService">N/A</div>
+                                </div>
+
+                                <div class="col-md-12 mb-2">
+                                    <div class="small text-muted">Fecha y hora de la cita</div>
+                                    <div class="font-weight-bold" id="modalDateTime">N/A</div>
+                                </div>
+
+                                <div class="col-md-6 mb-0">
+                                    <div class="small text-muted">Estado de la cita</div>
+                                    <div class="font-weight-bold" id="modalStatusBadge">N/A</div>
+                                </div>
+
+                                <div class="col-md-6 mb-0">
+                                    <div class="small text-muted">Estado del pago</div>
+                                    <div class="font-weight-bold" id="modalPaymentStatusBadge">
                                         <span class="badge px-2 py-1" style="background-color:#95a5a6;color:white;">N/A</span>
-                                    </span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
