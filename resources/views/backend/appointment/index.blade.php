@@ -274,9 +274,35 @@
                                         <div class="text-dark" id="modalTransferAmount">N/A</div>
                                     </div>
 
+                                    <div class="col-md-12 mt-2">
+                                        <div class="small text-muted font-weight-bold">Datos de la transferencia</div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-2">
+                                        <div class="small text-muted">Banco de origen</div>
+                                        <div class="text-dark" id="modalTransferBankOrigin">N/A</div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-2">
+                                        <div class="small text-muted">Nombre del titular</div>
+                                        <div class="text-dark" id="modalTransferPayerName">N/A</div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-2">
+                                        <div class="small text-muted">Fecha de la transferencia</div>
+                                        <div class="text-dark" id="modalTransferDate">N/A</div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-2">
+                                        <div class="small text-muted">Número de referencia</div>
+                                        <div class="text-dark" id="modalTransferReference">N/A</div>
+                                    </div>
+
                                     <div class="col-md-12 mb-0">
-                                        <div class="small text-muted">Datos de la transferencia (stand-by)</div>
-                                        <div class="text-muted font-italic small">Pendiente de definir</div>
+                                        <div class="small text-muted">Comprobante</div>
+                                        <div class="text-dark" id="modalTransferReceipt">
+                                            <span class="text-muted font-italic small">N/A</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -521,6 +547,11 @@
                                                         data-payment-method="{{ $appointment->payment_method ?? '' }}"
                                                         data-client-transaction-id="{{ $appointment->client_transaction_id ?? '' }}"
                                                         data-payment-status="{{ $appointment->payment_status ?? '' }}"
+                                                        data-transfer-bank-origin="{{ $appointment->transfer_bank_origin ?? '' }}"
+                                                        data-transfer-payer-name="{{ $appointment->transfer_payer_name ?? '' }}"
+                                                        data-transfer-date="{{ $appointment->transfer_date ?? '' }}"
+                                                        data-transfer-reference="{{ $appointment->transfer_reference ?? '' }}"
+                                                        data-transfer-receipt-path="{{ $appointment->transfer_receipt_path ?? '' }}"
                                                         data-created-at="{{ $appointment->created_at }}"
                                                         data-status="{{ $appointment->status }}">Ver detalles</button>
                                                 </td>
@@ -914,6 +945,53 @@
                         : 'N/A';
 
                 $('#modalTransferAmount').text(amountText);
+
+                // ===== Datos de la transferencia (appointments.*) =====
+                const tBankOrigin = $(this).data('transfer-bank-origin');
+                const tPayerName = $(this).data('transfer-payer-name');
+                const tDateRaw = $(this).data('transfer-date');
+                const tReference = $(this).data('transfer-reference');
+                const tReceiptPath = $(this).data('transfer-receipt-path');
+
+                // Banco / Titular / Referencia
+                $('#modalTransferBankOrigin').text(tBankOrigin ? String(tBankOrigin) : 'N/A');
+                $('#modalTransferPayerName').text(tPayerName ? String(tPayerName) : 'N/A');
+                $('#modalTransferReference').text(tReference ? String(tReference) : 'N/A');
+
+                // Fecha (si viene YYYY-MM-DD la formateamos bonito)
+                let transferDateFinal = 'N/A';
+                if (tDateRaw && String(tDateRaw).trim() !== '') {
+                    const s = String(tDateRaw).trim();
+
+                    // Si viene "YYYY-MM-DD"
+                    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+                        const [yy, mm, dd] = s.split('-').map(Number);
+                        const dObj = new Date(yy, (mm || 1) - 1, dd || 1);
+                        transferDateFinal = dObj.toLocaleDateString('es-EC', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric'
+                        });
+                    } else {
+                        // Si viene en otro formato, lo mostramos tal cual
+                        transferDateFinal = s;
+                    }
+                }
+                $('#modalTransferDate').text(transferDateFinal);
+
+                // Comprobante (link/botón)
+                if (tReceiptPath && String(tReceiptPath).trim() !== '') {
+                    const url = String(tReceiptPath).trim();
+                    $('#modalTransferReceipt').html(
+                        `<a href="${url}" target="_blank" class="btn btn-outline-primary btn-sm">
+                            Ver comprobante
+                        </a>`
+                    );
+                } else {
+                    $('#modalTransferReceipt').html(
+                        `<span class="text-muted font-italic small">N/A</span>`
+                    );
+                }
 
             } else {
                 // Si no hay método, ocultamos Sección 5 (no mostramos basura)
