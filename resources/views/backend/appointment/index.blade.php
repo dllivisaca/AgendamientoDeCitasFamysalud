@@ -322,19 +322,19 @@
                                         <div class="small text-muted font-weight-bold">Validación de transferencia</div>
                                     </div>
 
-                                    <div class="col-md-6 mb-2">
+                                    <div class="col-md-12 mb-2">
                                         <div class="small text-muted">Estado de validación</div>
-                                        <select class="form-control form-control-sm" id="modalTransferValidationSelect">
+                                        <select class="form-control form-control-sm w-100" id="modalTransferValidationSelect">
                                             <option value="">Sin revisar</option>
                                             <option value="validated">Validada</option>
                                             <option value="rejected">Rechazada</option>
                                         </select>
                                         <small class="text-muted d-block mt-1">
-                                            “Validada” marcará la cita como pagada. “Rechazada” pasará la cita a En espera.
+                                            “Validada” marcará la cita como "Pagada". “Rechazada” pasará la cita a "En espera".
                                         </small>
                                     </div>
 
-                                    <div class="col-md-6 mb-2" id="transferValidationMeta" style="display:none;">
+                                    <div class="col-md-12 mb-2" id="transferValidationMeta" style="display:none;">
                                         <div class="small text-muted">Última validación</div>
                                         <div class="text-dark">
                                             <span id="modalTransferValidatedAt">N/A</span>
