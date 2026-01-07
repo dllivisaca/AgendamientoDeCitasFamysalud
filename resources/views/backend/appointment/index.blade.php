@@ -563,6 +563,7 @@
                                                     <button class="btn btn-primary btn-sm py-0 px-1 view-appointment-btn"
                                                         data-toggle="modal" data-target="#appointmentModal"
                                                         data-id="{{ $appointment->id }}"
+                                                        data-booking-code="{{ $appointment->booking_id ?? ('FS-' . $appointment->id) }}"
                                                         data-name="{{ $appointment->patient_full_name }}"
                                                         data-area="{{ $appointment->service->category->title ?? 'No definida' }}"
                                                         data-service="{{ 
@@ -1090,13 +1091,16 @@
                     const path = String(tReceiptPath).trim().toLowerCase();
                     const fileType = path.endsWith('.pdf') ? 'pdf' : 'image';
 
+                    const bookingCode = String($(this).data('booking-code') || $(this).data('booking_id') || `FS-${appointmentId}`).trim();
+
                     $('#modalTransferReceipt').html(
-                        `<button type="button"
+                    `<button type="button"
                         class="btn btn-outline-primary btn-sm js-open-receipt-modal"
                         data-url="${protectedUrl}"
-                        data-filetype="${fileType}">
+                        data-filetype="${fileType}"
+                        data-booking-code="${bookingCode}">
                         Ver comprobante
-                        </button>`
+                    </button>`
                     );
                     } else {
                     $('#modalTransferReceipt').html(
@@ -1202,6 +1206,8 @@
             // Botones
             $('#receiptOpenNewTab').attr('href', url);
             $('#receiptDownloadBtn').data('url', url);
+            const bookingCode = String($(this).data('bookingcode') || $(this).data('booking-code') || '').trim();
+            $('#receiptDownloadBtn').data('booking-code', bookingCode);
 
             if (isPdf) {
                 // ✅ PDF: nunca mostrar error (solo ocultarlo)
@@ -1270,9 +1276,10 @@
                     : 'bin';
 
                 // nombre del archivo (simple y útil)
-                const now = new Date();
-                const pad = (n) => String(n).padStart(2, '0');
-                const fileName = `comprobante_transferencia_${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.${ext}`;
+                const bookingCode = String($(this).data('booking-code') || '').trim();
+                const safeCode = bookingCode ? bookingCode.replace(/[^\w\-]+/g, '-') : 'SIN_CODIGO';
+
+                const fileName = `comprobante_transferencia_${safeCode}.${ext}`;
 
                 const a = document.createElement('a');
                 a.href = blobUrl;
