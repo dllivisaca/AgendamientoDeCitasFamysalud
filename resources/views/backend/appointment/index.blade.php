@@ -21,7 +21,15 @@
             <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Detalles de la cita</h5>
+                        <div>
+                            <h5 class="modal-title mb-0">Detalles de la cita</h5>
+
+                            {{-- ✅ Subtítulo informativo: Código de reserva --}}
+                            <div class="small text-muted mt-1">
+                                Código de reserva: <strong id="modalBookingCode">N/A</strong>
+                            </div>
+                        </div>
+
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
@@ -714,6 +722,8 @@
         $(document).on('click', '.view-appointment-btn', function() {
             // Set modal fields
             $('#modalAppointmentId').val($(this).data('id'));
+            // ✅ Código de reserva (booking_id)
+            $('#modalBookingCode').text($(this).data('booking-code') || 'N/A');
             $('#modalAppointmentName').text($(this).data('name'));
             $('#modalArea').text($(this).data('area'));
             $('#modalService').text($(this).data('service'));
