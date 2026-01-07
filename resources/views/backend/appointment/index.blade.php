@@ -347,6 +347,11 @@
                                                         $appointment->service->title ?? 'MA' }}"
                                                         data-email="{{ $appointment->patient_email }}"
                                                         data-phone="{{ $appointment->patient_phone }}"
+                                                        data-doc-type="{{ $appointment->patient_doc_type }}"
+                                                        data-doc-number="{{ $appointment->patient_doc_number }}"
+                                                        data-address="{{ $appointment->patient_address }}"
+                                                        data-timezone="{{ $appointment->patient_timezone }}"
+                                                        data-timezone-label="{{ $appointment->patient_timezone_label }}"
                                                         data-employee="{{ $appointment->employee->user->name }}"
                                                         data-date="{{ $appointment->appointment_date }}"
                                                         data-start-time="{{ $appointment->appointment_time }}"
@@ -426,10 +431,30 @@
             $('#modalPatientFullName').text($(this).data('name') || 'N/A');
 
             // Estos quedan en N/A hasta que los conectes con data-* reales
-            $('#modalDocType').text($(this).data('doc-type') || 'N/A');
-            $('#modalDocNumber').text($(this).data('doc-number') || 'N/A');
-            $('#modalAddress').text($(this).data('address') || 'N/A');
-            $('#modalPatientTimezone').text($(this).data('timezone') || 'N/A');
+            const docType = $(this).data('doc-type');
+            const docNumber = $(this).data('doc-number');
+            const address = $(this).data('address');
+
+            const tz = $(this).data('timezone');
+            const tzLabel = $(this).data('timezone-label');
+
+            $('#modalDocType').text(docType ? String(docType) : 'N/A');
+            $('#modalDocNumber').text(docNumber ? String(docNumber) : 'N/A');
+            $('#modalAddress').text(address ? String(address) : 'N/A');
+
+            // Timezone: "America-Bogota" -> "America/Bogota" y concatenar "(GMT-5)"
+            let tzFormatted = tz ? String(tz).replace('-', '/') : '';
+            let tzFinal = 'N/A';
+
+            if (tzFormatted && tzLabel) {
+                tzFinal = `${tzFormatted} (${tzLabel})`;
+            } else if (tzFormatted) {
+                tzFinal = tzFormatted;
+            } else if (tzLabel) {
+                tzFinal = `(${tzLabel})`;
+            }
+
+            $('#modalPatientTimezone').text(tzFinal);
             // Fecha y horas
             const date = $(this).data('date');
             const startTime = $(this).data('start-time');
