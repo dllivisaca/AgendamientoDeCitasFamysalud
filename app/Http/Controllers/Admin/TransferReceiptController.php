@@ -45,4 +45,15 @@ class TransferReceiptController extends Controller
 
         abort(404);
     }
+
+    public function view(Appointment $appointment)
+    {
+        // Esta URL es la que devuelve el archivo directo (PDF o imagen)
+        $fileUrl = route('admin.appointments.transfer_receipt', ['appointment' => $appointment->id]);
+
+        // Título que queremos en la pestaña
+        $title = 'Comprobante de transferencia';
+
+        return view('admin.appointments.transfer_receipt_view', compact('fileUrl', 'title'));
+    }
 }

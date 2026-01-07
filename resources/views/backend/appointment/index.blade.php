@@ -1086,6 +1086,7 @@
                 if (tReceiptPath && String(tReceiptPath).trim() !== '') {
                     const appointmentId = $(this).data('id'); 
                     const protectedUrl = `/admin/appointments/${appointmentId}/transfer-receipt`;
+                    const openViewUrl = `/admin/appointments/${appointmentId}/transfer-receipt/view`;
 
                     // ✅ Detectar tipo por el path REAL guardado (no por la URL protegida)
                     const path = String(tReceiptPath).trim().toLowerCase();
@@ -1097,6 +1098,7 @@
                     `<button type="button"
                         class="btn btn-outline-primary btn-sm js-open-receipt-modal"
                         data-url="${protectedUrl}"
+                        data-open-url="${openViewUrl}"
                         data-filetype="${fileType}"
                         data-booking-code="${bookingCode}">
                         Ver comprobante
@@ -1204,7 +1206,8 @@
             $img.hide().attr('src', '');
 
             // Botones
-            $('#receiptOpenNewTab').attr('href', url);
+            const openUrl = $(this).data('open-url') || url;
+            $('#receiptOpenNewTab').attr('href', openUrl);
             $('#receiptDownloadBtn').data('url', url);
             const bookingCode = String($(this).data('bookingcode') || $(this).data('booking-code') || '').trim();
             $('#receiptDownloadBtn').data('booking-code', bookingCode);

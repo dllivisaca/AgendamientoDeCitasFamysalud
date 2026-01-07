@@ -40,6 +40,10 @@ Route::middleware(['auth'])->group(function () {
     ->middleware('permission:appointments.view')
     ->name('admin.appointments.transfer_receipt');
 
+    Route::get('/admin/appointments/{appointment}/transfer-receipt/view', [TransferReceiptController::class, 'view'])
+    ->middleware('permission:appointments.view')
+    ->name('admin.appointments.transfer_receipt.view');
+
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     //user
