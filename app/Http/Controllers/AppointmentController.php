@@ -135,7 +135,7 @@ class AppointmentController extends Controller
 
 
         // Generate unique booking ID
-        $validated['booking_id'] = 'BK-' . strtoupper(uniqid());
+        $validated['booking_id'] = 'FS-' . strtoupper(uniqid());
 
         // ✅ PASO 6: validar HOLD activo
         $sessionId = $request->session()->getId();
