@@ -492,6 +492,12 @@
                                                     <a>
                                                         {{ $appointment->patient_full_name }}
                                                     </a>
+
+                                                    <div class="small text-muted">
+                                                        <span class="font-weight-bold">
+                                                            {{ $appointment->booking_id ?? ('FS-' . $appointment->id) }}
+                                                        </span>
+                                                    </div>
                                                     {{-- 
                                                     <br>
                                                     <small>
