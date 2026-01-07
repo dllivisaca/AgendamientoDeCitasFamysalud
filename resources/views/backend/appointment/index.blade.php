@@ -214,10 +214,10 @@
                                         <div class="text-dark" id="modalBillingAddress">N/A</div>
                                     </div>
 
-                                    <div class="col-md-12 mb-0">
+                                    <!-- <div class="col-md-12 mb-0">
                                         <div class="small text-muted">Zona horaria de facturación</div>
                                         <div class="text-dark" id="modalBillingTimezone">N/A</div>
-                                    </div>
+                                    </div> -->
                                 </div>
                             </div>
                         </div>
@@ -987,9 +987,7 @@
             $('#modalStatusBadgeLegacy').html(badgeHtml);
 
             // Por ahora, estado del pago queda N/A hasta que lo conectemos a tus campos reales
-            $('#modalPaymentStatusBadge').html(
-                `<span class="badge px-2 py-1" style="background-color:#95a5a6;color:white;">N/A</span>`
-            );
+            $('#modalPaymentStatusBadge').html(paymentStatusBadge(paymentStatusRaw));
         });
     </script>
 @endsection
