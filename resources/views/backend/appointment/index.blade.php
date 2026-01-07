@@ -132,11 +132,40 @@
                         </div>
 
                         {{-- =========================
+                            SECCIÓN 3 (NO COLAPSABLE)
+                            Detalles de la cita (2 columnas)
+                        ========================== --}}
+                        <div class="p-3 mb-3 rounded border bg-light">
+                            <h6 class="mb-3 font-weight-bold text-primary">Detalles de la cita</h6>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    <div class="small text-muted">Modalidad de la cita</div>
+                                    <div class="text-dark" id="modalAppointmentMode">N/A</div>
+                                </div>
+
+                                <div class="col-md-6 mb-2">
+                                    <div class="small text-muted">Fecha y hora de la cita</div>
+                                    <div class="text-dark" id="modalDateTime2">N/A</div>
+                                </div>
+
+                                <div class="col-md-6 mb-2">
+                                    <div class="small text-muted">Registrada el</div>
+                                    <div class="text-dark" id="modalCreatedAt">N/A</div>
+                                </div>
+
+                                <div class="col-md-6 mb-2">
+                                    <div class="small text-muted">Notas del paciente</div>
+                                    <div class="text-dark" id="modalNotes">N/A</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- =========================
                             RESTO DEL MODAL (NO BORRAR)
                             Se queda debajo tal cual
                         ========================== --}}
                         <p><strong>Total:</strong> <span id="modalAmount">N/A</span></p>
-                        <p><strong>Notas:</strong> <span id="modalNotes">N/A</span></p>
 
                         <p><strong>Estado actual:</strong> <span id="modalStatusBadgeLegacy">N/A</span></p>
 
@@ -359,6 +388,8 @@
                                                         data-start="{{ $appointment->appointment_date . ' ' . $appointment->appointment_time }}"
                                                         data-amount="{{ $appointment->amount }}"
                                                         data-notes="{{ $appointment->patient_notes }}"
+                                                        data-appointment-mode="{{ $appointment->appointment_mode }}"
+                                                        data-created-at="{{ $appointment->created_at }}"
                                                         data-status="{{ $appointment->status }}">Ver detalles</button>
                                                 </td>
                                             </tr>
@@ -513,6 +544,39 @@
                 `${formatTime(startTime)} – ${formatTime(endTime)}`;
 
             $('#modalDateTime').text(`${formattedDate} · ${formattedTime}`);
+
+            // ===== SECCIÓN 3: Detalles de la cita =====
+
+            // Modalidad (presencial / virtual)
+            const apptModeRaw = $(this).data('appointment-mode');
+            let apptMode = 'N/A';
+            if (apptModeRaw && String(apptModeRaw).trim() !== '') {
+                const m = String(apptModeRaw).trim().toLowerCase();
+                if (m === 'virtual' || m === 'online') apptMode = 'Virtual';
+                else if (m === 'presencial' || m === 'in_person' || m === 'in-person') apptMode = 'Presencial';
+                else apptMode = m.charAt(0).toUpperCase() + m.slice(1);
+            }
+            $('#modalAppointmentMode').text(apptMode);
+
+            // Reusar el mismo “Fecha y hora de la cita” en Sección 3
+            $('#modalDateTime2').text(`${formattedDate} · ${formattedTime}`);
+
+            // Fecha/hora de registro (auditoría)
+            const createdAtRaw = $(this).data('created-at');
+            let createdAtFinal = 'N/A';
+
+            if (createdAtRaw && String(createdAtRaw).trim() !== '') {
+                const dt = new Date(String(createdAtRaw));
+                if (!isNaN(dt.getTime())) {
+                    const datePart = dt.toLocaleDateString('es-EC', { day: '2-digit', month: 'short', year: 'numeric' });
+                    const timePart = dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+                    createdAtFinal = `${datePart} · ${timePart}`;
+                } else {
+                    createdAtFinal = String(createdAtRaw); // fallback
+                }
+            }
+            $('#modalCreatedAt').text(createdAtFinal);
+
             const amount = $(this).data('amount');
 
             $('#modalAmount').text(
