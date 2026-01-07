@@ -58,12 +58,64 @@
                         </div>
 
                         {{-- =========================
+                            SECCIÓN 2 (COLAPSABLE - ABIERTA POR DEFECTO)
+                            Datos del paciente
+                        ========================== --}}
+                        <div class="p-3 mb-3 rounded border bg-light">
+                            <a class="d-flex align-items-center justify-content-between text-decoration-none"
+                            data-toggle="collapse"
+                            href="#collapsePatientData"
+                            role="button"
+                            aria-expanded="true"
+                            aria-controls="collapsePatientData">
+                                <h6 class="mb-0 font-weight-bold text-primary">Datos del paciente</h6>
+                                <span class="text-muted"><i class="fas fa-chevron-down"></i></span>
+                            </a>
+
+                            <div class="collapse show mt-3" id="collapsePatientData">
+                                <div class="row">
+                                    <div class="col-md-6 mb-2">
+                                        <div class="small text-muted">Nombre del paciente</div>
+                                        <div class="font-weight-bold" id="modalPatientFullName">N/A</div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-2">
+                                        <div class="small text-muted">Tipo de documento</div>
+                                        <div class="font-weight-bold" id="modalDocType">N/A</div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-2">
+                                        <div class="small text-muted">Número de documento</div>
+                                        <div class="font-weight-bold" id="modalDocNumber">N/A</div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-2">
+                                        <div class="small text-muted">Correo</div>
+                                        <div class="font-weight-bold" id="modalEmail">N/A</div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-2">
+                                        <div class="small text-muted">Teléfono</div>
+                                        <div class="font-weight-bold" id="modalPhone">N/A</div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-2">
+                                        <div class="small text-muted">Dirección</div>
+                                        <div class="font-weight-bold" id="modalAddress">N/A</div>
+                                    </div>
+
+                                    <div class="col-md-12 mb-0">
+                                        <div class="small text-muted">Zona horaria del paciente</div>
+                                        <div class="font-weight-bold" id="modalPatientTimezone">N/A</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- =========================
                             RESTO DEL MODAL (NO BORRAR)
                             Se queda debajo tal cual
                         ========================== --}}
-                        <p><strong>Correo:</strong> <span id="modalEmail">N/A</span></p>
-                        <p><strong>Teléfono:</strong> <span id="modalPhone">N/A</span></p>
-
                         <p><strong>Total:</strong> <span id="modalAmount">N/A</span></p>
                         <p><strong>Notas:</strong> <span id="modalNotes">N/A</span></p>
 
@@ -350,6 +402,15 @@
             $('#modalEmail').text($(this).data('email'));
             $('#modalPhone').text($(this).data('phone'));
             $('#modalStaff').text($(this).data('employee'));
+
+            // ===== SECCIÓN 2: Datos del paciente =====
+            $('#modalPatientFullName').text($(this).data('name') || 'N/A');
+
+            // Estos quedan en N/A hasta que los conectes con data-* reales
+            $('#modalDocType').text($(this).data('doc-type') || 'N/A');
+            $('#modalDocNumber').text($(this).data('doc-number') || 'N/A');
+            $('#modalAddress').text($(this).data('address') || 'N/A');
+            $('#modalPatientTimezone').text($(this).data('timezone') || 'N/A');
             // Fecha y horas
             const date = $(this).data('date');
             const startTime = $(this).data('start-time');
