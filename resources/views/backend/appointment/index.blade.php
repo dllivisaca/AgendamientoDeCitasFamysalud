@@ -223,6 +223,66 @@
                         </div>
 
                         {{-- =========================
+                            SECCIÓN 5 (DINÁMICA)
+                            Información de pago (2 columnas)
+                            Cambia según método: card / transfer
+                        ========================== --}}
+                        <div class="p-3 mb-3 rounded border bg-light" id="paymentSectionWrapper" style="display:none;">
+                            <h6 class="mb-3 font-weight-bold text-primary">Información de pago</h6>
+
+                            {{-- BLOQUE TARJETA --}}
+                            <div id="paymentCardBlock" style="display:none;">
+                                <div class="row">
+                                    <div class="col-md-6 mb-2">
+                                        <div class="small text-muted">Método</div>
+                                        <div class="text-dark" id="modalPaymentMethodLabel">N/A</div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-2">
+                                        <div class="small text-muted">Client Transaction ID</div>
+                                        {{-- OJO: es largo, por eso usamos estilo wrap --}}
+                                        <div class="text-dark" id="modalClientTransactionId" style="word-break: break-all;">N/A</div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-2">
+                                        <div class="small text-muted">Monto</div>
+                                        <div class="text-dark" id="modalPaymentAmount">N/A</div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-2">
+                                        <div class="small text-muted">Fecha del pago</div>
+                                        <div class="text-dark" id="modalPaymentDate">N/A</div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-0">
+                                        <div class="small text-muted">Estado del pago</div>
+                                        <div class="text-dark" id="modalPaymentStatusBadge2">N/A</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- BLOQUE TRANSFERENCIA (stand-by) --}}
+                            <div id="paymentTransferBlock" style="display:none;">
+                                <div class="row">
+                                    <div class="col-md-6 mb-2">
+                                        <div class="small text-muted">Método</div>
+                                        <div class="text-dark" id="modalTransferMethodLabel">N/A</div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-2">
+                                        <div class="small text-muted">Monto</div>
+                                        <div class="text-dark" id="modalTransferAmount">N/A</div>
+                                    </div>
+
+                                    <div class="col-md-12 mb-0">
+                                        <div class="small text-muted">Datos de la transferencia (stand-by)</div>
+                                        <div class="text-muted font-italic small">Pendiente de definir</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- =========================
                             RESTO DEL MODAL (NO BORRAR)
                             Se queda debajo tal cual
                         ========================== --}}
@@ -458,6 +518,9 @@
                                                         data-billing-address="{{ $appointment->billing_address ?? '' }}"
                                                         data-billing-timezone="{{ $appointment->billing_timezone ?? '' }}"
                                                         data-billing-timezone-label="{{ $appointment->billing_timezone_label ?? '' }}"
+                                                        data-payment-method="{{ $appointment->payment_method ?? '' }}"
+                                                        data-client-transaction-id="{{ $appointment->client_transaction_id ?? '' }}"
+                                                        data-payment-status="{{ $appointment->payment_status ?? '' }}"
                                                         data-created-at="{{ $appointment->created_at }}"
                                                         data-status="{{ $appointment->status }}">Ver detalles</button>
                                                 </td>
@@ -767,6 +830,94 @@
             } else {
                 $('#modalBillingSameNote').show();          // “Se usaron los mismos datos del paciente”
                 $('#collapseBillingData').collapse('hide'); // cerrada por defecto si es igual
+            }
+
+            // ===== SECCIÓN 5: Información de pago (DINÁMICA) =====
+            const paymentMethodRaw = $(this).data('payment-method');          // "card" | "transfer"
+            const clientTxIdRaw = $(this).data('client-transaction-id');      // largo
+            const paymentStatusRaw = $(this).data('payment-status');          // lo que tengas guardado
+            const amountRaw = $(this).data('amount');                         // ya existe
+            // Fecha del pago: reusamos createdAtFinal (porque pago=cita)
+            const paymentDateFinal = createdAtFinal || 'N/A';
+
+            // Reset visual
+            $('#paymentSectionWrapper').hide();
+            $('#paymentCardBlock').hide();
+            $('#paymentTransferBlock').hide();
+
+            // Helpers para labels/badges
+            function paymentMethodLabel(method) {
+                const m = String(method || '').trim().toLowerCase();
+                if (m === 'card') return 'Tarjeta';
+                if (m === 'transfer') return 'Transferencia';
+                return m ? (m.charAt(0).toUpperCase() + m.slice(1)) : 'N/A';
+            }
+
+            function paymentStatusBadge(status) {
+                const s = String(status || '').trim().toLowerCase();
+
+                // Ajusta aquí a tus estados reales si los tienes definidos
+                const colors = {
+                    paid: '#2ecc71',
+                    pending: '#f39c12',
+                    processing: '#3498db',
+                    rejected: '#e74c3c',
+                    failed: '#e74c3c',
+                    cancelled: '#95a5a6',
+                    na: '#95a5a6',
+                };
+
+                const labels = {
+                    paid: 'Pagado',
+                    pending: 'Pendiente',
+                    processing: 'Procesando',
+                    rejected: 'Rechazado',
+                    failed: 'Fallido',
+                    cancelled: 'Cancelado',
+                    na: 'N/A',
+                };
+
+                const key = s || 'na';
+                const color = colors[key] || '#95a5a6';
+                const label = labels[key] || (status ? String(status) : 'N/A');
+
+                return `<span class="badge px-2 py-1" style="background-color:${color};color:white;">${label}</span>`;
+            }
+
+            const pm = String(paymentMethodRaw || '').trim().toLowerCase();
+
+            if (pm === 'card') {
+                $('#paymentSectionWrapper').show();
+                $('#paymentCardBlock').show();
+
+                $('#modalPaymentMethodLabel').text(paymentMethodLabel(pm));
+                $('#modalClientTransactionId').text(clientTxIdRaw ? String(clientTxIdRaw) : 'N/A');
+
+                const amountText =
+                    amountRaw !== null && amountRaw !== undefined && amountRaw !== ''
+                        ? `$${parseFloat(amountRaw).toFixed(2)}`
+                        : 'N/A';
+
+                $('#modalPaymentAmount').text(amountText);
+                $('#modalPaymentDate').text(paymentDateFinal);
+                $('#modalPaymentStatusBadge2').html(paymentStatusBadge(paymentStatusRaw));
+
+            } else if (pm === 'transfer') {
+                $('#paymentSectionWrapper').show();
+                $('#paymentTransferBlock').show();
+
+                $('#modalTransferMethodLabel').text(paymentMethodLabel(pm));
+
+                const amountText =
+                    amountRaw !== null && amountRaw !== undefined && amountRaw !== ''
+                        ? `$${parseFloat(amountRaw).toFixed(2)}`
+                        : 'N/A';
+
+                $('#modalTransferAmount').text(amountText);
+
+            } else {
+                // Si no hay método, ocultamos Sección 5 (no mostramos basura)
+                $('#paymentSectionWrapper').hide();
             }
 
             const amount = $(this).data('amount');
