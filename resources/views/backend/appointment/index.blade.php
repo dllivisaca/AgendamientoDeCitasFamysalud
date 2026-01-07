@@ -341,6 +341,49 @@
             </div>
         </div>
     </form>
+
+    <!-- ✅ Modal: Vista rápida del comprobante -->
+    <div class="modal fade" id="transferReceiptModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-receipt" role="document">
+        <div class="modal-content">
+
+        <div class="modal-header">
+            <h5 class="modal-title">Comprobante de transferencia</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+
+        <div class="modal-body">
+            <div id="receiptLoading" class="text-center py-3" style="display:none;">
+            <span class="text-muted">Cargando comprobante...</span>
+            </div>
+
+            <div id="receiptError" class="alert alert-danger" style="display:none;">
+            No se pudo cargar el comprobante.
+            </div>
+
+            <div class="text-center">
+            <img id="receiptImg"
+                src=""
+                alt="Comprobante"
+                style="max-width:100%; height:auto; display:none; border-radius:6px;">
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <a href="#" target="_blank" id="receiptOpenNewTab" class="btn btn-primary">
+            Pantalla completa
+            </a>
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">
+            Cerrar
+            </button>
+        </div>
+
+        </div>
+    </div>
+    </div>
+
     <div class="">
         @if (session('success'))
             <div class="alert alert-success alert-dismissable">
@@ -574,7 +617,12 @@
 @stop
 
 @section('css')
-
+<style>
+  /* ✅ ancho cómodo para comprobantes (responsive) */
+  .modal-dialog.modal-receipt {
+    max-width: 900px;
+  }
+</style>
 @stop
 
 @section('js')
@@ -988,9 +1036,11 @@
                     const protectedUrl = `/admin/appointments/${appointmentId}/transfer-receipt`;
 
                     $('#modalTransferReceipt').html(
-                        `<a href="${protectedUrl}" target="_blank" class="btn btn-outline-primary btn-sm">
+                        `<button type="button"
+                            class="btn btn-outline-primary btn-sm js-open-receipt-modal"
+                            data-url="${protectedUrl}">
                             Ver comprobante
-                        </a>`
+                        </button>`
                     );
                 } else {
                     $('#modalTransferReceipt').html(
@@ -1071,6 +1121,46 @@
 
             // Por ahora, estado del pago queda N/A hasta que lo conectemos a tus campos reales
             $('#modalPaymentStatusBadge').html(paymentStatusBadge(paymentStatusRaw));
+        });
+    </script>
+
+    <script>
+        // ✅ Abrir modal del comprobante (delegado)
+        $(document).on('click', '.js-open-receipt-modal', function () {
+            const url = $(this).data('url');
+
+            // Reset UI
+            $('#receiptError').hide();
+            $('#receiptImg').hide().attr('src', '');
+            $('#receiptLoading').show();
+
+            // Botón "Pantalla completa"
+            $('#receiptOpenNewTab').attr('href', url);
+
+            // Cargar imagen
+            const img = $('#receiptImg')[0];
+            img.onload = function () {
+            $('#receiptLoading').hide();
+            $('#receiptImg').show();
+            };
+            img.onerror = function () {
+            $('#receiptLoading').hide();
+            $('#receiptError').show();
+            };
+
+            // Set src (route protegida que ya te funciona)
+            $('#receiptImg').attr('src', url);
+
+            // Mostrar modal
+            $('#transferReceiptModal').modal('show');
+        });
+
+        // ✅ Fix: cuando se cierra el modal del comprobante, mantener "modal-open"
+        // (porque sigues dentro del modal de la cita)
+        $('#transferReceiptModal').on('hidden.bs.modal', function () {
+            if ($('#appointmentModal').hasClass('show')) {
+            $('body').addClass('modal-open');
+            }
         });
     </script>
 @endsection
