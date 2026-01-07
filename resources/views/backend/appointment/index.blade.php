@@ -16,6 +16,8 @@
     <form id="appointmentStatusForm" method="POST" action="{{ route('appointments.update.status') }}">
         @csrf
         <input type="hidden" name="appointment_id" id="modalAppointmentId">
+        <input type="hidden" name="transfer_validation_status" id="modalTransferValidationStatusInput" value="">
+        <input type="hidden" name="transfer_validation_notes" id="modalTransferValidationNotesInput" value="">
 
         <div class="modal fade" id="appointmentModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
@@ -312,6 +314,42 @@
                                             <span class="text-muted font-italic small">N/A</span>
                                         </div>
                                     </div>
+
+                                    {{-- =========================
+                                        SUBSECCIÓN: Validación de transferencia (solo admin / solo transfer)
+                                    ========================== --}}
+                                    <div class="col-md-12 mt-3">
+                                        <div class="small text-muted font-weight-bold">Validación de transferencia</div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-2">
+                                        <div class="small text-muted">Estado de validación</div>
+                                        <select class="form-control form-control-sm" id="modalTransferValidationSelect">
+                                            <option value="">Sin revisar</option>
+                                            <option value="validated">Validada</option>
+                                            <option value="rejected">Rechazada</option>
+                                        </select>
+                                        <small class="text-muted d-block mt-1">
+                                            “Validada” marcará la cita como pagada. “Rechazada” pasará la cita a En espera.
+                                        </small>
+                                    </div>
+
+                                    <div class="col-md-6 mb-2" id="transferValidationMeta" style="display:none;">
+                                        <div class="small text-muted">Última validación</div>
+                                        <div class="text-dark">
+                                            <span id="modalTransferValidatedAt">N/A</span>
+                                            <span class="text-muted">·</span>
+                                            <span id="modalTransferValidatedBy">N/A</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-12 mb-0" id="transferValidationNotesWrapper" style="display:none;">
+                                        <div class="small text-muted">
+                                            Observaciones <span id="transferNotesRequired" class="text-danger" style="display:none;">(obligatorias)</span>
+                                        </div>
+                                        <textarea class="form-control form-control-sm" id="modalTransferValidationNotes" rows="2"
+                                            placeholder="Ej: El comprobante no coincide con el monto / Falta referencia / OK, confirmado en el banco."></textarea>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -340,8 +378,9 @@
                     </div>
 
                     <div class="modal-footer">
-                        <button type="submit" onclick="return confirm('¿Estás seguro que quieres actualizar el estado de la cita?')"
-                            class="btn btn-danger">Actualizar estado</button>
+                        <button type="submit" id="btnSaveChanges"
+                            onclick="return confirm('¿Estás seguro que quieres guardar los cambios?')"
+                            class="btn btn-danger">Guardar cambios</button>
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
                     </div>
 
@@ -1053,6 +1092,27 @@
                 $('#paymentSectionWrapper').show();
                 $('#paymentTransferBlock').show();
 
+                // ===== SUBSECCIÓN: Validación de transferencia (solo transfer) =====
+                // Reset UI
+                $('#modalTransferValidationSelect').val('');
+                $('#modalTransferValidationNotes').val('');
+                $('#transferValidationNotesWrapper').hide();
+                $('#transferNotesRequired').hide();
+                $('#transferValidationMeta').hide();
+
+                // Limpia hidden (para que no se quede pegado de otra cita)
+                $('#modalTransferValidationStatusInput').val('');
+                $('#modalTransferValidationNotesInput').val('');
+
+                // (Opcional) Si luego pasas estos data-* desde el botón, aquí los pintas:
+                // const validatedAt = $(this).data('transfer-validated-at');
+                // const validatedBy = $(this).data('transfer-validated-by-name'); // o email/nombre
+                // if (validatedAt || validatedBy) {
+                //   $('#transferValidationMeta').show();
+                //   $('#modalTransferValidatedAt').text(validatedAt ? String(validatedAt) : 'N/A');
+                //   $('#modalTransferValidatedBy').text(validatedBy ? String(validatedBy) : 'N/A');
+                // }
+
                 $('#modalTransferMethodLabel').text(paymentMethodLabel(pm));
 
                 const amountText =
@@ -1199,6 +1259,57 @@
 
             // Por ahora, estado del pago queda N/A hasta que lo conectemos a tus campos reales
             $('#modalPaymentStatusBadge').html(paymentStatusBadge(paymentStatusRaw));
+        });
+    </script>
+
+    <script>
+        // ✅ Cambios en validación de transferencia (solo aplica si el bloque existe)
+        $(document).on('change', '#modalTransferValidationSelect', function () {
+            const v = String($(this).val() || '').trim().toLowerCase();
+
+            if (v === 'validated' || v === 'rejected') {
+                $('#transferValidationNotesWrapper').show();
+
+                // Rechazada -> notas obligatorias
+                if (v === 'rejected') {
+                    $('#transferNotesRequired').show();
+                } else {
+                    $('#transferNotesRequired').hide();
+                }
+            } else {
+                // Sin revisar
+                $('#transferValidationNotesWrapper').hide();
+                $('#transferNotesRequired').hide();
+                $('#modalTransferValidationNotes').val('');
+            }
+        });
+
+        // ✅ Antes de enviar el form: valida reglas y llena hidden inputs
+        $(document).on('submit', '#appointmentStatusForm', function (e) {
+            const pm = String($('#modalTransferMethodLabel').text() || '').trim().toLowerCase();
+            // OJO: tu label muestra "Transferencia" / "Tarjeta"
+            const isTransfer = (pm === 'transferencia');
+
+            if (!isTransfer) {
+                // Si no es transferencia, no forzamos nada
+                return true;
+            }
+
+            const v = String($('#modalTransferValidationSelect').val() || '').trim().toLowerCase();
+            const notes = String($('#modalTransferValidationNotes').val() || '').trim();
+
+            // Rechazada requiere notas
+            if (v === 'rejected' && notes === '') {
+                e.preventDefault();
+                alert('Para marcar como "Rechazada", debes escribir una observación.');
+                return false;
+            }
+
+            // Llenar hidden inputs para backend
+            $('#modalTransferValidationStatusInput').val(v);   // "" | validated | rejected
+            $('#modalTransferValidationNotesInput').val(notes);
+
+            return true;
         });
     </script>
 
