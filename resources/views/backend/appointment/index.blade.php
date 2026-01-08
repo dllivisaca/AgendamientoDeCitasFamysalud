@@ -1386,8 +1386,18 @@
             $('#modalTransferValidationStatusInput').val(v);   // "" | validated | rejected
             $('#modalTransferValidationNotesInput').val(notes);
 
-            if (v === 'validated') $('#modalStatusHidden').val('paid');
-            if (v === 'rejected')  $('#modalStatusHidden').val('on_hold');
+            if (v === 'validated') {
+                $('#modalStatusHidden').val('paid');
+            } else if (v === 'rejected') {
+                $('#modalStatusHidden').val('on_hold');
+            } else {
+                // ✅ Sin revisar => volver a pendiente de verificación
+                $('#modalStatusHidden').val('pending_verification');
+
+                // ✅ Asegurar que se envíe vacío al backend (para que él lo convierta a NULL)
+                $('#modalTransferValidationStatusInput').val('');
+                $('#modalTransferValidationNotesInput').val('');
+            }
 
             // Rechazada requiere notas
             if (v === 'rejected' && notes === '') {
