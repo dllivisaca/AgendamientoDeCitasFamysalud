@@ -829,7 +829,10 @@
 
                     // ✅ HOLD
                     hold_id: null,
-                    hold_expires_at: null
+                    hold_expires_at: null,
+
+                    // ✅ Guard para cierre de pestaña
+                    booking_completed: false
                 };
 
                 // ✅ Persistir consentimiento en bookingState
@@ -2036,6 +2039,25 @@
                     }
                 }
 
+                // ✅ Guard: alerta si intenta cerrar pestaña desde Step 4+ sin completar
+                (function () {
+                    function shouldWarnOnLeave() {
+                        const step = Number(bookingState?.currentStep || 1);
+                        const done = Boolean(bookingState?.booking_completed);
+                        return step >= 4 && !done;
+                    }
+
+                    window.addEventListener('beforeunload', function (e) {
+                        if (!shouldWarnOnLeave()) return;
+
+                        // Nota: Chrome/Edge muestran un mensaje genérico, pero esto lo activa sí o sí.
+                        const msg = 'Tu cita NO quedará agendada si no completas todos los pasos.';
+
+                        e.preventDefault();
+                        e.returnValue = msg; // requerido por el estándar
+                        return msg;
+                    });
+                })();
 
                 function updateProgressBar() {
                     const progress = ((bookingState.currentStep - 1) / 5) * 100;
@@ -3141,7 +3163,8 @@
                                 `
                         }
                     `);
-
+                    // ✅ Ya se creó la cita: desactivar warning al cerrar pestaña
+                    bookingState.booking_completed = true;
                     new bootstrap.Modal(document.getElementById("bookingSuccessModal")).show();
                     setTimeout(resetBooking, 800); // igual que transferencia (pop-up y enseguida paso 1)
                 }
@@ -3454,7 +3477,8 @@
                             `
                         }
                         `);
-
+                        // ✅ Ya se creó la cita: desactivar warning al cerrar pestaña
+                        bookingState.booking_completed = true;
                         new bootstrap.Modal(document.getElementById("bookingSuccessModal")).show();
 
                         setTimeout(resetBooking, 800);
@@ -3631,7 +3655,8 @@
                         selectedDate: null,
                         selectedTime: null,
                         appointmentMode: 'presencial',
-                        paymentMethod: null
+                        paymentMethod: null,
+                        booking_completed: false
                     };
 
                     // Reset UI
