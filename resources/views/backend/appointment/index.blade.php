@@ -18,6 +18,7 @@
         <input type="hidden" name="appointment_id" id="modalAppointmentId">
         <input type="hidden" name="status" id="modalStatusHidden" value="">
         <input type="hidden" name="transfer_validation_status" id="modalTransferValidationStatusInput" value="">
+        <input type="hidden" name="payment_status" id="modalPaymentStatusHidden" value="">
         <input type="hidden" name="transfer_validation_notes" id="modalTransferValidationNotesInput" value="">
         <input type="hidden" id="modalPaymentMethodRaw" value="">
 
@@ -154,14 +155,37 @@
 
                                 <div class="col-md-6 mb-0">
                                     <div class="small text-muted">Estado de la cita</div>
-                                    <div class="text-dark" id="modalStatusBadge">N/A</div>
+
+                                    {{-- Texto (badge) --}}
+                                    <div class="text-dark js-edit-text" id="modalStatusBadge">N/A</div>
+
+                                    {{-- Select (modo edición) --}}
+                                    <select class="form-control form-control-sm js-edit-input" id="modalStatusSelect">
+                                        <option value="pending_verification">Pendiente de verificación</option>
+                                        <option value="paid">Pagada</option>
+                                        <option value="confirmed">Confirmada</option>
+                                        <option value="completed">Completada</option>
+                                        <option value="canceled">Cancelada</option>
+                                        <option value="rescheduled">Reagendada</option>
+                                        <option value="no_show">No asistió</option>
+                                        <option value="on_hold">En espera</option>
+                                    </select>
                                 </div>
 
                                 <div class="col-md-6 mb-0">
                                     <div class="small text-muted">Estado del pago</div>
-                                    <div class="text-dark" id="modalPaymentStatusBadge">
+
+                                    {{-- Texto (badge) --}}
+                                    <div class="text-dark js-edit-text" id="modalPaymentStatusBadge">
                                         <span class="badge px-2 py-1" style="background-color:#95a5a6;color:white;">N/A</span>
                                     </div>
+
+                                    {{-- Select (modo edición) --}}
+                                    <select class="form-control form-control-sm js-edit-input" id="modalPaymentStatusSelect">
+                                        <option value="pending">Pendiente</option>
+                                        <option value="paid">Pagado</option>
+                                        <option value="refunded">Reembolsado</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -195,7 +219,6 @@
                                         <div class="text-dark js-edit-text" id="modalDocType">N/A</div>
                                         <select class="form-control form-control-sm js-edit-input"
                                                 id="modalDocTypeInput" name="patient_doc_type">
-                                            <option value="">—</option>
                                             <option value="cedula">Cédula</option>
                                             <option value="ruc">RUC</option>
                                             <option value="pasaporte">Pasaporte</option>
@@ -309,7 +332,6 @@
                                         <div class="text-dark js-edit-text" id="modalBillingDocType">N/A</div>
                                         <select class="form-control form-control-sm js-edit-input"
                                                 id="modalBillingDocTypeInput" name="billing_doc_type">
-                                            <option value="">—</option>
                                             <option value="cedula">Cédula</option>
                                             <option value="ruc">RUC</option>
                                             <option value="pasaporte">Pasaporte</option>
@@ -647,26 +669,27 @@
                                     <tbody>
                                         @php
                                             $statusColors = [
-                                                'Pending payment' => '#f39c12',
-                                                'Processing' => '#3498db',
-                                                'Paid' => '#2ecc71',
-                                                'Cancelled' => '#ff0000',
-                                                'Completed' => '#008000',
-                                                'On Hold' => '#95a5a6',
-                                                'Rescheduled' => '#f1c40f',
-                                                'No Show' => '#e67e22',
+                                                // ✅ NUEVOS (los que sí quieres)
+                                                'pending_verification' => '#7f8c8d',
+                                                'paid' => '#2ecc71',
+                                                'confirmed' => '#3498db',
+                                                'completed' => '#008000',
+                                                'canceled' => '#ff0000',
+                                                'rescheduled' => '#f1c40f',
+                                                'no_show' => '#e67e22',
+                                                'on_hold' => '#95a5a6',
                                             ];
 
                                             $statusLabels = [
-                                                'Pending payment' => 'Pendiente de pago',
-                                                'Processing' => 'Procesando',
-                                                'Paid' => 'Pagada',
-                                                'Cancelled' => 'Cancelado',
-                                                'Completed' => 'Completado',
-                                                'On Hold' => 'En espera',
-                                                'Rescheduled' => 'Reprogramado',
-                                                'No Show' => 'No asistió',
+                                                // ✅ NUEVOS
                                                 'pending_verification' => 'Pendiente de verificación',
+                                                'paid' => 'Pagada',
+                                                'confirmed' => 'Confirmada',
+                                                'completed' => 'Completada',
+                                                'canceled' => 'Cancelada',
+                                                'rescheduled' => 'Reagendada',
+                                                'no_show' => 'No asistió',
+                                                'on_hold' => 'En espera',
                                             ];
                                         @endphp
                                         @foreach ($appointments as $appointment)
@@ -1213,23 +1236,15 @@
 
                 // Ajusta aquí a tus estados reales si los tienes definidos
                 const colors = {
-                    paid: '#2ecc71',
                     pending: '#f39c12',
-                    processing: '#3498db',
-                    rejected: '#e74c3c',
-                    failed: '#e74c3c',
-                    cancelled: '#95a5a6',
-                    na: '#95a5a6',
+                    paid: '#2ecc71',
+                    refunded: '#9b59b6',
                 };
 
                 const labels = {
-                    paid: 'Pagado',
                     pending: 'Pendiente',
-                    processing: 'Procesando',
-                    rejected: 'Rechazado',
-                    failed: 'Fallido',
-                    cancelled: 'Cancelado',
-                    na: 'N/A',
+                    paid: 'Pagado',
+                    refunded: 'Reembolsado',
                 };
 
                 const key = s || 'na';
@@ -1426,32 +1441,32 @@
             let normalizedStatus = String(rawStatus || '')
                 .trim()
                 .toLowerCase()
-                .replace(/\s+/g, '_');
+                .replace(/\s+/g, '_')
+                .replace('cancelled', 'canceled'); // ✅ fuerza tu formato en BD
 
             // Colores por status normalizado
             const statusColors = {
-                pending_payment: '#f39c12',
-                processing: '#3498db',
+                // ✅ nuevos
+                pending_verification: '#7f8c8d',
                 paid: '#2ecc71',
-                cancelled: '#ff0000',
+                confirmed: '#3498db',
                 completed: '#008000',
-                on_hold: '#95a5a6',
+                canceled: '#ff0000',
                 rescheduled: '#f1c40f',
                 no_show: '#e67e22',
-                pending_verification: '#7f8c8d',
+                on_hold: '#95a5a6',
             };
 
-            // Etiquetas en español por status normalizado
             const statusLabels = {
-                pending_payment: 'Pendiente de pago',
-                processing: 'Procesando',
-                paid: 'Pagada',
-                cancelled: 'Cancelada',
-                completed: 'Completada',
-                on_hold: 'En espera',
-                rescheduled: 'Reprogramada',
-                no_show: 'No asistió',
+                // ✅ nuevos
                 pending_verification: 'Pendiente de verificación',
+                paid: 'Pagada',
+                confirmed: 'Confirmada',
+                completed: 'Completada',
+                canceled: 'Cancelada',
+                rescheduled: 'Reagendada',
+                no_show: 'No asistió',
+                on_hold: 'En espera',
             };
 
             const badgeColor = statusColors[normalizedStatus] || '#7f8c8d';
@@ -1464,6 +1479,76 @@
 
             // Por ahora, estado del pago queda N/A hasta que lo conectemos a tus campos reales
             $('#modalPaymentStatusBadge').html(paymentStatusBadge(paymentStatusRaw));
+
+            // ============================
+            // ✅ Pre-cargar selects de estados (Resumen)
+            // ============================
+
+            // Estado cita (usa el normalizedStatus que ya armaste)
+            $('#modalStatusSelect').val(normalizedStatus || 'pending_verification');
+
+            // Estado pago (normaliza para que matchee opciones)
+            const pStat = String(paymentStatusRaw || '').trim().toLowerCase();
+            $('#modalPaymentStatusSelect').val(pStat);
+
+            // ✅ Hiddens que se envían al backend
+            $('#modalStatusHidden').val(normalizedStatus || 'pending_verification');
+            $('#modalPaymentStatusHidden').val(pStat);
+
+            // ============================
+            // ✅ Cambios en selects de estado (Resumen)
+            // ============================
+            $(document).off('change.apptStatusSelects'); // evita duplicados si recargas scripts
+            $(document).on('change.apptStatusSelects', '#modalStatusSelect', function () {
+                const v = String($(this).val() || '').trim().toLowerCase();
+
+                // hidden que se envía
+                $('#modalStatusHidden').val(v);
+
+                // refrescar badge visible
+                const statusColors = {
+                    pending_payment: '#f39c12',
+                    processing: '#3498db',
+                    paid: '#2ecc71',
+                    cancelled: '#ff0000',
+                    completed: '#008000',
+                    on_hold: '#95a5a6',
+                    rescheduled: '#f1c40f',
+                    no_show: '#e67e22',
+                    pending_verification: '#7f8c8d',
+                };
+
+                const statusLabels = {
+                    pending_payment: 'Pendiente de pago',
+                    processing: 'Procesando',
+                    paid: 'Pagada',
+                    cancelled: 'Cancelada',
+                    completed: 'Completada',
+                    on_hold: 'En espera',
+                    rescheduled: 'Reprogramada',
+                    no_show: 'No asistió',
+                    pending_verification: 'Pendiente de verificación',
+                };
+
+                const c = statusColors[v] || '#7f8c8d';
+                const l = statusLabels[v] || 'Estado desconocido';
+
+                $('#modalStatusBadge').html(`<span class="badge px-2 py-1" style="background-color:${c}; color:white;">${l}</span>`);
+
+                __updateSaveButtonState();
+            });
+
+            $(document).on('change.apptStatusSelects', '#modalPaymentStatusSelect', function () {
+                const v = String($(this).val() || '').trim().toLowerCase();
+
+                // hidden que se envía
+                $('#modalPaymentStatusHidden').val(v);
+
+                // badge visible
+                $('#modalPaymentStatusBadge').html(paymentStatusBadge(v));
+
+                __updateSaveButtonState();
+            });
 
             // ============================
             // ✅ Pre-cargar inputs editables desde data-*
@@ -1744,6 +1829,9 @@
             return {
                 pmRaw,
 
+                appointment_status: __norm($('#modalStatusSelect').val()).toLowerCase(),
+                payment_status: __norm($('#modalPaymentStatusSelect').val()).toLowerCase(),
+
                 patient_full_name: __norm($('#modalPatientFullNameInput').val()),
                 patient_doc_type: __norm($('#modalDocTypeInput').val()).toLowerCase(),
                 patient_doc_number: __norm($('#modalDocNumberInput').val()),
@@ -1808,7 +1896,7 @@
             __updateSaveButtonState();
         });
 
-        $(document).on('input change', '#modalPatientFullNameInput,#modalDocTypeInput,#modalDocNumberInput,#modalEmailInput,#modalPhoneInput,#modalAddressInput,#modalPatientTimezoneInput,#modalNotesInput,#modalBillingNameInput,#modalBillingDocTypeInput,#modalBillingDocNumberInput,#modalBillingEmailInput,#modalBillingPhoneInput,#modalBillingAddressInput,#modalAmountInput,#modalTransferBankOriginInput,#modalTransferPayerNameInput,#modalTransferDateInput,#modalTransferReferenceInput', function () {
+        $(document).on('input change', '#modalPatientFullNameInput,#modalDocTypeInput,#modalDocNumberInput,#modalEmailInput,#modalPhoneInput,#modalAddressInput,#modalPatientTimezoneInput,#modalNotesInput,#modalBillingNameInput,#modalBillingDocTypeInput,#modalBillingDocNumberInput,#modalBillingEmailInput,#modalBillingPhoneInput,#modalBillingAddressInput,#modalAmountInput,#modalTransferBankOriginInput,#modalTransferPayerNameInput,#modalTransferDateInput,#modalTransferReferenceInput,#modalStatusSelect,#modalPaymentStatusSelect', function () {
             __updateSaveButtonState();
         });
 
