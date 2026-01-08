@@ -24,7 +24,7 @@
         <div class="modal fade" id="appointmentModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
                 <div class="modal-content">
-                    <div class="modal-header">
+                    <div class="modal-header d-flex align-items-start justify-content-between">
                         <div>
                             <h5 class="modal-title mb-0">Detalles de la cita</h5>
 
@@ -34,12 +34,72 @@
                             </div>
                         </div>
 
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
+                        <div class="d-flex align-items-center">
+                            {{-- ✅ Indicador sutil de modo (solo UI) --}}
+                            <span id="apptModeBadge" class="badge badge-light mr-2" style="display:none;">
+                                Editando
+                            </span>
+
+                            {{-- ✅ Dropdown Acciones --}}
+                            <div class="dropdown mr-2">
+                                <button class="btn btn-outline-primary btn-sm dropdown-toggle"
+                                        type="button"
+                                        id="apptActionsDropdown"
+                                        data-toggle="dropdown"
+                                        aria-haspopup="true"
+                                        aria-expanded="false">
+                                    Acciones
+                                </button>
+
+                                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="apptActionsDropdown">
+                                    <button type="button" class="dropdown-item" id="btnEnterEditMode">
+                                        <i class="fas fa-pen mr-2"></i>Editar datos
+                                    </button>
+
+                                    <div class="dropdown-divider"></div>
+
+                                    <button type="button" class="dropdown-item" id="btnReagendar">
+                                        <i class="fas fa-calendar-alt mr-2"></i>Reagendar
+                                    </button>
+
+                                    <button type="button" class="dropdown-item" id="btnConfirmarCita">
+                                        <i class="fas fa-check-circle mr-2"></i>Confirmar cita
+                                    </button>
+
+                                    <button type="button" class="dropdown-item" id="btnNoAsistio">
+                                        <i class="fas fa-user-times mr-2"></i>Marcar como no asistida
+                                    </button>
+
+                                    <button type="button" class="dropdown-item text-danger" id="btnCancelarCita">
+                                        <i class="fas fa-ban mr-2"></i>Cancelar cita
+                                    </button>
+
+                                    <div class="dropdown-divider"></div>
+
+                                    <button type="button" class="dropdown-item" id="btnVerHistorial">
+                                        <i class="fas fa-history mr-2"></i>Ver historial de cambios
+                                    </button>
+                                </div>
+                            </div>
+
+                            {{-- ✅ Cerrar modal --}}
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="modal-body">
+                        {{-- ✅ Banner: modo edición (solo UI) --}}
+                        <div id="editModeBanner" class="alert alert-warning py-2 mb-3" style="display:none;">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="mb-0">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                                    <strong>Modo edición:</strong> estás editando datos de la cita.
+                                </div>
+                                <small class="text-muted">No se guardará nada hasta que presiones “Guardar cambios”.</small>
+                            </div>
+                        </div>
 
                         {{-- =========================
                             SECCIÓN 1 (NO COLAPSABLE)
@@ -363,9 +423,14 @@
                     </div>
 
                     <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" id="btnCancelEditMode" style="display:none;">
+                            Cancelar edición
+                        </button>
+
                         <button type="submit" id="btnSaveChanges" disabled
                             onclick="return confirm('¿Estás seguro que quieres guardar los cambios?')"
                             class="btn btn-danger">Guardar cambios</button>
+
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
                     </div>
 
@@ -688,6 +753,9 @@
 
 @section('css')
 <style>
+    #editModeBanner{
+        border-left: 4px solid #f39c12;
+    }
   /* ✅ Modal de comprobante: tamaño fijo al viewport (no gigante) */
     .modal-dialog.modal-receipt{
     max-width: 900px;
@@ -1599,6 +1667,62 @@
         $('#appointmentModal').on('hidden.bs.modal', function () {
             window.__apptModalSnapshot = null;
             $('#btnSaveChanges').prop('disabled', true);
+        });
+    </script>
+
+    <script>
+        // ============================
+        // ✅ UI: Modo lectura / Modo edición (solo UI por ahora)
+        // ============================
+        window.__apptIsEditMode = false;
+
+        function __enterEditModeUI() {
+            window.__apptIsEditMode = true;
+
+            $('#editModeBanner').show();
+            $('#btnCancelEditMode').show();
+            $('#apptModeBadge').show();
+
+            // Por ahora NO convertimos campos a inputs (eso viene en el siguiente paso),
+            // solo marcamos el estado visual.
+        }
+
+        function __exitEditModeUI() {
+            window.__apptIsEditMode = false;
+
+            $('#editModeBanner').hide();
+            $('#btnCancelEditMode').hide();
+            $('#apptModeBadge').hide();
+
+            // Por ahora NO revertimos nada más (porque no hay inputs aún).
+        }
+
+        // Click: Acciones -> Editar datos
+        $(document).on('click', '#btnEnterEditMode', function () {
+            __enterEditModeUI();
+            // Cerrar dropdown
+            $('#apptActionsDropdown').dropdown('hide');
+        });
+
+        // Click: Cancelar edición
+        $(document).on('click', '#btnCancelEditMode', function () {
+            __exitEditModeUI();
+        });
+
+        // Al abrir modal: siempre volver a solo lectura
+        $(document).on('click', '.view-appointment-btn', function() {
+            __exitEditModeUI();
+        });
+
+        // Al cerrar modal: resetear
+        $('#appointmentModal').on('hidden.bs.modal', function () {
+            __exitEditModeUI();
+        });
+
+        // (Opcional) Por ahora: estos botones solo muestran alerta placeholder
+        $(document).on('click', '#btnReagendar,#btnConfirmarCita,#btnNoAsistio,#btnCancelarCita,#btnVerHistorial', function(){
+            alert('Acción pendiente de implementar (solo UI en este paso).');
+            $('#apptActionsDropdown').dropdown('hide');
         });
     </script>
 @endsection
