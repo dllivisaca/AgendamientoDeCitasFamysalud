@@ -16,6 +16,7 @@
     <form id="appointmentStatusForm" method="POST" action="{{ route('appointments.update.status') }}">
         @csrf
         <input type="hidden" name="appointment_id" id="modalAppointmentId">
+        <input type="hidden" name="status" id="modalStatusHidden" value="">
         <input type="hidden" name="transfer_validation_status" id="modalTransferValidationStatusInput" value="">
         <input type="hidden" name="transfer_validation_notes" id="modalTransferValidationNotesInput" value="">
         <input type="hidden" id="modalPaymentMethodRaw" value="">
@@ -368,7 +369,7 @@
 
                         <div class="form-group ">
                             <label><strong>Estado:</strong></label>
-                            <select name="status" class="form-control" id="modalStatusSelect">
+                            <select class="form-control" id="modalStatusSelect">
                                 <option value="Pending payment">Pendiente de pago</option>
                                 <option value="Processing">Procesando</option>
                                 <option value="Paid">Pagado</option>
@@ -376,6 +377,7 @@
                                 <option value="Completed">Completado</option>
                                 <option value="On Hold">En espera</option>
                                 {{-- <option value="Rescheduled">Rescheduled</option> --}}
+                                <option value="pending_verification">Pendiente de verificación</option>
                                 <option value="No Show">No Show</option>
                             </select>
                         </div>
@@ -1249,6 +1251,13 @@
             var status = $(this).data('status');
             $('#modalStatusSelect').val(status);
 
+            if ($('#modalStatusSelect').val() === null) {
+                // fallback seguro si el status no existe en las options
+                $('#modalStatusSelect').val('Pending payment');
+            }
+
+            $('#modalStatusHidden').val($('#modalStatusSelect').val());
+
             // Set status badge (EN -> ES, sin guiones bajos)
             let rawStatus = $(this).data('status');
 
@@ -1298,6 +1307,11 @@
     </script>
 
     <script>
+
+        // ✅ Cada vez que cambien el select, actualiza el hidden
+        $(document).on('change', '#modalStatusSelect', function () {
+            $('#modalStatusHidden').val($(this).val());
+        });
         // ✅ Cambios en validación de transferencia (solo aplica si el bloque existe)
         $(document).on('change', '#modalTransferValidationSelect', function () {
             const v = String($(this).val() || '').trim().toLowerCase();
@@ -1342,6 +1356,8 @@
             console.log('[FORM method]', $('#appointmentStatusForm').attr('method'));
             console.log('[appointment_id]', $('#modalAppointmentId').val());
             console.log('[status select]', $('#modalStatusSelect').val());
+            $('#modalStatusHidden').val($('#modalStatusSelect').val());
+            console.log('[status hidden]', $('#modalStatusHidden').val());
             console.log('[pmRaw hidden]', $('#modalPaymentMethodRaw').val());
             console.log('[select validation]', $('#modalTransferValidationSelect').val());
             console.log('[notes textarea]', $('#modalTransferValidationNotes').val());
