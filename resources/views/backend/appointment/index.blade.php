@@ -359,28 +359,7 @@
                             </div>
                         </div>
 
-                        {{-- =========================
-                            RESTO DEL MODAL (NO BORRAR)
-                            Se queda debajo tal cual
-                        ========================== --}}
-                        <p><strong>Total:</strong> <span id="modalAmount">N/A</span></p>
-
-                        <p><strong>Estado actual:</strong> <span id="modalStatusBadgeLegacy">N/A</span></p>
-
-                        <div class="form-group ">
-                            <label><strong>Estado:</strong></label>
-                            <select class="form-control" id="modalStatusSelect">
-                                <option value="Pending payment">Pendiente de pago</option>
-                                <option value="Processing">Procesando</option>
-                                <option value="Paid">Pagado</option>
-                                <option value="Cancelled">Cancelado</option>
-                                <option value="Completed">Completado</option>
-                                <option value="On Hold">En espera</option>
-                                {{-- <option value="Rescheduled">Rescheduled</option> --}}
-                                <option value="pending_verification">Pendiente de verificación</option>
-                                <option value="No Show">No Show</option>
-                            </select>
-                        </div>
+                       
                     </div>
 
                     <div class="modal-footer">
@@ -1136,10 +1115,10 @@
                 // ===== SUBSECCIÓN: Validación de transferencia (solo transfer) =====
 
                 // Leer data-* desde el botón
-                const validationStatus = $(this).data('transferValidationStatus');
-                const validatedAtRaw   = $(this).data('transferValidatedAt');
-                const validatedByName  = $(this).data('transferValidatedBy');
-                const validationNotes  = $(this).data('transferValidationNotes');
+                const validationStatus = $(this).attr('data-transfer-validation-status');
+                const validatedAtRaw   = $(this).attr('data-transfer-validated-at');
+                const validatedByName  = $(this).attr('data-transfer-validated-by');
+                const validationNotes  = $(this).attr('data-transfer-validation-notes');
 
                 const vStatus = String(validationStatus || '').trim().toLowerCase();
 
@@ -1287,16 +1266,9 @@
                     .addClass('text-muted font-italic small');
             }
 
-            // Set status select dropdown
-            var status = $(this).data('status');
-            $('#modalStatusSelect').val(status);
-
-            if ($('#modalStatusSelect').val() === null) {
-                // fallback seguro si el status no existe en las options
-                $('#modalStatusSelect').val('Pending payment');
-            }
-
-            $('#modalStatusHidden').val($('#modalStatusSelect').val());
+            // ✅ Guardar status real en hidden (sin dropdown)
+            const statusRaw = $(this).data('status');
+            $('#modalStatusHidden').val(statusRaw ? String(statusRaw).trim() : 'Pending payment');
 
             // Set status badge (EN -> ES, sin guiones bajos)
             let rawStatus = $(this).data('status');
@@ -1347,11 +1319,6 @@
     </script>
 
     <script>
-
-        // ✅ Cada vez que cambien el select, actualiza el hidden
-        $(document).on('change', '#modalStatusSelect', function () {
-            $('#modalStatusHidden').val($(this).val());
-        });
         // ✅ Cambios en validación de transferencia (solo aplica si el bloque existe)
         $(document).on('change', '#modalTransferValidationSelect', function () {
             const v = String($(this).val() || '').trim().toLowerCase();
@@ -1395,14 +1362,11 @@
             console.log('[FORM action]', $('#appointmentStatusForm').attr('action'));
             console.log('[FORM method]', $('#appointmentStatusForm').attr('method'));
             console.log('[appointment_id]', $('#modalAppointmentId').val());
-            console.log('[status select]', $('#modalStatusSelect').val());
-            $('#modalStatusHidden').val($('#modalStatusSelect').val());
             console.log('[status hidden]', $('#modalStatusHidden').val());
             console.log('[pmRaw hidden]', $('#modalPaymentMethodRaw').val());
             console.log('[select validation]', $('#modalTransferValidationSelect').val());
             console.log('[notes textarea]', $('#modalTransferValidationNotes').val());
-            console.log('[hidden transfer_validation_status]', $('#modalTransferValidationStatusInput').val());
-            console.log('[hidden transfer_validation_notes]', $('#modalTransferValidationNotesInput').val());
+           
             console.log('===============================================================');
             // ✅ Usa el valor real de BD: "transfer" | "card"
             const pmRaw = String($('#modalPaymentMethodRaw').val() || '').trim().toLowerCase();
@@ -1418,17 +1382,22 @@
             const v = String($('#modalTransferValidationSelect').val() || '').trim().toLowerCase();
             const notes = String($('#modalTransferValidationNotes').val() || '').trim();
 
+             // ✅ Llenar hidden inputs para backend
+            $('#modalTransferValidationStatusInput').val(v);   // "" | validated | rejected
+            $('#modalTransferValidationNotesInput').val(notes);
+
+            if (v === 'validated') $('#modalStatusHidden').val('paid');
+            if (v === 'rejected')  $('#modalStatusHidden').val('on_hold');
+
             // Rechazada requiere notas
             if (v === 'rejected' && notes === '') {
                 e.preventDefault();
                 alert('Para marcar como "Rechazada", debes escribir una observación.');
                 return false;
             }
-
-            // ✅ Llenar hidden inputs para backend
-            $('#modalTransferValidationStatusInput').val(v);   // "" | validated | rejected
-            $('#modalTransferValidationNotesInput').val(notes);
-
+            console.log('[hidden transfer_validation_status]', $('#modalTransferValidationStatusInput').val());
+            console.log('[hidden transfer_validation_notes]', $('#modalTransferValidationNotesInput').val());
+           
             return true;
         });
     </script>

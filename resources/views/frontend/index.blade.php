@@ -2149,11 +2149,11 @@
                                     if (service.sale_price) {
                                         // If sale price exists, show both with strike-through on original price
                                         priceDisplay =
-                                            `<span class="text-decoration-line-through text-muted">${service.price}</span> <span class=" fw-bold">Efectivo / Transferencia: ${service.sale_price}</span>`;
+                                            `<span class="text-decoration-line-through text-muted">${service.price}</span> <span class=" fw-bold">Transferencia: ${service.sale_price}</span>`;
                                     } else {
                                         // If no sale price, just show regular price normally
                                         priceDisplay =
-                                            `<span class="fw-bold">Efectivo / Transferencia: ${service.price}</span>`;
+                                            `<span class="fw-bold">Transferencia: ${service.price}</span>`;
                                     }
 
                                     const serviceCard = `
