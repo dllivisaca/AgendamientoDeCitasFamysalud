@@ -363,7 +363,7 @@
                     </div>
 
                     <div class="modal-footer">
-                        <button type="submit" id="btnSaveChanges"
+                        <button type="submit" id="btnSaveChanges" disabled
                             onclick="return confirm('¿Estás seguro que quieres guardar los cambios?')"
                             class="btn btn-danger">Guardar cambios</button>
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
@@ -1315,6 +1315,9 @@
 
             // Por ahora, estado del pago queda N/A hasta que lo conectemos a tus campos reales
             $('#modalPaymentStatusBadge').html(paymentStatusBadge(paymentStatusRaw));
+
+            // ✅ Snapshot final (BD) para habilitar Guardar cambios solo si hay cambios reales
+            __setSnapshotFromCurrent();
         });
     </script>
 
@@ -1525,6 +1528,77 @@
             } finally {
                 $btn.prop('disabled', false).text(oldText);
             }
+        });
+    </script>
+
+    <script>
+        // ============================
+        // ✅ Guardar cambios: solo se habilita si hay cambios reales
+        // ============================
+        window.__apptModalSnapshot = null;
+
+        function __norm(v) {
+            return String(v ?? '').trim(); // comparación exacta pero sin espacios
+        }
+
+        function __getCurrentEditableState() {
+            const pmRaw = String($('#modalPaymentMethodRaw').val() || '').trim().toLowerCase();
+
+            // Solo hay "cambios guardables" si es transferencia
+            if (pmRaw !== 'transfer') {
+                return { pmRaw, transfer_validation_status: '', transfer_validation_notes: '' };
+            }
+
+            const v = __norm($('#modalTransferValidationSelect').val()).toLowerCase(); // '' | validated | rejected
+            const notes = __norm($('#modalTransferValidationNotes').val());            // texto
+
+            return {
+                pmRaw,
+                transfer_validation_status: v,
+                transfer_validation_notes: notes
+            };
+        }
+
+        function __hasRealChanges() {
+            if (!window.__apptModalSnapshot) return false;
+
+            const current = __getCurrentEditableState();
+            const snap = window.__apptModalSnapshot;
+
+            // Si no es transferencia, nunca habilitar (no hay nada editable que guardar)
+            if (current.pmRaw !== 'transfer') return false;
+
+            // Comparar valores editables reales
+            if (__norm(current.transfer_validation_status) !== __norm(snap.transfer_validation_status)) return true;
+            if (__norm(current.transfer_validation_notes)  !== __norm(snap.transfer_validation_notes))  return true;
+
+            return false;
+        }
+
+        function __updateSaveButtonState() {
+            const enable = __hasRealChanges();
+            $('#btnSaveChanges').prop('disabled', !enable);
+        }
+
+        function __setSnapshotFromCurrent() {
+            // Guardar estado inicial (lo que vino de BD y ya pintaste en el modal)
+            window.__apptModalSnapshot = __getCurrentEditableState();
+            __updateSaveButtonState(); // normalmente lo deja disabled
+        }
+
+        // ✅ Recalcular cuando el admin cambia select o escribe notas
+        $(document).on('change', '#modalTransferValidationSelect', function () {
+            __updateSaveButtonState();
+        });
+
+        $(document).on('input', '#modalTransferValidationNotes', function () {
+            __updateSaveButtonState();
+        });
+
+        // ✅ Al cerrar modal, limpiar snapshot y deshabilitar el botón
+        $('#appointmentModal').on('hidden.bs.modal', function () {
+            window.__apptModalSnapshot = null;
+            $('#btnSaveChanges').prop('disabled', true);
         });
     </script>
 @endsection

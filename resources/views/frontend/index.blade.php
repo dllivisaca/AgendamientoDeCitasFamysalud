@@ -4645,8 +4645,8 @@
         data-bs-autohide="false">
         <div class="d-flex">
         <div class="toast-body">
-            ⚠️ Tu cita todavía no está registrada. Completa todos los pasos para agendarla.
-            Si cierras esta pestaña, se perderá el proceso.
+            ⚠️ Su cita todavía no está registrada. Complete todos los pasos para agendarla.
+            Si cierra esta pestaña, se perderá el proceso.
         </div>
         <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
         </div>
