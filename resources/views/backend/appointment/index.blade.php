@@ -682,6 +682,10 @@
                                                         data-transfer-date="{{ $appointment->transfer_date ?? '' }}"
                                                         data-transfer-reference="{{ $appointment->transfer_reference ?? '' }}"
                                                         data-transfer-receipt-path="{{ $appointment->transfer_receipt_path ?? '' }}"
+                                                        data-transfer-validation-status="{{ $appointment->transfer_validation_status ?? '' }}"
+                                                        data-transfer-validated-at="{{ $appointment->transfer_validated_at ?? '' }}"
+                                                        data-transfer-validated-by="{{ optional($appointment->transferValidatedBy)->name ?? '' }}"
+                                                        data-transfer-validation-notes="{{ $appointment->transfer_validation_notes ?? '' }}"
                                                         data-created-at="{{ $appointment->created_at }}"
                                                         data-status="{{ $appointment->status }}">Ver detalles</button>
                                                 </td>
@@ -1130,25 +1134,61 @@
                 $('#paymentTransferBlock').show();
 
                 // ===== SUBSECCIÓN: Validación de transferencia (solo transfer) =====
+
+                // Leer data-* desde el botón
+                const validationStatus = $(this).data('transferValidationStatus');
+                const validatedAtRaw   = $(this).data('transferValidatedAt');
+                const validatedByName  = $(this).data('transferValidatedBy');
+                const validationNotes  = $(this).data('transferValidationNotes');
+
+                const vStatus = String(validationStatus || '').trim().toLowerCase();
+
                 // Reset UI
                 $('#modalTransferValidationSelect').val('');
                 $('#modalTransferValidationNotes').val('');
                 $('#transferValidationNotesWrapper').hide();
                 $('#transferNotesRequired').hide();
+                $('#transferNotesOptional').hide();
                 $('#transferValidationMeta').hide();
 
-                // Limpia hidden (para que no se quede pegado de otra cita)
-                $('#modalTransferValidationStatusInput').val('');
-                $('#modalTransferValidationNotesInput').val('');
+                // Si YA EXISTE una validación previa
+                if (vStatus) {
 
-                // (Opcional) Si luego pasas estos data-* desde el botón, aquí los pintas:
-                // const validatedAt = $(this).data('transfer-validated-at');
-                // const validatedBy = $(this).data('transfer-validated-by-name'); // o email/nombre
-                // if (validatedAt || validatedBy) {
-                //   $('#transferValidationMeta').show();
-                //   $('#modalTransferValidatedAt').text(validatedAt ? String(validatedAt) : 'N/A');
-                //   $('#modalTransferValidatedBy').text(validatedBy ? String(validatedBy) : 'N/A');
-                // }
+                    // 1️⃣ Select
+                    $('#modalTransferValidationSelect').val(vStatus);
+
+                    // 2️⃣ Notes
+                    if (validationNotes) {
+                        $('#modalTransferValidationNotes').val(validationNotes);
+                        $('#transferValidationNotesWrapper').show();
+                    }
+
+                    // 3️⃣ Meta (fecha + usuario)
+                    if (validatedAtRaw || validatedByName) {
+                        $('#transferValidationMeta').show();
+
+                        let formattedValidatedAt = 'N/A';
+                        if (validatedAtRaw) {
+                            const d = new Date(validatedAtRaw);
+                            if (!isNaN(d.getTime())) {
+                                const datePart = d.toLocaleDateString('es-EC', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    year: 'numeric'
+                                });
+                                const timePart = d.toLocaleTimeString('en-US', {
+                                    hour: 'numeric',
+                                    minute: '2-digit',
+                                    hour12: true
+                                });
+                                formattedValidatedAt = `${datePart} · ${timePart}`;
+                            }
+                        }
+
+                        $('#modalTransferValidatedAt').text(formattedValidatedAt);
+                        $('#modalTransferValidatedBy').text(validatedByName || 'Sistema');
+                    }
+                }
 
                 $('#modalTransferMethodLabel').text(paymentMethodLabel(pm));
 

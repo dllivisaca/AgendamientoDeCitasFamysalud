@@ -281,12 +281,22 @@ class AppointmentController extends Controller
         $pm = strtolower(trim((string) ($appointment->payment_method ?? ''))); // "transfer" | "card"
         $validation = strtolower(trim((string) ($request->transfer_validation_status ?? ''))); // validated | rejected | ""
 
+        // ✅ Guardar el status de validación (si viene vacío, queda NULL)
+        if ($pm === 'transfer') {
+            $appointment->transfer_validation_status = ($validation !== '') ? $validation : null;
+        } else {
+            // Si no es transferencia, limpiamos por seguridad
+            $appointment->transfer_validation_status = null;
+        }
+
         if ($pm === 'transfer' && in_array($validation, ['validated', 'rejected'], true)) {
 
             // Guarda auditoría de validación
             $appointment->transfer_validated_at = now();
             $appointment->transfer_validated_by = Auth::id(); // user logueado (admin/mod/employee)
-            $appointment->transfer_validation_notes = $request->transfer_validation_notes;
+            if ($request->has('transfer_validation_notes')) {
+                $appointment->transfer_validation_notes = $request->transfer_validation_notes;
+            }
 
             // Reglas de negocio (según tu texto del modal):
             // - Validada => cita "Paid" y pago "paid"
@@ -314,11 +324,24 @@ class AppointmentController extends Controller
             $appointment->terms_accepted_at = $request->data_consent ? now() : null;
         }
 
-        // ✅ Guardar transferencia (si viene)
-        $appointment->transfer_bank_origin = $request->transfer_bank_origin;
-        $appointment->transfer_payer_name  = $request->transfer_payer_name;
-        $appointment->transfer_date        = $request->transfer_date;
-        $appointment->transfer_reference   = $request->transfer_reference;
+        // ✅ Guardar datos de transferencia SOLO si vienen en el request
+        if ($request->hasAny(['transfer_bank_origin', 'transfer_payer_name', 'transfer_date', 'transfer_reference'])) {
+
+            // OJO: si algún campo viene vacío a propósito, se guardará vacío.
+            // Si NO viene en el request, no lo tocamos.
+            if ($request->has('transfer_bank_origin')) {
+                $appointment->transfer_bank_origin = $request->transfer_bank_origin;
+            }
+            if ($request->has('transfer_payer_name')) {
+                $appointment->transfer_payer_name = $request->transfer_payer_name;
+            }
+            if ($request->has('transfer_date')) {
+                $appointment->transfer_date = $request->transfer_date;
+            }
+            if ($request->has('transfer_reference')) {
+                $appointment->transfer_reference = $request->transfer_reference;
+            }
+        }
 
         // ✅ Guardar archivo comprobante (si viene)
         if ($request->hasFile('tr_file')) {
@@ -328,7 +351,7 @@ class AppointmentController extends Controller
 
         event(new StatusUpdated($appointment));
 
-        return redirect()->back()->with('success', 'Appointment status updated successfully.');
+        return redirect()->back()->with('success', 'Cambios guardados correctamente.');
     }
 
 }
