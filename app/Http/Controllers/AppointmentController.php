@@ -302,10 +302,10 @@ class AppointmentController extends Controller
             // - Validada => cita "Paid" y pago "paid"
             // - Rechazada => cita "On Hold" y pago "pending"
             if ($validation === 'validated') {
-                $appointment->status = 'Paid';
+                $appointment->status = 'paid';
                 $appointment->payment_status = 'paid';
             } else { // rejected
-                $appointment->status = 'On Hold';
+                $appointment->status = 'on_hold';
                 $appointment->payment_status = 'pending';
             }
         }
