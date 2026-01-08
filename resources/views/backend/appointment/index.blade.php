@@ -185,37 +185,57 @@
                                 <div class="row">
                                     <div class="col-md-6 mb-2">
                                         <div class="small text-muted">Nombre del paciente</div>
-                                        <div class="text-dark" id="modalPatientFullName">N/A</div>
+                                        <div class="text-dark js-edit-text" id="modalPatientFullName">N/A</div>
+                                        <input type="text" class="form-control form-control-sm js-edit-input"
+                                            id="modalPatientFullNameInput" name="patient_full_name" value="">
                                     </div>
 
                                     <div class="col-md-6 mb-2">
                                         <div class="small text-muted">Tipo de documento</div>
-                                        <div class="text-dark" id="modalDocType">N/A</div>
+                                        <div class="text-dark js-edit-text" id="modalDocType">N/A</div>
+                                        <select class="form-control form-control-sm js-edit-input"
+                                                id="modalDocTypeInput" name="patient_doc_type">
+                                            <option value="">—</option>
+                                            <option value="cedula">Cédula</option>
+                                            <option value="ruc">RUC</option>
+                                            <option value="pasaporte">Pasaporte</option>
+                                        </select>
                                     </div>
 
                                     <div class="col-md-6 mb-2">
                                         <div class="small text-muted">Número de documento</div>
-                                        <div class="text-dark" id="modalDocNumber">N/A</div>
+                                        <div class="text-dark js-edit-text" id="modalDocNumber">N/A</div>
+                                        <input type="text" class="form-control form-control-sm js-edit-input"
+                                            id="modalDocNumberInput" name="patient_doc_number" value="">
                                     </div>
 
                                     <div class="col-md-6 mb-2">
                                         <div class="small text-muted">Correo</div>
-                                        <div class="text-dark" id="modalEmail">N/A</div>
+                                        <div class="text-dark js-edit-text" id="modalEmail">N/A</div>
+                                        <input type="email" class="form-control form-control-sm js-edit-input"
+                                            id="modalEmailInput" name="patient_email" value="">
                                     </div>
 
                                     <div class="col-md-6 mb-2">
                                         <div class="small text-muted">Teléfono</div>
-                                        <div class="text-dark" id="modalPhone">N/A</div>
+                                        <div class="text-dark js-edit-text" id="modalPhone">N/A</div>
+                                        <input type="text" class="form-control form-control-sm js-edit-input"
+                                            id="modalPhoneInput" name="patient_phone" value="">
                                     </div>
 
                                     <div class="col-md-6 mb-2">
                                         <div class="small text-muted">Dirección</div>
-                                        <div class="text-dark" id="modalAddress">N/A</div>
+                                        <div class="text-dark js-edit-text" id="modalAddress">N/A</div>
+                                        <input type="text" class="form-control form-control-sm js-edit-input"
+                                            id="modalAddressInput" name="patient_address" value="">
                                     </div>
 
                                     <div class="col-md-12 mb-0">
                                         <div class="small text-muted">Zona horaria del paciente</div>
-                                        <div class="text-dark" id="modalPatientTimezone">N/A</div>
+                                        <div class="text-dark js-edit-text" id="modalPatientTimezone">N/A</div>
+                                        <input type="text" class="form-control form-control-sm js-edit-input"
+                                            id="modalPatientTimezoneInput" name="patient_timezone" value=""
+                                            placeholder="Ej: America/Guayaquil">
                                     </div>
                                 </div>
                             </div>
@@ -246,7 +266,10 @@
 
                                 <div class="col-md-6 mb-2">
                                     <div class="small text-muted">Notas del paciente</div>
-                                    <div class="text-dark" id="modalNotes">N/A</div>
+                                    <div class="text-dark js-edit-text" id="modalNotes">N/A</div>
+                                    <textarea class="form-control form-control-sm js-edit-input"
+                                            id="modalNotesInput" name="patient_notes" rows="2"
+                                            placeholder="Notas del paciente..."></textarea>
                                 </div>
                             </div>
                         </div>
@@ -276,32 +299,49 @@
                                 <div class="row">
                                     <div class="col-md-6 mb-2">
                                         <div class="small text-muted">Nombre para facturación</div>
-                                        <div class="text-dark" id="modalBillingName">N/A</div>
+                                        <div class="text-dark js-edit-text" id="modalBillingName">N/A</div>
+                                        <input type="text" class="form-control form-control-sm js-edit-input"
+                                            id="modalBillingNameInput" name="billing_name" value="">
                                     </div>
 
                                     <div class="col-md-6 mb-2">
                                         <div class="small text-muted">Tipo de documento</div>
-                                        <div class="text-dark" id="modalBillingDocType">N/A</div>
+                                        <div class="text-dark js-edit-text" id="modalBillingDocType">N/A</div>
+                                        <select class="form-control form-control-sm js-edit-input"
+                                                id="modalBillingDocTypeInput" name="billing_doc_type">
+                                            <option value="">—</option>
+                                            <option value="cedula">Cédula</option>
+                                            <option value="ruc">RUC</option>
+                                            <option value="pasaporte">Pasaporte</option>
+                                        </select>
                                     </div>
 
                                     <div class="col-md-6 mb-2">
                                         <div class="small text-muted">Número de documento</div>
-                                        <div class="text-dark" id="modalBillingDocNumber">N/A</div>
+                                        <div class="text-dark js-edit-text" id="modalBillingDocNumber">N/A</div>
+                                        <input type="text" class="form-control form-control-sm js-edit-input"
+                                            id="modalBillingDocNumberInput" name="billing_doc_number" value="">
                                     </div>
 
                                     <div class="col-md-6 mb-2">
                                         <div class="small text-muted">Correo de facturación</div>
-                                        <div class="text-dark" id="modalBillingEmail">N/A</div>
+                                        <div class="text-dark js-edit-text" id="modalBillingEmail">N/A</div>
+                                        <input type="email" class="form-control form-control-sm js-edit-input"
+                                            id="modalBillingEmailInput" name="billing_email" value="">
                                     </div>
 
                                     <div class="col-md-6 mb-2">
                                         <div class="small text-muted">Teléfono de facturación</div>
-                                        <div class="text-dark" id="modalBillingPhone">N/A</div>
+                                        <div class="text-dark js-edit-text" id="modalBillingPhone">N/A</div>
+                                        <input type="text" class="form-control form-control-sm js-edit-input"
+                                            id="modalBillingPhoneInput" name="billing_phone" value="">
                                     </div>
 
                                     <div class="col-md-6 mb-2">
                                         <div class="small text-muted">Dirección de facturación</div>
-                                        <div class="text-dark" id="modalBillingAddress">N/A</div>
+                                        <div class="text-dark js-edit-text" id="modalBillingAddress">N/A</div>
+                                        <input type="text" class="form-control form-control-sm js-edit-input"
+                                            id="modalBillingAddressInput" name="billing_address" value="">
                                     </div>
 
                                     <!-- <div class="col-md-12 mb-0">
@@ -336,7 +376,9 @@
 
                                     <div class="col-md-6 mb-2">
                                         <div class="small text-muted">Monto</div>
-                                        <div class="text-dark" id="modalPaymentAmount">N/A</div>
+                                        <div class="text-dark js-edit-text" id="modalPaymentAmount">N/A</div>
+                                        <input type="number" step="0.01" min="0" class="form-control form-control-sm js-edit-input"
+                                            id="modalAmountInput" name="amount" value="">
                                     </div>
 
                                     <div class="col-md-6 mb-2">
@@ -361,7 +403,12 @@
 
                                     <div class="col-md-6 mb-2">
                                         <div class="small text-muted">Monto</div>
-                                        <div class="text-dark" id="modalTransferAmount">N/A</div>
+                                        <div class="text-dark js-edit-text" id="modalTransferAmount">N/A</div>
+                                        <div class="js-edit-input">
+                                            <input type="number" step="0.01" min="0" class="form-control form-control-sm"
+                                                id="modalAmountInputClone" disabled>
+                                            <small class="text-muted">*El monto se edita en el campo “Monto” del bloque de pago.</small>
+                                        </div>
                                     </div>
 
                                     <div class="col-md-12 mt-2">
@@ -370,22 +417,30 @@
 
                                     <div class="col-md-6 mb-2">
                                         <div class="small text-muted">Banco de origen</div>
-                                        <div class="text-dark" id="modalTransferBankOrigin">N/A</div>
+                                        <div class="text-dark js-edit-text" id="modalTransferBankOrigin">N/A</div>
+                                        <input type="text" class="form-control form-control-sm js-edit-input"
+                                            id="modalTransferBankOriginInput" name="transfer_bank_origin" value="">
                                     </div>
 
                                     <div class="col-md-6 mb-2">
                                         <div class="small text-muted">Nombre del titular</div>
-                                        <div class="text-dark" id="modalTransferPayerName">N/A</div>
+                                        <div class="text-dark js-edit-text" id="modalTransferPayerName">N/A</div>
+                                        <input type="text" class="form-control form-control-sm js-edit-input"
+                                            id="modalTransferPayerNameInput" name="transfer_payer_name" value="">
                                     </div>
 
                                     <div class="col-md-6 mb-2">
                                         <div class="small text-muted">Fecha de la transferencia</div>
-                                        <div class="text-dark" id="modalTransferDate">N/A</div>
+                                        <div class="text-dark js-edit-text" id="modalTransferDate">N/A</div>
+                                        <input type="date" class="form-control form-control-sm js-edit-input"
+                                            id="modalTransferDateInput" name="transfer_date" value="">
                                     </div>
 
                                     <div class="col-md-6 mb-2">
                                         <div class="small text-muted">Número de referencia</div>
-                                        <div class="text-dark" id="modalTransferReference">N/A</div>
+                                        <div class="text-dark js-edit-text" id="modalTransferReference">N/A</div>
+                                        <input type="text" class="form-control form-control-sm js-edit-input"
+                                            id="modalTransferReferenceInput" name="transfer_reference" value="">
                                     </div>
 
                                     <div class="col-md-12 mb-0">
@@ -774,6 +829,14 @@
     #editModeBanner{
         border-left: 4px solid #f39c12;
     }
+
+    /* ====== Edit mode: texto vs inputs ====== */
+    .js-edit-input { display:none; }
+    .js-edit-text  { display:block; }
+
+    body.appt-edit-mode .js-edit-input { display:block; }
+    body.appt-edit-mode .js-edit-text  { display:none; }
+
   /* ✅ Modal de comprobante: tamaño fijo al viewport (no gigante) */
     .modal-dialog.modal-receipt{
     max-width: 900px;
@@ -1402,6 +1465,54 @@
             // Por ahora, estado del pago queda N/A hasta que lo conectemos a tus campos reales
             $('#modalPaymentStatusBadge').html(paymentStatusBadge(paymentStatusRaw));
 
+            // ============================
+            // ✅ Pre-cargar inputs editables desde data-*
+            // ============================
+            $('#modalPatientFullNameInput').val($(this).data('name') || '');
+            $('#modalDocTypeInput').val(String($(this).data('doc-type') || '').trim().toLowerCase());
+            $('#modalDocNumberInput').val($(this).data('doc-number') || '');
+            $('#modalEmailInput').val($(this).data('email') || '');
+            $('#modalPhoneInput').val($(this).data('phone') || '');
+            $('#modalAddressInput').val($(this).data('address') || '');
+
+            const tzOnly = (tz ? String(tz).replace('-', '/') : '');
+            $('#modalPatientTimezoneInput').val(tzOnly || '');
+
+            $('#modalNotesInput').val($(this).data('notes') || '');
+
+            $('#modalBillingNameInput').val(billingName === 'N/A' ? '' : billingName);
+            $('#modalBillingDocTypeInput').val(String(billingDocType || '').trim().toLowerCase());
+            $('#modalBillingDocNumberInput').val(billingDocNumber === 'N/A' ? '' : billingDocNumber);
+            $('#modalBillingEmailInput').val(billingEmail === 'N/A' ? '' : billingEmail);
+            $('#modalBillingPhoneInput').val(billingPhone === 'N/A' ? '' : billingPhone);
+            $('#modalBillingAddressInput').val(billingAddress === 'N/A' ? '' : billingAddress);
+
+            // Amount editable
+            if (amountRaw !== null && amountRaw !== undefined && amountRaw !== '') {
+                $('#modalAmountInput').val(parseFloat(amountRaw).toFixed(2));
+            } else {
+                $('#modalAmountInput').val('');
+            }
+            $('#modalAmountInputClone').val($('#modalAmountInput').val());
+
+            // Transfer editable
+            $('#modalTransferBankOriginInput').val(tBankOrigin ? String(tBankOrigin) : '');
+            $('#modalTransferPayerNameInput').val(tPayerName ? String(tPayerName) : '');
+            $('#modalTransferReferenceInput').val(tReference ? String(tReference) : '');
+
+            // date input: YYYY-MM-DD
+            if (tDateRaw && String(tDateRaw).trim() !== '') {
+                const s = String(tDateRaw).trim();
+                const datePart = s.split(' ')[0];
+                if (/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
+                    $('#modalTransferDateInput').val(datePart);
+                } else {
+                    $('#modalTransferDateInput').val('');
+                }
+            } else {
+                $('#modalTransferDateInput').val('');
+            }
+
             // ✅ Snapshot final (BD) para habilitar Guardar cambios solo si hay cambios reales
             __setSnapshotFromCurrent();
         });
@@ -1630,34 +1741,50 @@
         function __getCurrentEditableState() {
             const pmRaw = String($('#modalPaymentMethodRaw').val() || '').trim().toLowerCase();
 
-            // Solo hay "cambios guardables" si es transferencia
-            if (pmRaw !== 'transfer') {
-                return { pmRaw, transfer_validation_status: '', transfer_validation_notes: '' };
-            }
-
-            const v = __norm($('#modalTransferValidationSelect').val()).toLowerCase(); // '' | validated | rejected
-            const notes = __norm($('#modalTransferValidationNotes').val());            // texto
-
             return {
                 pmRaw,
-                transfer_validation_status: v,
-                transfer_validation_notes: notes
+
+                patient_full_name: __norm($('#modalPatientFullNameInput').val()),
+                patient_doc_type: __norm($('#modalDocTypeInput').val()).toLowerCase(),
+                patient_doc_number: __norm($('#modalDocNumberInput').val()),
+                patient_email: __norm($('#modalEmailInput').val()),
+                patient_phone: __norm($('#modalPhoneInput').val()),
+                patient_address: __norm($('#modalAddressInput').val()),
+                patient_timezone: __norm($('#modalPatientTimezoneInput').val()),
+                patient_notes: __norm($('#modalNotesInput').val()),
+
+                billing_name: __norm($('#modalBillingNameInput').val()),
+                billing_doc_type: __norm($('#modalBillingDocTypeInput').val()).toLowerCase(),
+                billing_doc_number: __norm($('#modalBillingDocNumberInput').val()),
+                billing_email: __norm($('#modalBillingEmailInput').val()),
+                billing_phone: __norm($('#modalBillingPhoneInput').val()),
+                billing_address: __norm($('#modalBillingAddressInput').val()),
+
+                amount: __norm($('#modalAmountInput').val()),
+
+                transfer_bank_origin: __norm($('#modalTransferBankOriginInput').val()),
+                transfer_payer_name: __norm($('#modalTransferPayerNameInput').val()),
+                transfer_date: __norm($('#modalTransferDateInput').val()),
+                transfer_reference: __norm($('#modalTransferReferenceInput').val()),
+
+                transfer_validation_status: __norm($('#modalTransferValidationSelect').val()).toLowerCase(),
+                transfer_validation_notes: __norm($('#modalTransferValidationNotes').val())
             };
         }
 
         function __hasRealChanges() {
             if (!window.__apptModalSnapshot) return false;
 
+            // ✅ Solo habilitar si estás en modo edición
+            if (!window.__apptIsEditMode) return false;
+
             const current = __getCurrentEditableState();
             const snap = window.__apptModalSnapshot;
 
-            // Si no es transferencia, nunca habilitar (no hay nada editable que guardar)
-            if (current.pmRaw !== 'transfer') return false;
-
-            // Comparar valores editables reales
-            if (__norm(current.transfer_validation_status) !== __norm(snap.transfer_validation_status)) return true;
-            if (__norm(current.transfer_validation_notes)  !== __norm(snap.transfer_validation_notes))  return true;
-
+            const keys = Object.keys(current);
+            for (const k of keys) {
+                if (__norm(current[k]) !== __norm(snap[k])) return true;
+            }
             return false;
         }
 
@@ -1681,6 +1808,10 @@
             __updateSaveButtonState();
         });
 
+        $(document).on('input change', '#modalPatientFullNameInput,#modalDocTypeInput,#modalDocNumberInput,#modalEmailInput,#modalPhoneInput,#modalAddressInput,#modalPatientTimezoneInput,#modalNotesInput,#modalBillingNameInput,#modalBillingDocTypeInput,#modalBillingDocNumberInput,#modalBillingEmailInput,#modalBillingPhoneInput,#modalBillingAddressInput,#modalAmountInput,#modalTransferBankOriginInput,#modalTransferPayerNameInput,#modalTransferDateInput,#modalTransferReferenceInput', function () {
+            __updateSaveButtonState();
+        });
+
         // ✅ Al cerrar modal, limpiar snapshot y deshabilitar el botón
         $('#appointmentModal').on('hidden.bs.modal', function () {
             window.__apptModalSnapshot = null;
@@ -1696,6 +1827,8 @@
 
         function __enterEditModeUI(mode = 'edit') {
             window.__apptIsEditMode = true;
+
+            $('body').addClass('appt-edit-mode');
 
             $('#editModeBanner').show();
             $('#btnCancelEditMode').show();
@@ -1716,6 +1849,8 @@
 
         function __exitEditModeUI() {
             window.__apptIsEditMode = false;
+
+            $('body').removeClass('appt-edit-mode');
 
             $('#editModeBanner').hide();
             $('#btnCancelEditMode').hide();
