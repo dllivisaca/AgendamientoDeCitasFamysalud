@@ -2013,11 +2013,6 @@
                     // ✅ Exit warning desde paso 4, 5 Y 6
                     setExitWarningActive(step >= 4 && step <= 6, step);
 
-                    // ✅ Activar warning desde paso 4 en adelante
-                    if (step >= 4) {
-                    setExitWarningActive(true);
-                    }
-
                     // Update the navigation buttons
                     updateNavigationButtons();
 
@@ -2084,24 +2079,26 @@
                 }
 
                 // ✅ Exit warning: se activa desde el paso 4 (fecha/hora), 5 (datos) y 6 (pago)
-                function setExitWarningActive(active, step = bookingState.currentStep) {
-                bookingState.exit_warning_active = !!active;
-
-                // Si ya terminó la reserva o no aplica, resetea tracker
-                if (!bookingState.exit_warning_active || bookingState.booking_completed) {
-                    bookingState.exit_warning_last_step_shown = null;
-                    return;
-                }
-
-                // ✅ Mostrar toast cada vez que entras a 4/5/6 (aunque lo hayan cerrado antes)
-                if (bookingState.exit_warning_last_step_shown !== step) {
-                    bookingState.exit_warning_last_step_shown = step;
+                function setExitWarningActive(active, step = null) {
+                    bookingState.exit_warning_active = !!active;
 
                     const el = document.getElementById("exitWarningToast");
-                    if (el && window.bootstrap) {
-                    bootstrap.Toast.getOrCreateInstance(el).show();
+                    if (!el || !window.bootstrap) return;
+
+                    const toast = bootstrap.Toast.getOrCreateInstance(el, { autohide: false });
+
+                    // ✅ Si ya se completó la cita o el warning está apagado -> ocultar toast sí o sí
+                    if (!bookingState.exit_warning_active || bookingState.booking_completed) {
+                        try { toast.hide(); } catch (e) {}
+                        bookingState.exit_warning_last_step = null;
+                        return;
                     }
-                }
+
+                    // ✅ Mostrar 1 vez por cada step (4, 5, 6)
+                    if (step !== null && bookingState.exit_warning_last_step !== step) {
+                        bookingState.exit_warning_last_step = step;
+                        toast.show();
+                    }
                 }
 
                 // ✅ Warning genérico del navegador (no se puede personalizar el texto)
