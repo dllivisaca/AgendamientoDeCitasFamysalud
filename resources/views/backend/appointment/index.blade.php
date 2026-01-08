@@ -13,7 +13,7 @@
 
 @section('content')
     <!-- Modal -->
-    <form id="appointmentStatusForm" method="POST" action="{{ route('appointments.update.status') }}">
+    <form id="appointmentStatusForm" method="POST" action="{{ route('appointments.update.status') }}" enctype="multipart/form-data">
         @csrf
         <input type="hidden" name="appointment_id" id="modalAppointmentId">
         <input type="hidden" name="status" id="modalStatusHidden" value="">
@@ -387,7 +387,15 @@
                                 <div class="row">
                                     <div class="col-md-6 mb-2">
                                         <div class="small text-muted">Método</div>
-                                        <div class="text-dark" id="modalPaymentMethodLabel">N/A</div>
+
+                                        <div class="text-dark js-edit-text" id="modalPaymentMethodLabel">N/A</div>
+
+                                        <select class="form-control form-control-sm js-edit-input"
+                                                id="modalPaymentMethodSelectCard"
+                                                name="payment_method">
+                                            <option value="transfer">Transferencia</option>
+                                            <option value="card">Tarjeta</option>
+                                        </select>
                                     </div>
 
                                     <div class="col-md-6 mb-2">
@@ -420,17 +428,27 @@
                                 <div class="row">
                                     <div class="col-md-6 mb-2">
                                         <div class="small text-muted">Método</div>
-                                        <div class="text-dark" id="modalTransferMethodLabel">N/A</div>
+
+                                        <div class="text-dark js-edit-text" id="modalTransferMethodLabel">N/A</div>
+
+                                        <select class="form-control form-control-sm js-edit-input"
+                                                id="modalPaymentMethodSelectTransfer"
+                                                name="payment_method">
+                                            <option value="transfer">Transferencia</option>
+                                            <option value="card">Tarjeta</option>
+                                        </select>
                                     </div>
 
                                     <div class="col-md-6 mb-2">
                                         <div class="small text-muted">Monto</div>
+
                                         <div class="text-dark js-edit-text" id="modalTransferAmount">N/A</div>
-                                        <div class="js-edit-input">
-                                            <input type="number" step="0.01" min="0" class="form-control form-control-sm"
-                                                id="modalAmountInputClone" disabled>
-                                            <small class="text-muted">*El monto se edita en el campo “Monto” del bloque de pago.</small>
-                                        </div>
+
+                                        <input type="number" step="0.01" min="0"
+                                            class="form-control form-control-sm js-edit-input"
+                                            id="modalAmountInputTransfer"
+                                            name="amount"
+                                            value="">
                                     </div>
 
                                     <div class="col-md-12 mt-2">
@@ -467,8 +485,20 @@
 
                                     <div class="col-md-12 mb-0">
                                         <div class="small text-muted">Comprobante</div>
-                                        <div class="text-dark" id="modalTransferReceipt">
+
+                                        <div class="text-dark js-edit-text" id="modalTransferReceipt">
                                             <span class="text-muted font-italic small">N/A</span>
+                                        </div>
+
+                                        <div class="js-edit-input">
+                                            <input type="file"
+                                                class="form-control form-control-sm"
+                                                id="modalTransferReceiptFile"
+                                                name="transfer_receipt_file"
+                                                accept="image/*,application/pdf">
+                                            <small class="text-muted d-block mt-1">
+                                                Si adjuntas uno nuevo, reemplazará el comprobante actual.
+                                            </small>
                                         </div>
                                     </div>
 
@@ -502,7 +532,7 @@
 
                                     <div class="col-md-12 mb-0" id="transferValidationNotesWrapper" style="display:none;">
                                         <div class="small text-muted">
-                                            Observaciones
+                                            Observaciones de validación
                                             <span id="transferNotesOptional" class="text-muted" style="display:none;">(opcional)</span>
                                             <span id="transferNotesRequired" class="text-danger" style="display:none;">(obligatorias)</span>
                                         </div>
@@ -1254,6 +1284,51 @@
                 return `<span class="badge px-2 py-1" style="background-color:${color};color:white;">${label}</span>`;
             }
 
+            // ✅ Datos de transferencia disponibles SIEMPRE (evita undefined fuera del if)
+            const tBankOrigin = $(this).data('transfer-bank-origin') || '';
+            const tPayerName  = $(this).data('transfer-payer-name') || '';
+            const tDateRaw    = $(this).data('transfer-date') || '';
+            const tReference  = $(this).data('transfer-reference') || '';
+            const tReceiptPath = $(this).data('transfer-receipt-path') || '';
+
+            function __setPaymentMethodUI(newPm) {
+                const pm = String(newPm || '').trim().toLowerCase();
+
+                // Guardar método real
+                $('#modalPaymentMethodRaw').val(pm);
+
+                // Mostrar bloques
+                if (pm === 'card') {
+                    $('#paymentSectionWrapper').show();
+                    $('#paymentCardBlock').show();
+                    $('#paymentTransferBlock').hide();
+                } else if (pm === 'transfer') {
+                    $('#paymentSectionWrapper').show();
+                    $('#paymentTransferBlock').show();
+                    $('#paymentCardBlock').hide();
+                } else {
+                    $('#paymentSectionWrapper').hide();
+                    $('#paymentCardBlock').hide();
+                    $('#paymentTransferBlock').hide();
+                }
+
+                // ✅ Set selects (los dos) para que reflejen el método
+                $('#modalPaymentMethodSelectCard').val(pm || 'card');
+                $('#modalPaymentMethodSelectTransfer').val(pm || 'transfer');
+
+                // ✅ Importantísimo: deshabilitar inputs del bloque oculto para no mandar duplicados
+                const isCard = (pm === 'card');
+                $('#paymentCardBlock :input').prop('disabled', !isCard);
+                $('#paymentTransferBlock :input').prop('disabled', isCard);
+
+                // ✅ Re-habilitar los selects de método del bloque visible (por si quedaron disabled)
+                if (isCard) {
+                    $('#modalPaymentMethodSelectCard').prop('disabled', false);
+                } else {
+                    $('#modalPaymentMethodSelectTransfer').prop('disabled', false);
+                }
+            }
+
             const pm = String(paymentMethodRaw || '').trim().toLowerCase();
 
             if (pm === 'card') {
@@ -1341,13 +1416,6 @@
                         : 'N/A';
 
                 $('#modalTransferAmount').text(amountText);
-
-                // ===== Datos de la transferencia (appointments.*) =====
-                const tBankOrigin = $(this).data('transfer-bank-origin');
-                const tPayerName = $(this).data('transfer-payer-name');
-                const tDateRaw = $(this).data('transfer-date');
-                const tReference = $(this).data('transfer-reference');
-                const tReceiptPath = $(this).data('transfer-receipt-path');
 
                 // Banco / Titular / Referencia
                 $('#modalTransferBankOrigin').text(tBankOrigin ? String(tBankOrigin) : 'N/A');
@@ -1572,13 +1640,30 @@
             $('#modalBillingPhoneInput').val(billingPhone === 'N/A' ? '' : billingPhone);
             $('#modalBillingAddressInput').val(billingAddress === 'N/A' ? '' : billingAddress);
 
-            // Amount editable
+            // ✅ Amount editable (card + transfer)
+            let amt = '';
             if (amountRaw !== null && amountRaw !== undefined && amountRaw !== '') {
-                $('#modalAmountInput').val(parseFloat(amountRaw).toFixed(2));
-            } else {
-                $('#modalAmountInput').val('');
+                amt = parseFloat(amountRaw).toFixed(2);
             }
-            $('#modalAmountInputClone').val($('#modalAmountInput').val());
+            $('#modalAmountInput').val(amt);
+            $('#modalAmountInputTransfer').val(amt);
+
+            $(document).off('input.syncAmount');
+            $(document).on('input.syncAmount', '#modalAmountInput, #modalAmountInputTransfer', function () {
+                const v = $(this).val();
+                $('#modalAmountInput').val(v);
+                $('#modalAmountInputTransfer').val(v);
+                __updateSaveButtonState();
+            });
+
+            // ✅ B4: Cambiar método (card/transfer) y refrescar UI
+            $(document).off('change.paymentMethodSelect');
+
+            $(document).on('change.paymentMethodSelect', '#modalPaymentMethodSelectCard, #modalPaymentMethodSelectTransfer', function () {
+                const pm = String($(this).val() || '').trim().toLowerCase();
+                __setPaymentMethodUI(pm);
+                __updateSaveButtonState();
+            });
 
             // Transfer editable
             $('#modalTransferBankOriginInput').val(tBankOrigin ? String(tBankOrigin) : '');
@@ -1854,6 +1939,7 @@
                 transfer_payer_name: __norm($('#modalTransferPayerNameInput').val()),
                 transfer_date: __norm($('#modalTransferDateInput').val()),
                 transfer_reference: __norm($('#modalTransferReferenceInput').val()),
+                transfer_receipt_file_selected: ($('#modalTransferReceiptFile').val() || '') !== '',
 
                 transfer_validation_status: __norm($('#modalTransferValidationSelect').val()).toLowerCase(),
                 transfer_validation_notes: __norm($('#modalTransferValidationNotes').val())
@@ -1896,7 +1982,7 @@
             __updateSaveButtonState();
         });
 
-        $(document).on('input change', '#modalPatientFullNameInput,#modalDocTypeInput,#modalDocNumberInput,#modalEmailInput,#modalPhoneInput,#modalAddressInput,#modalPatientTimezoneInput,#modalNotesInput,#modalBillingNameInput,#modalBillingDocTypeInput,#modalBillingDocNumberInput,#modalBillingEmailInput,#modalBillingPhoneInput,#modalBillingAddressInput,#modalAmountInput,#modalTransferBankOriginInput,#modalTransferPayerNameInput,#modalTransferDateInput,#modalTransferReferenceInput,#modalStatusSelect,#modalPaymentStatusSelect', function () {
+        $(document).on('input change', '#modalPatientFullNameInput,#modalDocTypeInput,#modalDocNumberInput,#modalEmailInput,#modalPhoneInput,#modalAddressInput,#modalPatientTimezoneInput,#modalNotesInput,#modalBillingNameInput,#modalBillingDocTypeInput,#modalBillingDocNumberInput,#modalBillingEmailInput,#modalBillingPhoneInput,#modalBillingAddressInput,#modalAmountInput,#modalTransferBankOriginInput,#modalTransferPayerNameInput,#modalTransferDateInput,#modalTransferReferenceInput,#modalStatusSelect,#modalPaymentStatusSelect,#modalTransferReceiptFile', function () {
             __updateSaveButtonState();
         });
 
