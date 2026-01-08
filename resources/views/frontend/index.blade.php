@@ -831,9 +831,45 @@
                     hold_id: null,
                     hold_expires_at: null,
 
-                    // ✅ Guard para cierre de pestaña
-                    booking_completed: false
+                    exit_warning_active: false,     // se activa desde el paso 4
+                    exit_warning_shown: false,      // para mostrar toast solo 1 vez
+                    exit_warning_last_step_shown: null, // ✅ para re-mostrar en paso 4/5/6 aunque lo cierren
+                    booking_completed: false,       // se vuelve true al crear la cita
                 };
+
+                // ===========================
+                // ✅ Leave guard (Paso 4+)
+                // ===========================
+                let leaveGuardEnabled = false;
+
+                function handleBeforeUnload(e) {
+                    // Solo advertir si ya están en paso 4 o más y NO se completó la reserva
+                    const shouldWarn = (bookingState.currentStep >= 4) && (bookingState.booking_completed !== true);
+                    if (!shouldWarn) return;
+
+                    // Chrome/Edge ignoran el texto personalizado y muestran un mensaje genérico
+                    e.preventDefault();
+                    e.returnValue = '';
+                    return '';
+                }
+
+                function enableLeaveGuard() {
+                    if (leaveGuardEnabled) return;
+                    window.addEventListener('beforeunload', handleBeforeUnload);
+                    leaveGuardEnabled = true;
+                }
+
+                function disableLeaveGuard() {
+                    if (!leaveGuardEnabled) return;
+                    window.removeEventListener('beforeunload', handleBeforeUnload);
+                    leaveGuardEnabled = false;
+                }
+
+                function updateLeaveGuard() {
+                    const shouldEnable = (bookingState.currentStep >= 4) && (bookingState.booking_completed !== true);
+                    if (shouldEnable) enableLeaveGuard();
+                    else disableLeaveGuard();
+                }
 
                 // ✅ Persistir consentimiento en bookingState
                 $("#consent_data").on("change", function () {
@@ -1974,6 +2010,14 @@
                     // Update the current step
                     bookingState.currentStep = step;
 
+                    // ✅ Exit warning desde paso 4, 5 Y 6
+                    setExitWarningActive(step >= 4 && step <= 6, step);
+
+                    // ✅ Activar warning desde paso 4 en adelante
+                    if (step >= 4) {
+                    setExitWarningActive(true);
+                    }
+
                     // Update the navigation buttons
                     updateNavigationButtons();
 
@@ -2038,6 +2082,37 @@
                         $("#urgent-help-banner").hide();
                     }
                 }
+
+                // ✅ Exit warning: se activa desde el paso 4 (fecha/hora), 5 (datos) y 6 (pago)
+                function setExitWarningActive(active, step = bookingState.currentStep) {
+                bookingState.exit_warning_active = !!active;
+
+                // Si ya terminó la reserva o no aplica, resetea tracker
+                if (!bookingState.exit_warning_active || bookingState.booking_completed) {
+                    bookingState.exit_warning_last_step_shown = null;
+                    return;
+                }
+
+                // ✅ Mostrar toast cada vez que entras a 4/5/6 (aunque lo hayan cerrado antes)
+                if (bookingState.exit_warning_last_step_shown !== step) {
+                    bookingState.exit_warning_last_step_shown = step;
+
+                    const el = document.getElementById("exitWarningToast");
+                    if (el && window.bootstrap) {
+                    bootstrap.Toast.getOrCreateInstance(el).show();
+                    }
+                }
+                }
+
+                // ✅ Warning genérico del navegador (no se puede personalizar el texto)
+                window.addEventListener("beforeunload", function (e) {
+                if (bookingState.booking_completed) return;
+                if (!bookingState.exit_warning_active) return;
+
+                e.preventDefault();
+                e.returnValue = ""; // necesario para que el navegador muestre el warning
+                return "";
+                });
 
                 // ✅ Guard: alerta si intenta cerrar pestaña desde Step 4+ sin completar
                 (function () {
@@ -3163,8 +3238,9 @@
                                 `
                         }
                     `);
-                    // ✅ Ya se creó la cita: desactivar warning al cerrar pestaña
+                    // ✅ Ya se creó la cita: desactivar warning
                     bookingState.booking_completed = true;
+                    setExitWarningActive(false);
                     new bootstrap.Modal(document.getElementById("bookingSuccessModal")).show();
                     setTimeout(resetBooking, 800); // igual que transferencia (pop-up y enseguida paso 1)
                 }
@@ -3477,8 +3553,9 @@
                             `
                         }
                         `);
-                        // ✅ Ya se creó la cita: desactivar warning al cerrar pestaña
+                        // ✅ Ya se creó la cita: desactivar warning
                         bookingState.booking_completed = true;
+                        setExitWarningActive(false);
                         new bootstrap.Modal(document.getElementById("bookingSuccessModal")).show();
 
                         setTimeout(resetBooking, 800);
@@ -3656,6 +3733,9 @@
                         selectedTime: null,
                         appointmentMode: 'presencial',
                         paymentMethod: null,
+                        exit_warning_active: false,
+                        exit_warning_shown: false,
+                        exit_warning_last_step_shown: null, // ✅ para re-mostrar en paso 4/5/6 aunque lo cierren
                         booking_completed: false
                     };
 
@@ -4560,4 +4640,19 @@
             </div>
         </div>
     </body>
+    <!-- ✅ Toast: aviso de cita no confirmada -->
+    <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 2000;">
+    <div id="exitWarningToast"
+        class="toast align-items-center text-bg-warning border-0"
+        role="alert" aria-live="assertive" aria-atomic="true"
+        data-bs-autohide="false">
+        <div class="d-flex">
+        <div class="toast-body">
+            ⚠️ Tu cita todavía no está registrada. Completa todos los pasos para agendarla.
+            Si cierras esta pestaña, se perderá el proceso.
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+    </div>
 </html>
