@@ -100,16 +100,21 @@
                                 <div class="mb-0 pr-2">
                                     <i class="fas fa-exclamation-triangle mr-1"></i>
                                     <strong>Modo edición activado.</strong>
-                                    <div class="small mt-1">
+                                    <div class="small mt-1" id="editModeBannerLong">
                                         Puedes editar datos, estados y (si aplica) validación de transferencia.
                                         <br>
                                         <span class="text-muted">Las observaciones de validación aplican solo al comprobante.</span>
                                         <br>
                                         <span class="text-muted">La nota interna solo se pide si cambias datos sensibles.</span>
                                     </div>
+
+                                    <div class="small mt-1" id="editModeBannerShort" style="display:none;">
+                                        No se guardará nada hasta que presiones “Guardar cambios”.
+                                    </div>
                                 </div>
                                 <small class="text-muted text-right" style="min-width: 170px;">
-                                    No se guardará nada hasta que presiones “Guardar cambios”.
+                                <!-- En modo “solo validar transferencia”, el mensaje se muestra a la izquierda (editModeBannerShort) -->
+                                    <span id="editModeBannerRightHint">No se guardará nada hasta que presiones “Guardar cambios”.</span>
                                 </small>
                             </div>
                         </div>
@@ -1689,15 +1694,24 @@
         // ============================
         window.__apptIsEditMode = false;
 
-        function __enterEditModeUI() {
+        function __enterEditModeUI(mode = 'edit') {
             window.__apptIsEditMode = true;
 
             $('#editModeBanner').show();
             $('#btnCancelEditMode').show();
             $('#apptModeBadge').show();
 
-            // Por ahora NO convertimos campos a inputs (eso viene en el siguiente paso),
-            // solo marcamos el estado visual.
+            if (mode === 'quick_transfer') {
+                // Banner corto
+                $('#editModeBannerLong').hide();
+                $('#editModeBannerShort').show();
+                $('#editModeBannerRightHint').hide();
+            } else {
+                // Banner normal (largo)
+                $('#editModeBannerLong').show();
+                $('#editModeBannerShort').hide();
+                $('#editModeBannerRightHint').show();
+            }
         }
 
         function __exitEditModeUI() {
@@ -1708,6 +1722,11 @@
             $('#apptModeBadge').hide();
 
             // Por ahora NO revertimos nada más (porque no hay inputs aún).
+
+             // Reset banner a modo normal
+            $('#editModeBannerLong').show();
+            $('#editModeBannerShort').hide();
+            $('#editModeBannerRightHint').show();
         }
 
         // Click: Acciones -> Editar
@@ -1718,7 +1737,7 @@
 
         // Click: Acciones -> Solo validar transferencia (atajo)
         $(document).on('click', '#btnQuickValidateTransfer', function () {
-            __enterEditModeUI();
+            __enterEditModeUI('quick_transfer');
             $('#apptActionsDropdown').dropdown('hide');
 
             const pmRaw = String($('#modalPaymentMethodRaw').val() || '').trim().toLowerCase();
