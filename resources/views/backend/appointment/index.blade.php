@@ -53,7 +53,11 @@
 
                                 <div class="dropdown-menu dropdown-menu-right" aria-labelledby="apptActionsDropdown">
                                     <button type="button" class="dropdown-item" id="btnEnterEditMode">
-                                        <i class="fas fa-pen mr-2"></i>Editar datos
+                                        <i class="fas fa-pen mr-2"></i>Editar
+                                    </button>
+
+                                    <button type="button" class="dropdown-item" id="btnQuickValidateTransfer">
+                                        <i class="fas fa-money-check-alt mr-2"></i>Solo validar transferencia
                                     </button>
 
                                     <div class="dropdown-divider"></div>
@@ -92,12 +96,21 @@
                     <div class="modal-body">
                         {{-- ✅ Banner: modo edición (solo UI) --}}
                         <div id="editModeBanner" class="alert alert-warning py-2 mb-3" style="display:none;">
-                            <div class="d-flex align-items-center justify-content-between">
-                                <div class="mb-0">
+                            <div class="d-flex align-items-start justify-content-between">
+                                <div class="mb-0 pr-2">
                                     <i class="fas fa-exclamation-triangle mr-1"></i>
-                                    <strong>Modo edición:</strong> estás editando datos de la cita.
+                                    <strong>Modo edición activado.</strong>
+                                    <div class="small mt-1">
+                                        Puedes editar datos, estados y (si aplica) validación de transferencia.
+                                        <br>
+                                        <span class="text-muted">Las observaciones de validación aplican solo al comprobante.</span>
+                                        <br>
+                                        <span class="text-muted">La nota interna solo se pide si cambias datos sensibles.</span>
+                                    </div>
                                 </div>
-                                <small class="text-muted">No se guardará nada hasta que presiones “Guardar cambios”.</small>
+                                <small class="text-muted text-right" style="min-width: 170px;">
+                                    No se guardará nada hasta que presiones “Guardar cambios”.
+                                </small>
                             </div>
                         </div>
 
@@ -380,7 +393,7 @@
                                     {{-- =========================
                                         SUBSECCIÓN: Validación de transferencia (solo admin / solo transfer)
                                     ========================== --}}
-                                    <div class="col-md-12 mt-3">
+                                    <div class="col-md-12 mt-3" id="transferValidationSection">
                                         <div class="small text-muted font-weight-bold">Validación de transferencia</div>
                                     </div>
 
@@ -1697,11 +1710,30 @@
             // Por ahora NO revertimos nada más (porque no hay inputs aún).
         }
 
-        // Click: Acciones -> Editar datos
+        // Click: Acciones -> Editar
         $(document).on('click', '#btnEnterEditMode', function () {
             __enterEditModeUI();
-            // Cerrar dropdown
             $('#apptActionsDropdown').dropdown('hide');
+        });
+
+        // Click: Acciones -> Solo validar transferencia (atajo)
+        $(document).on('click', '#btnQuickValidateTransfer', function () {
+            __enterEditModeUI();
+            $('#apptActionsDropdown').dropdown('hide');
+
+            const pmRaw = String($('#modalPaymentMethodRaw').val() || '').trim().toLowerCase();
+            if (pmRaw !== 'transfer') {
+                alert('Esta cita no es por transferencia. No hay validación de transferencia para revisar.');
+                return;
+            }
+
+            // Scroll suave a la sección de validación
+            setTimeout(function () {
+                const el = document.getElementById('transferValidationSection');
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 150);
         });
 
         // Click: Cancelar edición
