@@ -245,6 +245,11 @@ class AppointmentController extends Controller
             'appointment_id' => 'required|exists:appointments,id',
             'status' => 'required|string',
 
+            // ✅ Guardar método/monto/estado pago desde el modal
+            'payment_method' => 'nullable|in:transfer,card',
+            'amount' => 'nullable|numeric|min:0',
+            'payment_status' => 'nullable|in:pending,paid,refunded',
+
             // ✅ Validación de transferencia (desde tu modal)
             'transfer_validation_status' => 'nullable|in:validated,rejected',
             'transfer_validation_notes'  => 'nullable|string|required_if:transfer_validation_status,rejected',
@@ -269,6 +274,21 @@ class AppointmentController extends Controller
 
         $appointment = Appointment::findOrFail($request->appointment_id);
         $appointment->status = $request->status;
+
+        // ✅ Guardar método de pago (si lo cambiaron en el modal)
+        if ($request->filled('payment_method')) {
+            $appointment->payment_method = $request->payment_method;
+        }
+
+        // ✅ Guardar monto (si lo cambiaron)
+        if ($request->filled('amount')) {
+            $appointment->amount = $request->amount;
+        }
+
+        // ✅ Guardar estado de pago (si lo cambiaron)
+        if ($request->filled('payment_status')) {
+            $appointment->payment_status = $request->payment_status;
+        }
 
         logger()->info('UPDATE STATUS APPOINTMENT', [
             'id' => $appointment->id ?? null,
@@ -363,6 +383,13 @@ class AppointmentController extends Controller
 
         // ✅ Guardar archivo comprobante (si viene)
         if ($request->hasFile('tr_file')) {
+
+            // ✅ borrar el anterior si existe
+            if (!empty($appointment->transfer_receipt_path) && Storage::disk('public')->exists($appointment->transfer_receipt_path)) {
+                Storage::disk('public')->delete($appointment->transfer_receipt_path);
+            }
+
+            // ✅ guardar el nuevo
             $appointment->transfer_receipt_path = $request->file('tr_file')->store('transfer_proofs', 'public');
         }
         $appointment->save();

@@ -494,10 +494,10 @@
                                             <input type="file"
                                                 class="form-control form-control-sm"
                                                 id="modalTransferReceiptFile"
-                                                name="transfer_receipt_file"
+                                                name="tr_file"
                                                 accept="image/*,application/pdf">
                                             <small class="text-muted d-block mt-1">
-                                                Si adjuntas uno nuevo, reemplazará el comprobante actual.
+                                                Si adjuntas un nuevo comprobante, se reemplazará el comprobante actual.
                                             </small>
                                         </div>
                                     </div>
