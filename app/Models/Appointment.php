@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\User;
 
 class Appointment extends Model
 {
@@ -59,6 +60,11 @@ class Appointment extends Model
         'transfer_date',
         'transfer_reference',
         'transfer_receipt_path',
+
+        'transfer_validation_status',
+        'transfer_validated_at',
+        'transfer_validated_by',
+        'transfer_validation_notes',
     ];
 
     protected $casts = [
@@ -66,6 +72,7 @@ class Appointment extends Model
         'data_consent' => 'boolean',
         'terms_accepted_at' => 'datetime',
         'transfer_date' => 'date',
+        'transfer_validated_at' => 'datetime',
     ];
 
     public function service()
@@ -81,5 +88,10 @@ class Appointment extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function transferValidatedBy()
+    {
+        return $this->belongsTo(User::class, 'transfer_validated_by');
     }
 }
