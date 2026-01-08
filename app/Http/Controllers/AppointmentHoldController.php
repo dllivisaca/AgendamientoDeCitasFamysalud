@@ -30,7 +30,7 @@ class AppointmentHoldController extends Controller
         ]);
 
         $sessionId = $request->session()->getId();
-        $holdMinutes = 15;
+        $holdMinutes = 20;
         $expiresAt = now()->addMinutes($holdMinutes);
 
         // Normalizar start/end:

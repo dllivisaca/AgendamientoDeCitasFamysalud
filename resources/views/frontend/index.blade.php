@@ -783,7 +783,7 @@
                     </div>
                     <div class="modal-body text-center p-4">
                         <i class="bi bi-check-circle text-success" style="font-size: 4rem;"></i>
-                        <h4 class="mt-3">¡Gracias!</h4>
+                        <h4 class="mt-3">¡Gracias por preferirnos!</h4>
                         <p>Su cita se registró correctamente.</p>
                         <div class="alert alert-info mt-3">
                             <p class="mb-0">Le enviamos un correo electrónico con el resumen de su cita</p>
