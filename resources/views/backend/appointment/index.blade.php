@@ -1401,6 +1401,7 @@
             }
 
             const pm = String(paymentMethodRaw || '').trim().toLowerCase();
+            __setPaymentMethodUI(pm);
 
             if (pm === 'card') {
                 $('#paymentSectionWrapper').show();
@@ -2192,6 +2193,7 @@
                 $('#editModeBannerShort').hide();
                 $('#editModeBannerRightHint').show();
             }
+            __setPaymentMethodUI($('#modalPaymentMethodRaw').val());
         }
 
         function __exitEditModeUI() {
