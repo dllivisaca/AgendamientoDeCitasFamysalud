@@ -908,6 +908,7 @@
                                                         data-cash-notes="{{ $appointment->cash_notes ?? '' }}"
                                                         data-client-transaction-id="{{ $appointment->client_transaction_id ?? '' }}"
                                                         data-payment-status="{{ $appointment->payment_status ?? '' }}"
+                                                        data-payment-paid-at="{{ $appointment->payment_paid_at ?? '' }}"
                                                         data-transfer-bank-origin="{{ $appointment->transfer_bank_origin ?? '' }}"
                                                         data-transfer-payer-name="{{ $appointment->transfer_payer_name ?? '' }}"
                                                         data-transfer-date="{{ $appointment->transfer_date ?? '' }}"
