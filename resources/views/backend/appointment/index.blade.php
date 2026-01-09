@@ -102,23 +102,11 @@
                             <div class="d-flex align-items-start justify-content-between">
                                 <div class="mb-0 pr-2">
                                     <i class="fas fa-exclamation-triangle mr-1"></i>
-                                    <strong>Modo edición activado.</strong>
-                                    <div class="small mt-1" id="editModeBannerLong">
-                                        Puedes editar datos, estados y (si aplica) validación de transferencia.
-                                        <br>
-                                        <span class="text-muted">Las observaciones de validación aplican solo al comprobante.</span>
-                                        <br>
-                                        <span class="text-muted">La nota interna solo se pide si cambias datos sensibles.</span>
-                                    </div>
-
-                                    <div class="small mt-1" id="editModeBannerShort" style="display:none;">
-                                        No se guardará nada hasta que presiones “Guardar cambios”.
+                                    <strong>Modo edición activado</strong>
+                                    <div class="small mt-1 text-muted">
+                                        Los cambios se guardarán solo al presionar “Guardar cambios”.
                                     </div>
                                 </div>
-                                <small class="text-muted text-right" style="min-width: 170px;">
-                                <!-- En modo “solo validar transferencia”, el mensaje se muestra a la izquierda (editModeBannerShort) -->
-                                    <span id="editModeBannerRightHint">No se guardará nada hasta que presiones “Guardar cambios”.</span>
-                                </small>
                             </div>
                         </div>
 
@@ -1012,7 +1000,7 @@
     {{-- hide notifcation --}}
     <script>
         $(document).ready(function() {
-            $(".alert").delay(6000).slideUp(300);
+            $(".alert").not("#editModeBanner").delay(6000).slideUp(300);
         });
     </script>
 
