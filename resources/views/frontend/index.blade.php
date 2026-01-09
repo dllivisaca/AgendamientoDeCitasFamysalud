@@ -841,16 +841,25 @@
                 // ✅ Leave guard (Paso 4+)
                 // ===========================
                 let leaveGuardEnabled = false;
+                window.__skipBeforeUnload = false;
 
                 function handleBeforeUnload(e) {
-                    // Solo advertir si ya están en paso 4 o más y NO se completó la reserva
-                    const shouldWarn = (bookingState.currentStep >= 4) && (bookingState.booking_completed !== true);
-                    if (!shouldWarn) return;
+                    // 1) Skip temporal (para PayPhone)
+                    if (window.__skipBeforeUnload) return;
 
-                    // Chrome/Edge ignoran el texto personalizado y muestran un mensaje genérico
+                    // 2) Si ya terminó, no advertir
+                    if (bookingState.booking_completed === true) return;
+
+                    // 3) Solo desde step 4+
+                    const step = Number(bookingState?.currentStep || 1);
+                    if (step < 4) return;
+
+                    // 4) Debe estar “activo” el warning (lo manejas con setExitWarningActive)
+                    if (!bookingState.exit_warning_active) return;
+
                     e.preventDefault();
-                    e.returnValue = '';
-                    return '';
+                    e.returnValue = ""; // Chrome/Edge muestran mensaje genérico
+                    return "";
                 }
 
                 function enableLeaveGuard() {
@@ -2076,6 +2085,16 @@
                     } else {
                         $("#urgent-help-banner").hide();
                     }
+
+                    // Leave guard + toast por step (4,5,6)
+                    if (step >= 4 && step <= 6 && !bookingState.booking_completed) {
+                    setExitWarningActive(true, step);
+                    } else {
+                    setExitWarningActive(false);
+                    }
+
+                    // Enciende/apaga beforeunload (usa exit_warning_active)
+                    updateLeaveGuard();
                 }
 
                 // ✅ Exit warning: se activa desde el paso 4 (fecha/hora), 5 (datos) y 6 (pago)
@@ -2100,36 +2119,6 @@
                         toast.show();
                     }
                 }
-
-                // ✅ Warning genérico del navegador (no se puede personalizar el texto)
-                window.addEventListener("beforeunload", function (e) {
-                if (bookingState.booking_completed) return;
-                if (!bookingState.exit_warning_active) return;
-
-                e.preventDefault();
-                e.returnValue = ""; // necesario para que el navegador muestre el warning
-                return "";
-                });
-
-                // ✅ Guard: alerta si intenta cerrar pestaña desde Step 4+ sin completar
-                (function () {
-                    function shouldWarnOnLeave() {
-                        const step = Number(bookingState?.currentStep || 1);
-                        const done = Boolean(bookingState?.booking_completed);
-                        return step >= 4 && !done;
-                    }
-
-                    window.addEventListener('beforeunload', function (e) {
-                        if (!shouldWarnOnLeave()) return;
-
-                        // Nota: Chrome/Edge muestran un mensaje genérico, pero esto lo activa sí o sí.
-                        const msg = 'Tu cita NO quedará agendada si no completas todos los pasos.';
-
-                        e.preventDefault();
-                        e.returnValue = msg; // requerido por el estándar
-                        return msg;
-                    });
-                })();
 
                 function updateProgressBar() {
                     const progress = ((bookingState.currentStep - 1) / 5) * 100;
@@ -3704,7 +3693,7 @@
                         contentType: "application/json",
                         headers: { "X-CSRF-TOKEN": getCsrfToken() },
                         data: JSON.stringify({
-                            appointment_hold_id: holdId,
+                            appointment_hold_id: bookingState.hold_id,
                             amount: parseFloat(standard),
                             payload: payloadToSend
                         }),
@@ -3924,6 +3913,34 @@
                 $(document).on("click", "#open-terms-card", function () {
                     $("#termsModal").modal("show"); // o el id real de tu modal
                 });
+
+                document.addEventListener("pointerdown", function (e) {
+                    const step = Number(bookingState?.currentStep || 1);
+                    const pm = (bookingState?.paymentMethod || "").toString().toLowerCase();
+
+                    if (step !== 6) return;
+                    if (pm !== "card") return;
+                    if (bookingState?.booking_completed) return;
+
+                    // Si el click fue dentro del contenedor de PayPhone (incluye iframe)
+                    const insidePayphone =
+                        e.target?.closest?.("#payphone-container") ||
+                        e.target?.closest?.("#pp-button");
+
+                    if (!insidePayphone) return;
+
+                    // Apaga beforeunload solo para esta navegación
+                    window.__skipBeforeUnload = true;
+
+                    // Por si tu guard está enganchado
+                    try { disableLeaveGuard(); } catch (err) {}
+
+                    // Si NO salió realmente, lo reactivamos
+                    setTimeout(() => {
+                        window.__skipBeforeUnload = false;
+                        try { updateLeaveGuard(); } catch (err) {}
+                    }, 6000);
+                }, true);
 
                 handlePayphoneReturn();
             });
