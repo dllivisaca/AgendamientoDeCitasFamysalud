@@ -608,8 +608,8 @@
 
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="accept_terms_card">
-                                <label class="form-check-label" for="card_terms_accepted">
-                                Acepto los <a href="#" target="_blank">Términos y condiciones</a>
+                                <label class="form-check-label" for="accept_terms_card">
+                                Acepto los <a href="#" id="open-terms-card">Términos y condiciones</a>
                                 </label>
                             </div>
 
@@ -717,7 +717,7 @@
                             <div class="border rounded p-3 bg-light" id="payphone-container">
                                 <div id="pp-button"></div>
                                 <div class="small text-muted mt-2" id="pp-help">
-                                    Al pagar, usted será redirigido/a para confirmar el resultado.
+                                    
                                 </div>
                             </div>
                             
@@ -3907,8 +3907,12 @@
                     modal.show();
                 });
 
-                $(document).on("click", "#open-terms-card", function () {
-                    $("#termsModal").modal("show"); // o el id real de tu modal
+                $(document).on("click", "#open-terms-card", function (e) {
+                    e.preventDefault();
+                    const modalEl = document.getElementById("termsModal");
+                    if (modalEl && window.bootstrap) {
+                        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+                    }
                 });
 
                 document.addEventListener("pointerdown", function (e) {
