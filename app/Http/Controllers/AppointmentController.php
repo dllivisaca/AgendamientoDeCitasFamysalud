@@ -141,6 +141,11 @@ class AppointmentController extends Controller
             $validated['appointment_channel'] = 'patient_online';
         }
 
+        // ✅ Canal de pago: transferencia bancaria (solo cuando el paciente agenda online)
+        if (!$isPrivilegedRole && (($validated['payment_method'] ?? null) === 'transfer')) {
+            $validated['payment_channel'] = 'bank_transfer';
+        }
+
         // Generate unique booking ID
         $validated['booking_id'] = 'FS-' . strtoupper(uniqid());
 

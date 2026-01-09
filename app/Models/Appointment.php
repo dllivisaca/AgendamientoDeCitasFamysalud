@@ -42,12 +42,14 @@ class Appointment extends Model
         'amount_standard',
         'discount_amount',
         'payment_status',
-
+        'payment_channel',
+        
         // Cita
         'appointment_date',
         'appointment_time',
         'appointment_end_time',
         'status',
+        'appointment_channel',
 
         // Consentimientos
         'data_consent',
