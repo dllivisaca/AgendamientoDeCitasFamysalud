@@ -20,6 +20,8 @@
         <input type="hidden" name="transfer_validation_status" id="modalTransferValidationStatusInput" value="">
         <input type="hidden" name="payment_status" id="modalPaymentStatusHidden" value="">
         <input type="hidden" name="cash_paid_at" id="modalCashPaidAtHidden" value="">
+        <input type="hidden" name="client_transaction_id" id="modalClientTransactionIdHidden" value="">
+        <input type="hidden" name="payment_paid_at" id="modalPaymentPaidAtHidden" value="">
         <input type="hidden" name="cash_notes" id="modalCashNotesHidden" value="">
         <input type="hidden" name="transfer_validation_notes" id="modalTransferValidationNotesInput" value="">
         <input type="hidden" id="modalPaymentMethodRaw" value="">
@@ -391,8 +393,16 @@
 
                                     <div class="col-md-6 mb-2">
                                         <div class="small text-muted">Client Transaction ID</div>
-                                        {{-- OJO: es largo, por eso usamos estilo wrap --}}
-                                        <div class="text-dark" id="modalClientTransactionId" style="word-break: break-all;">N/A</div>
+
+                                        {{-- Lectura --}}
+                                        <div class="text-dark js-edit-text" id="modalClientTransactionId" style="word-break: break-all;">N/A</div>
+
+                                        {{-- Edición --}}
+                                        <input type="text"
+                                            class="form-control form-control-sm js-edit-input"
+                                            id="modalClientTransactionIdInput"
+                                            value=""
+                                            placeholder="Ej: 33b7a262-1814-45f2-8076-76d1236f1769">
                                     </div>
 
                                     <div class="col-md-6 mb-2">
@@ -404,12 +414,29 @@
 
                                     <div class="col-md-6 mb-2">
                                         <div class="small text-muted">Fecha del pago</div>
-                                        <div class="text-dark" id="modalPaymentDate">N/A</div>
+
+                                        {{-- Lectura --}}
+                                        <div class="text-dark js-edit-text" id="modalPaymentDate">N/A</div>
+
+                                        {{-- Edición (fecha + hora) --}}
+                                        <input type="datetime-local"
+                                            class="form-control form-control-sm js-edit-input"
+                                            id="modalPaymentPaidAtInput"
+                                            value="">
                                     </div>
 
                                     <div class="col-md-6 mb-0">
                                         <div class="small text-muted">Estado del pago</div>
-                                        <div class="text-dark" id="modalPaymentStatusBadge2">N/A</div>
+
+                                        {{-- Lectura --}}
+                                        <div class="text-dark js-edit-text" id="modalPaymentStatusBadge2">N/A</div>
+
+                                        {{-- Edición --}}
+                                        <select class="form-control form-control-sm js-edit-input" id="modalPaymentStatusSelectCard">
+                                            <option value="pending">Pendiente</option>
+                                            <option value="paid">Pagado</option>
+                                            <option value="refunded">Reembolsado</option>
+                                        </select>
                                     </div>
                                 </div>
                             </div>
@@ -1300,10 +1327,31 @@
             console.log('[pmRaw hidden now]', $('#modalPaymentMethodRaw').val());
             console.log('------------------');
             const clientTxIdRaw = $(this).data('client-transaction-id');      // largo
-            const paymentStatusRaw = $(this).data('payment-status');          // lo que tengas guardado
-            const amountRaw = $(this).data('amount');                         // ya existe
-            // Fecha del pago: reusamos createdAtFinal (porque pago=cita)
-            const paymentDateFinal = createdAtFinal || 'N/A';
+            const paymentStatusRaw = $(this).data('payment-status');          // pending|paid|refunded
+            const amountRaw = $(this).data('amount');
+            const paymentPaidAtRaw = $(this).data('payment-paid-at');         // NUEVO: datetime real (BD)
+
+            function __toDatetimeLocalValue(dateRaw) {
+                if (!dateRaw || String(dateRaw).trim() === '') return '';
+                const d = new Date(String(dateRaw));
+                if (isNaN(d.getTime())) return '';
+                const pad = (n) => String(n).padStart(2, '0');
+                return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+            }
+
+            function __formatNiceDateTime(dateRaw) {
+                if (!dateRaw || String(dateRaw).trim() === '') return 'N/A';
+                const d = new Date(String(dateRaw));
+                if (isNaN(d.getTime())) return String(dateRaw);
+                const datePart = d.toLocaleDateString('es-EC', { day: '2-digit', month: 'short', year: 'numeric' });
+                const timePart = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+                return `${datePart} · ${timePart}`;
+            }
+
+            // ✅ Fecha del pago (prioridad: payment_paid_at, fallback: createdAtFinal)
+            const paymentDateFinal = (paymentPaidAtRaw && String(paymentPaidAtRaw).trim() !== '')
+                ? __formatNiceDateTime(paymentPaidAtRaw)
+                : (createdAtFinal || 'N/A');
 
             // Reset visual
             $('#paymentSectionWrapper').hide();
@@ -1418,6 +1466,19 @@
                 $('#modalPaymentAmount').text(amountText);
                 $('#modalPaymentDate').text(paymentDateFinal);
                 $('#modalPaymentStatusBadge2').html(paymentStatusBadge(paymentStatusRaw));
+
+                // ✅ Precargar inputs editables (tarjeta)
+                $('#modalClientTransactionIdInput').val(clientTxIdRaw ? String(clientTxIdRaw) : '');
+
+                // datetime-local input (payment_paid_at)
+                $('#modalPaymentPaidAtInput').val(__toDatetimeLocalValue(paymentPaidAtRaw));
+
+                // ✅ Sincronizar estado del pago (arriba + tarjeta + hidden + badges)
+                __syncPaymentStatusEverywhere(paymentStatusRaw, 'init');
+
+                // ✅ Precargar hiddens para submit (tarjeta)
+                $('#modalClientTransactionIdHidden').val(clientTxIdRaw ? String(clientTxIdRaw) : '');
+                $('#modalPaymentPaidAtHidden').val(__toDatetimeLocalValue(paymentPaidAtRaw));
 
             } else if (pm === 'transfer') {
                 $('#paymentSectionWrapper').show();
@@ -1699,6 +1760,8 @@
             // ✅ Hiddens que se envían al backend
             $('#modalStatusHidden').val(normalizedStatus || 'pending_verification');
             $('#modalPaymentStatusHidden').val(pStat);
+            $('#modalPaymentStatusSelectCard').val(pStat);
+            $('#modalPaymentStatusBadge2').html(paymentStatusBadge(pStat));
 
             // ============================
             // ✅ Cambios en selects de estado (Resumen)
@@ -1743,16 +1806,29 @@
                 __updateSaveButtonState();
             });
 
-            $(document).on('change.apptStatusSelects', '#modalPaymentStatusSelect', function () {
-                const v = String($(this).val() || '').trim().toLowerCase();
+            function __syncPaymentStatusEverywhere(v, source) {
+                const val = String(v || '').trim().toLowerCase();
 
-                // hidden que se envía
-                $('#modalPaymentStatusHidden').val(v);
+                // Hidden que se envía
+                $('#modalPaymentStatusHidden').val(val);
 
-                // badge visible
-                $('#modalPaymentStatusBadge').html(paymentStatusBadge(v));
+                // Selects (arriba + tarjeta)
+                if (source !== 'top')  $('#modalPaymentStatusSelect').val(val);
+                if (source !== 'card') $('#modalPaymentStatusSelectCard').val(val);
+
+                // Badges (arriba + tarjeta)
+                $('#modalPaymentStatusBadge').html(paymentStatusBadge(val));
+                $('#modalPaymentStatusBadge2').html(paymentStatusBadge(val));
 
                 __updateSaveButtonState();
+            }
+
+            $(document).on('change.apptStatusSelects', '#modalPaymentStatusSelect', function () {
+                __syncPaymentStatusEverywhere($(this).val(), 'top');
+            });
+
+            $(document).on('change.apptStatusSelects', '#modalPaymentStatusSelectCard', function () {
+                __syncPaymentStatusEverywhere($(this).val(), 'card');
             });
 
             // ============================
@@ -1855,6 +1931,12 @@
                 $('#modalTransferDateInput').val('');
             }
 
+            // ✅ Si no es tarjeta, NO tocar campos de tarjeta en backend
+            if (pm !== 'card') {
+                $('#modalClientTransactionIdHidden').val('');
+                $('#modalPaymentPaidAtHidden').val('');
+            }
+
             // ✅ Snapshot final (BD) para habilitar Guardar cambios solo si hay cambios reales
             __setSnapshotFromCurrent();
         });
@@ -1913,6 +1995,21 @@
             const pmRaw = String($('#modalPaymentMethodRaw').val() || '').trim().toLowerCase();
             const isTransfer = (pmRaw === 'transfer');
             const isCash = (pmRaw === 'cash');
+
+            const isCard = (pmRaw === 'card');
+
+            // ✅ Tarjeta: mandar client_transaction_id + payment_paid_at
+            if (isCard) {
+                const tx = String($('#modalClientTransactionIdInput').val() || '').trim();
+                const paidAt = String($('#modalPaymentPaidAtInput').val() || '').trim(); // datetime-local
+
+                $('#modalClientTransactionIdHidden').val(tx);
+                $('#modalPaymentPaidAtHidden').val(paidAt);
+            } else {
+                // No tarjeta => no pisar en backend
+                $('#modalClientTransactionIdHidden').val('');
+                $('#modalPaymentPaidAtHidden').val('');
+            }
 
             // ✅ Si NO es cash, limpiamos cash_paid_at para que backend lo ponga NULL
             if (!isCash) {
@@ -2122,6 +2219,9 @@
                 appointment_status: __norm($('#modalStatusSelect').val()).toLowerCase(),
                 payment_status: __norm($('#modalPaymentStatusSelect').val()).toLowerCase(),
 
+                client_transaction_id: __norm($('#modalClientTransactionIdInput').val()),
+                payment_paid_at: __norm($('#modalPaymentPaidAtInput').val()),
+
                 patient_full_name: __norm($('#modalPatientFullNameInput').val()),
                 patient_doc_type: __norm($('#modalDocTypeInput').val()).toLowerCase(),
                 patient_doc_number: __norm($('#modalDocNumberInput').val()),
@@ -2189,7 +2289,7 @@
             __updateSaveButtonState();
         });
 
-        $(document).on('input change', '#modalPatientFullNameInput,#modalDocTypeInput,#modalDocNumberInput,#modalEmailInput,#modalPhoneInput,#modalAddressInput,#modalPatientTimezoneInput,#modalNotesInput,#modalBillingNameInput,#modalBillingDocTypeInput,#modalBillingDocNumberInput,#modalBillingEmailInput,#modalBillingPhoneInput,#modalBillingAddressInput,#modalAmountInput,#modalTransferBankOriginInput,#modalTransferPayerNameInput,#modalTransferDateInput,#modalTransferReferenceInput,#modalStatusSelect,#modalPaymentStatusSelect,#modalTransferReceiptFile,#modalAmountInputCash,#modalCashPaidAtInput,#modalCashNotesInput,#modalPaymentMethodSelectCash', function () {
+        $(document).on('input change', '#modalPatientFullNameInput,#modalDocTypeInput,#modalDocNumberInput,#modalEmailInput,#modalPhoneInput,#modalAddressInput,#modalPatientTimezoneInput,#modalNotesInput,#modalBillingNameInput,#modalBillingDocTypeInput,#modalBillingDocNumberInput,#modalBillingEmailInput,#modalBillingPhoneInput,#modalBillingAddressInput,#modalAmountInput,#modalTransferBankOriginInput,#modalTransferPayerNameInput,#modalTransferDateInput,#modalTransferReferenceInput,#modalStatusSelect,#modalPaymentStatusSelect,#modalTransferReceiptFile,#modalAmountInputCash,#modalCashPaidAtInput,#modalCashNotesInput,#modalPaymentMethodSelectCash,#modalClientTransactionIdInput,#modalPaymentPaidAtInput,#modalPaymentStatusSelectCard', function () {
             __updateSaveButtonState();
         });
 
