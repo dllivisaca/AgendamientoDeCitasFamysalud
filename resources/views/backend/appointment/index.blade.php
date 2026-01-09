@@ -503,12 +503,19 @@
 
                                     <div class="col-md-12 mb-2">
                                         <div class="small text-muted">Estado de validación</div>
-                                        <select class="form-control form-control-sm w-100" id="modalTransferValidationSelect">
+
+                                        {{-- ✅ Lectura: solo texto --}}
+                                        <div class="text-dark js-edit-text" id="modalTransferValidationText">Sin revisar</div>
+
+                                        {{-- ✅ Edición: dropdown --}}
+                                        <select class="form-control form-control-sm w-100 js-edit-input" id="modalTransferValidationSelect">
                                             <option value="">Sin revisar</option>
                                             <option value="validated">Validada</option>
                                             <option value="rejected">Rechazada</option>
                                         </select>
-                                        <small class="text-muted d-block mt-1">
+
+                                        {{-- ✅ Esta ayuda solo en edición --}}
+                                        <small class="text-muted mt-1 js-edit-input">
                                             “Validada” marcará la cita como "Pagada". “Rechazada” pasará la cita a "En espera".
                                         </small>
                                     </div>
@@ -601,7 +608,7 @@
 
                         <button type="submit" id="btnSaveChanges" disabled
                             onclick="return confirm('¿Estás seguro que quieres guardar los cambios?')"
-                            class="btn btn-danger">Guardar cambios</button>
+                            class="btn btn-danger js-edit-input">Guardar cambios</button>
 
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
                     </div>
@@ -934,10 +941,10 @@
     }
 
     /* ====== Edit mode: texto vs inputs ====== */
-    .js-edit-input { display:none; }
+    .js-edit-input { display:none !important; }
     .js-edit-text  { display:block; }
 
-    body.appt-edit-mode .js-edit-input { display:block; }
+    body.appt-edit-mode .js-edit-input { display:block !important; }
     body.appt-edit-mode .js-edit-text  { display:none; }
 
   /* ✅ Modal de comprobante: tamaño fijo al viewport (no gigante) */
@@ -1424,6 +1431,16 @@
                 const validationNotes  = $(this).attr('data-transfer-validation-notes');
 
                 const vStatus = String(validationStatus || '').trim().toLowerCase();
+
+                // ✅ Texto modo lectura (Validación)
+                (function () {
+                    const labels = {
+                        '': 'Sin revisar',
+                        'validated': 'Validada',
+                        'rejected': 'Rechazada'
+                    };
+                    $('#modalTransferValidationText').text(labels[vStatus] ?? 'Sin revisar');
+                })();
 
                 // Reset UI
                 $('#modalTransferValidationSelect').val('');
