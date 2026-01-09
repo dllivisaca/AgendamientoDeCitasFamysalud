@@ -398,8 +398,8 @@
                                     <div class="col-md-6 mb-2">
                                         <div class="small text-muted">Monto</div>
                                         <div class="text-dark js-edit-text" id="modalPaymentAmount">N/A</div>
-                                        <input type="number" step="0.01" min="0" class="form-control form-control-sm js-edit-input"
-                                            id="modalAmountInput" name="amount" value="">
+                                        <input type="number" step="0.01" min="0" lang="en" class="form-control form-control-sm js-edit-input"
+                                        id="modalAmountInput" name="amount" value="">
                                     </div>
 
                                     <div class="col-md-6 mb-2">
@@ -436,7 +436,7 @@
 
                                         <div class="text-dark js-edit-text" id="modalTransferAmount">N/A</div>
 
-                                        <input type="number" step="0.01" min="0"
+                                        <input type="number" step="0.01" min="0" lang="en"
                                             class="form-control form-control-sm js-edit-input"
                                             id="modalAmountInputTransfer"
                                             name="amount"
@@ -564,7 +564,7 @@
 
                                         <div class="text-dark js-edit-text" id="modalCashAmount">N/A</div>
 
-                                        <input type="number" step="0.01" min="0"
+                                        <input type="number" step="0.01" min="0" lang="en"
                                             class="form-control form-control-sm js-edit-input"
                                             id="modalAmountInputCash"
                                             name="amount"
@@ -1786,12 +1786,45 @@
             $('#modalAmountInputTransfer').val(amt);
             $('#modalAmountInputCash').val(amt);
 
+            // ✅ asegurar formato final consistente
+            __syncAmountAll(__force2Decimals(amt));
+
+            function __force2Decimals(raw) {
+                // Normaliza coma -> punto y limpia espacios
+                let s = String(raw ?? '').trim().replace(',', '.');
+
+                // Si está vacío, no fuerces nada
+                if (s === '') return '';
+
+                // Convertir a número
+                const n = Number(s);
+
+                // Si es inválido, lo dejamos tal cual (para no romper UX)
+                if (!isFinite(n)) return s;
+
+                // Forzar 2 decimales SIEMPRE (15 -> 15.00)
+                return n.toFixed(2);
+            }
+
+            function __syncAmountAll(formattedVal) {
+                $('#modalAmountInput').val(formattedVal);
+                $('#modalAmountInputTransfer').val(formattedVal);
+                $('#modalAmountInputCash').val(formattedVal);
+            }
+
+            // 1) Mientras escribe o usa flechitas: sincroniza y mantiene formato estable
             $(document).off('input.syncAmount');
             $(document).on('input.syncAmount', '#modalAmountInput, #modalAmountInputTransfer, #modalAmountInputCash', function () {
-                const v = $(this).val();
-                $('#modalAmountInput').val(v);
-                $('#modalAmountInputTransfer').val(v);
-                $('#modalAmountInputCash').val(v);
+                const formatted = __force2Decimals($(this).val());
+                __syncAmountAll(formatted);
+                __updateSaveButtonState();
+            });
+
+            // 2) Al salir del input (blur): asegura que quede 15.00 sí o sí
+            $(document).off('blur.syncAmount');
+            $(document).on('blur.syncAmount', '#modalAmountInput, #modalAmountInputTransfer, #modalAmountInputCash', function () {
+                const formatted = __force2Decimals($(this).val());
+                __syncAmountAll(formatted);
                 __updateSaveButtonState();
             });
 
