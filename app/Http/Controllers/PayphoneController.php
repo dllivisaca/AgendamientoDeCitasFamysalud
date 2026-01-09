@@ -295,7 +295,7 @@
                     return $v;
                 };
 
-                $bookingId = $payload['booking_id'] ?? ('BK-' . strtoupper(Str::random(12)));
+                $bookingId = 'FS-' . strtoupper(Str::random(12));
 
                 DB::table('appointments')->insert([
                     'user_id'      => $attempt->user_id,
@@ -324,6 +324,13 @@
                     'payment_method'  => 'card',
                     'amount_standard' => $attempt->amount,
                     'discount_amount' => 0,
+
+                    // ✅ Nuevos campos de pago (NO cambia lógica, solo guarda metadata)
+                    'amount_paid' => $attempt->amount,                         // payment_attempts.amount
+                    'payment_paid_at' => $attempt->created_at ?? now(),         // payment_attempts.created_at
+                    'payment_paid_at_date_source' => 'payphone',                // minúsculas
+                    'payment_channel' => 'payphone',                            // minúsculas
+                    'appointment_channel' => 'patient_online',                  // minúsculas + underscore
 
                     'appointment_date'     => $hold->appointment_date,
                     'appointment_time'     => $hold->appointment_time,

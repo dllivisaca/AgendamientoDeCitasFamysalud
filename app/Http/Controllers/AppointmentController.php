@@ -106,6 +106,9 @@ class AppointmentController extends Controller
 
             'payment_method' => 'required|in:transfer,card',
             'tr_file' => 'nullable|required_if:payment_method,transfer|file|mimes:jpg,jpeg,png,pdf|max:5120',
+
+            // ✅ Payphone (solo si payment_method = card)
+            'client_transaction_id' => 'nullable|string|max:120|required_if:payment_method,card',
         ]);
 
         // Mapear consentimiento a columnas reales de appointments
@@ -133,6 +136,10 @@ class AppointmentController extends Controller
             $validated['user_id'] = auth()->id();
         }
 
+        // ✅ Canal de cita: paciente agenda online (solo si NO es admin/mod/employee)
+        if (!$isPrivilegedRole) {
+            $validated['appointment_channel'] = 'patient_online';
+        }
 
         // Generate unique booking ID
         $validated['booking_id'] = 'FS-' . strtoupper(uniqid());
@@ -175,6 +182,45 @@ class AppointmentController extends Controller
         }
 
         $appointment = null;
+
+        // ✅ Si es tarjeta (Payphone), rellenar nuevos campos desde payment_attempts
+        if (($validated['payment_method'] ?? null) === 'card') {
+
+            $clientTxId = (string) ($request->input('client_transaction_id') ?? '');
+            $clientTxId = trim($clientTxId);
+
+            if ($clientTxId !== '') {
+                // Guardar también el client_transaction_id si tu tabla appointments lo tiene
+                $validated['client_transaction_id'] = $clientTxId;
+
+                $attempt = DB::table('payment_attempts')
+                    ->where('client_transaction_id', $clientTxId)
+                    ->latest('id')
+                    ->first();
+
+                // Solo si existe el attempt (no cambiamos tu lógica actual, solo rellenamos)
+                if ($attempt) {
+                    // amount_paid = payment_attempts.amount
+                    if (isset($attempt->amount)) {
+                        $validated['amount_paid'] = $attempt->amount;
+                    }
+
+                    // payment_paid_at = payment_attempts.created_at
+                    if (isset($attempt->created_at)) {
+                        $validated['payment_paid_at'] = $attempt->created_at;
+                    }
+
+                    // sources / channel (siempre en minúsculas)
+                    $validated['payment_paid_at_date_source'] = 'payphone';
+                    $validated['payment_channel'] = 'payphone';
+                } else {
+                    // Igual setea estos 2 para mantener consistencia del canal,
+                    // aunque el attempt no exista por alguna razón.
+                    $validated['payment_paid_at_date_source'] = 'payphone';
+                    $validated['payment_channel'] = 'payphone';
+                }
+            }
+        }
 
         DB::transaction(function () use (&$appointment, &$validated, $hold, $request) {
             unset($validated['hold_id']);
