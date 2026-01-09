@@ -19,6 +19,8 @@
         <input type="hidden" name="status" id="modalStatusHidden" value="">
         <input type="hidden" name="transfer_validation_status" id="modalTransferValidationStatusInput" value="">
         <input type="hidden" name="payment_status" id="modalPaymentStatusHidden" value="">
+        <input type="hidden" name="cash_paid_at" id="modalCashPaidAtHidden" value="">
+        <input type="hidden" name="cash_notes" id="modalCashNotesHidden" value="">
         <input type="hidden" name="transfer_validation_notes" id="modalTransferValidationNotesInput" value="">
         <input type="hidden" id="modalPaymentMethodRaw" value="">
 
@@ -395,6 +397,7 @@
                                                 name="payment_method">
                                             <option value="transfer">Transferencia</option>
                                             <option value="card">Tarjeta</option>
+                                            <option value="cash">Efectivo</option>
                                         </select>
                                     </div>
 
@@ -436,6 +439,7 @@
                                                 name="payment_method">
                                             <option value="transfer">Transferencia</option>
                                             <option value="card">Tarjeta</option>
+                                            <option value="cash">Efectivo</option>
                                         </select>
                                     </div>
 
@@ -497,7 +501,7 @@
                                                 name="tr_file"
                                                 accept="image/*,application/pdf">
                                             <small class="text-muted d-block mt-1">
-                                                Si adjuntas un nuevo comprobante, se reemplazará el comprobante actual.
+                                                Si adjunta un nuevo comprobante, se reemplazará el comprobante actual.
                                             </small>
                                         </div>
                                     </div>
@@ -539,6 +543,61 @@
 
                                         <textarea class="form-control form-control-sm" id="modalTransferValidationNotes" rows="2"
                                             placeholder="Ej: Escribe una observación..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- BLOQUE EFECTIVO --}}
+                            <div id="paymentCashBlock" style="display:none;">
+                                <div class="row">
+                                    <div class="col-md-6 mb-2">
+                                        <div class="small text-muted">Método</div>
+
+                                        <div class="text-dark js-edit-text" id="modalCashMethodLabel">Efectivo</div>
+
+                                        <select class="form-control form-control-sm js-edit-input"
+                                                id="modalPaymentMethodSelectCash"
+                                                name="payment_method">
+                                            <option value="transfer">Transferencia</option>
+                                            <option value="card">Tarjeta</option>
+                                            <option value="cash">Efectivo</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-6 mb-2">
+                                        <div class="small text-muted">Monto</div>
+
+                                        <div class="text-dark js-edit-text" id="modalCashAmount">N/A</div>
+
+                                        <input type="number" step="0.01" min="0"
+                                            class="form-control form-control-sm js-edit-input"
+                                            id="modalAmountInputCash"
+                                            name="amount"
+                                            value="">
+                                    </div>
+
+                                    <div class="col-md-6 mb-2">
+                                        <div class="small text-muted">Fecha del pago</div>
+
+                                        <div class="text-dark js-edit-text" id="modalCashPaidAtText">N/A</div>
+
+                                        <input type="datetime-local"
+                                            class="form-control form-control-sm js-edit-input"
+                                            id="modalCashPaidAtInput"
+                                            value="">
+                                    </div>
+
+                                    <div class="col-md-12 mb-0">
+                                        <div class="small text-muted">Observaciones (opcional)</div>
+
+                                        <div class="text-dark js-edit-text" id="modalCashNotesText">
+                                            <span class="text-muted font-italic small">N/A</span>
+                                        </div>
+
+                                        <textarea class="form-control form-control-sm js-edit-input"
+                                                id="modalCashNotesInput"
+                                                rows="2"
+                                                placeholder="Ej: Pago recibido en recepción / Regularización de transferencia rechazada"></textarea>
                                     </div>
                                 </div>
                             </div>
@@ -845,6 +904,8 @@
                                                         data-billing-timezone="{{ $appointment->billing_timezone ?? '' }}"
                                                         data-billing-timezone-label="{{ $appointment->billing_timezone_label ?? '' }}"
                                                         data-payment-method="{{ $appointment->payment_method ?? '' }}"
+                                                        data-cash-paid-at="{{ $appointment->cash_paid_at ?? '' }}"
+                                                        data-cash-notes="{{ $appointment->cash_notes ?? '' }}"
                                                         data-client-transaction-id="{{ $appointment->client_transaction_id ?? '' }}"
                                                         data-payment-status="{{ $appointment->payment_status ?? '' }}"
                                                         data-transfer-bank-origin="{{ $appointment->transfer_bank_origin ?? '' }}"
@@ -1258,6 +1319,7 @@
                 const m = String(method || '').trim().toLowerCase();
                 if (m === 'card') return 'Tarjeta';
                 if (m === 'transfer') return 'Transferencia';
+                if (m === 'cash') return 'Efectivo';
                 return m ? (m.charAt(0).toUpperCase() + m.slice(1)) : 'N/A';
             }
 
@@ -1302,24 +1364,37 @@
                     $('#paymentSectionWrapper').show();
                     $('#paymentCardBlock').show();
                     $('#paymentTransferBlock').hide();
+                    $('#paymentCashBlock').hide();
                 } else if (pm === 'transfer') {
                     $('#paymentSectionWrapper').show();
                     $('#paymentTransferBlock').show();
                     $('#paymentCardBlock').hide();
+                    $('#paymentCashBlock').hide();
+                } else if (pm === 'cash') {
+                    $('#paymentSectionWrapper').show();
+                    $('#paymentCashBlock').show();
+                    $('#paymentCardBlock').hide();
+                    $('#paymentTransferBlock').hide();
                 } else {
                     $('#paymentSectionWrapper').hide();
                     $('#paymentCardBlock').hide();
                     $('#paymentTransferBlock').hide();
+                    $('#paymentCashBlock').hide();
                 }
 
                 // ✅ Set selects (los dos) para que reflejen el método
                 $('#modalPaymentMethodSelectCard').val(pm || 'card');
                 $('#modalPaymentMethodSelectTransfer').val(pm || 'transfer');
+                $('#modalPaymentMethodSelectCash').val(pm || 'cash');
 
                 // ✅ Importantísimo: deshabilitar inputs del bloque oculto para no mandar duplicados
                 const isCard = (pm === 'card');
+                const isTransfer = (pm === 'transfer');
+                const isCash = (pm === 'cash');
+
                 $('#paymentCardBlock :input').prop('disabled', !isCard);
-                $('#paymentTransferBlock :input').prop('disabled', isCard);
+                $('#paymentTransferBlock :input').prop('disabled', !isTransfer);
+                $('#paymentCashBlock :input').prop('disabled', !isCash);
 
                 // ✅ Re-habilitar los selects de método del bloque visible (por si quedaron disabled)
                 if (isCard) {
@@ -1474,6 +1549,61 @@
                     );
                 }
 
+            } else if (pm === 'cash') {
+                $('#paymentSectionWrapper').show();
+                $('#paymentCashBlock').show();
+
+                // Labels
+                $('#modalCashMethodLabel').text('Efectivo');
+
+                const amountText =
+                    amountRaw !== null && amountRaw !== undefined && amountRaw !== ''
+                        ? `$${parseFloat(amountRaw).toFixed(2)}`
+                        : 'N/A';
+
+                $('#modalCashAmount').text(amountText);
+
+                // cash_paid_at desde data-*
+                const cashPaidAtRaw = $(this).data('cash-paid-at'); // puede venir "" o null
+
+                // Texto bonito
+                let cashPaidAtText = 'N/A';
+                if (cashPaidAtRaw && String(cashPaidAtRaw).trim() !== '') {
+                    const d = new Date(String(cashPaidAtRaw));
+                    if (!isNaN(d.getTime())) {
+                        const datePart = d.toLocaleDateString('es-EC', { day: '2-digit', month: 'short', year: 'numeric' });
+                        const timePart = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+                        cashPaidAtText = `${datePart} · ${timePart}`;
+                    } else {
+                        cashPaidAtText = String(cashPaidAtRaw);
+                    }
+                }
+                $('#modalCashPaidAtText').text(cashPaidAtText);
+
+                // Input datetime-local (formato YYYY-MM-DDTHH:MM)
+                // Si no hay cash_paid_at, lo dejamos vacío (y cuando edites, tú lo pones)
+                if (cashPaidAtRaw && String(cashPaidAtRaw).trim() !== '') {
+                    const d = new Date(String(cashPaidAtRaw));
+                    if (!isNaN(d.getTime())) {
+                        const pad = (n) => String(n).padStart(2, '0');
+                        const localVal = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+                        $('#modalCashPaidAtInput').val(localVal);
+                    } else {
+                        $('#modalCashPaidAtInput').val('');
+                    }
+                } else {
+                    $('#modalCashPaidAtInput').val('');
+                }
+
+                // Notes (si no tienes columna todavía, esto quedará N/A siempre)
+                const cashNotesRaw = $(this).data('cash-notes');
+                if (cashNotesRaw && String(cashNotesRaw).trim() !== '') {
+                    $('#modalCashNotesText').text(String(cashNotesRaw));
+                    $('#modalCashNotesInput').val(String(cashNotesRaw));
+                } else {
+                    $('#modalCashNotesText').html(`<span class="text-muted font-italic small">N/A</span>`);
+                    $('#modalCashNotesInput').val('');
+                } 
             } else {
                 // Si no hay método, ocultamos Sección 5 (no mostramos basura)
                 $('#paymentSectionWrapper').hide();
@@ -1647,19 +1777,21 @@
             }
             $('#modalAmountInput').val(amt);
             $('#modalAmountInputTransfer').val(amt);
+            $('#modalAmountInputCash').val(amt);
 
             $(document).off('input.syncAmount');
-            $(document).on('input.syncAmount', '#modalAmountInput, #modalAmountInputTransfer', function () {
+            $(document).on('input.syncAmount', '#modalAmountInput, #modalAmountInputTransfer, #modalAmountInputCash', function () {
                 const v = $(this).val();
                 $('#modalAmountInput').val(v);
                 $('#modalAmountInputTransfer').val(v);
+                $('#modalAmountInputCash').val(v);
                 __updateSaveButtonState();
             });
 
             // ✅ B4: Cambiar método (card/transfer) y refrescar UI
             $(document).off('change.paymentMethodSelect');
 
-            $(document).on('change.paymentMethodSelect', '#modalPaymentMethodSelectCard, #modalPaymentMethodSelectTransfer', function () {
+            $(document).on('change.paymentMethodSelect', '#modalPaymentMethodSelectCard, #modalPaymentMethodSelectTransfer, #modalPaymentMethodSelectCash', function () {
                 const pm = String($(this).val() || '').trim().toLowerCase();
                 __setPaymentMethodUI(pm);
                 __updateSaveButtonState();
@@ -1738,12 +1870,45 @@
             console.log('[notes textarea]', $('#modalTransferValidationNotes').val());
            
             console.log('===============================================================');
-            // ✅ Usa el valor real de BD: "transfer" | "card"
             const pmRaw = String($('#modalPaymentMethodRaw').val() || '').trim().toLowerCase();
             const isTransfer = (pmRaw === 'transfer');
+            const isCash = (pmRaw === 'cash');
 
+            // ✅ Si NO es cash, limpiamos cash_paid_at para que backend lo ponga NULL
+            if (!isCash) {
+                $('#modalCashPaidAtHidden').val('');
+                $('#modalCashNotesHidden').val('');
+            }
+
+            // ✅ Caso EFECTIVO: fuerza reglas
+            if (isCash) {
+                const cashPaidAt = String($('#modalCashPaidAtInput').val() || '').trim(); // datetime-local
+                const cashNotes = String($('#modalCashNotesInput').val() || '').trim();
+
+                // Reglas: cash => status paid, payment_status paid
+                $('#modalStatusHidden').val('paid');
+                $('#modalPaymentStatusHidden').val('paid');
+
+                // cash_paid_at NO puede ser vacío
+                if (!cashPaidAt) {
+                    e.preventDefault();
+                    alert('Para marcar como "Efectivo", debes registrar la fecha del pago.');
+                    return false;
+                }
+
+                // Mandar al backend
+                $('#modalCashPaidAtHidden').val(cashPaidAt);
+                $('#modalCashNotesHidden').val(cashNotes);
+
+                // Transfer stuff vacío
+                $('#modalTransferValidationStatusInput').val('');
+                $('#modalTransferValidationNotesInput').val('');
+
+                return true;
+            }
+
+            // ✅ Caso NO transferencia: no mandamos validación transfer
             if (!isTransfer) {
-                // Si no es transferencia, NO mandamos nada extra
                 $('#modalTransferValidationStatusInput').val('');
                 $('#modalTransferValidationNotesInput').val('');
                 return true;
@@ -1942,7 +2107,9 @@
                 transfer_receipt_file_selected: ($('#modalTransferReceiptFile').val() || '') !== '',
 
                 transfer_validation_status: __norm($('#modalTransferValidationSelect').val()).toLowerCase(),
-                transfer_validation_notes: __norm($('#modalTransferValidationNotes').val())
+                transfer_validation_notes: __norm($('#modalTransferValidationNotes').val()),
+                cash_paid_at: __norm($('#modalCashPaidAtInput').val()),
+                cash_notes: __norm($('#modalCashNotesInput').val())
             };
         }
 
@@ -1982,7 +2149,7 @@
             __updateSaveButtonState();
         });
 
-        $(document).on('input change', '#modalPatientFullNameInput,#modalDocTypeInput,#modalDocNumberInput,#modalEmailInput,#modalPhoneInput,#modalAddressInput,#modalPatientTimezoneInput,#modalNotesInput,#modalBillingNameInput,#modalBillingDocTypeInput,#modalBillingDocNumberInput,#modalBillingEmailInput,#modalBillingPhoneInput,#modalBillingAddressInput,#modalAmountInput,#modalTransferBankOriginInput,#modalTransferPayerNameInput,#modalTransferDateInput,#modalTransferReferenceInput,#modalStatusSelect,#modalPaymentStatusSelect,#modalTransferReceiptFile', function () {
+        $(document).on('input change', '#modalPatientFullNameInput,#modalDocTypeInput,#modalDocNumberInput,#modalEmailInput,#modalPhoneInput,#modalAddressInput,#modalPatientTimezoneInput,#modalNotesInput,#modalBillingNameInput,#modalBillingDocTypeInput,#modalBillingDocNumberInput,#modalBillingEmailInput,#modalBillingPhoneInput,#modalBillingAddressInput,#modalAmountInput,#modalTransferBankOriginInput,#modalTransferPayerNameInput,#modalTransferDateInput,#modalTransferReferenceInput,#modalStatusSelect,#modalPaymentStatusSelect,#modalTransferReceiptFile,#modalAmountInputCash,#modalCashPaidAtInput,#modalCashNotesInput,#modalPaymentMethodSelectCash', function () {
             __updateSaveButtonState();
         });
 
