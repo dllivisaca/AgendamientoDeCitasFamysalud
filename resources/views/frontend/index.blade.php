@@ -844,22 +844,16 @@
                 window.__skipBeforeUnload = false;
 
                 function handleBeforeUnload(e) {
-                    // 1) Skip temporal (para PayPhone)
-                    if (window.__skipBeforeUnload) return;
+                    // ✅ Solo advertir (alerta del navegador) en pasos 4 y 5
+                    const step = bookingState.currentStep || 1;
+                    const shouldWarn = (step >= 4) && (step <= 5) && (bookingState.booking_completed !== true);
 
-                    // 2) Si ya terminó, no advertir
-                    if (bookingState.booking_completed === true) return;
+                    if (!shouldWarn) return;
 
-                    // 3) Solo desde step 4+
-                    const step = Number(bookingState?.currentStep || 1);
-                    if (step < 4) return;
-
-                    // 4) Debe estar “activo” el warning (lo manejas con setExitWarningActive)
-                    if (!bookingState.exit_warning_active) return;
-
+                    // Chrome/Edge ignoran el texto personalizado y muestran un mensaje genérico
                     e.preventDefault();
-                    e.returnValue = ""; // Chrome/Edge muestran mensaje genérico
-                    return "";
+                    e.returnValue = '';
+                    return '';
                 }
 
                 function enableLeaveGuard() {
@@ -875,7 +869,10 @@
                 }
 
                 function updateLeaveGuard() {
-                    const shouldEnable = (bookingState.currentStep >= 4) && (bookingState.booking_completed !== true);
+                    // ✅ Solo activar el beforeunload en pasos 4 y 5 (NO en paso 6)
+                    const step = bookingState.currentStep || 1;
+                    const shouldEnable = (step >= 4) && (step <= 5) && (bookingState.booking_completed !== true);
+
                     if (shouldEnable) enableLeaveGuard();
                     else disableLeaveGuard();
                 }
