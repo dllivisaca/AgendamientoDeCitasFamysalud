@@ -409,8 +409,9 @@
                                     <div class="col-md-6 mb-2">
                                         <div class="small text-muted">Monto total a pagar</div>
                                         <div class="text-dark js-edit-text" id="modalPaymentAmount">N/A</div>
-                                        <input type="number" step="0.01" min="0" lang="en" class="form-control form-control-sm js-edit-input"
-                                        id="modalAmountInput" name="amount" value="">
+                                        <input type="text" inputmode="decimal" autocomplete="off"
+                                        class="form-control form-control-sm js-edit-input"
+                                        id="modalAmountInput" name="amount" value="" placeholder="0.00">
                                     </div>
 
                                     {{-- FILA 2 (solo derecha) --}}
@@ -422,11 +423,11 @@
                                         <div class="text-dark js-edit-text" id="modalPaidAmountText">N/A</div>
 
                                         {{-- Edición --}}
-                                        <input type="number" step="0.01" min="0" lang="en"
+                                        <input type="text" inputmode="decimal" autocomplete="off"
                                             class="form-control form-control-sm js-edit-input"
                                             id="modalPaidAmountInputCard"
                                             name="amount_paid"
-                                            value="">
+                                            value="" placeholder="0.00">
                                     </div>
 
                                     <div class="col-md-6 mb-2">
@@ -480,11 +481,11 @@
 
                                         <div class="text-dark js-edit-text" id="modalTransferAmount">N/A</div>
 
-                                        <input type="number" step="0.01" min="0" lang="en"
+                                        <input type="text" inputmode="decimal" autocomplete="off"
                                             class="form-control form-control-sm js-edit-input"
                                             id="modalAmountInputTransfer"
                                             name="amount"
-                                            value="">
+                                            value="" placeholder="0.00">
                                     </div>
 
                                     <div class="col-md-12 mt-2">
@@ -608,11 +609,11 @@
 
                                         <div class="text-dark js-edit-text" id="modalCashAmount">N/A</div>
 
-                                        <input type="number" step="0.01" min="0" lang="en"
+                                        <input type="text" inputmode="decimal" autocomplete="off"
                                             class="form-control form-control-sm js-edit-input"
                                             id="modalAmountInputCash"
                                             name="amount"
-                                            value="">
+                                            value="" placeholder="0.00">
                                     </div>
 
                                     <div class="col-md-6 mb-2">
@@ -1930,11 +1931,32 @@
                 $('#modalAmountInputCash').val(formattedVal);
             }
 
-            // 1) Mientras escribe o usa flechitas: sincroniza y mantiene formato estable
+            // 1) Mientras escribe: permitir dígitos + (.) o (,). No formatear aquí.
             $(document).off('input.syncAmount');
             $(document).on('input.syncAmount', '#modalAmountInput, #modalAmountInputTransfer, #modalAmountInputCash', function () {
-                const formatted = __force2Decimals($(this).val());
-                __syncAmountAll(formatted);
+                let raw = String($(this).val() ?? '');
+
+                // permitir solo 0-9, punto y coma
+                raw = raw.replace(/[^\d.,]/g, '');
+
+                // permitir solo UN separador decimal (el primero que aparezca)
+                const idxDot = raw.indexOf('.');
+                const idxComma = raw.indexOf(',');
+                let sepIndex = -1;
+                if (idxDot >= 0 && idxComma >= 0) sepIndex = Math.min(idxDot, idxComma);
+                else sepIndex = (idxDot >= 0 ? idxDot : idxComma);
+
+                if (sepIndex >= 0) {
+                    const before = raw.slice(0, sepIndex + 1);
+                    const after = raw.slice(sepIndex + 1).replace(/[.,]/g, '');
+                    raw = before + after;
+                }
+
+                // actualizar el que estás editando sin pelear
+                $(this).val(raw);
+
+                // sincronizar a los otros dos
+                __syncAmountAll(raw);
                 __updateSaveButtonState();
             });
 
@@ -1951,11 +1973,30 @@
                 $('#modalAmountPaidHidden').val(formattedVal); // hidden siempre actualizado
             }
 
-            // 1) Mientras escribe
+            or:
+
+            // 1) Mientras escribe: permitir dígitos + (.) o (,). No formatear aquí.
             $(document).off('input.syncPaidAmount');
             $(document).on('input.syncPaidAmount', '#modalPaidAmountInputCard', function () {
-                const formatted = __force2Decimals($(this).val());
-                __syncPaidAmountAll(formatted);
+                let raw = String($(this).val() ?? '');
+
+                raw = raw.replace(/[^\d.,]/g, '');
+
+                const idxDot = raw.indexOf('.');
+                const idxComma = raw.indexOf(',');
+                let sepIndex = -1;
+                if (idxDot >= 0 && idxComma >= 0) sepIndex = Math.min(idxDot, idxComma);
+                else sepIndex = (idxDot >= 0 ? idxDot : idxComma);
+
+                if (sepIndex >= 0) {
+                    const before = raw.slice(0, sepIndex + 1);
+                    const after = raw.slice(sepIndex + 1).replace(/[.,]/g, '');
+                    raw = before + after;
+                }
+
+                $(this).val(raw);
+
+                __syncPaidAmountAll(raw);
                 __updateSaveButtonState();
             });
 
@@ -2061,13 +2102,51 @@
 
             const isCard = (pmRaw === 'card');
 
+            function __normalizeMoneyToFixed2(val) {
+                let s = String(val ?? '').trim();
+
+                if (s === '') return '';
+
+                // coma -> punto (16,1 => 16.1)
+                s = s.replace(/\s+/g, '').replace(',', '.');
+
+                // por si alguien pegó símbolos
+                s = s.replace(/[^0-9.]/g, '');
+
+                // si hay más de un punto, une lo que sobra
+                const parts = s.split('.');
+                if (parts.length > 2) {
+                    s = parts[0] + '.' + parts.slice(1).join('');
+                }
+
+                const n = Number(s);
+                if (!isFinite(n)) return '';
+
+                return n.toFixed(2);
+            }
+
+            // ✅ Normalizar "amount" ANTES de enviar (solo al guardar)
+            if (isCard) {
+                const fixed = __normalizeMoneyToFixed2($('#modalAmountInput').val());
+                __syncAmountAll(fixed);
+            }
+            if (isTransfer) {
+                const fixed = __normalizeMoneyToFixed2($('#modalAmountInputTransfer').val());
+                __syncAmountAll(fixed);
+            }
+            if (isCash) {
+                const fixed = __normalizeMoneyToFixed2($('#modalAmountInputCash').val());
+                __syncAmountAll(fixed);
+            }
+
             // ✅ Tarjeta: mandar client_transaction_id + payment_paid_at
             if (isCard) {
                 const tx = String($('#modalClientTransactionIdInput').val() || '').trim();
                 const paidAt = String($('#modalPaymentPaidAtInput').val() || '').trim(); // datetime-local
 
-                const paidAmount = String($('#modalPaidAmountInputCard').val() || '').trim();
-                $('#modalAmountPaidHidden').val(paidAmount);
+                const paidAmountFixed = __normalizeMoneyToFixed2($('#modalPaidAmountInputCard').val());
+                $('#modalPaidAmountInputCard').val(paidAmountFixed);
+                $('#modalAmountPaidHidden').val(paidAmountFixed);
 
                 $('#modalClientTransactionIdHidden').val(tx);
                 $('#modalPaymentPaidAtHidden').val(paidAt);
