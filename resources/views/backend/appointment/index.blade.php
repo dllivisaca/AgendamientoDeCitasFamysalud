@@ -588,7 +588,7 @@
                                         </select>
 
                                         {{-- ✅ Esta ayuda solo en edición --}}
-                                        <small class="text-muted mt-1 js-edit-input">
+                                        <small id="transferValidationHelperText" class="text-muted mt-1 js-edit-input">
                                             “Validada” marcará la cita como "Pagada". “Rechazada” pasará la cita a "En espera".
                                         </small>
                                     </div>
@@ -605,8 +605,8 @@
                                     <div class="col-md-12 mb-0" id="transferValidationNotesWrapper" style="display:none;">
                                         <div class="small text-muted">
                                             Observaciones de validación
-                                            <span id="transferNotesOptional" class="text-muted" style="display:none;">(opcional)</span>
-                                            <span id="transferNotesRequired" class="text-danger" style="display:none;">(obligatorias)</span>
+                                            <span id="transferNotesOptional" class="text-muted js-edit-input" style="display:none;">(opcional)</span>
+                                            <span id="transferNotesRequired" class="text-danger js-edit-input" style="display:none;">(obligatorias)</span>
                                         </div>
 
                                         <!-- ✅ Lectura: texto NO editable -->
@@ -1074,11 +1074,21 @@
 
     /* ✅ Excepciones: lo único editable/visible en quick transfer */
     body.appt-quick-transfer-mode #modalTransferValidationSelect,
+    body.appt-quick-transfer-mode #transferValidationHelperText,
     body.appt-quick-transfer-mode #transferValidationSection .js-edit-input,
     body.appt-quick-transfer-mode #transferValidationNotesWrapper small,
-    body.appt-quick-transfer-mode #btnSaveChanges,
-    body.appt-quick-transfer-mode #transferValidationNotesWrapper,
-    body.appt-quick-transfer-mode #modalTransferValidationNotes {
+    body.appt-quick-transfer-mode #btnSaveChanges {
+        display: block !important;
+    }
+
+    /* ✅ En quick transfer: por defecto, NO mostrar observaciones */
+    body.appt-quick-transfer-mode #transferValidationNotesWrapper {
+        display: none !important;
+    }
+
+    /* ✅ En quick transfer: SOLO mostrar observaciones cuando hay estado (validated/rejected) */
+    body.appt-quick-transfer-mode.transfer-notes-visible #transferValidationNotesWrapper,
+    body.appt-quick-transfer-mode.transfer-notes-visible #modalTransferValidationNotes {
         display: block !important;
     }
 
@@ -2470,6 +2480,7 @@
             const phRejected  = 'Ej: El comprobante no coincide con el monto / Falta referencia.';
 
             if (v === 'validated' || v === 'rejected') {
+                $('body').addClass('transfer-notes-visible');
                 $('#transferValidationNotesWrapper').show();
 
                 // ✅ Habilitar textarea SOLO cuando hay estado
@@ -2486,6 +2497,7 @@
                 }
 
             } else {
+                $('body').removeClass('transfer-notes-visible');
                 // ✅ Sin revisar => NO permitir notas
                 $('#transferValidationNotesWrapper').hide();
                 $('#transferNotesRequired').hide();
@@ -3030,6 +3042,14 @@
             }
             __setPaymentMethodUI($('#modalPaymentMethodRaw').val());
             __applyQuickTransferLock(mode === 'quick_transfer');
+
+            // ✅ Si ya viene "Rechazada" o "Validada", mostrar cajón de observaciones al entrar a edición
+            setTimeout(function () {
+                const pm = String($('#modalPaymentMethodRaw').val() || '').trim().toLowerCase();
+                if (pm === 'transfer') {
+                    $('#modalTransferValidationSelect').trigger('change');
+                }
+            }, 0);
         }
 
         function __exitEditModeUI() {
