@@ -2892,8 +2892,40 @@
             $('#modalTransferValidationStatusInput').val(String(snap.transfer_validation_status || ''));
             $('#modalTransferValidationNotesInput').val(String(snap.transfer_validation_notes || ''));
 
-            if (String(snap.transfer_validation_status || '').trim() !== '') {
+            // ✅ REPINTAR MODO LECTURA: Estado de validación + texto de observaciones
+            (function () {
+                const vStatus = String(snap.transfer_validation_status || '').trim().toLowerCase();
+
+                const labels = {
+                    '': 'Sin revisar',
+                    'validated': 'Validada',
+                    'rejected': 'Rechazada'
+                };
+
+                // Estado (modo lectura)
+                $('#modalTransferValidationText').text(labels[vStatus] ?? 'Sin revisar');
+
+                // Observaciones (modo lectura)
+                const notes = String(snap.transfer_validation_notes || '').trim();
+                if (notes !== '') {
+                    $('#modalTransferValidationNotesText').text(notes);
+                } else {
+                    $('#modalTransferValidationNotesText').html('<span class="text-muted font-italic small">N/A</span>');
+                }
+            })();
+
+            const __v = String(snap.transfer_validation_status || '').trim().toLowerCase();
+
+            if (__v === 'validated' || __v === 'rejected') {
                 $('#transferValidationNotesWrapper').show();
+
+                if (__v === 'rejected') {
+                    $('#transferNotesRequired').show();
+                    $('#transferNotesOptional').hide();
+                } else {
+                    $('#transferNotesRequired').hide();
+                    $('#transferNotesOptional').show();
+                }
             } else {
                 $('#transferValidationNotesWrapper').hide();
                 $('#transferNotesRequired').hide();
