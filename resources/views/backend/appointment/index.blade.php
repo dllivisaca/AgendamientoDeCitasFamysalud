@@ -176,6 +176,7 @@
                                     {{-- Select (modo edición) --}}
                                     <select class="form-control form-control-sm js-edit-input" id="modalPaymentStatusSelect">
                                         <option value="pending">Pendiente</option>
+                                        <option value="unpaid">No pagado</option>
                                         <option value="paid">Pagado</option>
                                         <option value="refunded">Reembolsado</option>
                                     </select>
@@ -406,6 +407,7 @@
                                         {{-- Edición --}}
                                         <select class="form-control form-control-sm js-edit-input" id="modalPaymentStatusSelectCard">
                                             <option value="pending">Pendiente</option>
+                                            <option value="unpaid">No pagado</option>
                                             <option value="paid">Pagado</option>
                                             <option value="refunded">Reembolsado</option>
                                         </select>
@@ -1145,7 +1147,7 @@
             }
 
             $('#modalPatientAge').text(patientAgeFinal);
-            
+
             const docNumber = $(this).data('doc-number');
             const address = $(this).data('address');
 
@@ -1438,12 +1440,14 @@
 
                 // Ajusta aquí a tus estados reales si los tienes definidos
                 const colors = {
+                    unpaid: '#95a5a6',
                     pending: '#f39c12',
                     paid: '#2ecc71',
                     refunded: '#9b59b6',
                 };
 
                 const labels = {
+                    unpaid: 'No pagado',
                     pending: 'Pendiente',
                     paid: 'Pagado',
                     refunded: 'Reembolsado',
