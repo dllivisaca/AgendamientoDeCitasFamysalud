@@ -219,6 +219,11 @@
                                     </div>
 
                                     <div class="col-md-6 mb-2">
+                                        <div class="small text-muted">Edad</div>
+                                        <div class="text-dark" id="modalPatientAge">N/A</div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-2">
                                         <div class="small text-muted">Número de documento</div>
                                         <div class="text-dark js-edit-text" id="modalDocNumber">N/A</div>
                                         <input type="text" class="form-control form-control-sm js-edit-input"
@@ -954,6 +959,7 @@
                                                         data-phone="{{ $appointment->patient_phone }}"
                                                         data-doc-type="{{ $appointment->patient_doc_type }}"
                                                         data-doc-number="{{ $appointment->patient_doc_number }}"
+                                                        data-patient-age="{{ !empty($appointment->patient_dob) ? \Carbon\Carbon::parse($appointment->patient_dob)->age : '' }}"
                                                         data-address="{{ $appointment->patient_address }}"
                                                         data-timezone="{{ $appointment->patient_timezone }}"
                                                         data-timezone-label="{{ $appointment->patient_timezone_label }}"
@@ -1129,6 +1135,17 @@
 
             // Estos quedan en N/A hasta que los conectes con data-* reales
             const docType = $(this).data('doc-type');
+
+            const patientAgeRaw = $(this).data('patient-age');
+            let patientAgeFinal = 'N/A';
+
+            if (patientAgeRaw !== null && patientAgeRaw !== undefined && String(patientAgeRaw).trim() !== '') {
+                const n = Number(String(patientAgeRaw).trim());
+                if (isFinite(n)) patientAgeFinal = `${n} años`;
+            }
+
+            $('#modalPatientAge').text(patientAgeFinal);
+            
             const docNumber = $(this).data('doc-number');
             const address = $(this).data('address');
 
