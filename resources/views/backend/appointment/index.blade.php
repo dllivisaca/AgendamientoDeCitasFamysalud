@@ -1049,8 +1049,6 @@
     /* ✅ Excepciones: lo único editable/visible en quick transfer */
     body.appt-quick-transfer-mode #modalTransferValidationSelect,
     body.appt-quick-transfer-mode #transferValidationSection .js-edit-input,
-    body.appt-quick-transfer-mode #transferValidationNotesWrapper,
-    body.appt-quick-transfer-mode #transferValidationNotesWrapper textarea,
     body.appt-quick-transfer-mode #transferValidationNotesWrapper small {
     display: block !important;
     }
@@ -1776,6 +1774,9 @@
             __setPaymentMethodUI(pm);
             __setQuickValidateVisibility(pm);
 
+            // ✅ Aplicar regla de notas según estado actual (por si está vacío)
+            $('#modalTransferValidationSelect').trigger('change');
+
             if (pm === 'card') {
                 $('#paymentSectionWrapper').show();
                 $('#paymentCardBlock').show();
@@ -2418,28 +2419,32 @@
             if (v === 'validated' || v === 'rejected') {
                 $('#transferValidationNotesWrapper').show();
 
+                // ✅ Habilitar textarea SOLO cuando hay estado
+                $notes.prop('disabled', false);
+
                 if (v === 'rejected') {
-                    // Rechazada => obligatorio + placeholder "rechazo"
                     $('#transferNotesRequired').show();
                     $('#transferNotesOptional').hide();
                     $notes.attr('placeholder', phRejected);
                 } else {
-                    // Validada => opcional + placeholder "ok banco"
                     $('#transferNotesRequired').hide();
                     $('#transferNotesOptional').show();
                     $notes.attr('placeholder', phValidated);
                 }
 
             } else {
-                // Sin revisar => ocultar todo y limpiar
+                // ✅ Sin revisar => NO permitir notas
                 $('#transferValidationNotesWrapper').hide();
                 $('#transferNotesRequired').hide();
                 $('#transferNotesOptional').hide();
-                $('#transferNotesOptional').hide();
-                $('#modalTransferValidationNotes').attr('placeholder', 'Ej: Escribe una observación...');
+
+                // ✅ limpiar + deshabilitar
                 $notes.val('');
+                $notes.prop('disabled', true);
                 $notes.attr('placeholder', 'Ej: Escribe una observación...');
             }
+
+            __updateSaveButtonState();
         });
 
         // ✅ Antes de enviar el form: valida reglas y llena hidden inputs
