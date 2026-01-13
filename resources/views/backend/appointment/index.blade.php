@@ -609,8 +609,17 @@
                                             <span id="transferNotesRequired" class="text-danger" style="display:none;">(obligatorias)</span>
                                         </div>
 
-                                        <textarea class="form-control form-control-sm" id="modalTransferValidationNotes" rows="2"
-                                            placeholder="Ej: Escribe una observación..."></textarea>
+                                        <!-- ✅ Lectura: texto NO editable -->
+                                        <div class="text-dark js-edit-text" id="modalTransferValidationNotesText">
+                                            <span class="text-muted font-italic small">N/A</span>
+                                        </div>
+
+                                        <!-- ✅ Edición: textarea -->
+                                        <textarea class="form-control form-control-sm js-edit-input"
+                                                id="modalTransferValidationNotes"
+                                                rows="2"
+                                                placeholder="Ej: Escribe una observación..."
+                                                disabled></textarea>
                                     </div>
                                 </div>
                             </div>
@@ -1046,11 +1055,31 @@
     display: block !important; 
     }
 
+    /* ✅ No duplicar "Sin revisar" arriba del dropdown */
+    body.appt-edit-mode #modalTransferValidationText,
+    body.appt-quick-transfer-mode #modalTransferValidationText{
+        display: none !important;
+    }
+
+    /* ✅ No duplicar textos de lectura dentro de Validación cuando se edita */
+    body.appt-edit-mode #appointmentModal #modalTransferValidationText,
+    body.appt-quick-transfer-mode #appointmentModal #modalTransferValidationText{
+        display:none !important;
+    }
+
+    body.appt-edit-mode #appointmentModal #modalTransferValidationNotesText,
+    body.appt-quick-transfer-mode #appointmentModal #modalTransferValidationNotesText{
+        display:none !important;
+    }
+
     /* ✅ Excepciones: lo único editable/visible en quick transfer */
     body.appt-quick-transfer-mode #modalTransferValidationSelect,
     body.appt-quick-transfer-mode #transferValidationSection .js-edit-input,
-    body.appt-quick-transfer-mode #transferValidationNotesWrapper small {
-    display: block !important;
+    body.appt-quick-transfer-mode #transferValidationNotesWrapper small,
+    body.appt-quick-transfer-mode #btnSaveChanges,
+    body.appt-quick-transfer-mode #transferValidationNotesWrapper,
+    body.appt-quick-transfer-mode #modalTransferValidationNotes {
+        display: block !important;
     }
 
   /* ✅ Modal de comprobante: tamaño fijo al viewport (no gigante) */
@@ -1868,10 +1897,15 @@
                     // 1️⃣ Select
                     $('#modalTransferValidationSelect').val(vStatus);
 
-                    // 2️⃣ Notes
-                    if (validationNotes) {
+                    // 2️⃣ Notes (lectura + edición)
+                    if (validationNotes && String(validationNotes).trim() !== '') {
                         $('#modalTransferValidationNotes').val(validationNotes);
+                        $('#modalTransferValidationNotesText').text(String(validationNotes));
                         $('#transferValidationNotesWrapper').show();
+                    } else {
+                        $('#modalTransferValidationNotes').val('');
+                        $('#modalTransferValidationNotesText').html('<span class="text-muted font-italic small">N/A</span>');
+                        $('#transferValidationNotesWrapper').hide();
                     }
 
                     // 3️⃣ Meta (fecha + usuario)
