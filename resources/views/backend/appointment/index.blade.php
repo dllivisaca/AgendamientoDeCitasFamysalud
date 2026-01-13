@@ -1038,6 +1038,23 @@
     body.appt-edit-mode .js-edit-input { display:block !important; }
     body.appt-edit-mode .js-edit-text  { display:none; }
 
+    /* ====== Quick Transfer mode: solo editar validación ====== */
+    body.appt-quick-transfer-mode .js-edit-input { 
+    display: none !important; 
+    }
+    body.appt-quick-transfer-mode .js-edit-text { 
+    display: block !important; 
+    }
+
+    /* ✅ Excepciones: lo único editable/visible en quick transfer */
+    body.appt-quick-transfer-mode #modalTransferValidationSelect,
+    body.appt-quick-transfer-mode #transferValidationSection .js-edit-input,
+    body.appt-quick-transfer-mode #transferValidationNotesWrapper,
+    body.appt-quick-transfer-mode #transferValidationNotesWrapper textarea,
+    body.appt-quick-transfer-mode #transferValidationNotesWrapper small {
+    display: block !important;
+    }
+
   /* ✅ Modal de comprobante: tamaño fijo al viewport (no gigante) */
     .modal-dialog.modal-receipt{
     max-width: 900px;
@@ -1757,6 +1774,7 @@
 
             const pm = String(paymentMethodRaw || '').trim().toLowerCase();
             __setPaymentMethodUI(pm);
+            __setQuickValidateVisibility(pm);
 
             if (pm === 'card') {
                 $('#paymentSectionWrapper').show();
@@ -2349,6 +2367,7 @@
             $(document).on('change.paymentMethodSelect', '#modalPaymentMethodSelectCard, #modalPaymentMethodSelectTransfer, #modalPaymentMethodSelectCash', function () {
                 const pm = String($(this).val() || '').trim().toLowerCase();
                 window.__setPaymentMethodUI(pm);
+                __setQuickValidateVisibility(pm);
                 if (window.__apptIsEditMode) {
                     window.__clearPaymentDraftFields(pm);
                 }
@@ -2863,6 +2882,41 @@
         // ============================
         window.__apptIsEditMode = false;
 
+        function __setQuickValidateVisibility(pm) {
+            const p = String(pm || '').trim().toLowerCase();
+            $('#btnQuickValidateTransfer').toggle(p === 'transfer');
+        }
+
+        function __applyQuickTransferLock(active) {
+            const $body = $('body');
+
+            if (active) {
+                $body.addClass('appt-quick-transfer-mode');
+
+                // ✅ Deshabilitar todos los controles del body del modal (pero NO hidden)
+                $('#appointmentModal .modal-body :input')
+                    .not('input[type="hidden"]')
+                    .prop('disabled', true);
+
+                // ✅ Re-habilitar solo validación
+                $('#modalTransferValidationSelect').prop('disabled', false);
+                $('#modalTransferValidationNotes').prop('disabled', false);
+
+            } else {
+                $body.removeClass('appt-quick-transfer-mode');
+
+                // ✅ Re-habilitar todo (el método de pago UI ya vuelve a setear disabled/enabled por bloque)
+                $('#appointmentModal .modal-body :input')
+                    .not('input[type="hidden"]')
+                    .prop('disabled', false);
+
+                // ✅ Re-aplicar la lógica normal de bloques (card/transfer/cash)
+                if (window.__setPaymentMethodUI) {
+                    window.__setPaymentMethodUI($('#modalPaymentMethodRaw').val());
+                }
+            }
+        }
+
         function __enterEditModeUI(mode = 'edit') {
             window.__apptIsEditMode = true;
 
@@ -2884,6 +2938,7 @@
                 $('#editModeBannerRightHint').show();
             }
             __setPaymentMethodUI($('#modalPaymentMethodRaw').val());
+            __applyQuickTransferLock(mode === 'quick_transfer');
         }
 
         function __exitEditModeUI() {
@@ -2906,6 +2961,8 @@
             $('#editModeBannerLong').show();
             $('#editModeBannerShort').hide();
             $('#editModeBannerRightHint').show();
+
+            __applyQuickTransferLock(false);
         }
 
         // Click: Acciones -> Editar
