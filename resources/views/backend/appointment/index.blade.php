@@ -220,15 +220,21 @@
                                     </div>
 
                                     <div class="col-md-6 mb-2">
-                                        <div class="small text-muted">Edad</div>
-                                        <div class="text-dark" id="modalPatientAge">N/A</div>
-                                    </div>
-
-                                    <div class="col-md-6 mb-2">
                                         <div class="small text-muted">Número de documento</div>
                                         <div class="text-dark js-edit-text" id="modalDocNumber">N/A</div>
                                         <input type="text" class="form-control form-control-sm js-edit-input"
                                             id="modalDocNumberInput" name="patient_doc_number" value="">
+                                    </div>
+
+                                    <div class="col-md-6 mb-2">
+                                        <div class="small text-muted">Fecha de nacimiento</div>
+                                        <div class="text-dark js-edit-text" id="modalPatientDobText">N/A</div>
+                                        <input type="date" class="form-control form-control-sm js-edit-input" id="modalPatientDobInput" name="patient_dob" value="">
+                                    </div>
+
+                                    <div class="col-md-6 mb-2">
+                                        <div class="small text-muted">Edad</div>
+                                        <div class="text-dark" id="modalPatientAge">N/A</div>
                                     </div>
 
                                     <div class="col-md-6 mb-2">
@@ -962,6 +968,7 @@
                                                         data-doc-type="{{ $appointment->patient_doc_type }}"
                                                         data-doc-number="{{ $appointment->patient_doc_number }}"
                                                         data-patient-age="{{ !empty($appointment->patient_dob) ? \Carbon\Carbon::parse($appointment->patient_dob)->age : '' }}"
+                                                        data-patient-dob="{{ $appointment->patient_dob ?? '' }}"
                                                         data-address="{{ $appointment->patient_address }}"
                                                         data-timezone="{{ $appointment->patient_timezone }}"
                                                         data-timezone-label="{{ $appointment->patient_timezone_label }}"
@@ -1139,6 +1146,7 @@
             const docType = $(this).data('doc-type');
 
             const patientAgeRaw = $(this).data('patient-age');
+            const patientDobRaw = $(this).data('patient-dob');
             let patientAgeFinal = 'N/A';
 
             if (patientAgeRaw !== null && patientAgeRaw !== undefined && String(patientAgeRaw).trim() !== '') {
@@ -1147,6 +1155,38 @@
             }
 
             $('#modalPatientAge').text(patientAgeFinal);
+
+            // ✅ Fecha de nacimiento (DOB): texto bonito + input date (YYYY-MM-DD)
+            let dobTextFinal = 'N/A';
+            let dobInputVal = '';
+
+            if (patientDobRaw !== null && patientDobRaw !== undefined && String(patientDobRaw).trim() !== '') {
+            const raw = String(patientDobRaw).trim();
+
+            // Tomar solo "YYYY-MM-DD" aunque venga con hora "YYYY-MM-DD HH:MM:SS"
+            const datePart = raw.split(' ')[0];
+
+            // Validar formato y formatear bonito
+            if (/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
+                dobInputVal = datePart;
+
+                const [yy, mm, dd] = datePart.split('-').map(Number);
+                const dObj = new Date(yy, (mm || 1) - 1, dd || 1); // sin UTC shift
+
+                dobTextFinal = dObj.toLocaleDateString('es-EC', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+                });
+            } else {
+                // fallback si viene raro
+                dobTextFinal = raw;
+                dobInputVal = '';
+            }
+            }
+
+            $('#modalPatientDobText').text(dobTextFinal);
+            $('#modalPatientDobInput').val(dobInputVal);
 
             const docNumber = $(this).data('doc-number');
             const address = $(this).data('address');
@@ -1516,6 +1556,59 @@
                 } else {
                     $('#modalPaymentMethodSelectTransfer').prop('disabled', false);
                 }
+            }
+
+            // ✅ NUEVO: limpiar campos del método NUEVO (solo draft / edición)
+            function __clearPaymentDraftFields(pm) {
+                const method = String(pm || '').trim().toLowerCase();
+
+                // 1) Limpia inputs comunes (monto total + monto pagado) en TODOS
+                __syncAmountAll('');
+                __syncPaidAmountAll('');
+
+                // 2) Limpia estado de pago (arriba + tarjeta + badges)
+                //    Deja selects en vacío visualmente (pendiente si quieres), pero lo más "limpio" es vacío.
+                $('#modalPaymentStatusSelect').val('');          // top
+                $('#modalPaymentStatusSelectCard').val('');      // card
+                $('#modalPaymentStatusHidden').val('');
+
+                // Opcional: badges a N/A en edición (no asusta porque en edición se ven inputs)
+                $('#modalPaymentStatusBadge').html(paymentStatusBadge(''));
+                $('#modalPaymentStatusBadge2').html(paymentStatusBadge(''));
+
+                // 3) Limpia tarjeta
+                $('#modalClientTransactionIdInput').val('');
+                $('#modalPaymentPaidAtInput').val('');
+                $('#modalClientTransactionIdHidden').val('');
+                $('#modalPaymentPaidAtHidden').val('');
+
+                // 4) Limpia transferencia
+                $('#modalTransferBankOriginInput').val('');
+                $('#modalTransferPayerNameInput').val('');
+                $('#modalTransferDateInput').val('');
+                $('#modalTransferReferenceInput').val('');
+                $('#modalTransferReceiptFile').val(''); // limpia selección de archivo
+
+                // Validación de transferencia (draft)
+                $('#modalTransferValidationSelect').val('');
+                $('#modalTransferValidationNotes').val('');
+                $('#modalTransferValidationStatusInput').val('');
+                $('#modalTransferValidationNotesInput').val('');
+                $('#transferValidationNotesWrapper').hide();
+                $('#transferNotesRequired').hide();
+                $('#transferNotesOptional').hide();
+
+                // 5) Limpia efectivo
+                $('#modalCashPaidAtInput').val('');
+                $('#modalCashNotesInput').val('');
+                $('#modalCashPaidAtHidden').val('');
+                $('#modalCashNotesHidden').val('');
+
+                // 6) Limpia hidden de monto pagado
+                $('#modalAmountPaidHidden').val('');
+
+                // 7) IMPORTANTE: el método seleccionado queda como "raw" (draft)
+                $('#modalPaymentMethodRaw').val(method);
             }
 
             const pm = String(paymentMethodRaw || '').trim().toLowerCase();
@@ -1977,6 +2070,7 @@
             $('#modalPatientFullNameInput').val($(this).data('name') || '');
             $('#modalDocTypeInput').val(String($(this).data('doc-type') || '').trim().toLowerCase());
             $('#modalDocNumberInput').val($(this).data('doc-number') || '');
+            $('#modalPatientDobInput').val((patientDobRaw ? String(patientDobRaw).trim().split(' ')[0] : ''));
             $('#modalEmailInput').val($(this).data('email') || '');
             $('#modalPhoneInput').val($(this).data('phone') || '');
             $('#modalAddressInput').val($(this).data('address') || '');
@@ -2111,6 +2205,12 @@
             $(document).on('change.paymentMethodSelect', '#modalPaymentMethodSelectCard, #modalPaymentMethodSelectTransfer, #modalPaymentMethodSelectCash', function () {
                 const pm = String($(this).val() || '').trim().toLowerCase();
                 __setPaymentMethodUI(pm);
+
+                // ✅ NUEVO: si estás en modo edición, al cambiar método deja TODO en blanco
+                if (window.__apptIsEditMode) {
+                    __clearPaymentDraftFields(pm);
+                }
+
                 __updateSaveButtonState();
             });
 
@@ -2486,6 +2586,7 @@
                 billing_name: __norm($('#modalBillingNameInput').val()),
                 billing_doc_type: __norm($('#modalBillingDocTypeInput').val()).toLowerCase(),
                 billing_doc_number: __norm($('#modalBillingDocNumberInput').val()),
+                patient_dob: __norm($('#modalPatientDobInput').val()),
                 billing_email: __norm($('#modalBillingEmailInput').val()),
                 billing_phone: __norm($('#modalBillingPhoneInput').val()),
                 billing_address: __norm($('#modalBillingAddressInput').val()),
@@ -2533,6 +2634,67 @@
             __updateSaveButtonState(); // normalmente lo deja disabled
         }
 
+        // ✅ NUEVO: restaurar inputs + hiddens desde snapshot (lo que vino de BD al abrir)
+        function __restoreFromSnapshot(snap) {
+            if (!snap) return;
+
+            // Método
+            $('#modalPaymentMethodRaw').val(String(snap.pmRaw || '').toLowerCase());
+
+            // Status / payment status (selects)
+            $('#modalStatusSelect').val(String(snap.appointment_status || ''));
+            $('#modalPaymentStatusSelect').val(String(snap.payment_status || ''));
+            $('#modalPaymentStatusSelectCard').val(String(snap.payment_status || ''));
+
+            // Hiddens relacionados
+            $('#modalStatusHidden').val(String(snap.appointment_status || ''));
+            $('#modalPaymentStatusHidden').val(String(snap.payment_status || ''));
+
+            // Tarjeta
+            $('#modalClientTransactionIdInput').val(String(snap.client_transaction_id || ''));
+            $('#modalPaymentPaidAtInput').val(String(snap.payment_paid_at || ''));
+            $('#modalClientTransactionIdHidden').val(String(snap.client_transaction_id || ''));
+            $('#modalPaymentPaidAtHidden').val(String(snap.payment_paid_at || ''));
+
+            // Montos (restaura exactamente lo que había)
+            __syncAmountAll(String(snap.amount || ''));
+            __syncPaidAmountAll(String(snap.amount_paid || ''));
+
+            // Transfer (campos)
+            $('#modalTransferBankOriginInput').val(String(snap.transfer_bank_origin || ''));
+            $('#modalTransferPayerNameInput').val(String(snap.transfer_payer_name || ''));
+            $('#modalTransferDateInput').val(String(snap.transfer_date || ''));
+            $('#modalTransferReferenceInput').val(String(snap.transfer_reference || ''));
+
+            // Transfer (validación)
+            $('#modalTransferValidationSelect').val(String(snap.transfer_validation_status || ''));
+            $('#modalTransferValidationNotes').val(String(snap.transfer_validation_notes || ''));
+            $('#modalTransferValidationStatusInput').val(String(snap.transfer_validation_status || ''));
+            $('#modalTransferValidationNotesInput').val(String(snap.transfer_validation_notes || ''));
+
+            if (String(snap.transfer_validation_status || '').trim() !== '') {
+                $('#transferValidationNotesWrapper').show();
+            } else {
+                $('#transferValidationNotesWrapper').hide();
+                $('#transferNotesRequired').hide();
+                $('#transferNotesOptional').hide();
+            }
+
+            // Cash
+            $('#modalCashPaidAtInput').val(String(snap.cash_paid_at || ''));
+            $('#modalCashNotesInput').val(String(snap.cash_notes || ''));
+            $('#modalCashPaidAtHidden').val(String(snap.cash_paid_at || ''));
+            $('#modalCashNotesHidden').val(String(snap.cash_notes || ''));
+
+            // Monto pagado hidden
+            $('#modalAmountPaidHidden').val(String(snap.amount_paid || ''));
+
+            // ✅ Re-pintar badges (arriba + tarjeta) según el payment_status restaurado
+            const ps = String(snap.payment_status || '').toLowerCase();
+            $('#modalPaymentStatusBadge').html(paymentStatusBadge(ps));
+            $('#modalPaymentStatusBadge2').html(paymentStatusBadge(ps));
+        }
+
         // ✅ Recalcular cuando el admin cambia select o escribe notas
         $(document).on('change', '#modalTransferValidationSelect', function () {
             __updateSaveButtonState();
@@ -2542,7 +2704,7 @@
             __updateSaveButtonState();
         });
 
-        $(document).on('input change', '#modalPatientFullNameInput,#modalDocTypeInput,#modalDocNumberInput,#modalEmailInput,#modalPhoneInput,#modalAddressInput,#modalPatientTimezoneInput,#modalNotesInput,#modalBillingNameInput,#modalBillingDocTypeInput,#modalBillingDocNumberInput,#modalBillingEmailInput,#modalBillingPhoneInput,#modalBillingAddressInput,#modalAmountInput,#modalTransferBankOriginInput,#modalTransferPayerNameInput,#modalTransferDateInput,#modalTransferReferenceInput,#modalStatusSelect,#modalPaymentStatusSelect,#modalTransferReceiptFile,#modalAmountInputCash,#modalCashPaidAtInput,#modalCashNotesInput,#modalPaymentMethodSelectCash,#modalClientTransactionIdInput,#modalPaymentPaidAtInput,#modalPaymentStatusSelectCard,#modalPaidAmountInputCard,#modalPaidAmountInputTransfer,#modalPaidAmountInputCash', function () {
+        $(document).on('input change', '#modalPatientFullNameInput,#modalDocTypeInput,#modalPatientDobInput,#modalDocNumberInput,#modalEmailInput,#modalPhoneInput,#modalAddressInput,#modalPatientTimezoneInput,#modalNotesInput,#modalBillingNameInput,#modalBillingDocTypeInput,#modalBillingDocNumberInput,#modalBillingEmailInput,#modalBillingPhoneInput,#modalBillingAddressInput,#modalAmountInput,#modalTransferBankOriginInput,#modalTransferPayerNameInput,#modalTransferDateInput,#modalTransferReferenceInput,#modalStatusSelect,#modalPaymentStatusSelect,#modalTransferReceiptFile,#modalAmountInputCash,#modalCashPaidAtInput,#modalCashNotesInput,#modalPaymentMethodSelectCash,#modalClientTransactionIdInput,#modalPaymentPaidAtInput,#modalPaymentStatusSelectCard,#modalPaidAmountInputCard,#modalPaidAmountInputTransfer,#modalPaidAmountInputCash', function () {
             __updateSaveButtonState();
         });
 
@@ -2583,6 +2745,13 @@
         }
 
         function __exitEditModeUI() {
+            // ✅ Antes de salir, restaurar el estado original (snapshot) para evitar NA/valores raros
+            if (window.__apptModalSnapshot) {
+                __restoreFromSnapshot(window.__apptModalSnapshot);
+                __setPaymentMethodUI(window.__apptModalSnapshot.pmRaw); // vuelve al método real de BD
+                __updateSaveButtonState(); // normalmente queda disabled
+            }
+
             window.__apptIsEditMode = false;
 
             $('body').removeClass('appt-edit-mode');
@@ -2591,9 +2760,7 @@
             $('#btnCancelEditMode').hide();
             $('#apptModeBadge').hide();
 
-            // Por ahora NO revertimos nada más (porque no hay inputs aún).
-
-             // Reset banner a modo normal
+            // Reset banner a modo normal
             $('#editModeBannerLong').show();
             $('#editModeBannerShort').hide();
             $('#editModeBannerRightHint').show();
