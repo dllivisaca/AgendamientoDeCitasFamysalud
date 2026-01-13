@@ -1885,6 +1885,7 @@
 
                 // Reset UI
                 $('#modalTransferValidationSelect').val('');
+                $('#modalTransferValidationSelect').data('prev', '');
                 $('#modalTransferValidationNotes').val('');
                 $('#transferValidationNotesWrapper').hide();
                 $('#transferNotesRequired').hide();
@@ -1896,6 +1897,7 @@
 
                     // 1️⃣ Select
                     $('#modalTransferValidationSelect').val(vStatus);
+                    $('#modalTransferValidationSelect').data('prev', vStatus);
 
                     // 2️⃣ Notes (lectura + edición)
                     if (validationNotes && String(validationNotes).trim() !== '') {
@@ -2444,6 +2446,23 @@
         $(document).on('change', '#modalTransferValidationSelect', function () {
             const v = String($(this).val() || '').trim().toLowerCase();
 
+            const $sel = $(this);
+            const prev = String($sel.data('prev') || '').trim().toLowerCase();
+
+            // ✅ Si cambia entre Validada <-> Rechazada: limpiar observaciones (queda en blanco)
+            const switchedBetweenValidatedRejected =
+                (prev === 'validated' && v === 'rejected') ||
+                (prev === 'rejected' && v === 'validated');
+
+            if (switchedBetweenValidatedRejected) {
+                $('#modalTransferValidationNotes').val(''); // textarea (edición)
+                $('#modalTransferValidationNotesText').html('<span class="text-muted font-italic small">N/A</span>'); // lectura
+                $('#modalTransferValidationNotesInput').val(''); // hidden (por si acaso)
+            }
+
+            // ✅ Guardar el valor actual como "prev" para la próxima vez
+            $sel.data('prev', v);
+
             const $notes = $('#modalTransferValidationNotes');
 
             // Placeholders dinámicos
@@ -2868,6 +2887,7 @@
 
             // Transfer (validación)
             $('#modalTransferValidationSelect').val(String(snap.transfer_validation_status || ''));
+            $('#modalTransferValidationSelect').data('prev', String(snap.transfer_validation_status || '').toLowerCase());
             $('#modalTransferValidationNotes').val(String(snap.transfer_validation_notes || ''));
             $('#modalTransferValidationStatusInput').val(String(snap.transfer_validation_status || ''));
             $('#modalTransferValidationNotesInput').val(String(snap.transfer_validation_notes || ''));
