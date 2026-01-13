@@ -23,6 +23,7 @@
         <input type="hidden" name="client_transaction_id" id="modalClientTransactionIdHidden" value="">
         <input type="hidden" name="payment_paid_at" id="modalPaymentPaidAtHidden" value="">
         <input type="hidden" name="cash_notes" id="modalCashNotesHidden" value="">
+        <input type="hidden" name="paid_amount" id="modalPaidAmountHidden" value="">
         <input type="hidden" name="transfer_validation_notes" id="modalTransferValidationNotesInput" value="">
         <input type="hidden" id="modalPaymentMethodRaw" value="">
 
@@ -392,24 +393,40 @@
                                     </div>
 
                                     <div class="col-md-6 mb-2">
-                                        <div class="small text-muted">Client Transaction ID</div>
+                                        <div class="small text-muted">Estado del pago</div>
 
                                         {{-- Lectura --}}
-                                        <div class="text-dark js-edit-text" id="modalClientTransactionId" style="word-break: break-all;">N/A</div>
+                                        <div class="text-dark js-edit-text" id="modalPaymentStatusBadge2">N/A</div>
 
                                         {{-- Edición --}}
-                                        <input type="text"
-                                            class="form-control form-control-sm js-edit-input"
-                                            id="modalClientTransactionIdInput"
-                                            value=""
-                                            placeholder="Ej: 33b7a262-1814-45f2-8076-76d1236f1769">
+                                        <select class="form-control form-control-sm js-edit-input" id="modalPaymentStatusSelectCard">
+                                            <option value="pending">Pendiente</option>
+                                            <option value="paid">Pagado</option>
+                                            <option value="refunded">Reembolsado</option>
+                                        </select>
                                     </div>
 
                                     <div class="col-md-6 mb-2">
-                                        <div class="small text-muted">Monto</div>
+                                        <div class="small text-muted">Monto total a pagar</div>
                                         <div class="text-dark js-edit-text" id="modalPaymentAmount">N/A</div>
                                         <input type="number" step="0.01" min="0" lang="en" class="form-control form-control-sm js-edit-input"
                                         id="modalAmountInput" name="amount" value="">
+                                    </div>
+
+                                    {{-- FILA 2 (solo derecha) --}}
+
+                                    <div class="col-md-6 mb-2">
+                                        <div class="small text-muted">Monto pagado</div>
+
+                                        {{-- Lectura --}}
+                                        <div class="text-dark js-edit-text" id="modalPaidAmountText">N/A</div>
+
+                                        {{-- Edición --}}
+                                        <input type="number" step="0.01" min="0" lang="en"
+                                            class="form-control form-control-sm js-edit-input"
+                                            id="modalPaidAmountInputCard"
+                                            name="paid_amount"
+                                            value="">
                                     </div>
 
                                     <div class="col-md-6 mb-2">
@@ -425,18 +442,18 @@
                                             value="">
                                     </div>
 
-                                    <div class="col-md-6 mb-0">
-                                        <div class="small text-muted">Estado del pago</div>
+                                    <div class="col-md-6 mb-2">
+                                        <div class="small text-muted">Client Transaction ID</div>
 
                                         {{-- Lectura --}}
-                                        <div class="text-dark js-edit-text" id="modalPaymentStatusBadge2">N/A</div>
+                                        <div class="text-dark js-edit-text" id="modalClientTransactionId" style="word-break: break-word; overflow-wrap:anywhere;">N/A</div>
 
                                         {{-- Edición --}}
-                                        <select class="form-control form-control-sm js-edit-input" id="modalPaymentStatusSelectCard">
-                                            <option value="pending">Pendiente</option>
-                                            <option value="paid">Pagado</option>
-                                            <option value="refunded">Reembolsado</option>
-                                        </select>
+                                        <input type="text"
+                                            class="form-control form-control-sm js-edit-input"
+                                            id="modalClientTransactionIdInput"
+                                            value=""
+                                            placeholder="Ej: 33b7a262-1814-45f2-8076-76d1236f1769">
                                     </div>
                                 </div>
                             </div>
@@ -940,6 +957,7 @@
                                                         data-transfer-validated-at="{{ $appointment->transfer_validated_at ?? '' }}"
                                                         data-transfer-validated-by="{{ optional($appointment->transferValidatedBy)->name ?? '' }}"
                                                         data-transfer-validation-notes="{{ $appointment->transfer_validation_notes ?? '' }}"
+                                                        data-paid-amount="{{ $appointment->paid_amount ?? '' }}"
                                                         data-created-at="{{ $appointment->created_at }}"
                                                         data-status="{{ $appointment->status }}">Ver detalles</button>
                                                 </td>
