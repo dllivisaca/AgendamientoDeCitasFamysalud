@@ -1146,20 +1146,28 @@
     border-radius: 6px;
     }
 
-    /* 🔧 Fix: Header "Observaciones..." ocupa todo el ancho y en una sola línea */
+    /* 🔧 Fix: Header "Observaciones..." en una sola línea */
     #transferValidationNotesWrapper > div.small.text-muted{
         width: 100% !important;
         display: flex !important;
         align-items: baseline;
-        flex-wrap: nowrap;            /* si quieres que NO se rompa */
-        white-space: nowrap;          /* mantiene todo en una sola línea */
+        flex-wrap: nowrap;
+        white-space: nowrap;
     }
 
-    /* 🔧 Aunque .js-edit-input ponga display:block !important, aquí lo forzamos inline */
-    #transferValidationNotesWrapper > div.small.text-muted #transferNotesOptional,
-    #transferValidationNotesWrapper > div.small.text-muted #transferNotesRequired{
-        display: inline !important;
+    /* ✅ Control estable de (opcional)/(obligatorias) por clases en <body> */
+    body.appt-edit-mode #transferNotesOptional,
+    body.appt-edit-mode #transferNotesRequired{
+        display: none !important;     /* por defecto ocultos en edición */
         margin-left: 6px;
+    }
+
+    body.appt-edit-mode.transfer-notes-opt #transferNotesOptional{
+        display: inline !important;
+    }
+
+    body.appt-edit-mode.transfer-notes-req #transferNotesRequired{
+        display: inline !important;
     }
 </style>
 @stop
@@ -2503,22 +2511,22 @@
                 // ✅ Habilitar textarea SOLO cuando hay estado
                 $notes.prop('disabled', false);
 
+                // ✅ Reset clases de labels
+                $('body').removeClass('transfer-notes-opt transfer-notes-req');
+
                 if (v === 'rejected') {
-                    $('#transferNotesRequired').show();
-                    $('#transferNotesOptional').hide();
+                    $('body').addClass('transfer-notes-req');
                     $notes.attr('placeholder', phRejected);
                 } else {
-                    $('#transferNotesRequired').hide();
-                    $('#transferNotesOptional').show();
+                    $('body').addClass('transfer-notes-opt');
                     $notes.attr('placeholder', phValidated);
                 }
 
             } else {
-                $('body').removeClass('transfer-notes-visible');
+                $('body').removeClass('transfer-notes-visible transfer-notes-opt transfer-notes-req');
+
                 // ✅ Sin revisar => NO permitir notas
                 $('#transferValidationNotesWrapper').hide();
-                $('#transferNotesRequired').hide();
-                $('#transferNotesOptional').hide();
 
                 // ✅ limpiar + deshabilitar
                 $notes.val('');
