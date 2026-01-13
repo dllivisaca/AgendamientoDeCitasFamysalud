@@ -1076,6 +1076,7 @@
     body.appt-quick-transfer-mode #modalTransferValidationSelect,
     body.appt-quick-transfer-mode #transferValidationHelperText,
     body.appt-quick-transfer-mode #transferValidationSection .js-edit-input,
+    /* ✅ AÑADE ESTAS 2: (opcional) y (obligatorias) */
     body.appt-quick-transfer-mode #transferValidationNotesWrapper small,
     body.appt-quick-transfer-mode #btnSaveChanges {
         display: block !important;
@@ -1143,6 +1144,22 @@
     border: 0;
     display: none;
     border-radius: 6px;
+    }
+
+    /* 🔧 Fix: Header "Observaciones..." ocupa todo el ancho y en una sola línea */
+    #transferValidationNotesWrapper > div.small.text-muted{
+        width: 100% !important;
+        display: flex !important;
+        align-items: baseline;
+        flex-wrap: nowrap;            /* si quieres que NO se rompa */
+        white-space: nowrap;          /* mantiene todo en una sola línea */
+    }
+
+    /* 🔧 Aunque .js-edit-input ponga display:block !important, aquí lo forzamos inline */
+    #transferValidationNotesWrapper > div.small.text-muted #transferNotesOptional,
+    #transferValidationNotesWrapper > div.small.text-muted #transferNotesRequired{
+        display: inline !important;
+        margin-left: 6px;
     }
 </style>
 @stop
