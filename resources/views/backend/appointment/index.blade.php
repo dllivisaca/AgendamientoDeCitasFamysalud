@@ -1127,6 +1127,150 @@
 
 
     <script>
+        // ============================
+        // ✅ HELPERS GLOBALES (para que Cancelar edición funcione)
+        // ============================
+
+        window.__force2Decimals = function (raw) {
+            let s = String(raw ?? '').trim().replace(',', '.');
+            if (s === '') return '';
+            const n = Number(s);
+            if (!isFinite(n)) return s;
+            return n.toFixed(2);
+        };
+
+        window.__syncAmountAll = function (val) {
+            $('#modalAmountInput').val(val);
+            $('#modalAmountInputTransfer').val(val);
+            $('#modalAmountInputCash').val(val);
+        };
+
+        window.__syncPaidAmountAll = function (val) {
+            $('#modalPaidAmountInputCard').val(val);
+            $('#modalPaidAmountInputTransfer').val(val);
+            $('#modalPaidAmountInputCash').val(val);
+            $('#modalAmountPaidHidden').val(val);
+        };
+
+        // ✅ Badge global (lo usas en __restoreFromSnapshot)
+        window.paymentStatusBadge = function (status) {
+            const s = String(status || '').trim().toLowerCase();
+
+            const colors = {
+                unpaid: '#95a5a6',
+                pending: '#f39c12',
+                paid: '#2ecc71',
+                refunded: '#9b59b6',
+            };
+
+            const labels = {
+                unpaid: 'No pagado',
+                pending: 'Pendiente',
+                paid: 'Pagado',
+                refunded: 'Reembolsado',
+            };
+
+            const key = s || 'na';
+            const color = colors[key] || '#95a5a6';
+            const label = labels[key] || (status ? String(status) : 'N/A');
+
+            return `<span class="badge px-2 py-1" style="background-color:${color};color:white;">${label}</span>`;
+        };
+
+        // ✅ UI método pago global (la usas en __enterEditModeUI y __exitEditModeUI)
+        window.__setPaymentMethodUI = function (newPm) {
+            const pm = String(newPm || '').trim().toLowerCase();
+
+            // Guardar método actual (draft)
+            $('#modalPaymentMethodRaw').val(pm);
+
+            // Mostrar bloques
+            if (pm === 'card') {
+                $('#paymentSectionWrapper').show();
+                $('#paymentCardBlock').show();
+                $('#paymentTransferBlock').hide();
+                $('#paymentCashBlock').hide();
+            } else if (pm === 'transfer') {
+                $('#paymentSectionWrapper').show();
+                $('#paymentTransferBlock').show();
+                $('#paymentCardBlock').hide();
+                $('#paymentCashBlock').hide();
+            } else if (pm === 'cash') {
+                $('#paymentSectionWrapper').show();
+                $('#paymentCashBlock').show();
+                $('#paymentCardBlock').hide();
+                $('#paymentTransferBlock').hide();
+            } else {
+                $('#paymentSectionWrapper').hide();
+                $('#paymentCardBlock').hide();
+                $('#paymentTransferBlock').hide();
+                $('#paymentCashBlock').hide();
+            }
+
+            // Set selects (los 3) para reflejar el método
+            $('#modalPaymentMethodSelectCard').val(pm || 'card');
+            $('#modalPaymentMethodSelectTransfer').val(pm || 'transfer');
+            $('#modalPaymentMethodSelectCash').val(pm || 'cash');
+
+            // Deshabilitar inputs del bloque oculto (evita duplicados)
+            const isCard = (pm === 'card');
+            const isTransfer = (pm === 'transfer');
+            const isCash = (pm === 'cash');
+
+            $('#paymentCardBlock :input').prop('disabled', !isCard);
+            $('#paymentTransferBlock :input').prop('disabled', !isTransfer);
+            $('#paymentCashBlock :input').prop('disabled', !isCash);
+
+            // Re-habilitar selects del bloque visible
+            if (isCard) $('#modalPaymentMethodSelectCard').prop('disabled', false);
+            if (isTransfer) $('#modalPaymentMethodSelectTransfer').prop('disabled', false);
+            if (isCash) $('#modalPaymentMethodSelectCash').prop('disabled', false);
+        };
+
+        // ✅ Limpiar draft global (la usas al cambiar método en modo edición)
+        window.__clearPaymentDraftFields = function (pm) {
+            const method = String(pm || '').trim().toLowerCase();
+
+            window.__syncAmountAll('');
+            window.__syncPaidAmountAll('');
+
+            $('#modalPaymentStatusSelect').val('');
+            $('#modalPaymentStatusSelectCard').val('');
+            $('#modalPaymentStatusHidden').val('');
+
+            $('#modalPaymentStatusBadge').html(window.paymentStatusBadge(''));
+            $('#modalPaymentStatusBadge2').html(window.paymentStatusBadge(''));
+
+            // Tarjeta
+            $('#modalClientTransactionIdInput').val('');
+            $('#modalPaymentPaidAtInput').val('');
+            $('#modalClientTransactionIdHidden').val('');
+            $('#modalPaymentPaidAtHidden').val('');
+
+            // Transfer
+            $('#modalTransferBankOriginInput').val('');
+            $('#modalTransferPayerNameInput').val('');
+            $('#modalTransferDateInput').val('');
+            $('#modalTransferReferenceInput').val('');
+            $('#modalTransferReceiptFile').val('');
+
+            $('#modalTransferValidationSelect').val('');
+            $('#modalTransferValidationNotes').val('');
+            $('#modalTransferValidationStatusInput').val('');
+            $('#modalTransferValidationNotesInput').val('');
+            $('#transferValidationNotesWrapper').hide();
+            $('#transferNotesRequired').hide();
+            $('#transferNotesOptional').hide();
+
+            // Cash
+            $('#modalCashPaidAtInput').val('');
+            $('#modalCashNotesInput').val('');
+            $('#modalCashPaidAtHidden').val('');
+            $('#modalCashNotesHidden').val('');
+
+            $('#modalAmountPaidHidden').val('');
+            $('#modalPaymentMethodRaw').val(method);
+        };
         $(document).on('click', '.view-appointment-btn', function() {
             // Set modal fields
             $('#modalAppointmentId').val($(this).data('id'));
@@ -2204,11 +2348,9 @@
 
             $(document).on('change.paymentMethodSelect', '#modalPaymentMethodSelectCard, #modalPaymentMethodSelectTransfer, #modalPaymentMethodSelectCash', function () {
                 const pm = String($(this).val() || '').trim().toLowerCase();
-                __setPaymentMethodUI(pm);
-
-                // ✅ NUEVO: si estás en modo edición, al cambiar método deja TODO en blanco
+                window.__setPaymentMethodUI(pm);
                 if (window.__apptIsEditMode) {
-                    __clearPaymentDraftFields(pm);
+                    window.__clearPaymentDraftFields(pm);
                 }
 
                 __updateSaveButtonState();
