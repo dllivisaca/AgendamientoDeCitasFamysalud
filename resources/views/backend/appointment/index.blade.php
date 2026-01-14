@@ -174,6 +174,7 @@
 
                                     {{-- Select (modo edición) --}}
                                     <select class="form-control form-control-sm js-edit-input" id="modalPaymentStatusSelect">
+                                        <option value="" disabled selected>Seleccione una opción</option>
                                         <option value="pending">Pendiente</option>
                                         <option value="unpaid">No pagado</option>
                                         <option value="partial">Pagado parcialmente</option> <!-- ✅ NUEVO -->
@@ -412,6 +413,7 @@
 
                                         {{-- Edición --}}
                                         <select class="form-control form-control-sm js-edit-input" id="modalPaymentStatusSelectCard">
+                                            <option value="" disabled selected>Seleccione una opción</option>
                                             <option value="pending">Pendiente</option>
                                             <option value="unpaid">No pagado</option>
                                             <option value="partial">Pagado parcialmente</option> <!-- ✅ NUEVO -->
@@ -2356,10 +2358,10 @@
                         });
                     });
 
-                    // si el valor actual no es permitido, forzarlo a "pending"
+                    // si el valor actual no es permitido, dejar SIN selección (placeholder)
                     const current = String($('#modalPaymentStatusHidden').val() || '').trim().toLowerCase();
                     if (!allowed.has(current)) {
-                        __syncPaymentStatusEverywhere('pending', 'rule'); // sincroniza ambos + hidden + badges
+                        __syncPaymentStatusEverywhere('', 'rule'); // deja placeholder + hidden vacío + badges N/A
                     }
                 }
 
@@ -2383,9 +2385,10 @@
                         });
                     });
 
+                    // si el valor actual no es permitido, dejar SIN selección (placeholder)
                     const current = String($('#modalPaymentStatusHidden').val() || '').trim().toLowerCase();
                     if (!allowed.has(current)) {
-                        __syncPaymentStatusEverywhere('pending', 'rule');
+                        __syncPaymentStatusEverywhere('', 'rule'); // deja placeholder + hidden vacío + badges N/A
                     }
                 }
 
@@ -2409,9 +2412,10 @@
                         });
                     });
 
+                    // si el valor actual no es permitido, dejar SIN selección (placeholder)
                     const current = String($('#modalPaymentStatusHidden').val() || '').trim().toLowerCase();
                     if (!allowed.has(current)) {
-                        __syncPaymentStatusEverywhere('unpaid', 'rule');
+                        __syncPaymentStatusEverywhere('', 'rule'); // deja placeholder + hidden vacío + badges N/A
                     }
                 }
 
@@ -2435,9 +2439,10 @@
                         });
                     });
 
+                    // si el valor actual no es permitido, dejar SIN selección (placeholder)
                     const current = String($('#modalPaymentStatusHidden').val() || '').trim().toLowerCase();
                     if (!allowed.has(current)) {
-                        __syncPaymentStatusEverywhere('paid', 'rule');
+                        __syncPaymentStatusEverywhere('', 'rule'); // deja placeholder + hidden vacío + badges N/A
                     }
                 }
 
@@ -2461,10 +2466,10 @@
                         });
                     });
 
+                    // si el valor actual no es permitido, dejar SIN selección (placeholder)
                     const current = String($('#modalPaymentStatusHidden').val() || '').trim().toLowerCase();
                     if (!allowed.has(current)) {
-                        // por defecto dejamos "unpaid" si estaba en un estado inválido
-                        __syncPaymentStatusEverywhere('unpaid', 'rule');
+                        __syncPaymentStatusEverywhere('', 'rule'); // deja placeholder + hidden vacío + badges N/A
                     }
                 }
 
@@ -2488,9 +2493,10 @@
                         });
                     });
 
+                    // si el valor actual no es permitido, dejar SIN selección (placeholder)
                     const current = String($('#modalPaymentStatusHidden').val() || '').trim().toLowerCase();
                     if (!allowed.has(current)) {
-                        __syncPaymentStatusEverywhere('paid', 'rule');
+                        __syncPaymentStatusEverywhere('', 'rule'); // deja placeholder + hidden vacío + badges N/A
                     }
                 }
 
@@ -2514,10 +2520,10 @@
                         });
                     });
 
+                    // si el valor actual no es permitido, dejar SIN selección (placeholder)
                     const current = String($('#modalPaymentStatusHidden').val() || '').trim().toLowerCase();
                     if (!allowed.has(current)) {
-                        // por defecto: "unpaid" (porque no asistió puede ser con saldo pendiente)
-                        __syncPaymentStatusEverywhere('unpaid', 'rule');
+                        __syncPaymentStatusEverywhere('', 'rule'); // deja placeholder + hidden vacío + badges N/A
                     }
                 }
 
@@ -2859,6 +2865,14 @@
 
             const isCard = (pmRaw === 'card');
 
+            // ✅ Bloquear si el estado del pago quedó sin selección (placeholder)
+            const paymentHidden = String($('#modalPaymentStatusHidden').val() || '').trim().toLowerCase();
+            if (!paymentHidden) {
+                e.preventDefault();
+                alert('Debes seleccionar un estado del pago válido antes de guardar.');
+                return false;
+            }
+
             function __normalizeMoneyToFixed2(val) {
                 let s = String(val ?? '').trim();
 
@@ -3184,7 +3198,15 @@
         }
 
         function __updateSaveButtonState() {
-            const enable = __hasRealChanges();
+            const hasChanges = __hasRealChanges();
+
+            // ✅ Requerido: estado del pago NO puede quedar vacío
+            const paymentOk = String($('#modalPaymentStatusHidden').val() || '').trim().length > 0;
+
+            // (Opcional, pero recomendado) estado de cita tampoco vacío:
+            const statusOk = String($('#modalStatusSelect').val() || '').trim().length > 0;
+
+            const enable = hasChanges && paymentOk && statusOk;
             $('#btnSaveChanges').prop('disabled', !enable);
         }
 
