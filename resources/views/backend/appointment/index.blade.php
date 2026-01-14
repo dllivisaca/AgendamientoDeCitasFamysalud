@@ -155,6 +155,7 @@
                                     {{-- Select (modo edición) --}}
                                     <select class="form-control form-control-sm js-edit-input" id="modalStatusSelect">
                                         <option value="pending_verification">Pendiente de verificación</option>
+                                        <option value="pending_payment">Pendiente de pago</option>
                                         <option value="paid">Pagada</option>
                                         <option value="confirmed">Confirmada</option>
                                         <option value="completed">Completada</option>
@@ -854,6 +855,7 @@
                                             $statusColors = [
                                                 // ✅ NUEVOS (los que sí quieres)
                                                 'pending_verification' => '#7f8c8d',
+                                                'pending_payment' => '#f39c12',
                                                 'paid' => '#2ecc71',
                                                 'confirmed' => '#3498db',
                                                 'completed' => '#008000',
@@ -866,6 +868,7 @@
                                             $statusLabels = [
                                                 // ✅ NUEVOS
                                                 'pending_verification' => 'Pendiente de verificación',
+                                                'pending_payment'=> 'Pendiente de pago',
                                                 'paid' => 'Pagada',
                                                 'confirmed' => 'Confirmada',
                                                 'completed' => 'Completada',
@@ -2221,6 +2224,7 @@
 
             // Estado cita (usa el normalizedStatus que ya armaste)
             $('#modalStatusSelect').val(normalizedStatus || 'pending_verification');
+            __applyPaymentOptionsByAppointmentStatus(normalizedStatus);
 
             // Estado pago (normaliza para que matchee opciones)
             const pStat = String(paymentStatusRaw || '').trim().toLowerCase();
@@ -2241,6 +2245,8 @@
 
                 // hidden que se envía
                 $('#modalStatusHidden').val(v);
+                // ✅ aplicar regla: si está on_hold, limitar estados de pago
+                __applyPaymentOptionsByAppointmentStatus(v);
 
                 // refrescar badge visible
                 const statusColors = {
@@ -2290,6 +2296,39 @@
                 $('#modalPaymentStatusBadge2').html(paymentStatusBadge(val));
 
                 __updateSaveButtonState();
+            }
+
+            function __applyPaymentOptionsByAppointmentStatus(apptStatus) {
+                const s = String(apptStatus || '').trim().toLowerCase();
+
+                // defaults: todo habilitado
+                const $p1 = $('#modalPaymentStatusSelect');      // Resumen
+                const $p2 = $('#modalPaymentStatusSelectCard');  // Tarjeta
+
+                // habilitar todo primero
+                $p1.find('option').prop('disabled', false).show();
+                $p2.find('option').prop('disabled', false).show();
+
+                // ✅ Regla #1: si la cita está EN ESPERA (on_hold)
+                if (s === 'on_hold') {
+                    const allowed = new Set(['unpaid', 'pending', 'partial']);
+
+                    // deshabilitar lo no permitido en ambos selects
+                    [$p1, $p2].forEach($sel => {
+                        $sel.find('option').each(function () {
+                            const v = String($(this).val() || '').trim().toLowerCase();
+                            if (!allowed.has(v)) {
+                                $(this).prop('disabled', true).hide(); // hide opcional (más limpio)
+                            }
+                        });
+                    });
+
+                    // si el valor actual no es permitido, forzarlo a "pending"
+                    const current = String($('#modalPaymentStatusHidden').val() || '').trim().toLowerCase();
+                    if (!allowed.has(current)) {
+                        __syncPaymentStatusEverywhere('pending', 'rule'); // sincroniza ambos + hidden + badges
+                    }
+                }
             }
 
             $(document).on('change.apptStatusSelects', '#modalPaymentStatusSelect', function () {
