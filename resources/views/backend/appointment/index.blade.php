@@ -177,6 +177,7 @@
                                     <select class="form-control form-control-sm js-edit-input" id="modalPaymentStatusSelect">
                                         <option value="pending">Pendiente</option>
                                         <option value="unpaid">No pagado</option>
+                                        <option value="partial">Pagado parcialmente</option> <!-- ✅ NUEVO -->
                                         <option value="paid">Pagado</option>
                                         <option value="refunded">Reembolsado</option>
                                     </select>
@@ -414,6 +415,7 @@
                                         <select class="form-control form-control-sm js-edit-input" id="modalPaymentStatusSelectCard">
                                             <option value="pending">Pendiente</option>
                                             <option value="unpaid">No pagado</option>
+                                            <option value="partial">Pagado parcialmente</option> <!-- ✅ NUEVO -->
                                             <option value="paid">Pagado</option>
                                             <option value="refunded">Reembolsado</option>
                                         </select>
