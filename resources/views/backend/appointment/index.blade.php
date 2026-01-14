@@ -1307,6 +1307,11 @@
             if (isCard) $('#modalPaymentMethodSelectCard').prop('disabled', false);
             if (isTransfer) $('#modalPaymentMethodSelectTransfer').prop('disabled', false);
             if (isCash) $('#modalPaymentMethodSelectCash').prop('disabled', false);
+
+            // ✅ Re-aplicar reglas de combos según método (transfer vs card/cash)
+            if (typeof __applyAppointmentStatusOptionsByPaymentMethod === 'function') {
+                __applyAppointmentStatusOptionsByPaymentMethod(pm);
+            }
         };
 
         // ✅ Limpiar draft global (la usas al cambiar método en modo edición)
@@ -2292,6 +2297,11 @@
                 // ✅ NUEVO: restringir estados de cita según estado del pago
                 __applyAppointmentStatusOptionsByPaymentStatus(val);
 
+                // ✅ Re-aplicar regla de método (para que no reaparezca pending/pending_verification en card/cash)
+                if (typeof __applyAppointmentStatusOptionsByPaymentMethod === 'function') {
+                    __applyAppointmentStatusOptionsByPaymentMethod($('#modalPaymentMethodRaw').val());
+                }
+
                 // Selects (arriba + tarjeta)
                 if (source !== 'top')  $('#modalPaymentStatusSelect').val(val);
                 if (source !== 'card') $('#modalPaymentStatusSelectCard').val(val);
@@ -2462,19 +2472,46 @@
                 const pm = String(pmRaw || '').trim().toLowerCase();
                 const isTransfer = (pm === 'transfer');
 
+                // ============================
+                // 1) ESTADO DE LA CITA: pending_verification solo para transferencia
+                // ============================
                 const $status = $('#modalStatusSelect');
                 const $optPendingVerification = $status.find('option[value="pending_verification"]');
 
-                if (!$optPendingVerification.length) return;
+                if ($optPendingVerification.length) {
+                    if (isTransfer) {
+                        $optPendingVerification.prop('disabled', false).show();
+                    } else {
+                        // Si estaba seleccionado, muévelo a un estado válido (ej: pending_payment)
+                        if (String($status.val() || '').trim().toLowerCase() === 'pending_verification') {
+                            $status.val('pending_payment').trigger('change');
+                        }
+                        $optPendingVerification.prop('disabled', true).hide();
+                    }
+                }
+
+                // ============================
+                // 2) ESTADO DEL PAGO: "pending" solo para transferencia (en ambos dropdowns)
+                // ============================
+                const $p1 = $('#modalPaymentStatusSelect');      // Resumen
+                const $p2 = $('#modalPaymentStatusSelectCard');  // Tarjeta
+
+                // opción "pending" en ambos selects
+                const $p1Pending = $p1.find('option[value="pending"]');
+                const $p2Pending = $p2.find('option[value="pending"]');
 
                 if (isTransfer) {
-                    $optPendingVerification.prop('disabled', false).show();
+                    $p1Pending.prop('disabled', false).show();
+                    $p2Pending.prop('disabled', false).show();
                 } else {
-                    // Si estaba seleccionado, pásalo a "pending_payment" (o el que prefieras)
-                    if (String($status.val() || '').toLowerCase() === 'pending_verification') {
-                        $status.val('pending_payment').trigger('change');
+                    // si estaba seleccionado "pending", cámbialo a un valor seguro
+                    const current = String($('#modalPaymentStatusHidden').val() || '').trim().toLowerCase();
+                    if (current === 'pending') {
+                        __syncPaymentStatusEverywhere('unpaid', 'rule'); // default seguro para no-transfer
                     }
-                    $optPendingVerification.prop('disabled', true).hide();
+
+                    $p1Pending.prop('disabled', true).hide();
+                    $p2Pending.prop('disabled', true).hide();
                 }
             }
 
@@ -2515,6 +2552,11 @@
                     if (!allowed.has(current)) {
                         $status.val('pending_verification').trigger('change');
                     }
+                }
+
+                // ✅ Muy importante: luego del reset de options, re-aplicar regla por método de pago
+                if (typeof __applyAppointmentStatusOptionsByPaymentMethod === 'function') {
+                    __applyAppointmentStatusOptionsByPaymentMethod($('#modalPaymentMethodRaw').val());
                 }
             }
 
