@@ -1307,12 +1307,32 @@
             if (isCard) $('#modalPaymentMethodSelectCard').prop('disabled', false);
             if (isTransfer) $('#modalPaymentMethodSelectTransfer').prop('disabled', false);
             if (isCash) $('#modalPaymentMethodSelectCash').prop('disabled', false);
-
-            // ✅ Re-aplicar reglas de combos según método (transfer vs card/cash)
-            if (typeof __applyAppointmentStatusOptionsByPaymentMethod === 'function') {
-                __applyAppointmentStatusOptionsByPaymentMethod(pm);
-            }
         };
+
+        // ✅ Regla: "Pendiente de verificación" SOLO puede existir si método = transferencia
+        function __applyAppointmentStatusOptionsByPaymentMethod(pmRaw) {
+            const pm = String(pmRaw || '').trim().toLowerCase();
+
+            const $status = $('#modalStatusSelect');
+            if (!$status.length) return;
+
+            // Reset: habilitar/mostrar todo
+            $status.find('option').prop('disabled', false).show();
+
+            // Si NO es transferencia => ocultar/deshabilitar pending_verification
+            if (pm !== 'transfer') {
+                const $pv = $status.find('option[value="pending_verification"]');
+                if ($pv.length) {
+                    $pv.prop('disabled', true).hide();
+                }
+
+                // Si quedó seleccionado por inconsistencia, muévelo a "En espera" (on_hold)
+                const current = String($status.val() || '').trim().toLowerCase();
+                if (current === 'pending_verification') {
+                    $status.val('on_hold').trigger('change');
+                }
+            }
+        }
 
         // ✅ Limpiar draft global (la usas al cambiar método en modo edición)
         window.__clearPaymentDraftFields = function (pm) {
@@ -1844,8 +1864,8 @@
 
             const pm = String(paymentMethodRaw || '').trim().toLowerCase();
             __setPaymentMethodUI(pm);
-            __setQuickValidateVisibility(pm);
             __applyAppointmentStatusOptionsByPaymentMethod(pm);
+            __setQuickValidateVisibility(pm);
 
             // ✅ Aplicar regla de notas según estado actual (por si está vacío)
             $('#modalTransferValidationSelect').trigger('change');
@@ -2238,10 +2258,9 @@
             $('#modalStatusHidden').val(normalizedStatus || 'pending_verification');
             $('#modalPaymentStatusHidden').val(pStat);
             $('#modalPaymentStatusSelectCard').val(pStat);
+            $('#modalPaymentStatusSelect').data('last_valid', pStat);
+            $('#modalPaymentStatusSelectCard').data('last_valid', pStat);
             $('#modalPaymentStatusBadge2').html(paymentStatusBadge(pStat));
-
-            // ✅ NUEVO
-            __applyAppointmentStatusOptionsByPaymentStatus(pStat);
 
             // ============================
             // ✅ Cambios en selects de estado (Resumen)
@@ -2294,14 +2313,6 @@
                 // Hidden que se envía
                 $('#modalPaymentStatusHidden').val(val);
 
-                // ✅ NUEVO: restringir estados de cita según estado del pago
-                __applyAppointmentStatusOptionsByPaymentStatus(val);
-
-                // ✅ Re-aplicar regla de método (para que no reaparezca pending/pending_verification en card/cash)
-                if (typeof __applyAppointmentStatusOptionsByPaymentMethod === 'function') {
-                    __applyAppointmentStatusOptionsByPaymentMethod($('#modalPaymentMethodRaw').val());
-                }
-
                 // Selects (arriba + tarjeta)
                 if (source !== 'top')  $('#modalPaymentStatusSelect').val(val);
                 if (source !== 'card') $('#modalPaymentStatusSelectCard').val(val);
@@ -2320,7 +2331,7 @@
                 const $p1 = $('#modalPaymentStatusSelect');      // Resumen
                 const $p2 = $('#modalPaymentStatusSelectCard');  // Tarjeta
 
-                // habilitar todo primero
+                // ✅ Reset: todo visible y habilitado (NO ocultamos nada)
                 $p1.find('option').prop('disabled', false).show();
                 $p2.find('option').prop('disabled', false).show();
 
@@ -2328,12 +2339,19 @@
                 if (s === 'on_hold') {
                     const allowed = new Set(['unpaid', 'pending', 'partial', 'paid']);
 
+                    // ✅ Regla global: si NO es transferencia, "pending" NO se permite jamás
+                    const pm = String($('#modalPaymentMethodRaw').val() || '').trim().toLowerCase();
+                    const isTransfer = (pm === 'transfer');
+                    if (!isTransfer) {
+                        allowed.delete('pending');
+                    }
+
                     // deshabilitar lo no permitido en ambos selects
                     [$p1, $p2].forEach($sel => {
                         $sel.find('option').each(function () {
                             const v = String($(this).val() || '').trim().toLowerCase();
                             if (!allowed.has(v)) {
-                                $(this).prop('disabled', true).hide(); // hide opcional (más limpio)
+                                $(this).prop('disabled', true); // ✅ solo deshabilita, NO ocultes
                             }
                         });
                     });
@@ -2349,12 +2367,18 @@
                 // Solo permitir: pending (por defecto) y partial
                 if (s === 'pending_verification') {
                     const allowed = new Set(['pending', 'partial']);
+                    // ✅ Regla global: si NO es transferencia, "pending" NO se permite jamás
+                    const pm = String($('#modalPaymentMethodRaw').val() || '').trim().toLowerCase();
+                    const isTransfer = (pm === 'transfer');
+                    if (!isTransfer) {
+                        allowed.delete('pending');
+                    }
 
                     [$p1, $p2].forEach($sel => {
                         $sel.find('option').each(function () {
                             const v = String($(this).val() || '').trim().toLowerCase();
                             if (!allowed.has(v)) {
-                                $(this).prop('disabled', true).hide();
+                                $(this).prop('disabled', true); // ✅ solo deshabilita, NO ocultes
                             }
                         });
                     });
@@ -2369,12 +2393,18 @@
                 // Solo permitir: unpaid y partial
                 if (s === 'pending_payment') {
                     const allowed = new Set(['unpaid', 'partial']);
+                    // ✅ Regla global: si NO es transferencia, "pending" NO se permite jamás
+                    const pm = String($('#modalPaymentMethodRaw').val() || '').trim().toLowerCase();
+                    const isTransfer = (pm === 'transfer');
+                    if (!isTransfer) {
+                        allowed.delete('pending');
+                    }
 
                     [$p1, $p2].forEach($sel => {
                         $sel.find('option').each(function () {
                             const v = String($(this).val() || '').trim().toLowerCase();
                             if (!allowed.has(v)) {
-                                $(this).prop('disabled', true).hide();
+                                $(this).prop('disabled', true); // ✅ solo deshabilita, NO ocultes
                             }
                         });
                     });
@@ -2389,12 +2419,18 @@
                 // Solo permitir: paid
                 if (s === 'paid') {
                     const allowed = new Set(['paid']);
+                    // ✅ Regla global: si NO es transferencia, "pending" NO se permite jamás
+                    const pm = String($('#modalPaymentMethodRaw').val() || '').trim().toLowerCase();
+                    const isTransfer = (pm === 'transfer');
+                    if (!isTransfer) {
+                        allowed.delete('pending');
+                    }
 
                     [$p1, $p2].forEach($sel => {
                         $sel.find('option').each(function () {
                             const v = String($(this).val() || '').trim().toLowerCase();
                             if (!allowed.has(v)) {
-                                $(this).prop('disabled', true).hide();
+                                $(this).prop('disabled', true); // ✅ solo deshabilita, NO ocultes
                             }
                         });
                     });
@@ -2409,12 +2445,18 @@
                 // Solo permitir: unpaid, partial, paid
                 if (s === 'confirmed') {
                     const allowed = new Set(['unpaid', 'partial', 'paid']);
+                    // ✅ Regla global: si NO es transferencia, "pending" NO se permite jamás
+                    const pm = String($('#modalPaymentMethodRaw').val() || '').trim().toLowerCase();
+                    const isTransfer = (pm === 'transfer');
+                    if (!isTransfer) {
+                        allowed.delete('pending');
+                    }
 
                     [$p1, $p2].forEach($sel => {
                         $sel.find('option').each(function () {
                             const v = String($(this).val() || '').trim().toLowerCase();
                             if (!allowed.has(v)) {
-                                $(this).prop('disabled', true).hide();
+                                $(this).prop('disabled', true); // ✅ solo deshabilita, NO ocultes
                             }
                         });
                     });
@@ -2430,12 +2472,18 @@
                 // Solo permitir: paid y refunded
                 if (s === 'completed') {
                     const allowed = new Set(['paid', 'refunded']);
+                    // ✅ Regla global: si NO es transferencia, "pending" NO se permite jamás
+                    const pm = String($('#modalPaymentMethodRaw').val() || '').trim().toLowerCase();
+                    const isTransfer = (pm === 'transfer');
+                    if (!isTransfer) {
+                        allowed.delete('pending');
+                    }
 
                     [$p1, $p2].forEach($sel => {
                         $sel.find('option').each(function () {
                             const v = String($(this).val() || '').trim().toLowerCase();
                             if (!allowed.has(v)) {
-                                $(this).prop('disabled', true).hide();
+                                $(this).prop('disabled', true); // ✅ solo deshabilita, NO ocultes
                             }
                         });
                     });
@@ -2450,12 +2498,18 @@
                 // Solo permitir: unpaid, partial, paid, refunded
                 if (s === 'no_show') {
                     const allowed = new Set(['unpaid', 'partial', 'paid', 'refunded']);
+                    // ✅ Regla global: si NO es transferencia, "pending" NO se permite jamás
+                    const pm = String($('#modalPaymentMethodRaw').val() || '').trim().toLowerCase();
+                    const isTransfer = (pm === 'transfer');
+                    if (!isTransfer) {
+                        allowed.delete('pending');
+                    }
 
                     [$p1, $p2].forEach($sel => {
                         $sel.find('option').each(function () {
                             const v = String($(this).val() || '').trim().toLowerCase();
                             if (!allowed.has(v)) {
-                                $(this).prop('disabled', true).hide();
+                                $(this).prop('disabled', true); // ✅ solo deshabilita, NO ocultes
                             }
                         });
                     });
@@ -2466,107 +2520,84 @@
                         __syncPaymentStatusEverywhere('unpaid', 'rule');
                     }
                 }
-            }
 
-            function __applyAppointmentStatusOptionsByPaymentMethod(pmRaw) {
-                const pm = String(pmRaw || '').trim().toLowerCase();
-                const isTransfer = (pm === 'transfer');
+                // ✅ Guard final: "pending" SOLO puede existir si el método es transferencia
+                const pmNow = String($('#modalPaymentMethodRaw').val() || '').trim().toLowerCase();
+                if (pmNow !== 'transfer') {
+                    const $p1Pending = $p1.find('option[value="pending"]');
+                    const $p2Pending = $p2.find('option[value="pending"]');
 
-                // ============================
-                // 1) ESTADO DE LA CITA: pending_verification solo para transferencia
-                // ============================
-                const $status = $('#modalStatusSelect');
-                const $optPendingVerification = $status.find('option[value="pending_verification"]');
-
-                if ($optPendingVerification.length) {
-                    if (isTransfer) {
-                        $optPendingVerification.prop('disabled', false).show();
-                    } else {
-                        // Si estaba seleccionado, muévelo a un estado válido (ej: pending_payment)
-                        if (String($status.val() || '').trim().toLowerCase() === 'pending_verification') {
-                            $status.val('pending_payment').trigger('change');
-                        }
-                        $optPendingVerification.prop('disabled', true).hide();
-                    }
-                }
-
-                // ============================
-                // 2) ESTADO DEL PAGO: "pending" solo para transferencia (en ambos dropdowns)
-                // ============================
-                const $p1 = $('#modalPaymentStatusSelect');      // Resumen
-                const $p2 = $('#modalPaymentStatusSelectCard');  // Tarjeta
-
-                // opción "pending" en ambos selects
-                const $p1Pending = $p1.find('option[value="pending"]');
-                const $p2Pending = $p2.find('option[value="pending"]');
-
-                if (isTransfer) {
-                    $p1Pending.prop('disabled', false).show();
-                    $p2Pending.prop('disabled', false).show();
-                } else {
-                    // si estaba seleccionado "pending", cámbialo a un valor seguro
+                    // Si el valor actual quedó en pending por alguna regla (ej: on_hold), lo bajamos a unpaid
                     const current = String($('#modalPaymentStatusHidden').val() || '').trim().toLowerCase();
                     if (current === 'pending') {
                         __syncPaymentStatusEverywhere('unpaid', 'rule'); // default seguro para no-transfer
                     }
 
-                    $p1Pending.prop('disabled', true).hide();
-                    $p2Pending.prop('disabled', true).hide();
-                }
-            }
-
-            function __applyAppointmentStatusOptionsByPaymentStatus(payStatusRaw) {
-                const ps = String(payStatusRaw || '').trim().toLowerCase();
-
-                const $status = $('#modalStatusSelect');
-                if (!$status.length) return;
-
-                // Primero: habilitar y mostrar todas las opciones (reset)
-                $status.find('option').prop('disabled', false).show();
-
-                // ✅ Regla: Pago = PENDIENTE => solo permitir "pending_verification"
-                if (ps === 'pending') {
-                    const allowed = new Set(['pending_verification', 'on_hold']);
-
-                    // Asegurar que la opción exista y se muestre (por si estaba oculta)
-                    const $pv = $status.find('option[value="pending_verification"]');
-                    if ($pv.length) {
-                        $pv.prop('disabled', false).show();
-                    }
-
-                    const $oh = $status.find('option[value="on_hold"]');
-                    if ($oh.length) {
-                        $oh.prop('disabled', false).show();
-                    }
-
-                    // Ocultar/deshabilitar todo lo demás
-                    $status.find('option').each(function () {
-                        const v = String($(this).val() || '').trim().toLowerCase();
-                        if (!allowed.has(v)) {
-                            $(this).prop('disabled', true).hide();
-                        }
-                    });
-
-                    // Si el valor actual NO es pending_verification, forzarlo
-                    const current = String($status.val() || '').trim().toLowerCase();
-                    if (!allowed.has(current)) {
-                        $status.val('pending_verification').trigger('change');
-                    }
-                }
-
-                // ✅ Muy importante: luego del reset de options, re-aplicar regla por método de pago
-                if (typeof __applyAppointmentStatusOptionsByPaymentMethod === 'function') {
-                    __applyAppointmentStatusOptionsByPaymentMethod($('#modalPaymentMethodRaw').val());
+                    // Ocultar/deshabilitar pending en ambos selects
+                    if ($p1Pending.length) $p1Pending.prop('disabled', true).hide();
+                    if ($p2Pending.length) $p2Pending.prop('disabled', true).hide();
                 }
             }
 
 
             $(document).on('change.apptStatusSelects', '#modalPaymentStatusSelect', function () {
-                __syncPaymentStatusEverywhere($(this).val(), 'top');
+                const $sel = $(this);
+                const next = String($sel.val() || '').trim().toLowerCase();
+
+                // allowed calculado por estado de cita (y método)
+                const allowedArr = $sel.data('allowed') || [];
+                const allowed = new Set(allowedArr.map(x => String(x).trim().toLowerCase()));
+
+                // si aún no hay allowed (por timing), lo recalculamos
+                if (!allowed.size) {
+                    __applyPaymentOptionsByAppointmentStatus($('#modalStatusSelect').val());
+                }
+
+                const allowedArr2 = $sel.data('allowed') || [];
+                const allowed2 = new Set(allowedArr2.map(x => String(x).trim().toLowerCase()));
+
+                if (!allowed2.has(next)) {
+                    const last = String($sel.data('last_valid') || $('#modalPaymentStatusHidden').val() || '').trim().toLowerCase();
+                    $sel.val(last);
+
+                    alert('Ese estado de pago no es válido para el estado actual de la cita. Cambia primero el estado de la cita.');
+
+                    return;
+                }
+
+                // ✅ válido: sincronizamos y guardamos como last_valid
+                $sel.data('last_valid', next);
+                __syncPaymentStatusEverywhere(next, 'top');
             });
 
-            $(document).on('change.apptStatusSelects', '#modalPaymentStatusSelectCard', function () {
-                __syncPaymentStatusEverywhere($(this).val(), 'card');
+            $(document).on('change.apptStatusSelects', '#modalPaymentStatusSelect', function () {
+                const $sel = $(this);
+                const next = String($sel.val() || '').trim().toLowerCase();
+
+                // allowed calculado por estado de cita (y método)
+                const allowedArr = $sel.data('allowed') || [];
+                const allowed = new Set(allowedArr.map(x => String(x).trim().toLowerCase()));
+
+                // si aún no hay allowed (por timing), lo recalculamos
+                if (!allowed.size) {
+                    __applyPaymentOptionsByAppointmentStatus($('#modalStatusSelect').val());
+                }
+
+                const allowedArr2 = $sel.data('allowed') || [];
+                const allowed2 = new Set(allowedArr2.map(x => String(x).trim().toLowerCase()));
+
+                if (!allowed2.has(next)) {
+                    const last = String($sel.data('last_valid') || $('#modalPaymentStatusHidden').val() || '').trim().toLowerCase();
+                    $sel.val(last);
+
+                    alert('Ese estado de pago no es válido para el estado actual de la cita. Cambia primero el estado de la cita.');
+
+                    return;
+                }
+
+                // ✅ válido: sincronizamos y guardamos como last_valid
+                $sel.data('last_valid', next);
+                __syncPaymentStatusEverywhere(next, 'card');
             });
 
             // ============================
@@ -2710,8 +2741,9 @@
             $(document).on('change.paymentMethodSelect', '#modalPaymentMethodSelectCard, #modalPaymentMethodSelectTransfer, #modalPaymentMethodSelectCash', function () {
                 const pm = String($(this).val() || '').trim().toLowerCase();
                 window.__setPaymentMethodUI(pm);
-                __setQuickValidateVisibility(pm);
                 __applyAppointmentStatusOptionsByPaymentMethod(pm);
+                __setQuickValidateVisibility(pm);
+                __applyPaymentOptionsByAppointmentStatus($('#modalStatusSelect').val());
                 if (window.__apptIsEditMode) {
                     window.__clearPaymentDraftFields(pm);
                 }
