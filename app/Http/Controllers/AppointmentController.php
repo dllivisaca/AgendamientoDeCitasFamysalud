@@ -292,15 +292,17 @@ class AppointmentController extends Controller
         ]);
         $request->validate([
             'appointment_id' => 'required|exists:appointments,id',
-            'status' => 'required|string',
+            'status' => 'required|in:pending_verification,pending_payment,on_hold,confirmed,paid,completed,cancelled,no_show,rescheduled',
 
             // ✅ Guardar método/monto/estado pago desde el modal
             'payment_method' => 'nullable|in:transfer,card',
             'amount' => 'nullable|numeric|min:0',
-            'payment_status' => 'nullable|in:pending,paid,refunded',
+            'payment_status' => 'nullable|in:pending,unpaid,partial,paid,refunded',
 
             // ✅ Validación de transferencia (desde tu modal)
             'transfer_validation_status' => 'nullable|in:validated,rejected',
+            'transfer_validation_touched' => 'nullable|in:0,1',
+            'transfer_validation_status_original' => 'nullable|in:validated,rejected',
             'transfer_validation_notes'  => 'nullable|string|required_if:transfer_validation_status,rejected',
 
             // Precios (si los envías desde el front)
@@ -349,12 +351,13 @@ class AppointmentController extends Controller
         // ✅ Solo si el método de pago es transferencia, aplicar validación admin
         $pm = strtolower(trim((string) ($appointment->payment_method ?? ''))); // "transfer" | "card"
         $validation = strtolower(trim((string) ($request->transfer_validation_status ?? ''))); // validated | rejected | ""
+        $touched = (string) $request->input('transfer_validation_touched', '0') === '1';
 
         // ✅ Caso "Sin revisar" (validation vacío) para transferencia:
         // - status: pending_verification
         // - payment_status: pending
         // - limpiar auditoría de validación (NULL)
-        if ($pm === 'transfer' && $validation === '') {
+        if ($pm === 'transfer' && $touched && $validation === '') {
             $appointment->status = 'pending_verification';
             $appointment->payment_status = 'pending';
 
@@ -366,7 +369,7 @@ class AppointmentController extends Controller
 
         // ✅ Guardar el status de validación
         // OJO: si es transfer y validation está vacío, ya lo manejamos arriba como "Sin revisar".
-        if ($pm === 'transfer' && $validation !== '') {
+        if ($pm === 'transfer' && $touched && $validation !== '') {
             $appointment->transfer_validation_status = $validation;
         } elseif ($pm !== 'transfer') {
             // Si no es transferencia, limpiamos por seguridad
@@ -376,7 +379,7 @@ class AppointmentController extends Controller
             $appointment->transfer_validated_by = null;
         }
 
-        if ($pm === 'transfer' && in_array($validation, ['validated', 'rejected'], true)) {
+        if ($pm === 'transfer' && $touched && in_array($validation, ['validated', 'rejected'], true)) {
 
             // Guarda auditoría de validación
             $appointment->transfer_validated_at = now();

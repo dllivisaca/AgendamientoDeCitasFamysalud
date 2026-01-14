@@ -15,9 +15,12 @@
     <!-- Modal -->
     <form id="appointmentStatusForm" method="POST" action="{{ route('appointments.update.status') }}" enctype="multipart/form-data">
         @csrf
+        <input type="hidden" name="transfer_validation_touched" id="modalTransferValidationTouched" value="0">
+        <input type="hidden" name="transfer_validation_status_original" id="modalTransferValidationStatusOriginal" value="">
         <input type="hidden" name="appointment_id" id="modalAppointmentId">
         <input type="hidden" name="status" id="modalStatusHidden" value="">
         <input type="hidden" name="transfer_validation_status" id="modalTransferValidationStatusInput" value="">
+        <input type="hidden" name="transfer_validation_touched" id="modalTransferValidationTouchedInput" value="0">
         <input type="hidden" name="payment_status" id="modalPaymentStatusHidden" value="">
         <input type="hidden" name="cash_paid_at" id="modalCashPaidAtHidden" value="">
         <input type="hidden" name="client_transaction_id" id="modalClientTransactionIdHidden" value="">
@@ -1381,6 +1384,8 @@
             $('#modalPaymentMethodRaw').val(method);
         };
         $(document).on('click', '.view-appointment-btn', function() {
+            window.__transferValidationTouched = false;
+            $('#modalTransferValidationTouchedInput').val('0');
             // Set modal fields
             $('#modalAppointmentId').val($(this).data('id'));
             // ✅ Código de reserva (booking_id)
@@ -2802,6 +2807,8 @@
     <script>
         // ✅ Cambios en validación de transferencia (solo aplica si el bloque existe)
         $(document).on('change', '#modalTransferValidationSelect', function () {
+            window.__transferValidationTouched = true;
+            $('#modalTransferValidationTouchedInput').val('1');
             const v = String($(this).val() || '').trim().toLowerCase();
 
             const $sel = $(this);
