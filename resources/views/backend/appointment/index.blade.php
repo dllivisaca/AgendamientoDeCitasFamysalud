@@ -2235,6 +2235,9 @@
             $('#modalPaymentStatusSelectCard').val(pStat);
             $('#modalPaymentStatusBadge2').html(paymentStatusBadge(pStat));
 
+            // ✅ NUEVO
+            __applyAppointmentStatusOptionsByPaymentStatus(pStat);
+
             // ============================
             // ✅ Cambios en selects de estado (Resumen)
             // ============================
@@ -2285,6 +2288,9 @@
 
                 // Hidden que se envía
                 $('#modalPaymentStatusHidden').val(val);
+
+                // ✅ NUEVO: restringir estados de cita según estado del pago
+                __applyAppointmentStatusOptionsByPaymentStatus(val);
 
                 // Selects (arriba + tarjeta)
                 if (source !== 'top')  $('#modalPaymentStatusSelect').val(val);
@@ -2469,6 +2475,46 @@
                         $status.val('pending_payment').trigger('change');
                     }
                     $optPendingVerification.prop('disabled', true).hide();
+                }
+            }
+
+            function __applyAppointmentStatusOptionsByPaymentStatus(payStatusRaw) {
+                const ps = String(payStatusRaw || '').trim().toLowerCase();
+
+                const $status = $('#modalStatusSelect');
+                if (!$status.length) return;
+
+                // Primero: habilitar y mostrar todas las opciones (reset)
+                $status.find('option').prop('disabled', false).show();
+
+                // ✅ Regla: Pago = PENDIENTE => solo permitir "pending_verification"
+                if (ps === 'pending') {
+                    const allowed = new Set(['pending_verification', 'on_hold']);
+
+                    // Asegurar que la opción exista y se muestre (por si estaba oculta)
+                    const $pv = $status.find('option[value="pending_verification"]');
+                    if ($pv.length) {
+                        $pv.prop('disabled', false).show();
+                    }
+
+                    const $oh = $status.find('option[value="on_hold"]');
+                    if ($oh.length) {
+                        $oh.prop('disabled', false).show();
+                    }
+
+                    // Ocultar/deshabilitar todo lo demás
+                    $status.find('option').each(function () {
+                        const v = String($(this).val() || '').trim().toLowerCase();
+                        if (!allowed.has(v)) {
+                            $(this).prop('disabled', true).hide();
+                        }
+                    });
+
+                    // Si el valor actual NO es pending_verification, forzarlo
+                    const current = String($status.val() || '').trim().toLowerCase();
+                    if (!allowed.has(current)) {
+                        $status.val('pending_verification').trigger('change');
+                    }
                 }
             }
 
