@@ -1842,6 +1842,7 @@
             const pm = String(paymentMethodRaw || '').trim().toLowerCase();
             __setPaymentMethodUI(pm);
             __setQuickValidateVisibility(pm);
+            __applyAppointmentStatusOptionsByPaymentMethod(pm);
 
             // ✅ Aplicar regla de notas según estado actual (por si está vacío)
             $('#modalTransferValidationSelect').trigger('change');
@@ -2329,7 +2330,48 @@
                         __syncPaymentStatusEverywhere('pending', 'rule'); // sincroniza ambos + hidden + badges
                     }
                 }
+
+                // ✅ Regla #2: si la cita está PENDIENTE DE VERIFICACIÓN (pending_verification)
+                // Solo permitir: pending (por defecto) y partial
+                if (s === 'pending_verification') {
+                    const allowed = new Set(['pending', 'partial']);
+
+                    [$p1, $p2].forEach($sel => {
+                        $sel.find('option').each(function () {
+                            const v = String($(this).val() || '').trim().toLowerCase();
+                            if (!allowed.has(v)) {
+                                $(this).prop('disabled', true).hide();
+                            }
+                        });
+                    });
+
+                    const current = String($('#modalPaymentStatusHidden').val() || '').trim().toLowerCase();
+                    if (!allowed.has(current)) {
+                        __syncPaymentStatusEverywhere('pending', 'rule');
+                    }
+                }
             }
+
+            function __applyAppointmentStatusOptionsByPaymentMethod(pmRaw) {
+                const pm = String(pmRaw || '').trim().toLowerCase();
+                const isTransfer = (pm === 'transfer');
+
+                const $status = $('#modalStatusSelect');
+                const $optPendingVerification = $status.find('option[value="pending_verification"]');
+
+                if (!$optPendingVerification.length) return;
+
+                if (isTransfer) {
+                    $optPendingVerification.prop('disabled', false).show();
+                } else {
+                    // Si estaba seleccionado, pásalo a "pending_payment" (o el que prefieras)
+                    if (String($status.val() || '').toLowerCase() === 'pending_verification') {
+                        $status.val('pending_payment').trigger('change');
+                    }
+                    $optPendingVerification.prop('disabled', true).hide();
+                }
+            }
+
 
             $(document).on('change.apptStatusSelects', '#modalPaymentStatusSelect', function () {
                 __syncPaymentStatusEverywhere($(this).val(), 'top');
@@ -2481,6 +2523,7 @@
                 const pm = String($(this).val() || '').trim().toLowerCase();
                 window.__setPaymentMethodUI(pm);
                 __setQuickValidateVisibility(pm);
+                __applyAppointmentStatusOptionsByPaymentMethod(pm);
                 if (window.__apptIsEditMode) {
                     window.__clearPaymentDraftFields(pm);
                 }
