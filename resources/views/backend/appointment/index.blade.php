@@ -159,8 +159,6 @@
                                         <option value="paid">Pagada</option>
                                         <option value="confirmed">Confirmada</option>
                                         <option value="completed">Completada</option>
-                                        <option value="canceled">Cancelada</option>
-                                        <option value="rescheduled">Reagendada</option>
                                         <option value="no_show">No asistió</option>
                                         <option value="on_hold">En espera</option>
                                     </select>
@@ -2312,7 +2310,7 @@
 
                 // ✅ Regla #1: si la cita está EN ESPERA (on_hold)
                 if (s === 'on_hold') {
-                    const allowed = new Set(['unpaid', 'pending', 'partial']);
+                    const allowed = new Set(['unpaid', 'pending', 'partial', 'paid']);
 
                     // deshabilitar lo no permitido en ambos selects
                     [$p1, $p2].forEach($sel => {
@@ -2348,6 +2346,108 @@
                     const current = String($('#modalPaymentStatusHidden').val() || '').trim().toLowerCase();
                     if (!allowed.has(current)) {
                         __syncPaymentStatusEverywhere('pending', 'rule');
+                    }
+                }
+
+                // ✅ Regla #3: si la cita está PENDIENTE DE PAGO (pending_payment)
+                // Solo permitir: unpaid y partial
+                if (s === 'pending_payment') {
+                    const allowed = new Set(['unpaid', 'partial']);
+
+                    [$p1, $p2].forEach($sel => {
+                        $sel.find('option').each(function () {
+                            const v = String($(this).val() || '').trim().toLowerCase();
+                            if (!allowed.has(v)) {
+                                $(this).prop('disabled', true).hide();
+                            }
+                        });
+                    });
+
+                    const current = String($('#modalPaymentStatusHidden').val() || '').trim().toLowerCase();
+                    if (!allowed.has(current)) {
+                        __syncPaymentStatusEverywhere('unpaid', 'rule');
+                    }
+                }
+
+                // ✅ Regla #4: si la cita está PAGADA (paid)
+                // Solo permitir: paid
+                if (s === 'paid') {
+                    const allowed = new Set(['paid']);
+
+                    [$p1, $p2].forEach($sel => {
+                        $sel.find('option').each(function () {
+                            const v = String($(this).val() || '').trim().toLowerCase();
+                            if (!allowed.has(v)) {
+                                $(this).prop('disabled', true).hide();
+                            }
+                        });
+                    });
+
+                    const current = String($('#modalPaymentStatusHidden').val() || '').trim().toLowerCase();
+                    if (!allowed.has(current)) {
+                        __syncPaymentStatusEverywhere('paid', 'rule');
+                    }
+                }
+
+                // ✅ Regla #5: si la cita está CONFIRMADA (confirmed)
+                // Solo permitir: unpaid, partial, paid
+                if (s === 'confirmed') {
+                    const allowed = new Set(['unpaid', 'partial', 'paid']);
+
+                    [$p1, $p2].forEach($sel => {
+                        $sel.find('option').each(function () {
+                            const v = String($(this).val() || '').trim().toLowerCase();
+                            if (!allowed.has(v)) {
+                                $(this).prop('disabled', true).hide();
+                            }
+                        });
+                    });
+
+                    const current = String($('#modalPaymentStatusHidden').val() || '').trim().toLowerCase();
+                    if (!allowed.has(current)) {
+                        // por defecto dejamos "unpaid" si estaba en un estado inválido
+                        __syncPaymentStatusEverywhere('unpaid', 'rule');
+                    }
+                }
+
+                // ✅ Regla #6: si la cita está COMPLETADA (completed)
+                // Solo permitir: paid y refunded
+                if (s === 'completed') {
+                    const allowed = new Set(['paid', 'refunded']);
+
+                    [$p1, $p2].forEach($sel => {
+                        $sel.find('option').each(function () {
+                            const v = String($(this).val() || '').trim().toLowerCase();
+                            if (!allowed.has(v)) {
+                                $(this).prop('disabled', true).hide();
+                            }
+                        });
+                    });
+
+                    const current = String($('#modalPaymentStatusHidden').val() || '').trim().toLowerCase();
+                    if (!allowed.has(current)) {
+                        __syncPaymentStatusEverywhere('paid', 'rule');
+                    }
+                }
+
+                // ✅ Regla #7: si la cita está NO ASISTIÓ (no_show)
+                // Solo permitir: unpaid, partial, paid, refunded
+                if (s === 'no_show') {
+                    const allowed = new Set(['unpaid', 'partial', 'paid', 'refunded']);
+
+                    [$p1, $p2].forEach($sel => {
+                        $sel.find('option').each(function () {
+                            const v = String($(this).val() || '').trim().toLowerCase();
+                            if (!allowed.has(v)) {
+                                $(this).prop('disabled', true).hide();
+                            }
+                        });
+                    });
+
+                    const current = String($('#modalPaymentStatusHidden').val() || '').trim().toLowerCase();
+                    if (!allowed.has(current)) {
+                        // por defecto: "unpaid" (porque no asistió puede ser con saldo pendiente)
+                        __syncPaymentStatusEverywhere('unpaid', 'rule');
                     }
                 }
             }
