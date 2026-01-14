@@ -2533,10 +2533,9 @@
                     const $p1Pending = $p1.find('option[value="pending"]');
                     const $p2Pending = $p2.find('option[value="pending"]');
 
-                    // Si el valor actual quedó en pending por alguna regla (ej: on_hold), lo bajamos a unpaid
                     const current = String($('#modalPaymentStatusHidden').val() || '').trim().toLowerCase();
                     if (current === 'pending') {
-                        __syncPaymentStatusEverywhere('unpaid', 'rule'); // default seguro para no-transfer
+                        __syncPaymentStatusEverywhere('', 'rule'); 
                     }
 
                     // Ocultar/deshabilitar pending en ambos selects
@@ -3308,6 +3307,46 @@
             const ps = String(snap.payment_status || '').toLowerCase();
             $('#modalPaymentStatusBadge').html(paymentStatusBadge(ps));
             $('#modalPaymentStatusBadge2').html(paymentStatusBadge(ps));
+
+            // ✅ Re-pintar badge del ESTADO DE LA CITA (modo lectura) según snapshot
+            (function () {
+                const st = String(snap.appointment_status || '').trim().toLowerCase();
+
+                const statusColors = {
+                    pending_payment: '#f39c12',
+                    processing: '#3498db',
+                    paid: '#2ecc71',
+                    confirmed: '#3498db',
+                    completed: '#008000',
+                    canceled: '#ff0000',
+                    cancelled: '#ff0000',
+                    rescheduled: '#f1c40f',
+                    no_show: '#e67e22',
+                    on_hold: '#95a5a6',
+                    pending_verification: '#7f8c8d',
+                };
+
+                const statusLabels = {
+                    pending_payment: 'Pendiente de pago',
+                    processing: 'Procesando',
+                    paid: 'Pagada',
+                    confirmed: 'Confirmada',
+                    completed: 'Completada',
+                    canceled: 'Cancelada',
+                    cancelled: 'Cancelada',
+                    rescheduled: 'Reagendada',
+                    no_show: 'No asistió',
+                    on_hold: 'En espera',
+                    pending_verification: 'Pendiente de verificación',
+                };
+
+                const c = statusColors[st] || '#7f8c8d';
+                const l = statusLabels[st] || 'Estado desconocido';
+
+                const html = `<span class="badge px-2 py-1" style="background-color:${c}; color:white;">${l}</span>`;
+                $('#modalStatusBadge').html(html);
+                $('#modalStatusBadgeLegacy').html(html);
+            })();
         }
 
         // ✅ Recalcular cuando el admin cambia select o escribe notas
