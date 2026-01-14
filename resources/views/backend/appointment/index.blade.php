@@ -2542,6 +2542,19 @@
                     if ($p1Pending.length) $p1Pending.prop('disabled', true).hide();
                     if ($p2Pending.length) $p2Pending.prop('disabled', true).hide();
                 }
+
+                // ✅ Guardar lista "allowed" en data() según opciones habilitadas
+                // (Esto evita que el change del estado del pago compare contra un allowed vacío)
+                const allowedNow = [];
+                $p1.find('option').each(function () {
+                    const v = String($(this).val() || '').trim().toLowerCase();
+                    if (!v) return; // placeholder (selecciona una opción)
+                    if ($(this).prop('disabled')) return;
+                    allowedNow.push(v);
+                });
+
+                // Guardamos en ambos selects (resumen y tarjeta) para que la validación funcione en el front
+                [$p1, $p2].forEach($sel => $sel.data('allowed', allowedNow));
             }
 
 
@@ -2558,6 +2571,7 @@
                     __applyPaymentOptionsByAppointmentStatus($('#modalStatusSelect').val());
                 }
 
+                // ✅ Releer allowed después de recalcular (ya quedó guardado en data('allowed'))
                 const allowedArr2 = $sel.data('allowed') || [];
                 const allowed2 = new Set(allowedArr2.map(x => String(x).trim().toLowerCase()));
 
