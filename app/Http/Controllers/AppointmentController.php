@@ -359,7 +359,11 @@ class AppointmentController extends Controller
         // - limpiar auditoría de validación (NULL)
         if ($pm === 'transfer' && $touched && $validation === '') {
             $appointment->status = 'pending_verification';
-            $appointment->payment_status = 'pending';
+
+            // ✅ NO pisar payment_status si el usuario lo envió (ej: partial)
+            if (!$request->filled('payment_status')) {
+                $appointment->payment_status = 'pending';
+            }
 
             $appointment->transfer_validation_status = null;
             $appointment->transfer_validation_notes = null;

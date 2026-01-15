@@ -15,7 +15,6 @@
     <!-- Modal -->
     <form id="appointmentStatusForm" method="POST" action="{{ route('appointments.update.status') }}" enctype="multipart/form-data">
         @csrf
-        <input type="hidden" name="transfer_validation_touched" id="modalTransferValidationTouched" value="0">
         <input type="hidden" name="transfer_validation_status_original" id="modalTransferValidationStatusOriginal" value="">
         <input type="hidden" name="appointment_id" id="modalAppointmentId">
         <input type="hidden" name="status" id="modalStatusHidden" value="">
@@ -29,6 +28,7 @@
         <input type="hidden" name="amount_paid" id="modalAmountPaidHidden" value="">
         <input type="hidden" name="transfer_validation_notes" id="modalTransferValidationNotesInput" value="">
         <input type="hidden" id="modalPaymentMethodRaw" value="">
+        <input type="hidden" name="payment_method" id="modalPaymentMethodHidden" value="">
 
         <div class="modal fade" id="appointmentModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
@@ -2875,11 +2875,14 @@
             console.log('[appointment_id]', $('#modalAppointmentId').val());
             console.log('[status hidden]', $('#modalStatusHidden').val());
             console.log('[pmRaw hidden]', $('#modalPaymentMethodRaw').val());
+            console.log('[payment_status hidden]', $('#modalPaymentStatusHidden').val());
+            console.log('[payment_method hidden name]', $('#modalPaymentMethodHidden').val());
             console.log('[select validation]', $('#modalTransferValidationSelect').val());
             console.log('[notes textarea]', $('#modalTransferValidationNotes').val());
            
             console.log('===============================================================');
             const pmRaw = String($('#modalPaymentMethodRaw').val() || '').trim().toLowerCase();
+            $('#modalPaymentMethodHidden').val(pmRaw);
             const isTransfer = (pmRaw === 'transfer');
             const isCash = (pmRaw === 'cash');
 

@@ -112,6 +112,8 @@ Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard
         dd($request->all())->toArray();
     })->name('test');
 
+    Route::post('/appointments/update-status', [AppointmentController::class, 'updateStatus'])->name('appointments.update.status');
+
 });
 
 
@@ -135,7 +137,7 @@ Route::get('/employees/{employee}/available-dates', [FrontendController::class, 
 Route::post('/bookings', [AppointmentController::class, 'store'])->name('bookings.store');
 Route::get('/appointments', [AppointmentController::class, 'index'])->name('appointments')->middleware('permission:appointments.view| appointments.create | services.appointments | appointments.delete');
 
-Route::post('/appointments/update-status', [AppointmentController::class, 'updateStatus'])->name('appointments.update.status');
+
 
 //update status from dashbaord
 Route::post('/update-status', [DashboardController::class, 'updateStatus'])->name('dashboard.update.status');
