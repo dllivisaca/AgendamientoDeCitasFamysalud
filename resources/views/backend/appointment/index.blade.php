@@ -3011,23 +3011,42 @@
             const v = String($('#modalTransferValidationSelect').val() || '').trim().toLowerCase();
             const notes = String($('#modalTransferValidationNotes').val() || '').trim();
 
-             // ✅ Llenar hidden inputs para backend
-            $('#modalTransferValidationStatusInput').val(v);   // "" | validated | rejected
+            // ✅ Comparar contra lo que vino de BD al abrir el modal (snapshot)
+            const snap = window.__apptModalSnapshot || {};
+            const origV = String(snap.transfer_validation_status || '').trim().toLowerCase();
+            const origNotes = String(snap.transfer_validation_notes || '').trim();
+
+            // ✅ Si NO cambió nada, NO enviamos validación (para que NO se actualice validated_at)
+            const validationChanged = (v !== origV) || (notes !== origNotes);
+
+            if (!validationChanged) {
+                $('#modalTransferValidationStatusInput').val('');
+                $('#modalTransferValidationNotesInput').val('');
+                // (opcional) también resetea el flag
+                $('#modalTransferValidationTouchedInput').val('0');
+                window.__transferValidationTouched = false;
+                return true;
+            }
+
+            // ✅ Si cambió, recién mandamos al backend
+            $('#modalTransferValidationStatusInput').val(v);       // "" | validated | rejected
             $('#modalTransferValidationNotesInput').val(notes);
 
-            // ✅ Validación de transferencia = SOLO auditoría (NO modifica status)
-            // Si está vacío => limpiamos para que backend lo deje NULL
+            // ✅ Si está vacío => no tocar backend (tu regla actual)
             if (!v) {
                 $('#modalTransferValidationStatusInput').val('');
                 $('#modalTransferValidationNotesInput').val('');
+                return true;
             }
 
-            // Rechazada requiere notas
+            // ✅ Rechazada requiere notas
             if (v === 'rejected' && notes === '') {
                 e.preventDefault();
                 alert('Para marcar como "Rechazada", debes escribir una observación.');
                 return false;
             }
+
+            return true;
             console.log('[hidden transfer_validation_status]', $('#modalTransferValidationStatusInput').val());
             console.log('[hidden transfer_validation_notes]', $('#modalTransferValidationNotesInput').val());
            
@@ -3381,6 +3400,8 @@
         });
 
         $(document).on('input', '#modalTransferValidationNotes', function () {
+            window.__transferValidationTouched = true;
+            $('#modalTransferValidationTouchedInput').val('1');
             __updateSaveButtonState();
         });
 
