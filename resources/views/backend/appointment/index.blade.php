@@ -2251,7 +2251,7 @@
             $('#modalStatusBadgeLegacy').html(badgeHtml);
 
             // Por ahora, estado del pago queda N/A hasta que lo conectemos a tus campos reales
-            $('#modalPaymentStatusBadge').html(paymentStatusBadge(paymentStatusRaw));
+            $('#modalPaymentStatusBadge').html(window.paymentStatusBadge(paymentStatusRaw));
 
             // ============================
             // ✅ Pre-cargar selects de estados (Resumen)
@@ -2271,7 +2271,7 @@
             $('#modalPaymentStatusSelectCard').val(pStat);
             $('#modalPaymentStatusSelect').data('last_valid', pStat);
             $('#modalPaymentStatusSelectCard').data('last_valid', pStat);
-            $('#modalPaymentStatusBadge2').html(paymentStatusBadge(pStat));
+            $('#modalPaymentStatusBadge2').html(window.paymentStatusBadge(pStat));
 
             // ============================
             // ✅ Cambios en selects de estado (Resumen)
@@ -2329,8 +2329,8 @@
                 if (source !== 'card') $('#modalPaymentStatusSelectCard').val(val);
 
                 // Badges (arriba + tarjeta)
-                $('#modalPaymentStatusBadge').html(paymentStatusBadge(val));
-                $('#modalPaymentStatusBadge2').html(paymentStatusBadge(val));
+                $('#modalPaymentStatusBadge').html(window.paymentStatusBadge(val));
+                $('#modalPaymentStatusBadge2').html(window.paymentStatusBadge(val));
 
                 __updateSaveButtonState();
             }
@@ -2598,7 +2598,7 @@
                 __syncPaymentStatusEverywhere(next, 'top');
             });
 
-            $(document).on('change.apptStatusSelects', '#modalPaymentStatusSelect', function () {
+            $(document).on('change.apptStatusSelects', '#modalPaymentStatusSelectCard', function () {
                 const $sel = $(this);
                 const next = String($sel.val() || '').trim().toLowerCase();
 
@@ -3011,15 +3011,9 @@
             $('#modalTransferValidationStatusInput').val(v);   // "" | validated | rejected
             $('#modalTransferValidationNotesInput').val(notes);
 
-            if (v === 'validated') {
-                $('#modalStatusHidden').val('paid');
-            } else if (v === 'rejected') {
-                $('#modalStatusHidden').val('on_hold');
-            } else {
-                // ✅ Sin revisar => volver a pendiente de verificación
-                $('#modalStatusHidden').val('pending_verification');
-
-                // ✅ Asegurar que se envíe vacío al backend (para que él lo convierta a NULL)
+            // ✅ Validación de transferencia = SOLO auditoría (NO modifica status)
+            // Si está vacío => limpiamos para que backend lo deje NULL
+            if (!v) {
                 $('#modalTransferValidationStatusInput').val('');
                 $('#modalTransferValidationNotesInput').val('');
             }

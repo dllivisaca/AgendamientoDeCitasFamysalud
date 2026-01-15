@@ -353,18 +353,9 @@ class AppointmentController extends Controller
         $validation = strtolower(trim((string) ($request->transfer_validation_status ?? ''))); // validated | rejected | ""
         $touched = (string) $request->input('transfer_validation_touched', '0') === '1';
 
-        // ✅ Caso "Sin revisar" (validation vacío) para transferencia:
-        // - status: pending_verification
-        // - payment_status: pending
-        // - limpiar auditoría de validación (NULL)
+        // ✅ Validación de transferencia = SOLO auditoría (no modifica status ni payment_status)
         if ($pm === 'transfer' && $touched && $validation === '') {
-            $appointment->status = 'pending_verification';
-
-            // ✅ NO pisar payment_status si el usuario lo envió (ej: partial)
-            if (!$request->filled('payment_status')) {
-                $appointment->payment_status = 'pending';
-            }
-
+            // "Sin revisar" => limpiar auditoría
             $appointment->transfer_validation_status = null;
             $appointment->transfer_validation_notes = null;
             $appointment->transfer_validated_at = null;
@@ -385,22 +376,13 @@ class AppointmentController extends Controller
 
         if ($pm === 'transfer' && $touched && in_array($validation, ['validated', 'rejected'], true)) {
 
-            // Guarda auditoría de validación
+            // ✅ SOLO auditoría
             $appointment->transfer_validated_at = now();
-            $appointment->transfer_validated_by = Auth::id(); // user logueado (admin/mod/employee)
+            $appointment->transfer_validated_by = Auth::id();
+
+            // Guardar notas (si vienen)
             if ($request->has('transfer_validation_notes')) {
                 $appointment->transfer_validation_notes = $request->transfer_validation_notes;
-            }
-
-            // Reglas de negocio (según tu texto del modal):
-            // - Validada => cita "Paid" y pago "paid"
-            // - Rechazada => cita "On Hold" y pago "pending"
-            if ($validation === 'validated') {
-                $appointment->status = 'paid';
-                $appointment->payment_status = 'paid';
-            } else { // rejected
-                $appointment->status = 'on_hold';
-                $appointment->payment_status = 'pending';
             }
         }
 
