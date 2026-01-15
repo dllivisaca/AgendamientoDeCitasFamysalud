@@ -1246,6 +1246,7 @@
             const colors = {
                 unpaid: '#95a5a6',
                 pending: '#f39c12',
+                partial: '#3498db',   // ✅ NUEVO (elige el color que prefieras)
                 paid: '#2ecc71',
                 refunded: '#9b59b6',
             };
@@ -1253,6 +1254,7 @@
             const labels = {
                 unpaid: 'No pagado',
                 pending: 'Pendiente',
+                partial: 'Pagado parcialmente', // ✅ NUEVO
                 paid: 'Pagado',
                 refunded: 'Reembolsado',
             };
@@ -1740,6 +1742,7 @@
                 const colors = {
                     unpaid: '#95a5a6',
                     pending: '#f39c12',
+                    partial: '#3498db',   // ✅ NUEVO (elige el color que prefieras)
                     paid: '#2ecc71',
                     refunded: '#9b59b6',
                 };
@@ -1747,6 +1750,7 @@
                 const labels = {
                     unpaid: 'No pagado',
                     pending: 'Pendiente',
+                    partial: 'Pagado parcialmente', // ✅ NUEVO
                     paid: 'Pagado',
                     refunded: 'Reembolsado',
                 };
