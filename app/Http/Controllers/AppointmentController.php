@@ -321,10 +321,62 @@ class AppointmentController extends Controller
 
             // Archivo comprobante (si el método de pago es transferencia)
             'tr_file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+
+            // ✅ Datos del paciente (editar desde modal)
+            'patient_full_name'  => 'nullable|string|max:255',
+            'patient_doc_type'   => 'nullable|string|max:20',
+            'patient_doc_number' => 'nullable|string|max:20',
+            'patient_dob'        => 'nullable|date',
+            'patient_email'      => 'nullable|email|max:255',
+            'patient_phone'      => 'nullable|string|max:20',
+            'patient_address'    => 'nullable|string|max:255',
+            'patient_timezone'   => 'nullable|string|max:50',
+            'patient_notes' => 'nullable|string',
         ]);
 
         $appointment = Appointment::findOrFail($request->appointment_id);
         $appointment->status = $request->status;
+
+        // ✅ Guardar datos del paciente SOLO si vienen en el request
+        if ($request->hasAny([
+            'patient_full_name',
+            'patient_doc_type',
+            'patient_doc_number',
+            'patient_dob',
+            'patient_email',
+            'patient_phone',
+            'patient_address',
+            'patient_timezone',
+            'patient_notes',
+        ])) {
+            if ($request->has('patient_full_name')) {
+                $appointment->patient_full_name = $request->input('patient_full_name');
+            }
+            if ($request->has('patient_doc_type')) {
+                $appointment->patient_doc_type = $request->input('patient_doc_type');
+            }
+            if ($request->has('patient_doc_number')) {
+                $appointment->patient_doc_number = $request->input('patient_doc_number');
+            }
+            if ($request->has('patient_dob')) {
+                $appointment->patient_dob = $request->input('patient_dob');
+            }
+            if ($request->has('patient_email')) {
+                $appointment->patient_email = $request->input('patient_email');
+            }
+            if ($request->has('patient_phone')) {
+                $appointment->patient_phone = $request->input('patient_phone');
+            }
+            if ($request->has('patient_address')) {
+                $appointment->patient_address = $request->input('patient_address');
+            }
+            if ($request->has('patient_timezone')) {
+                $appointment->patient_timezone = $request->input('patient_timezone');
+            }
+            if ($request->has('patient_notes')) {
+                $appointment->patient_notes = $request->input('patient_notes');
+            }
+        }
 
         // ✅ Guardar método de pago (si lo cambiaron en el modal)
         if ($request->filled('payment_method')) {
@@ -346,6 +398,10 @@ class AppointmentController extends Controller
             'payment_method_db' => $appointment->payment_method ?? null,
             'status_before' => $appointment->status ?? null,
             'payment_status_before' => $appointment->payment_status ?? null,
+            'patient_full_name_in' => $request->input('patient_full_name'),
+            'patient_email_in' => $request->input('patient_email'),
+            'patient_doc_number_in' => $request->input('patient_doc_number'),
+            'patient_notes_in' => $request->input('patient_notes'),
         ]);
 
         // ✅ Solo si el método de pago es transferencia, aplicar validación admin

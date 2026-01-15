@@ -2878,6 +2878,14 @@
         // ✅ Antes de enviar el form: valida reglas y llena hidden inputs
         $(document).on('submit', '#appointmentStatusForm', function (e) {
             console.log('================= SUBMIT appointmentStatusForm =================');
+            console.log('[patient_full_name]', $('#modalPatientFullNameInput').val());
+            console.log('[patient_doc_type]', $('#modalDocTypeInput').val());
+            console.log('[patient_doc_number]', $('#modalDocNumberInput').val());
+            console.log('[patient_dob]', $('#modalPatientDobInput').val());
+            console.log('[patient_email]', $('#modalEmailInput').val());
+            console.log('[patient_phone]', $('#modalPhoneInput').val());
+            console.log('[patient_address]', $('#modalAddressInput').val());
+            console.log('[patient_timezone]', $('#modalPatientTimezoneInput').val());
             console.log('[FORM action]', $('#appointmentStatusForm').attr('action'));
             console.log('[FORM method]', $('#appointmentStatusForm').attr('method'));
             console.log('[appointment_id]', $('#modalAppointmentId').val());
