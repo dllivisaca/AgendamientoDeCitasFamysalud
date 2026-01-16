@@ -378,6 +378,35 @@ class AppointmentController extends Controller
             }
         }
 
+        // ✅ Guardar datos de facturación SOLO si vienen en el request
+        if ($request->hasAny([
+            'billing_name',
+            'billing_doc_type',
+            'billing_doc_number',
+            'billing_email',
+            'billing_phone',
+            'billing_address',
+        ])) {
+            if ($request->has('billing_name')) {
+                $appointment->billing_name = $request->input('billing_name');
+            }
+            if ($request->has('billing_doc_type')) {
+                $appointment->billing_doc_type = $request->input('billing_doc_type');
+            }
+            if ($request->has('billing_doc_number')) {
+                $appointment->billing_doc_number = $request->input('billing_doc_number');
+            }
+            if ($request->has('billing_email')) {
+                $appointment->billing_email = $request->input('billing_email');
+            }
+            if ($request->has('billing_phone')) {
+                $appointment->billing_phone = $request->input('billing_phone');
+            }
+            if ($request->has('billing_address')) {
+                $appointment->billing_address = $request->input('billing_address');
+            }
+        }
+
         // ✅ Guardar método de pago (si lo cambiaron en el modal)
         if ($request->filled('payment_method')) {
             $appointment->payment_method = $request->payment_method;
@@ -402,6 +431,8 @@ class AppointmentController extends Controller
             'patient_email_in' => $request->input('patient_email'),
             'patient_doc_number_in' => $request->input('patient_doc_number'),
             'patient_notes_in' => $request->input('patient_notes'),
+            'billing_name_in' => $request->input('billing_name'),
+            'billing_doc_number_in' => $request->input('billing_doc_number'),
         ]);
 
         // ✅ Solo si el método de pago es transferencia, aplicar validación admin
