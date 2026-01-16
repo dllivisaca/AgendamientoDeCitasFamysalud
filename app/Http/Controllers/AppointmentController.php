@@ -295,7 +295,7 @@ class AppointmentController extends Controller
             'status' => 'required|in:pending_verification,pending_payment,on_hold,confirmed,paid,completed,cancelled,no_show,rescheduled',
 
             // ✅ Guardar método/monto/estado pago desde el modal
-            'payment_method' => 'nullable|in:transfer,card',
+            'payment_method' => 'nullable|in:transfer,card,cash',
             'amount' => 'nullable|numeric|min:0',
             'payment_status' => 'nullable|in:pending,unpaid,partial,paid,refunded',
 
@@ -305,6 +305,7 @@ class AppointmentController extends Controller
             'client_transaction_id' => 'nullable|string|max:120',
 
             'payment_paid_at_date_source' => 'nullable|string|max:30',
+            'payment_channel' => 'nullable|string|max:40',
 
             // ✅ Validación de transferencia (desde tu modal)
             'transfer_validation_status' => 'nullable|in:validated,rejected',
@@ -445,34 +446,6 @@ class AppointmentController extends Controller
                 $appointment->transfer_validated_by = null;
                 $appointment->transfer_validation_status = null; // si tu columna se llama así
                 $appointment->transfer_validation_notes = null;
-
-                // (si tu columna real es transfer_validation_notes o transfer_validation_notes, ya estás cubierto)
-                // (si tu columna real es transfer_validation_status vs transfer_validation_status, revisa tu schema)
-                $appointment->transfer_validation_status = null;
-                $appointment->transfer_validation_notes = null;
-
-                // También por seguridad, limpia tus campos actuales de controller:
-                $appointment->transfer_validation_status = null;
-                $appointment->transfer_validation_notes = null;
-
-                // Y los que usas abajo:
-                $appointment->transfer_validation_status = null;
-                $appointment->transfer_validation_notes = null;
-
-                // ✅ y los que existen en tu código actual:
-                $appointment->transfer_validation_status = null;
-                $appointment->transfer_validation_notes = null;
-
-                // ✅ y los que guardas en tu controller:
-                $appointment->transfer_validation_status = null;
-                $appointment->transfer_validation_notes = null;
-
-                // ✅ y los que están realmente en tu model según tu lógica:
-                $appointment->transfer_validation_status = null;
-                $appointment->transfer_validation_notes = null;
-
-                // Importante: tu controller usa transfer_validation_status / transfer_validation_notes,
-                // así que con estos dos ya basta.
             }
 
             /**
@@ -524,6 +497,26 @@ class AppointmentController extends Controller
         if ($request->has('client_transaction_id')) {
             $val = $request->input('client_transaction_id');
             $appointment->client_transaction_id = ($val !== '' && $val !== null) ? $val : null;
+        }
+
+        // ✅ Resolver payment_channel según tu lógica (post-edición)
+        $pmNow = strtolower(trim((string) ($appointment->payment_method ?? ''))); // transfer | card | cash
+        $txNow = trim((string) ($appointment->client_transaction_id ?? ''));
+        $paidAtNow = $appointment->payment_paid_at; // puede ser null
+
+        if ($pmNow === 'transfer') {
+            $appointment->payment_channel = 'bank_transfer';
+        } elseif ($pmNow === 'cash') {
+            $appointment->payment_channel = 'cash_in_person';
+        } elseif ($pmNow === 'card') {
+            if ($txNow !== '') {
+                $appointment->payment_channel = 'payphone';
+            } elseif (!empty($paidAtNow)) {
+                $appointment->payment_channel = 'manual_card';
+            } else {
+                // Si es card pero no hay tx ni fecha, no afirmamos canal
+                $appointment->payment_channel = null;
+            }
         }
 
         logger()->info('UPDATE STATUS APPOINTMENT', [
