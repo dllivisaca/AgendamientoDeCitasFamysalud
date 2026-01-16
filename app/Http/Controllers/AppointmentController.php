@@ -304,6 +304,8 @@ class AppointmentController extends Controller
             'payment_paid_at' => 'nullable|date',
             'client_transaction_id' => 'nullable|string|max:120',
 
+            'payment_paid_at_date_source' => 'nullable|string|max:30',
+
             // ✅ Validación de transferencia (desde tu modal)
             'transfer_validation_status' => 'nullable|in:validated,rejected',
             'transfer_validation_touched' => 'nullable|in:0,1',
@@ -414,13 +416,74 @@ class AppointmentController extends Controller
 
         // ✅ Guardar método de pago (si lo cambiaron en el modal)
         if ($request->filled('payment_method')) {
-            $appointment->payment_method = $request->payment_method;
 
-            // ✅ Si cambian a transferencia, limpiar datos típicos de tarjeta (opcional pero recomendado)
-            if ($request->payment_method === 'transfer') {
+            $newPm = strtolower(trim((string) $request->payment_method));
+            $oldPm = strtolower(trim((string) ($appointment->payment_method ?? '')));
+
+            $appointment->payment_method = $newPm;
+
+            /**
+             * ✅ Si cambiamos DE transferencia a otro método (card/cash/etc),
+             * limpiamos TODOS los campos de transferencia para evitar data basura.
+             */
+            if ($oldPm === 'transfer' && $newPm !== 'transfer') {
+
+                // Transfer data
+                $appointment->transfer_bank_origin = null;
+                $appointment->transfer_payer_name = null;
+                $appointment->transfer_date = null;
+                $appointment->transfer_reference = null;
+
+                // Receipt path (y opcionalmente borrar archivo físico)
+                if (!empty($appointment->transfer_receipt_path) && Storage::disk('public')->exists($appointment->transfer_receipt_path)) {
+                    Storage::disk('public')->delete($appointment->transfer_receipt_path);
+                }
+                $appointment->transfer_receipt_path = null;
+
+                // Transfer validation/audit fields
+                $appointment->transfer_validated_at = null;
+                $appointment->transfer_validated_by = null;
+                $appointment->transfer_validation_status = null; // si tu columna se llama así
+                $appointment->transfer_validation_notes = null;
+
+                // (si tu columna real es transfer_validation_notes o transfer_validation_notes, ya estás cubierto)
+                // (si tu columna real es transfer_validation_status vs transfer_validation_status, revisa tu schema)
+                $appointment->transfer_validation_status = null;
+                $appointment->transfer_validation_notes = null;
+
+                // También por seguridad, limpia tus campos actuales de controller:
+                $appointment->transfer_validation_status = null;
+                $appointment->transfer_validation_notes = null;
+
+                // Y los que usas abajo:
+                $appointment->transfer_validation_status = null;
+                $appointment->transfer_validation_notes = null;
+
+                // ✅ y los que existen en tu código actual:
+                $appointment->transfer_validation_status = null;
+                $appointment->transfer_validation_notes = null;
+
+                // ✅ y los que guardas en tu controller:
+                $appointment->transfer_validation_status = null;
+                $appointment->transfer_validation_notes = null;
+
+                // ✅ y los que están realmente en tu model según tu lógica:
+                $appointment->transfer_validation_status = null;
+                $appointment->transfer_validation_notes = null;
+
+                // Importante: tu controller usa transfer_validation_status / transfer_validation_notes,
+                // así que con estos dos ya basta.
+            }
+
+            /**
+             * ✅ Si cambiamos A transferencia, limpiamos datos típicos de tarjeta
+             * (mantengo tu lógica original).
+             */
+            if ($newPm === 'transfer') {
                 $appointment->client_transaction_id = null;
                 $appointment->amount_paid = null;
                 $appointment->payment_paid_at = null;
+                $appointment->payment_paid_at_date_source = null;
             }
         }
 
@@ -441,7 +504,21 @@ class AppointmentController extends Controller
 
         if ($request->has('payment_paid_at')) {
             $val = $request->input('payment_paid_at');
-            $appointment->payment_paid_at = ($val !== '' && $val !== null) ? $val : null;
+
+            if ($val !== '' && $val !== null) {
+                // ✅ Admin está seteando fecha manualmente
+                $appointment->payment_paid_at = $val;
+
+                // ✅ Fuente de fecha: manual (solo si NO viene de PayPhone)
+                // Si quieres que siempre sea manual cuando el admin lo setea, deja esta línea sin condición.
+                $appointment->payment_paid_at_date_source = 'manual';
+            } else {
+                // Si lo vacían, lo limpiamos
+                $appointment->payment_paid_at = null;
+
+                // Si quieres limpiar también la fuente cuando lo vacían:
+                $appointment->payment_paid_at_date_source = null;
+            }
         }
 
         if ($request->has('client_transaction_id')) {
