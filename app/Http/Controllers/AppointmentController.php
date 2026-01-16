@@ -299,6 +299,11 @@ class AppointmentController extends Controller
             'amount' => 'nullable|numeric|min:0',
             'payment_status' => 'nullable|in:pending,unpaid,partial,paid,refunded',
 
+            // ✅ Campos adicionales cuando el pago es tarjeta / edición manual
+            'amount_paid' => 'nullable|numeric|min:0',
+            'payment_paid_at' => 'nullable|date',
+            'client_transaction_id' => 'nullable|string|max:120',
+
             // ✅ Validación de transferencia (desde tu modal)
             'transfer_validation_status' => 'nullable|in:validated,rejected',
             'transfer_validation_touched' => 'nullable|in:0,1',
@@ -410,6 +415,13 @@ class AppointmentController extends Controller
         // ✅ Guardar método de pago (si lo cambiaron en el modal)
         if ($request->filled('payment_method')) {
             $appointment->payment_method = $request->payment_method;
+
+            // ✅ Si cambian a transferencia, limpiar datos típicos de tarjeta (opcional pero recomendado)
+            if ($request->payment_method === 'transfer') {
+                $appointment->client_transaction_id = null;
+                $appointment->amount_paid = null;
+                $appointment->payment_paid_at = null;
+            }
         }
 
         // ✅ Guardar monto (si lo cambiaron)
@@ -420,6 +432,21 @@ class AppointmentController extends Controller
         // ✅ Guardar estado de pago (si lo cambiaron)
         if ($request->filled('payment_status')) {
             $appointment->payment_status = $request->payment_status;
+        }
+
+        // ✅ Guardar monto pagado / fecha pago / transaction id (aunque vengan en 0 o vacíos)
+        if ($request->has('amount_paid')) {
+            $appointment->amount_paid = $request->input('amount_paid');
+        }
+
+        if ($request->has('payment_paid_at')) {
+            $val = $request->input('payment_paid_at');
+            $appointment->payment_paid_at = ($val !== '' && $val !== null) ? $val : null;
+        }
+
+        if ($request->has('client_transaction_id')) {
+            $val = $request->input('client_transaction_id');
+            $appointment->client_transaction_id = ($val !== '' && $val !== null) ? $val : null;
         }
 
         logger()->info('UPDATE STATUS APPOINTMENT', [
@@ -433,6 +460,9 @@ class AppointmentController extends Controller
             'patient_notes_in' => $request->input('patient_notes'),
             'billing_name_in' => $request->input('billing_name'),
             'billing_doc_number_in' => $request->input('billing_doc_number'),
+            'amount_paid_in' => $request->input('amount_paid'),
+            'payment_paid_at_in' => $request->input('payment_paid_at'),
+            'client_transaction_id_in' => $request->input('client_transaction_id'),
         ]);
 
         // ✅ Solo si el método de pago es transferencia, aplicar validación admin

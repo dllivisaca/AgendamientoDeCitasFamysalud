@@ -2965,8 +2965,8 @@
                 const paidAmountFixed = __normalizeMoneyToFixed2($('#modalPaidAmountInputTransfer').val());
                 $('#modalPaidAmountInputTransfer').val(paidAmountFixed);
                 $('#modalAmountPaidHidden').val(paidAmountFixed);
-            } else {
-                // No tarjeta => no pisar en backend
+            } else if (!isCard) {
+                // Si NO es transferencia y TAMPOCO es tarjeta, limpiamos
                 $('#modalClientTransactionIdHidden').val('');
                 $('#modalPaymentPaidAtHidden').val('');
             }
