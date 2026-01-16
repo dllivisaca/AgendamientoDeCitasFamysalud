@@ -1354,12 +1354,13 @@
             window.__syncAmountAll('');
             window.__syncPaidAmountAll('');
 
-            $('#modalPaymentStatusSelect').val('');
-            $('#modalPaymentStatusSelectCard').val('');
-            $('#modalPaymentStatusHidden').val('');
+            // ❌ NO borrar estado de pago al cambiar método
+            // $('#modalPaymentStatusSelect').val('');
+            // $('#modalPaymentStatusSelectCard').val('');
+            // $('#modalPaymentStatusHidden').val('');
 
-            $('#modalPaymentStatusBadge').html(window.paymentStatusBadge(''));
-            $('#modalPaymentStatusBadge2').html(window.paymentStatusBadge(''));
+            // $('#modalPaymentStatusBadge').html(window.paymentStatusBadge(''));
+            // $('#modalPaymentStatusBadge2').html(window.paymentStatusBadge(''));
 
             // Tarjeta
             $('#modalClientTransactionIdInput').val('');
