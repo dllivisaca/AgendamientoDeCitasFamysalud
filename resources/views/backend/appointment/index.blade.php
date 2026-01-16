@@ -3324,6 +3324,7 @@
             if (pm === 'card') {
                 const cardReq = [
                     '#modalPaymentMethodSelectCard',
+                    '#modalPaymentStatusSelectCard', // ✅ NUEVO: Estado del pago (sección info de pago)
                     '#modalAmountInput',
                     '#modalPaidAmountInputCard',
                     '#modalPaymentPaidAtInput',
@@ -3416,7 +3417,7 @@
             always.forEach(__applyAsteriskToLabel);
 
             if (pm === 'card') {
-                ['#modalPaymentMethodSelectCard', '#modalAmountInput', '#modalPaidAmountInputCard', '#modalPaymentPaidAtInput']
+                ['#modalPaymentMethodSelectCard', '#modalPaymentStatusSelectCard', '#modalAmountInput', '#modalPaidAmountInputCard', '#modalPaymentPaidAtInput']
                     .forEach(__applyAsteriskToLabel);
             } else if (pm === 'transfer') {
                 ['#modalPaymentMethodSelectTransfer', '#modalAmountInputTransfer', '#modalPaidAmountInputTransfer',
