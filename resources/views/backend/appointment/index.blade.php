@@ -3259,6 +3259,10 @@
             return false;
         }
 
+        function __hasChangedSinceSnapshot() {
+            return __hasRealChanges();
+        }
+
         function __isFilled(sel) {
             const $el = $(sel);
             if (!$el.length) return false;
@@ -3364,7 +3368,7 @@
         function __updateSaveButtonState() {
             if (!window.__apptIsEditMode) return;
 
-            const hasChanges = __hasChangedSinceSnapshot();
+            const hasChanges = __hasRealChanges();
             const requiredOk = __requiredOk();
 
             $('#btnSaveChanges').prop('disabled', !(hasChanges && requiredOk));
@@ -3657,6 +3661,14 @@
             __toggleRequiredAsterisks(true);
             __applyQuickTransferLock(mode === 'quick_transfer');
 
+            // ✅ Asegurar snapshot (si por alguna razón no existe todavía)
+            if (!window.__apptModalSnapshot) {
+                __setSnapshotFromCurrent();
+            }
+
+            // ✅ Refrescar estado del botón al entrar a edición
+            __updateSaveButtonState();
+
             // ✅ Si ya viene "Rechazada" o "Validada", mostrar cajón de observaciones al entrar a edición
             setTimeout(function () {
                 const pm = String($('#modalPaymentMethodRaw').val() || '').trim().toLowerCase();
@@ -3664,6 +3676,12 @@
                     $('#modalTransferValidationSelect').trigger('change');
                 }
             }, 0);
+
+            // ✅ Inicializar snapshot al entrar en modo edición
+            __setSnapshotFromCurrent();
+
+            // ✅ Evaluar botón inmediatamente
+            __updateSaveButtonState();
         }
 
         function __exitEditModeUI() {
