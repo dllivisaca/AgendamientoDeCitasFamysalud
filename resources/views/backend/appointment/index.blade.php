@@ -297,7 +297,7 @@
                                 </div>
 
                                 <div class="col-md-6 mb-2">
-                                    <div class="small text-muted">Notas del paciente</div>
+                                    <div class="small text-muted">Notas del paciente <span class="optional-tag text-muted">(opcional)</span></div>
                                     <div class="text-dark js-edit-text" id="modalNotes">N/A</div>
                                     <textarea class="form-control form-control-sm js-edit-input"
                                             id="modalNotesInput" name="patient_notes" rows="2"
@@ -463,7 +463,7 @@
                                     </div>
 
                                     <div class="col-md-6 mb-2">
-                                        <div class="small text-muted">Client Transaction ID</div>
+                                        <div class="small text-muted">Client Transaction ID <span class="optional-tag text-muted">(opcional)</span></div>
 
                                         {{-- Lectura --}}
                                         <div class="text-dark js-edit-text" id="modalClientTransactionId" style="word-break: break-word; overflow-wrap:anywhere;">N/A</div>
@@ -548,14 +548,14 @@
                                     </div>
 
                                     <div class="col-md-6 mb-2">
-                                        <div class="small text-muted">Número de referencia</div>
+                                        <div class="small text-muted">Número de referencia <span class="optional-tag text-muted">(opcional)</span></div>
                                         <div class="text-dark js-edit-text" id="modalTransferReference">N/A</div>
                                         <input type="text" class="form-control form-control-sm js-edit-input"
                                             id="modalTransferReferenceInput" name="transfer_reference" value="">
                                     </div>
 
                                     <div class="col-md-12 mb-0">
-                                        <div class="small text-muted">Comprobante</div>
+                                        <div class="small text-muted">Comprobante <span class="optional-tag text-muted">(opcional)</span></div>
 
                                         <div class="text-dark js-edit-text" id="modalTransferReceipt">
                                             <span class="text-muted font-italic small">N/A</span>
@@ -1053,6 +1053,10 @@
     /* ====== Edit mode: texto vs inputs ====== */
     .js-edit-input { display:none !important; }
     .js-edit-text  { display:block; }
+
+    /* ✅ Tag (opcional) solo en modo edición (sin forzar display:block) */
+    .optional-tag{ display:none !important; margin-left:6px; }
+    body.appt-edit-mode .optional-tag{ display:inline !important; }
 
     body.appt-edit-mode .js-edit-input { display:block !important; }
     body.appt-edit-mode .js-edit-text  { display:none; }
@@ -1819,6 +1823,12 @@
                     $('#modalPaymentMethodSelectCard').prop('disabled', false);
                 } else {
                     $('#modalPaymentMethodSelectTransfer').prop('disabled', false);
+                }
+
+                // ✅ Si estamos en modo edición, refrescar asteriscos y botón guardar
+                if (window.__apptIsEditMode) {
+                    __toggleRequiredAsterisks(true);
+                    __updateSaveButtonState();
                 }
             }
 
@@ -3249,17 +3259,173 @@
             return false;
         }
 
+        function __isFilled(sel) {
+            const $el = $(sel);
+            if (!$el.length) return false;
+
+            const v = String($el.val() ?? '').trim();
+
+            // selects con "Seleccione una opción" suelen quedar ""
+            return v !== '';
+        }
+
+        function __allFilled(selectors) {
+            for (const sel of selectors) {
+                if (!__isFilled(sel)) return false;
+            }
+            return true;
+        }
+
+        function __getPaymentMethodNow() {
+            // Tu UI usa distintos selects según bloque.
+            // Priorizamos el que esté visible.
+            const $card = $('#modalPaymentMethodSelectCard:visible');
+            const $tr   = $('#modalPaymentMethodSelectTransfer:visible');
+            const $cash = $('#modalPaymentMethodSelectCash:visible');
+
+            const v =
+                ($card.length ? $card.val() : '') ||
+                ($tr.length ? $tr.val() : '') ||
+                ($cash.length ? $cash.val() : '');
+
+            return String(v || '').trim().toLowerCase(); // card|transfer|cash
+        }
+
+        function __requiredOk() {
+            // 1) siempre obligatorios
+            const always = [
+                '#modalStatusSelect',
+                '#modalPaymentStatusSelect',
+
+                // paciente
+                '#modalPatientFullNameInput',
+                '#modalDocTypeInput',
+                '#modalDocNumberInput',
+                '#modalPatientDobInput',
+                '#modalEmailInput',
+                '#modalPhoneInput',
+                '#modalAddressInput',
+                '#modalPatientTimezoneInput',
+
+                // billing
+                '#modalBillingNameInput',
+                '#modalBillingDocTypeInput',
+                '#modalBillingDocNumberInput',
+                '#modalBillingEmailInput',
+                '#modalBillingPhoneInput',
+                '#modalBillingAddressInput',
+            ];
+
+            if (!__allFilled(always)) return false;
+
+            // 2) según método de pago
+            const pm = __getPaymentMethodNow();
+
+            if (pm === 'card') {
+                const cardReq = [
+                    '#modalPaymentMethodSelectCard',
+                    '#modalAmountInput',
+                    '#modalPaidAmountInputCard',
+                    '#modalPaymentPaidAtInput',
+                    // ✅ client_transaction_id NO obligatorio
+                    // ✅ patient_notes NO obligatorio
+                ];
+                return __allFilled(cardReq);
+            }
+
+            if (pm === 'transfer') {
+                const trReq = [
+                    '#modalPaymentMethodSelectTransfer',
+                    '#modalAmountInputTransfer',
+                    '#modalPaidAmountInputTransfer',
+                    '#modalTransferBankOriginInput',
+                    '#modalTransferPayerNameInput',
+                    '#modalTransferDateInput',
+                ];
+                return __allFilled(trReq);
+            }
+
+            if (pm === 'cash') {
+                const cashReq = [
+                    '#modalPaymentMethodSelectCash',
+                    '#modalAmountInputCash',
+                    '#modalPaidAmountInputCash',
+                    '#modalCashPaidAtInput',
+                    // cash notes lo puedes dejar opcional
+                ];
+                return __allFilled(cashReq);
+            }
+
+            // Si no hay método seleccionado, no habilites
+            return false;
+        }
+
         function __updateSaveButtonState() {
-            const hasChanges = __hasRealChanges();
+            if (!window.__apptIsEditMode) return;
 
-            // ✅ Requerido: estado del pago NO puede quedar vacío
-            const paymentOk = String($('#modalPaymentStatusHidden').val() || '').trim().length > 0;
+            const hasChanges = __hasChangedSinceSnapshot();
+            const requiredOk = __requiredOk();
 
-            // (Opcional, pero recomendado) estado de cita tampoco vacío:
-            const statusOk = String($('#modalStatusSelect').val() || '').trim().length > 0;
+            $('#btnSaveChanges').prop('disabled', !(hasChanges && requiredOk));
+        }
 
-            const enable = hasChanges && paymentOk && statusOk;
-            $('#btnSaveChanges').prop('disabled', !enable);
+        function __applyAsteriskToLabel(inputSelector) {
+            const $input = $(inputSelector);
+            if (!$input.length) return;
+
+            const $wrap = $input.closest('.mb-2, .mb-0, .col-md-6, .col-md-12');
+            const $label = $wrap.find('.small.text-muted').first();
+            if (!$label.length) return;
+
+            // evita duplicados
+            if ($label.find('.js-req-asterisk').length) return;
+
+            $label.append(' <span class="js-req-asterisk text-danger">*</span>');
+        }
+
+        function __removeAllAsterisks() {
+            $('.js-req-asterisk').remove();
+        }
+
+        function __toggleRequiredAsterisks(show) {
+            __removeAllAsterisks();
+            if (!show) return;
+
+            // mismos obligatorios que validas
+            const pm = __getPaymentMethodNow();
+
+            const always = [
+                '#modalStatusSelect',
+                '#modalPaymentStatusSelect',
+                '#modalPatientFullNameInput',
+                '#modalDocTypeInput',
+                '#modalDocNumberInput',
+                '#modalPatientDobInput',
+                '#modalEmailInput',
+                '#modalPhoneInput',
+                '#modalAddressInput',
+                '#modalPatientTimezoneInput',
+                '#modalBillingNameInput',
+                '#modalBillingDocTypeInput',
+                '#modalBillingDocNumberInput',
+                '#modalBillingEmailInput',
+                '#modalBillingPhoneInput',
+                '#modalBillingAddressInput',
+            ];
+
+            always.forEach(__applyAsteriskToLabel);
+
+            if (pm === 'card') {
+                ['#modalPaymentMethodSelectCard', '#modalAmountInput', '#modalPaidAmountInputCard', '#modalPaymentPaidAtInput']
+                    .forEach(__applyAsteriskToLabel);
+            } else if (pm === 'transfer') {
+                ['#modalPaymentMethodSelectTransfer', '#modalAmountInputTransfer', '#modalPaidAmountInputTransfer',
+                '#modalTransferBankOriginInput', '#modalTransferPayerNameInput', '#modalTransferDateInput'
+                ].forEach(__applyAsteriskToLabel);
+            } else if (pm === 'cash') {
+                ['#modalPaymentMethodSelectCash', '#modalAmountInputCash', '#modalPaidAmountInputCash', '#modalCashPaidAtInput']
+                    .forEach(__applyAsteriskToLabel);
+            }
         }
 
         function __setSnapshotFromCurrent() {
@@ -3486,6 +3652,8 @@
                 $('#editModeBannerRightHint').show();
             }
             __setPaymentMethodUI($('#modalPaymentMethodRaw').val());
+
+            __toggleRequiredAsterisks(true);
             __applyQuickTransferLock(mode === 'quick_transfer');
 
             // ✅ Si ya viene "Rechazada" o "Validada", mostrar cajón de observaciones al entrar a edición
@@ -3498,6 +3666,7 @@
         }
 
         function __exitEditModeUI() {
+            __toggleRequiredAsterisks(false);
             // ✅ Antes de salir, restaurar el estado original (snapshot) para evitar NA/valores raros
             if (window.__apptModalSnapshot) {
                 __restoreFromSnapshot(window.__apptModalSnapshot);
