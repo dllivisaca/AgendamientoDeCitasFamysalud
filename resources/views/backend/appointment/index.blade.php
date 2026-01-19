@@ -296,7 +296,9 @@
                                 </div>
 
                                 <div class="col-md-6 mb-2">
-                                    <div class="small text-muted">Notas del paciente <span class="optional-tag text-muted">(opcional)</span></div>
+                                    
+                                    <div class="small text-muted js-edit-input">Notas del paciente (opcional)</div>
+                                    <div class="small text-muted js-edit-text">Notas del paciente</div>
                                     <div class="text-dark js-edit-text" id="modalNotes">N/A</div>
                                     <textarea class="form-control form-control-sm js-edit-input"
                                             id="modalNotesInput" name="patient_notes" rows="2"
@@ -547,14 +549,16 @@
                                     </div>
 
                                     <div class="col-md-6 mb-2">
-                                        <div class="small text-muted">Número de referencia <span class="optional-tag text-muted">(opcional)</span></div>
+                                        <div class="small text-muted js-edit-input">Número de referencia (opcional)</div>
+                                        <div class="small text-muted js-edit-text">Número de referencia</div>
                                         <div class="text-dark js-edit-text" id="modalTransferReference">N/A</div>
                                         <input type="text" class="form-control form-control-sm js-edit-input"
                                             id="modalTransferReferenceInput" name="transfer_reference" value="">
                                     </div>
 
                                     <div class="col-md-12 mb-0">
-                                        <div class="small text-muted">Comprobante <span class="optional-tag text-muted">(opcional)</span></div>
+                                        <div class="small text-muted js-edit-input">Comprobante (opcional)</div>
+                                        <div class="small text-muted js-edit-text">Comprobante</div>
 
                                         <div class="text-dark js-edit-text" id="modalTransferReceipt">
                                             <span class="text-muted font-italic small">N/A</span>
@@ -591,11 +595,6 @@
                                             <option value="validated">Validada</option>
                                             <option value="rejected">Rechazada</option>
                                         </select>
-
-                                        {{-- ✅ Esta ayuda solo en edición --}}
-                                        <small id="transferValidationHelperText" class="text-muted mt-1 js-edit-input">
-                                            “Validada” marcará la cita como "Pagada". “Rechazada” pasará la cita a "En espera".
-                                        </small>
                                     </div>
 
                                     <div class="col-md-12 mb-2" id="transferValidationMeta" style="display:none;">
@@ -1053,9 +1052,9 @@
     .js-edit-input { display:none !important; }
     .js-edit-text  { display:block; }
 
-    /* ✅ Tag (opcional) solo en modo edición (sin forzar display:block) */
-    .optional-tag{ display:none !important; margin-left:6px; }
-    body.appt-edit-mode .optional-tag{ display:inline !important; }
+    /* ✅ Tag (opcional) solo en modo edición (pegado al texto como "Observaciones (opcional)") */
+    .optional-tag{ display:none !important; margin-left:6px; float:none !important; }
+    body.appt-edit-mode .optional-tag{ display:inline !important; float:none !important; }
 
     body.appt-edit-mode .js-edit-input { display:block !important; }
     body.appt-edit-mode .js-edit-text  { display:none; }
@@ -2786,8 +2785,14 @@
                 __applyAppointmentStatusOptionsByPaymentMethod(pm);
                 __setQuickValidateVisibility(pm);
                 __applyPaymentOptionsByAppointmentStatus($('#modalStatusSelect').val());
+
                 if (window.__apptIsEditMode) {
                     window.__clearPaymentDraftFields(pm);
+
+                    // ✅ Forzar repintado de asteriscos luego de mostrar/ocultar bloques
+                    setTimeout(function () {
+                        __toggleRequiredAsterisks(true);
+                    }, 0);
                 }
 
                 __updateSaveButtonState();
