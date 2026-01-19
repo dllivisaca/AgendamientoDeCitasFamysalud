@@ -64,10 +64,6 @@
                                         <i class="fas fa-pen mr-2"></i>Editar
                                     </button>
 
-                                    <button type="button" class="dropdown-item" id="btnQuickValidateTransfer">
-                                        <i class="fas fa-money-check-alt mr-2"></i>Solo validar transferencia
-                                    </button>
-
                                     <div class="dropdown-divider"></div>
 
                                     <button type="button" class="dropdown-item" id="btnReagendar">
@@ -476,6 +472,20 @@
                                             value=""
                                             placeholder="Ej: 33b7a262-1814-45f2-8076-76d1236f1769">
                                     </div>
+                                    <div class="col-md-12 mb-0">
+                                        <div class="small text-muted js-edit-input">Observaciones de pago (opcional)</div>
+                                        <div class="small text-muted js-edit-text">Observaciones de pago</div>
+
+                                        <div class="text-dark js-edit-text" id="modalCardNotesText">
+                                            <span class="text-muted font-italic small">N/A</span>
+                                        </div>
+
+                                        <textarea class="form-control form-control-sm js-edit-input"
+                                                id="modalCardNotesInput"
+                                                name="payment_notes"
+                                                rows="2"
+                                                placeholder="Ej: POS físico, voucher entregado..."></textarea>
+                                    </div>
                                 </div>
                             </div>
 
@@ -521,6 +531,21 @@
                                             id="modalPaidAmountInputTransfer"
                                             name="amount_paid"
                                             value="" placeholder="0.00">
+                                    </div>
+
+                                    <div class="col-md-12 mb-0">
+                                        <div class="small text-muted js-edit-input">Observaciones de pago (opcional)</div>
+                                        <div class="small text-muted js-edit-text">Observaciones de pago</div>
+
+                                        <div class="text-dark js-edit-text" id="modalTransferNotesText">
+                                            <span class="text-muted font-italic small">N/A</span>
+                                        </div>
+
+                                        <textarea class="form-control form-control-sm js-edit-input"
+                                                id="modalTransferNotesInput"
+                                                name="payment_notes"
+                                                rows="2"
+                                                placeholder="Ej: Comprobante enviado por WhatsApp..."></textarea>
                                     </div>
 
                                     <div class="col-md-12 mt-2">
@@ -684,8 +709,8 @@
                                     </div>
 
                                     <div class="col-md-12 mb-0">
-                                        <div class="small text-muted js-edit-input">Observaciones (opcional)</div>
-                                        <div class="small text-muted js-edit-text">Observaciones</div>
+                                        <div class="small text-muted js-edit-input">Observaciones de pago (opcional)</div>
+                                        <div class="small text-muted js-edit-text">Observaciones de pago</div>
 
                                         <div class="text-dark js-edit-text" id="modalCashNotesText">
                                             <span class="text-muted font-italic small">N/A</span>
@@ -694,13 +719,11 @@
                                         <textarea class="form-control form-control-sm js-edit-input"
                                                 id="modalCashNotesInput"
                                                 rows="2"
-                                                placeholder="Ej: Pago recibido en recepción / Regularización de transferencia rechazada"></textarea>
+                                                placeholder="Ej: Pago recibido en recepción / Regularización de transferencia rechazada..."></textarea>
                                     </div>
                                 </div>
                             </div>
                         </div>
-
-                       
                     </div>
 
                     <div class="modal-footer">
@@ -1703,6 +1726,7 @@
             const paymentStatusRaw = $(this).data('payment-status');          // pending|paid|refunded
             const amountRaw = $(this).data('amount');
             const paymentPaidAtRaw = $(this).data('payment-paid-at');         // NUEVO: datetime real (BD)
+            const paymentNotesRaw = $(this).data('payment-notes');
 
             function __toDatetimeLocalValue(dateRaw) {
                 if (!dateRaw || String(dateRaw).trim() === '') return '';
@@ -1908,6 +1932,15 @@
                 $('#modalPaymentDate').text(paymentDateFinal);
                 $('#modalPaymentStatusBadge2').html(paymentStatusBadge(paymentStatusRaw));
 
+                // ✅ Notes (Tarjeta)
+                if (paymentNotesRaw && String(paymentNotesRaw).trim() !== '') {
+                    $('#modalCardNotesText').text(String(paymentNotesRaw));
+                    $('#modalCardNotesInput').val(String(paymentNotesRaw));
+                } else {
+                    $('#modalCardNotesText').html('<span class="text-muted font-italic small">N/A</span>');
+                    $('#modalCardNotesInput').val('');
+                }
+
                 // ✅ Monto pagado (desde BD: appointments.paid_amount)
                 const paidAmountRaw = $(this).data('paid-amount');
 
@@ -2031,6 +2064,15 @@
                         : 'N/A';
 
                 $('#modalTransferAmount').text(amountText);
+
+                // ✅ Notes (Transferencia)
+                if (paymentNotesRaw && String(paymentNotesRaw).trim() !== '') {
+                    $('#modalTransferNotesText').text(String(paymentNotesRaw));
+                    $('#modalTransferNotesInput').val(String(paymentNotesRaw));
+                } else {
+                    $('#modalTransferNotesText').html('<span class="text-muted font-italic small">N/A</span>');
+                    $('#modalTransferNotesInput').val('');
+                }
 
                 // ✅ Monto pagado (desde BD: data-paid-amount)
                 const paidAmountRaw = $(this).data('paid-amount');
@@ -2986,10 +3028,23 @@
                 $('#modalPaymentPaidAtHidden').val('');
             }
 
+            // ✅ Payment notes: tomar del método activo (card/transfer/cash) y mandarlo SIEMPRE
+            const pmNow = String($('#modalPaymentMethodRaw').val() || '').trim().toLowerCase();
+
+            let paymentNotesNow = '';
+            if (pmNow === 'cash') {
+                paymentNotesNow = String($('#modalCashNotesInput').val() || '').trim();
+            } else if (pmNow === 'card') {
+                paymentNotesNow = String($('#modalCardNotesInput').val() || '').trim();
+            } else if (pmNow === 'transfer') {
+                paymentNotesNow = String($('#modalTransferNotesInput').val() || '').trim();
+            }
+
+            $('#modalPaymentNotesHidden').val(paymentNotesNow);
+
             // ✅ Si NO es cash, limpiamos cash_paid_at para que backend lo ponga NULL
             if (!isCash) {
                 $('#modalCashPaidAtHidden').val('');
-                $('#modalPaymentNotesHidden').val('');
             }
 
             // ✅ Caso EFECTIVO: fuerza reglas
@@ -3211,7 +3266,13 @@
 
                 client_transaction_id: __norm($('#modalClientTransactionIdInput').val()),
                 payment_paid_at: __norm($('#modalPaymentPaidAtInput').val()),
-                payment_notes: __norm($('#modalCashNotesInput').val()),
+                payment_notes: __norm(
+                    (String($('#modalPaymentMethodRaw').val() || '').trim().toLowerCase() === 'cash')
+                        ? $('#modalCashNotesInput').val()
+                        : (String($('#modalPaymentMethodRaw').val() || '').trim().toLowerCase() === 'card')
+                            ? $('#modalCardNotesInput').val()
+                            : $('#modalTransferNotesInput').val()
+                ),
                 patient_full_name: __norm($('#modalPatientFullNameInput').val()),
                 patient_doc_type: __norm($('#modalDocTypeInput').val()).toLowerCase(),
                 patient_doc_number: __norm($('#modalDocNumberInput').val()),
