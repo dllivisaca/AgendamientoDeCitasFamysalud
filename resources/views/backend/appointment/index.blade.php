@@ -2152,7 +2152,7 @@
                 $('#modalAmountPaidHidden').val(paidAmountVal);
 
                 // cash_paid_at desde data-*
-                const cashPaidAtRaw = $(this).data('cash-paid-at'); // puede venir "" o null
+                const cashPaidAtRaw = $(this).data('payment-paid-at'); // viene de appointments.payment_paid_at
 
                 // Texto bonito
                 let cashPaidAtText = 'N/A';
@@ -2998,10 +2998,6 @@
                 $('#modalPaidAmountInputCash').val(paidAmountFixed);
                 $('#modalAmountPaidHidden').val(paidAmountFixed);
 
-                // Reglas: cash => status paid, payment_status paid
-                $('#modalStatusHidden').val('paid');
-                $('#modalPaymentStatusHidden').val('paid');
-
                 // cash_paid_at NO puede ser vacío
                 if (!cashPaidAt) {
                     e.preventDefault();
@@ -3011,6 +3007,7 @@
 
                 // Mandar al backend
                 $('#modalCashPaidAtHidden').val(cashPaidAt);
+                $('#modalPaymentPaidAtHidden').val(cashPaidAt);
                 $('#modalCashNotesHidden').val(cashNotes);
 
                 // Transfer stuff vacío

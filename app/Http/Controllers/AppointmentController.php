@@ -343,7 +343,10 @@ class AppointmentController extends Controller
         ]);
 
         $appointment = Appointment::findOrFail($request->appointment_id);
-        $appointment->status = $request->status;
+        // ✅ Solo cambiar status si realmente viene (y no por efecto del método de pago)
+        if ($request->filled('status')) {
+            $appointment->status = $request->status;
+        }
 
         // ✅ Guardar datos del paciente SOLO si vienen en el request
         if ($request->hasAny([
@@ -475,21 +478,17 @@ class AppointmentController extends Controller
             $appointment->amount_paid = $request->input('amount_paid');
         }
 
-        if ($request->has('payment_paid_at')) {
-            $val = $request->input('payment_paid_at');
+        // ✅ Guardar payment_paid_at EXACTAMENTE como lo manda el admin
+        $valPaidAt = $request->input('payment_paid_at', null);
 
-            if ($val !== '' && $val !== null) {
-                // ✅ Admin está seteando fecha manualmente
-                $appointment->payment_paid_at = $val;
+        if ($valPaidAt !== null) {
+            $valPaidAt = trim((string)$valPaidAt);
 
-                // ✅ Fuente de fecha: manual (solo si NO viene de PayPhone)
-                // Si quieres que siempre sea manual cuando el admin lo setea, deja esta línea sin condición.
+            if ($valPaidAt !== '') {
+                $appointment->payment_paid_at = $valPaidAt;
                 $appointment->payment_paid_at_date_source = 'manual';
             } else {
-                // Si lo vacían, lo limpiamos
                 $appointment->payment_paid_at = null;
-
-                // Si quieres limpiar también la fuente cuando lo vacían:
                 $appointment->payment_paid_at_date_source = null;
             }
         }
