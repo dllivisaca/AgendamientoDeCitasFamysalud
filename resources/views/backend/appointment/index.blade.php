@@ -21,10 +21,9 @@
         <input type="hidden" name="transfer_validation_status" id="modalTransferValidationStatusInput" value="">
         <input type="hidden" name="transfer_validation_touched" id="modalTransferValidationTouchedInput" value="0">
         <input type="hidden" name="payment_status" id="modalPaymentStatusHidden" value="">
-        <input type="hidden" name="cash_paid_at" id="modalCashPaidAtHidden" value="">
         <input type="hidden" name="client_transaction_id" id="modalClientTransactionIdHidden" value="">
         <input type="hidden" name="payment_paid_at" id="modalPaymentPaidAtHidden" value="">
-        <input type="hidden" name="cash_notes" id="modalCashNotesHidden" value="">
+        <input type="hidden" name="payment_notes" id="modalPaymentNotesHidden" value="">
         <input type="hidden" name="amount_paid" id="modalAmountPaidHidden" value="">
         <input type="hidden" name="transfer_validation_notes" id="modalTransferValidationNotesInput" value="">
         <input type="hidden" id="modalPaymentMethodRaw" value="">
@@ -1008,11 +1007,10 @@
                                                         data-billing-timezone="{{ $appointment->billing_timezone ?? '' }}"
                                                         data-billing-timezone-label="{{ $appointment->billing_timezone_label ?? '' }}"
                                                         data-payment-method="{{ $appointment->payment_method ?? '' }}"
-                                                        data-cash-paid-at="{{ $appointment->cash_paid_at ?? '' }}"
-                                                        data-cash-notes="{{ $appointment->cash_notes ?? '' }}"
                                                         data-client-transaction-id="{{ $appointment->client_transaction_id ?? '' }}"
                                                         data-payment-status="{{ $appointment->payment_status ?? '' }}"
                                                         data-payment-paid-at="{{ $appointment->payment_paid_at ?? '' }}"
+                                                        data-payment-notes="{{ $appointment->payment_notes ?? '' }}"
                                                         data-transfer-bank-origin="{{ $appointment->transfer_bank_origin ?? '' }}"
                                                         data-transfer-payer-name="{{ $appointment->transfer_payer_name ?? '' }}"
                                                         data-transfer-date="{{ $appointment->transfer_date ?? '' }}"
@@ -2184,7 +2182,7 @@
                 }
 
                 // Notes (si no tienes columna todavía, esto quedará N/A siempre)
-                const cashNotesRaw = $(this).data('cash-notes');
+                const cashNotesRaw = $(this).data('payment-notes');
                 if (cashNotesRaw && String(cashNotesRaw).trim() !== '') {
                     $('#modalCashNotesText').text(String(cashNotesRaw));
                     $('#modalCashNotesInput').val(String(cashNotesRaw));
@@ -2985,7 +2983,7 @@
             // ✅ Si NO es cash, limpiamos cash_paid_at para que backend lo ponga NULL
             if (!isCash) {
                 $('#modalCashPaidAtHidden').val('');
-                $('#modalCashNotesHidden').val('');
+                $('#modalPaymentNotesHidden').val('');
             }
 
             // ✅ Caso EFECTIVO: fuerza reglas
@@ -3008,7 +3006,7 @@
                 // Mandar al backend
                 $('#modalCashPaidAtHidden').val(cashPaidAt);
                 $('#modalPaymentPaidAtHidden').val(cashPaidAt);
-                $('#modalCashNotesHidden').val(cashNotes);
+                $('#modalPaymentNotesHidden').val(cashNotes);
 
                 // Transfer stuff vacío
                 $('#modalTransferValidationStatusInput').val('');
@@ -3207,7 +3205,7 @@
 
                 client_transaction_id: __norm($('#modalClientTransactionIdInput').val()),
                 payment_paid_at: __norm($('#modalPaymentPaidAtInput').val()),
-
+                payment_notes: __norm($('#modalCashNotesInput').val()),
                 patient_full_name: __norm($('#modalPatientFullNameInput').val()),
                 patient_doc_type: __norm($('#modalDocTypeInput').val()).toLowerCase(),
                 patient_doc_number: __norm($('#modalDocNumberInput').val()),
@@ -3236,8 +3234,6 @@
 
                 transfer_validation_status: __norm($('#modalTransferValidationSelect').val()).toLowerCase(),
                 transfer_validation_notes: __norm($('#modalTransferValidationNotes').val()),
-                cash_paid_at: __norm($('#modalCashPaidAtInput').val()),
-                cash_notes: __norm($('#modalCashNotesInput').val())
             };
         }
 
@@ -3517,10 +3513,8 @@
             }
 
             // Cash
-            $('#modalCashPaidAtInput').val(String(snap.cash_paid_at || ''));
-            $('#modalCashNotesInput').val(String(snap.cash_notes || ''));
-            $('#modalCashPaidAtHidden').val(String(snap.cash_paid_at || ''));
-            $('#modalCashNotesHidden').val(String(snap.cash_notes || ''));
+            $('#modalCashNotesInput').val(String(snap.payment_notes || ''));
+            $('#modalPaymentNotesHidden').val(String(snap.payment_notes || ''));
 
             // Monto pagado hidden
             $('#modalAmountPaidHidden').val(String(snap.amount_paid || ''));
@@ -3583,6 +3577,11 @@
         });
 
         $(document).on('input change', '#modalPatientFullNameInput,#modalDocTypeInput,#modalPatientDobInput,#modalDocNumberInput,#modalEmailInput,#modalPhoneInput,#modalAddressInput,#modalPatientTimezoneInput,#modalNotesInput,#modalBillingNameInput,#modalBillingDocTypeInput,#modalBillingDocNumberInput,#modalBillingEmailInput,#modalBillingPhoneInput,#modalBillingAddressInput,#modalAmountInput,#modalTransferBankOriginInput,#modalTransferPayerNameInput,#modalTransferDateInput,#modalTransferReferenceInput,#modalStatusSelect,#modalPaymentStatusSelect,#modalTransferReceiptFile,#modalAmountInputCash,#modalCashPaidAtInput,#modalCashNotesInput,#modalPaymentMethodSelectCash,#modalClientTransactionIdInput,#modalPaymentPaidAtInput,#modalPaymentStatusSelectCard,#modalPaidAmountInputCard,#modalPaidAmountInputTransfer,#modalPaidAmountInputCash', function () {
+            __updateSaveButtonState();
+        });
+
+        $(document).on('input', '#modalCashNotesInput', function () {
+            $('#modalCashNotesHidden').val(String($(this).val() || ''));
             __updateSaveButtonState();
         });
 

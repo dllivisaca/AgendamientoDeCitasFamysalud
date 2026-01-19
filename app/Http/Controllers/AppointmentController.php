@@ -306,6 +306,7 @@ class AppointmentController extends Controller
 
             'payment_paid_at_date_source' => 'nullable|string|max:30',
             'payment_channel' => 'nullable|string|max:40',
+            'payment_notes' => 'nullable|string',
 
             // ✅ Validación de transferencia (desde tu modal)
             'transfer_validation_status' => 'nullable|in:validated,rejected',
@@ -493,6 +494,14 @@ class AppointmentController extends Controller
             }
         }
 
+        // ✅ Guardar observaciones de pago (payment_notes) si vienen en el request
+        if ($request->has('payment_notes')) {
+            $valNotes = $request->input('payment_notes');
+            $valNotes = is_string($valNotes) ? trim($valNotes) : $valNotes;
+
+            $appointment->payment_notes = ($valNotes !== '' && $valNotes !== null) ? $valNotes : null;
+        }
+
         if ($request->has('client_transaction_id')) {
             $val = $request->input('client_transaction_id');
             $appointment->client_transaction_id = ($val !== '' && $val !== null) ? $val : null;
@@ -532,6 +541,7 @@ class AppointmentController extends Controller
             'amount_paid_in' => $request->input('amount_paid'),
             'payment_paid_at_in' => $request->input('payment_paid_at'),
             'client_transaction_id_in' => $request->input('client_transaction_id'),
+            'payment_notes_in' => $request->input('payment_notes'),
         ]);
 
         // ✅ Solo si el método de pago es transferencia, aplicar validación admin
