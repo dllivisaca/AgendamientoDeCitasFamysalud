@@ -685,7 +685,8 @@
                                     </div>
 
                                     <div class="col-md-12 mb-0">
-                                        <div class="small text-muted">Observaciones (opcional)</div>
+                                        <div class="small text-muted js-edit-input">Observaciones (opcional)</div>
+                                        <div class="small text-muted js-edit-text">Observaciones</div>
 
                                         <div class="text-dark js-edit-text" id="modalCashNotesText">
                                             <span class="text-muted font-italic small">N/A</span>
