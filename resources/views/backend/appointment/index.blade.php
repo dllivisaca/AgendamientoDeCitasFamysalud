@@ -885,12 +885,30 @@
                             </div>
 
                             <div class="col-md-6 mb-3">
+                                <!-- TÍTULO FUERA DE LA CARD (alineado con “Selecciona una fecha”) -->
                                 <label class="small text-muted mb-1">Turnos disponibles</label>
-                                <div id="rescheduleSlotsWrap" class="border rounded p-2" style="min-height: 44px;">
-                                    <div class="text-muted small" id="rescheduleSlotsHint">Selecciona una fecha para ver turnos disponibles.</div>
-                                    <div id="rescheduleSlots" class="d-flex flex-wrap"></div>
+
+                                <div class="card">
+                                    <div class="card-body">
+                                        <!-- INFO ZONA HORARIA (como paciente) -->
+                                        <div class="d-flex align-items-center text-muted small mb-3" id="rescheduleTimezoneInfo">
+                                            <i class="bi bi-clock me-2"></i>
+                                            Todos los turnos están en hora local de Ecuador (GMT-5)
+                                        </div>
+
+                                        <!-- CONTENIDO (reusa tus IDs para no romper JS) -->
+                                        <div id="rescheduleSlotsWrap">
+                                            <div class="text-center text-muted w-100 py-4" id="rescheduleSlotsHint">
+                                                Selecciona una fecha para visualizar los turnos disponibles
+                                            </div>
+
+                                            <!-- aquí tu JS debe inyectar los botones de turnos -->
+                                            <div id="rescheduleSlots" class="slots-grid"></div>
+                                        </div>
+
+                                        <div class="small text-danger mt-2 d-none" id="rescheduleSlotsError"></div>
+                                    </div>
                                 </div>
-                                <div class="small text-danger mt-2 d-none" id="rescheduleSlotsError"></div>
                             </div>
                         </div>
 
