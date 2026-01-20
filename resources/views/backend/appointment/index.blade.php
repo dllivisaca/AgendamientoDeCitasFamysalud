@@ -818,24 +818,30 @@
 
                     {{-- Paso 1 --}}
                     <div id="rescheduleStep1">
-                        <div class="mb-2">
-                            <div class="small text-muted">Profesional</div>
-                            <div id="rescheduleEmployeeText">N/A</div>
-                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="mb-2">
+                                    <div class="small text-muted">Profesional</div>
+                                    <div id="rescheduleEmployeeText">N/A</div>
+                                </div>
 
-                        <div class="mb-2">
-                            <div class="small text-muted">Área de atención</div>
-                            <div id="rescheduleAreaText">N/A</div>
-                        </div>
+                                <div class="mb-2">
+                                    <div class="small text-muted">Área de atención</div>
+                                    <div id="rescheduleAreaText">N/A</div>
+                                </div>
+                            </div>
 
-                        <div class="mb-3">
-                            <div class="small text-muted">Servicio</div>
-                            <div id="rescheduleServiceText">N/A</div>
-                        </div>
+                            <div class="col-md-6">
+                                <div class="mb-2">
+                                    <div class="small text-muted">Servicio</div>
+                                    <div id="rescheduleServiceText">N/A</div>
+                                </div>
 
-                        <div class="mb-3">
-                            <div class="small text-muted">Modalidad</div>
-                            <div id="rescheduleModeText">N/A</div>
+                                <div class="mb-2">
+                                    <div class="small text-muted">Modalidad</div>
+                                    <div id="rescheduleModeText">N/A</div>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="row">
