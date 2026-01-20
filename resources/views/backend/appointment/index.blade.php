@@ -21,6 +21,11 @@
         <input type="hidden" name="transfer_validation_status" id="modalTransferValidationStatusInput" value="">
         <input type="hidden" name="transfer_validation_touched" id="modalTransferValidationTouchedInput" value="0">
         <input type="hidden" name="payment_status" id="modalPaymentStatusHidden" value="">
+        <input type="hidden" name="reschedule_date" id="rescheduleDateHidden" value="">
+        <input type="hidden" name="reschedule_time" id="rescheduleTimeHidden" value="">
+        <input type="hidden" name="reschedule_end_time" id="rescheduleEndTimeHidden" value="">
+        <input type="hidden" name="reschedule_reason" id="rescheduleReasonHidden" value="">
+        <input type="hidden" name="reschedule_reason_other" id="rescheduleReasonOtherHidden" value="">
         <input type="hidden" name="client_transaction_id" id="modalClientTransactionIdHidden" value="">
         <input type="hidden" name="payment_paid_at" id="modalPaymentPaidAtHidden" value="">
         <input type="hidden" name="payment_notes" id="modalPaymentNotesHidden" value="">
@@ -797,6 +802,93 @@
         </div>
     </div>
 
+    <!-- ✅ Modal Wizard: Reagendar (2 pasos) -->
+    <div class="modal fade" id="rescheduleWizardModal" tabindex="-1" role="dialog" aria-labelledby="rescheduleWizardModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="rescheduleWizardModalLabel">Reagendar cita</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+
+                    {{-- Paso 1 --}}
+                    <div id="rescheduleStep1">
+                        <div class="mb-2">
+                            <div class="small text-muted">Profesional (solo lectura)</div>
+                            <div class="font-weight-bold" id="rescheduleEmployeeText">N/A</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="small text-muted">Servicio (solo lectura)</div>
+                            <div class="font-weight-bold" id="rescheduleServiceText">N/A</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="small text-muted mb-1">Selecciona una fecha</label>
+                                <input type="date" class="form-control" id="rescheduleDateInput">
+                                <div class="small text-muted mt-1" id="rescheduleOldText">Antes: N/A</div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="small text-muted mb-1">Horas disponibles</label>
+                                <div id="rescheduleSlotsWrap" class="border rounded p-2" style="min-height: 44px;">
+                                    <div class="text-muted small" id="rescheduleSlotsHint">Selecciona una fecha para ver horas disponibles.</div>
+                                    <div id="rescheduleSlots" class="d-flex flex-wrap"></div>
+                                </div>
+                                <div class="small text-danger mt-2 d-none" id="rescheduleSlotsError"></div>
+                            </div>
+                        </div>
+
+                        <div class="mb-2">
+                            <label class="small text-muted mb-1">Motivo de reagendamiento (opcional)</label>
+                            <select class="form-control" id="rescheduleReasonSelect">
+                                <option value="">Seleccione una opción</option>
+                                <option value="patient_requested">Paciente pidió</option>
+                                <option value="doctor_requested">Doctor pidió</option>
+                                <option value="admin_requested">Admin</option>
+                                <option value="other">Otro</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-2 d-none" id="rescheduleReasonOtherWrap">
+                            <label class="small text-muted mb-1">Especifica (opcional)</label>
+                            <input type="text" class="form-control" id="rescheduleReasonOtherInput" maxlength="180" placeholder="Escribe el motivo...">
+                        </div>
+                    </div>
+
+                    {{-- Paso 2 --}}
+                    <div id="rescheduleStep2" class="d-none">
+                        <div class="mb-3">
+                            <div class="small text-muted">Resumen</div>
+                            <div class="border rounded p-3">
+                                <div class="mb-2"><strong>Antes:</strong> <span id="rescheduleConfirmBefore">N/A</span></div>
+                                <div><strong>Nuevo:</strong> <span id="rescheduleConfirmAfter">N/A</span></div>
+                            </div>
+                        </div>
+
+                        <div class="small text-muted">
+                            Al confirmar, la cita se actualizará y se guardará auditoría del cambio.
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" id="rescheduleBackBtn">Atrás</button>
+                    <button type="button" class="btn btn-primary" id="rescheduleNextBtn" disabled>Siguiente</button>
+                    <button type="button" class="btn btn-primary d-none" id="rescheduleConfirmBtn">Confirmar reagendamiento</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
     <!-- ✅ Modal: Vista rápida del comprobante -->
     <div class="modal fade" id="transferReceiptModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-receipt" role="document">
@@ -1068,6 +1160,7 @@
                                                         data-timezone="{{ $appointment->patient_timezone }}"
                                                         data-timezone-label="{{ $appointment->patient_timezone_label }}"
                                                         data-employee="{{ $appointment->employee->user->name }}"
+                                                        data-employee-id="{{ $appointment->employee_id }}"
                                                         data-date="{{ $appointment->appointment_date }}"
                                                         data-start-time="{{ $appointment->appointment_time }}"
                                                         data-end-time="{{ $appointment->appointment_end_time }}"
@@ -1282,6 +1375,12 @@
     /* Backdrop más oscuro para el motivo */
     .modal-backdrop.change-reason-backdrop {
         background-color: rgba(0, 0, 0, 0.80) !important;
+    }
+
+    /* ✅ Cuando se abre un modal hijo (wizard), oscurecer el modal de detalles SIN blur */
+    #appointmentModal.appt-dimmed .modal-dialog {
+        opacity: 0.35;
+        pointer-events: none;
     }
 </style>
 @stop
@@ -1539,6 +1638,17 @@
             $('#modalEmail').text($(this).data('email'));
             $('#modalPhone').text($(this).data('phone'));
             $('#modalStaff').text($(this).data('employee'));
+
+            // ✅ Contexto para reagendar (lo usará el wizard)
+            window.__rescheduleContext = {
+                appointment_id: $(this).data('id'),
+                employee_id: $(this).data('employee-id'),
+                service_text: $(this).data('service'),
+                employee_text: $(this).data('employee'),
+                old_date: $(this).data('date'),
+                old_start_time: $(this).data('start-time'),
+                old_end_time: $(this).data('end-time'),
+            };
 
             // ===== SECCIÓN 2: Datos del paciente =====
             $('#modalPatientFullName').text($(this).data('name') || 'N/A');
@@ -4128,8 +4238,233 @@
             __exitEditModeUI();
         });
 
+        // ============================
+        // ✅ Reagendar: abrir wizard + preparar UI
+        // ============================
+        window.__rescheduleSelected = null;
+
+        // URL para cargar horas disponibles (ajústala a tu ruta real si ya la tienes)
+        window.__RESCHEDULE_SLOTS_URL = window.__RESCHEDULE_SLOTS_URL || '/appointments/reschedule/slots';
+
+        function __rescheduleResetWizard() {
+            window.__rescheduleSelected = null;
+
+            // Step 1 visible, Step 2 oculto
+            $('#rescheduleStep1').removeClass('d-none');
+            $('#rescheduleStep2').addClass('d-none');
+
+            // Botones
+            $('#rescheduleBackBtn').prop('disabled', true);
+            $('#rescheduleNextBtn').prop('disabled', true).removeClass('d-none');
+            $('#rescheduleConfirmBtn').addClass('d-none');
+
+            // Inputs
+            $('#rescheduleDateInput').val('');
+            $('#rescheduleReasonSelect').val('');
+            $('#rescheduleReasonOtherInput').val('');
+            $('#rescheduleReasonOtherWrap').addClass('d-none');
+
+            // Slots UI
+            $('#rescheduleSlots').empty();
+            $('#rescheduleSlotsHint').show();
+            $('#rescheduleSlotsError').addClass('d-none').text('');
+        }
+
+        function __renderRescheduleSlots(slots) {
+            $('#rescheduleSlots').empty();
+
+            if (!Array.isArray(slots) || slots.length === 0) {
+                $('#rescheduleSlotsHint').show().text('No hay horas disponibles para esa fecha.');
+                return;
+            }
+
+            $('#rescheduleSlotsHint').hide();
+
+            slots.forEach(function (s) {
+                const start = String(s.start || '').trim();
+                const end = String(s.end || '').trim();
+                const label = String(s.label || (start && end ? (start + ' - ' + end) : start)).trim();
+
+                const $btn = $(`
+                    <button type="button" class="btn btn-outline-primary btn-sm mr-2 mb-2 js-reschedule-slot"
+                            data-start="${start}" data-end="${end}">
+                        ${label}
+                    </button>
+                `);
+
+                $('#rescheduleSlots').append($btn);
+            });
+        }
+
+        async function __loadRescheduleSlots(employeeId, dateStr) {
+            // UI reset
+            $('#rescheduleSlotsError').addClass('d-none').text('');
+            $('#rescheduleSlotsHint').show().text('Cargando horas disponibles...');
+            $('#rescheduleSlots').empty();
+
+            const url = `${window.__RESCHEDULE_SLOTS_URL}?employee_id=${encodeURIComponent(employeeId)}&date=${encodeURIComponent(dateStr)}`;
+
+            try {
+                const res = await fetch(url, {
+                    method: 'GET',
+                    credentials: 'same-origin',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+
+                const data = await res.json();
+
+                // Espera: { slots: [ {start,end,label}, ... ] } o directamente [ ... ]
+                const slots = Array.isArray(data) ? data : (data.slots || []);
+                __renderRescheduleSlots(slots);
+
+            } catch (e) {
+                console.error('Reschedule slots error:', e);
+                $('#rescheduleSlotsHint').hide();
+                $('#rescheduleSlotsError').removeClass('d-none').text('No se pudieron cargar las horas disponibles.');
+            }
+        }
+
+        // Click: Acciones -> Reagendar
+        $(document).on('click', '#btnReagendar', function () {
+            $('#apptActionsDropdown').dropdown('hide');
+
+            const ctx = window.__rescheduleContext || null;
+            if (!ctx || !ctx.appointment_id || !ctx.employee_id) {
+                alert('No se pudo cargar el contexto para reagendar. Abre la cita de nuevo con “Ver detalles”.');
+                return;
+            }
+
+            __rescheduleResetWizard();
+
+            // Textos
+            $('#rescheduleEmployeeText').text(ctx.employee_text || 'N/A');
+            $('#rescheduleServiceText').text(ctx.service_text || 'N/A');
+
+            const beforeTxt = (ctx.old_date && ctx.old_start_time)
+                ? `${ctx.old_date} ${ctx.old_start_time}${ctx.old_end_time ? (' - ' + ctx.old_end_time) : ''}`
+                : 'N/A';
+
+            $('#rescheduleOldText').text('Antes: ' + beforeTxt);
+            $('#rescheduleConfirmBefore').text(beforeTxt);
+            $('#rescheduleConfirmAfter').text('N/A');
+
+            // Abrir wizard encima sin glitches: cerrar el modal de detalles primero
+            $('#appointmentModal').modal('hide');
+
+            // Cuando cierre, abrir el wizard
+            $('#appointmentModal').one('hidden.bs.modal', function () {
+                $('#rescheduleWizardModal').modal('show');
+            });
+        });
+
+        // Mostrar/ocultar “Otro” motivo
+        $(document).on('change', '#rescheduleReasonSelect', function () {
+            const v = String($(this).val() || '').trim();
+            if (v === 'other') {
+                $('#rescheduleReasonOtherWrap').removeClass('d-none');
+            } else {
+                $('#rescheduleReasonOtherWrap').addClass('d-none');
+                $('#rescheduleReasonOtherInput').val('');
+            }
+        });
+
+        // Al elegir fecha => cargar slots
+        $(document).on('change', '#rescheduleDateInput', async function () {
+            const ctx = window.__rescheduleContext || null;
+            const dateStr = String($(this).val() || '').trim();
+
+            // Reset selección
+            window.__rescheduleSelected = null;
+            $('#rescheduleNextBtn').prop('disabled', true);
+
+            if (!ctx || !ctx.employee_id || !dateStr) return;
+
+            await __loadRescheduleSlots(ctx.employee_id, dateStr);
+        });
+
+        // Click en un slot => seleccionar
+        $(document).on('click', '.js-reschedule-slot', function () {
+            $('.js-reschedule-slot').removeClass('active');
+            $(this).addClass('active');
+
+            const start = String($(this).data('start') || '').trim();
+            const end = String($(this).data('end') || '').trim();
+
+            window.__rescheduleSelected = { start, end };
+
+            // Habilitar siguiente
+            $('#rescheduleNextBtn').prop('disabled', !(start));
+
+            // Preview “Nuevo”
+            const dateStr = String($('#rescheduleDateInput').val() || '').trim();
+            const afterTxt = dateStr && start ? `${dateStr} ${start}${end ? (' - ' + end) : ''}` : 'N/A';
+            $('#rescheduleConfirmAfter').text(afterTxt);
+        });
+
+        // Botón Atrás
+        $(document).on('click', '#rescheduleBackBtn', function () {
+            $('#rescheduleStep2').addClass('d-none');
+            $('#rescheduleStep1').removeClass('d-none');
+
+            $('#rescheduleBackBtn').prop('disabled', true);
+            $('#rescheduleNextBtn').removeClass('d-none');
+            $('#rescheduleConfirmBtn').addClass('d-none');
+        });
+
+        // Botón Siguiente (paso 1 => paso 2)
+        $(document).on('click', '#rescheduleNextBtn', function () {
+            const dateStr = String($('#rescheduleDateInput').val() || '').trim();
+            const sel = window.__rescheduleSelected;
+
+            if (!dateStr || !sel || !sel.start) return;
+
+            $('#rescheduleStep1').addClass('d-none');
+            $('#rescheduleStep2').removeClass('d-none');
+
+            $('#rescheduleBackBtn').prop('disabled', false);
+            $('#rescheduleNextBtn').addClass('d-none');
+            $('#rescheduleConfirmBtn').removeClass('d-none');
+        });
+
+        // Confirmar reagendamiento => set hidden inputs + submit
+        $(document).on('click', '#rescheduleConfirmBtn', function () {
+            const ctx = window.__rescheduleContext || null;
+            const dateStr = String($('#rescheduleDateInput').val() || '').trim();
+            const sel = window.__rescheduleSelected;
+
+            if (!ctx || !ctx.appointment_id || !dateStr || !sel || !sel.start) return;
+
+            const reason = String($('#rescheduleReasonSelect').val() || '').trim();
+            const reasonOther = String($('#rescheduleReasonOtherInput').val() || '').trim();
+
+            // ✅ Hidden inputs (backend)
+            $('#modalAppointmentId').val(ctx.appointment_id);
+
+            $('#rescheduleDateHidden').val(dateStr);
+            $('#rescheduleTimeHidden').val(sel.start);
+            $('#rescheduleEndTimeHidden').val(sel.end || '');
+
+            $('#rescheduleReasonHidden').val(reason);
+            $('#rescheduleReasonOtherHidden').val(reason === 'other' ? reasonOther : '');
+
+            // Opcional: marcar estado como rescheduled si tu backend lo espera
+            $('#modalStatusHidden').val('rescheduled');
+
+            // Cerrar wizard y enviar
+            $('#rescheduleWizardModal').modal('hide');
+            $('#appointmentStatusForm')[0].submit();
+        });
+
+        // Al cerrar wizard, reabrir modal de detalles si quieres seguir viendo info
+        $('#rescheduleWizardModal').on('hidden.bs.modal', function () {
+            // Limpieza simple
+            __rescheduleResetWizard();
+        });
+
         // (Opcional) Por ahora: estos botones solo muestran alerta placeholder
-        $(document).on('click', '#btnReagendar,#btnConfirmarCita,#btnNoAsistio,#btnCancelarCita,#btnVerHistorial', function(){
+        $(document).on('click', '#btnConfirmarCita,#btnNoAsistio,#btnCancelarCita,#btnVerHistorial', function(){
             alert('Acción pendiente de implementar (solo UI en este paso).');
             $('#apptActionsDropdown').dropdown('hide');
         });
