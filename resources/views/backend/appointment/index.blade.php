@@ -1414,6 +1414,40 @@
             $('#modalPaymentMethodRaw').val(method);
         };
         $(document).on('click', '.view-appointment-btn', function() {
+            // ✅ RESET DURO: al abrir, limpia cualquier "draft" viejo (evita glitch de valores fantasma)
+            $('#btnSaveChanges').prop('disabled', true);
+            window.__apptIsEditMode = false;
+            $('body').removeClass('appt-edit-mode appt-quick-transfer-mode transfer-notes-visible transfer-notes-opt transfer-notes-req');
+
+            // Limpia campos de pago que suelen quedarse pegados aunque la sección esté oculta
+            $('#modalPaymentMethodRaw').val('');
+            $('#modalAmountPaidHidden').val('');
+            $('#modalPaidAmountInputCard').val('');
+            $('#modalPaidAmountInputTransfer').val('');
+            $('#modalPaidAmountInputCash').val('');
+
+            // Limpia también amount por si acaso
+            $('#modalAmountInput').val('');
+            $('#modalAmountInputTransfer').val('');
+            $('#modalAmountInputCash').val('');
+
+            // Limpia card extras
+            $('#modalClientTransactionIdInput').val('');
+            $('#modalPaymentPaidAtInput').val('');
+            $('#modalClientTransactionIdHidden').val('');
+            $('#modalPaymentPaidAtHidden').val('');
+
+            // Limpia cash extras
+            $('#modalCashPaidAtInput').val('');
+            $('#modalCashPaidAtHidden').val('');
+            $('#modalCashNotesInput').val('');
+            $('#modalCashNotesHidden').val('');
+
+            // Limpia notes de pago (por si el draft quedó)
+            $('#modalCardNotesInput').val('');
+            $('#modalTransferNotesInput').val('');
+            $('#modalPaymentNotesHidden').val('');
+
             window.__transferValidationTouched = false;
             $('#modalTransferValidationTouchedInput').val('0');
             // Set modal fields
@@ -3177,6 +3211,41 @@
             }
 
             $('#transferReceiptModal').modal('show');
+        });
+
+        $('#appointmentModal').on('hidden.bs.modal', function () {
+            // ✅ mata cualquier draft no guardado
+            $('#btnSaveChanges').prop('disabled', true);
+            window.__apptIsEditMode = false;
+
+            $('body').removeClass('appt-edit-mode appt-quick-transfer-mode transfer-notes-visible transfer-notes-opt transfer-notes-req');
+
+            $('#modalPaymentMethodRaw').val('');
+            $('#modalAmountPaidHidden').val('');
+            $('#modalPaidAmountInputCard').val('');
+            $('#modalPaidAmountInputTransfer').val('');
+            $('#modalPaidAmountInputCash').val('');
+
+            $('#modalAmountInput').val('');
+            $('#modalAmountInputTransfer').val('');
+            $('#modalAmountInputCash').val('');
+
+            $('#modalClientTransactionIdInput').val('');
+            $('#modalPaymentPaidAtInput').val('');
+            $('#modalClientTransactionIdHidden').val('');
+            $('#modalPaymentPaidAtHidden').val('');
+
+            $('#modalCashPaidAtInput').val('');
+            $('#modalCashPaidAtHidden').val('');
+            $('#modalCashNotesInput').val('');
+            $('#modalCashNotesHidden').val('');
+
+            $('#modalCardNotesInput').val('');
+            $('#modalTransferNotesInput').val('');
+            $('#modalPaymentNotesHidden').val('');
+
+            // ✅ snapshot fuera, para que el siguiente open lo regenere desde BD
+            window.__apptModalSnapshot = null;
         });
 
         $('#transferReceiptModal').on('hidden.bs.modal', function () {
