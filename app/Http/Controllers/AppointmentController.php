@@ -308,6 +308,10 @@ class AppointmentController extends Controller
             'payment_channel' => 'nullable|string|max:40',
             'payment_notes' => 'nullable|string',
 
+            // ✅ Motivo del cambio (nuevo)
+            'change_reason' => 'nullable|in:typo,patient_update,admin_adjustment,other',
+            'change_reason_other' => 'nullable|string|max:180',
+
             // ✅ Validación de transferencia (desde tu modal)
             'transfer_validation_status' => 'nullable|in:validated,rejected',
             'transfer_validation_touched' => 'nullable|in:0,1',
@@ -344,6 +348,40 @@ class AppointmentController extends Controller
         ]);
 
         $appointment = Appointment::findOrFail($request->appointment_id);
+
+        // ✅ Snapshot ANTES (para auditoría)
+        $tracked = [
+            // Estados
+            'status', 'payment_method', 'payment_status',
+
+            // Montos y pago
+            'amount', 'amount_paid', 'payment_paid_at', 'client_transaction_id',
+            'payment_paid_at_date_source', 'payment_channel', 'payment_notes',
+
+            // Paciente
+            'patient_full_name', 'patient_doc_type', 'patient_doc_number', 'patient_dob',
+            'patient_email', 'patient_phone', 'patient_address', 'patient_timezone',
+            'patient_notes',
+
+            // Facturación
+            'billing_name', 'billing_doc_type', 'billing_doc_number',
+            'billing_email', 'billing_phone', 'billing_address',
+
+            // Transferencia
+            'transfer_bank_origin', 'transfer_payer_name', 'transfer_date', 'transfer_reference',
+            'transfer_receipt_path',
+
+            // Validación de transferencia
+            'transfer_validation_status', 'transfer_validation_notes',
+            'transfer_validated_at', 'transfer_validated_by',
+
+            // Precios / descuentos / términos
+            'amount_standard', 'discount_amount',
+            'terms_accepted', 'terms_accepted_at',
+        ];
+
+        $before = $appointment->only($tracked);
+
         // ✅ Solo cambiar status si realmente viene (y no por efecto del método de pago)
         if ($request->filled('status')) {
             $appointment->status = $request->status;
@@ -645,6 +683,69 @@ class AppointmentController extends Controller
             $appointment->transfer_receipt_path = $request->file('tr_file')->store('transfer_proofs', 'public');
         }
         $appointment->save();
+
+        // ✅ Snapshot DESPUÉS + calcular diferencias (auditoría)
+        $after = $appointment->fresh()->only($tracked);
+
+        $changedFields = [];
+        $oldValues = [];
+        $newValues = [];
+
+        foreach ($tracked as $key) {
+            $old = $before[$key] ?? null;
+            $new = $after[$key] ?? null;
+
+            // Normalización simple para comparar (evita falsos cambios por espacios)
+            $oldNorm = is_string($old) ? trim($old) : $old;
+            $newNorm = is_string($new) ? trim($new) : $new;
+
+            if ($oldNorm !== $newNorm) {
+                $changedFields[] = $key;
+                $oldValues[$key] = $old;
+                $newValues[$key] = $new;
+            }
+        }
+
+        // ✅ Solo crear audit si realmente hubo cambios
+        if (!empty($changedFields)) {
+
+            $actorId = Auth::id();
+
+            // actor_role: intento 1 (Spatie), fallback a null
+            $actorRole = null;
+            if (auth()->check()) {
+                try {
+                    if (method_exists(auth()->user(), 'getRoleNames')) {
+                        $roles = auth()->user()->getRoleNames();
+                        $actorRole = $roles && count($roles) ? $roles[0] : null;
+                    }
+                } catch (\Throwable $e) {
+                    $actorRole = null;
+                }
+            }
+
+            DB::table('appointment_audits')->insert([
+                'appointment_id' => $appointment->id,
+                'actor_user_id'  => $actorId,
+                'actor_role'     => $actorRole,
+
+                // Acción corta y consistente
+                'action'         => 'update',
+
+                // Longtext: guardamos JSON
+                'changed_fields' => json_encode($changedFields, JSON_UNESCAPED_UNICODE),
+                'old_values'     => json_encode($oldValues, JSON_UNESCAPED_UNICODE),
+                'new_values'     => json_encode($newValues, JSON_UNESCAPED_UNICODE),
+
+                // Motivo (tu select) + texto si fue "other"
+                'reason'         => $request->input('change_reason'),
+                'reason_other'   => $request->input('change_reason_other'),
+
+                // Tu tabla tiene created_at con default current_timestamp()
+                // Si quieres ponerlo explícito, descomenta:
+                // 'created_at'     => now(),
+            ]);
+        }
 
         event(new StatusUpdated($appointment));
 
