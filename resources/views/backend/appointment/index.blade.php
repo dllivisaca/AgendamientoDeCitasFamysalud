@@ -804,7 +804,7 @@
 
     <!-- ✅ Modal Wizard: Reagendar (2 pasos) -->
     <div class="modal fade" id="rescheduleWizardModal" tabindex="-1" role="dialog" aria-labelledby="rescheduleWizardModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg" role="document">
             <div class="modal-content">
 
                 <div class="modal-header">
@@ -819,12 +819,17 @@
                     {{-- Paso 1 --}}
                     <div id="rescheduleStep1">
                         <div class="mb-2">
-                            <div class="small text-muted">Profesional (solo lectura)</div>
+                            <div class="small text-muted">Profesional</div>
                             <div class="font-weight-bold" id="rescheduleEmployeeText">N/A</div>
                         </div>
 
+                        <div class="mb-2">
+                            <div class="small text-muted">Área de atención</div>
+                            <div class="font-weight-bold" id="rescheduleAreaText">N/A</div>
+                        </div>
+
                         <div class="mb-3">
-                            <div class="small text-muted">Servicio (solo lectura)</div>
+                            <div class="small text-muted">Servicio</div>
                             <div class="font-weight-bold" id="rescheduleServiceText">N/A</div>
                         </div>
 
@@ -836,9 +841,9 @@
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label class="small text-muted mb-1">Horas disponibles</label>
+                                <label class="small text-muted mb-1">Turnos disponibles</label>
                                 <div id="rescheduleSlotsWrap" class="border rounded p-2" style="min-height: 44px;">
-                                    <div class="text-muted small" id="rescheduleSlotsHint">Selecciona una fecha para ver horas disponibles.</div>
+                                    <div class="text-muted small" id="rescheduleSlotsHint">Selecciona una fecha para ver turnos disponibles.</div>
                                     <div id="rescheduleSlots" class="d-flex flex-wrap"></div>
                                 </div>
                                 <div class="small text-danger mt-2 d-none" id="rescheduleSlotsError"></div>
@@ -846,7 +851,7 @@
                         </div>
 
                         <div class="mb-2">
-                            <label class="small text-muted mb-1">Motivo de reagendamiento (opcional)</label>
+                            <label class="small text-muted mb-1">Motivo de reagendamiento</label>
                             <select class="form-control" id="rescheduleReasonSelect">
                                 <option value="">Seleccione una opción</option>
                                 <option value="patient_requested">Paciente pidió</option>
@@ -1643,6 +1648,7 @@
             window.__rescheduleContext = {
                 appointment_id: $(this).data('id'),
                 employee_id: $(this).data('employee-id'),
+                area_text: $(this).data('area'),
                 service_text: $(this).data('service'),
                 employee_text: $(this).data('employee'),
                 old_date: $(this).data('date'),
@@ -4340,6 +4346,7 @@
 
             // Textos
             $('#rescheduleEmployeeText').text(ctx.employee_text || 'N/A');
+            $('#rescheduleAreaText').text(ctx.area_text || 'N/A');
             $('#rescheduleServiceText').text(ctx.service_text || 'N/A');
 
             const beforeTxt = (ctx.old_date && ctx.old_start_time)
