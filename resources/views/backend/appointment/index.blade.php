@@ -820,17 +820,17 @@
                     <div id="rescheduleStep1">
                         <div class="mb-2">
                             <div class="small text-muted">Profesional</div>
-                            <div class="font-weight-bold" id="rescheduleEmployeeText">N/A</div>
+                            <div id="rescheduleEmployeeText">N/A</div>
                         </div>
 
                         <div class="mb-2">
                             <div class="small text-muted">Área de atención</div>
-                            <div class="font-weight-bold" id="rescheduleAreaText">N/A</div>
+                            <div id="rescheduleAreaText">N/A</div>
                         </div>
 
                         <div class="mb-3">
                             <div class="small text-muted">Servicio</div>
-                            <div class="font-weight-bold" id="rescheduleServiceText">N/A</div>
+                            <div id="rescheduleServiceText">N/A</div>
                         </div>
 
                         <div class="row">
@@ -4276,6 +4276,21 @@
             $('#rescheduleSlotsError').addClass('d-none').text('');
         }
 
+        function formatDateES(dateStr) {
+            if (!dateStr) return 'N/A';
+
+            const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
+            const parts = dateStr.split('-'); // YYYY-MM-DD
+            if (parts.length !== 3) return dateStr;
+
+            const year = parts[0];
+            const monthIndex = parseInt(parts[1], 10) - 1;
+            const day = parseInt(parts[2], 10);
+
+            return `${day} ${months[monthIndex]} ${year}`;
+        }
+
         function __renderRescheduleSlots(slots) {
             $('#rescheduleSlots').empty();
 
@@ -4349,8 +4364,10 @@
             $('#rescheduleAreaText').text(ctx.area_text || 'N/A');
             $('#rescheduleServiceText').text(ctx.service_text || 'N/A');
 
+            const formattedDate = formatDateES(ctx.old_date);
+
             const beforeTxt = (ctx.old_date && ctx.old_start_time)
-                ? `${ctx.old_date} ${ctx.old_start_time}${ctx.old_end_time ? (' - ' + ctx.old_end_time) : ''}`
+                ? `${formattedDate} ${ctx.old_start_time}${ctx.old_end_time ? (' - ' + ctx.old_end_time) : ''}`
                 : 'N/A';
 
             $('#rescheduleOldText').text('Antes: ' + beforeTxt);
