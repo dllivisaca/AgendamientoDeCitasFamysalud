@@ -833,6 +833,11 @@
                             <div id="rescheduleServiceText">N/A</div>
                         </div>
 
+                        <div class="mb-3">
+                            <div class="small text-muted">Modalidad</div>
+                            <div id="rescheduleModeText">N/A</div>
+                        </div>
+
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="small text-muted mb-1">Selecciona una fecha</label>
@@ -851,8 +856,10 @@
                         </div>
 
                         <div class="mb-2">
-                            <label class="small text-muted mb-1">Motivo de reagendamiento</label>
-                            <select class="form-control" id="rescheduleReasonSelect">
+                            <label class="small text-muted mb-1">
+                                Motivo de reagendamiento <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-control" id="rescheduleReasonSelect" required>
                                 <option value="">Seleccione una opción</option>
                                 <option value="patient_requested">Paciente pidió</option>
                                 <option value="doctor_requested">Doctor pidió</option>
@@ -1654,6 +1661,7 @@
                 old_date: $(this).data('date'),
                 old_start_time: $(this).data('start-time'),
                 old_end_time: $(this).data('end-time'),
+                appointment_mode: $(this).data('appointment-mode'),
             };
 
             // ===== SECCIÓN 2: Datos del paciente =====
@@ -4291,6 +4299,22 @@
             return `${day} ${months[monthIndex]} ${year}`;
         }
 
+        function capitalizeFirstLetter(text) {
+            if (!text) return 'N/A';
+            text = String(text).trim();
+            return text.charAt(0).toUpperCase() + text.slice(1);
+        }
+
+        function validateRescheduleStep1() {
+            const date = String($('#rescheduleDateInput').val() || '').trim();
+            const slotSelected = window.__rescheduleSelected && window.__rescheduleSelected.start;
+            const reason = String($('#rescheduleReasonSelect').val() || '').trim();
+
+            const isValid = date && slotSelected && reason;
+
+            $('#rescheduleNextBtn').prop('disabled', !isValid);
+        }
+
         function __renderRescheduleSlots(slots) {
             $('#rescheduleSlots').empty();
 
@@ -4363,6 +4387,7 @@
             $('#rescheduleEmployeeText').text(ctx.employee_text || 'N/A');
             $('#rescheduleAreaText').text(ctx.area_text || 'N/A');
             $('#rescheduleServiceText').text(ctx.service_text || 'N/A');
+            $('#rescheduleModeText').text(capitalizeFirstLetter(ctx.appointment_mode)); 
 
             const formattedDate = formatDateES(ctx.old_date);
 
@@ -4392,6 +4417,8 @@
                 $('#rescheduleReasonOtherWrap').addClass('d-none');
                 $('#rescheduleReasonOtherInput').val('');
             }
+
+            validateRescheduleStep1();
         });
 
         // Al elegir fecha => cargar slots
@@ -4401,7 +4428,7 @@
 
             // Reset selección
             window.__rescheduleSelected = null;
-            $('#rescheduleNextBtn').prop('disabled', true);
+            validateRescheduleStep1();
 
             if (!ctx || !ctx.employee_id || !dateStr) return;
 
@@ -4419,7 +4446,7 @@
             window.__rescheduleSelected = { start, end };
 
             // Habilitar siguiente
-            $('#rescheduleNextBtn').prop('disabled', !(start));
+           validateRescheduleStep1();
 
             // Preview “Nuevo”
             const dateStr = String($('#rescheduleDateInput').val() || '').trim();
