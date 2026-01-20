@@ -4552,5 +4552,75 @@
             alert('Acción pendiente de implementar (solo UI en este paso).');
             $('#apptActionsDropdown').dropdown('hide');
         });
+
+        // ================================
+        // CALENDARIO (UI) PARA REAGENDAR
+        // ================================
+        (function () {
+
+        const monthNames = [
+            "Enero","Febrero","Marzo","Abril","Mayo","Junio",
+            "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"
+        ];
+
+        let resMonth = (new Date()).getMonth();   // 0-11
+        let resYear  = (new Date()).getFullYear(); // 2026 etc.
+
+        function generateRescheduleCalendar() {
+            $("#reschedule-current-month").text(`${monthNames[resMonth]} ${resYear}`);
+            $("#reschedule-calendar-body").empty();
+
+            const firstDay = new Date(resYear, resMonth, 1).getDay(); // 0=Dom
+            const daysInMonth = new Date(resYear, resMonth + 1, 0).getDate();
+
+            let date = 1;
+
+            for (let i = 0; i < 6; i++) {
+            const row = $("<tr></tr>");
+
+            for (let j = 0; j < 7; j++) {
+                if (i === 0 && j < firstDay) {
+                row.append(`<td class="text-center py-2"></td>`);
+                } else if (date > daysInMonth) {
+                row.append(`<td class="text-center py-2"></td>`);
+                } else {
+                // UI: día clickeable (sin reglas todavía)
+                row.append(`
+                    <td class="text-center py-2 calendar-day" data-date="${resYear}-${String(resMonth+1).padStart(2,'0')}-${String(date).padStart(2,'0')}">
+                    ${date}
+                    </td>
+                `);
+                date++;
+                }
+            }
+
+            $("#reschedule-calendar-body").append(row);
+
+            if (date > daysInMonth) break;
+            }
+        }
+
+        // Navegación
+        $(document).on("click", "#reschedule-prev-month", function () {
+            resMonth--;
+            if (resMonth < 0) { resMonth = 11; resYear--; }
+            generateRescheduleCalendar();
+        });
+
+        $(document).on("click", "#reschedule-next-month", function () {
+            resMonth++;
+            if (resMonth > 11) { resMonth = 0; resYear++; }
+            generateRescheduleCalendar();
+        });
+
+        // IMPORTANTE: generar cuando el modal ya abrió (si lo haces antes, a veces no pinta)
+        const modalEl = document.getElementById("rescheduleModal"); // <-- cambia este id si tu modal se llama distinto
+        if (modalEl) {
+            modalEl.addEventListener("shown.bs.modal", function () {
+            generateRescheduleCalendar();
+            });
+        }
+
+        })();
     </script>
 @endsection
