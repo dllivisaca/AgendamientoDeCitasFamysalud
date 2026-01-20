@@ -556,6 +556,12 @@ class AppointmentController extends Controller
             $appointment->transfer_validation_notes = null;
             $appointment->transfer_validated_at = null;
             $appointment->transfer_validated_by = null;
+
+            // ✅ Si payment_paid_at venía de la validación de transferencia, lo limpiamos también
+            if (($appointment->payment_paid_at_date_source ?? null) === 'transfer_validated_at') {
+                $appointment->payment_paid_at = null;
+                $appointment->payment_paid_at_date_source = null;
+            }
         }
 
         // ✅ Guardar el status de validación
@@ -568,6 +574,12 @@ class AppointmentController extends Controller
             $appointment->transfer_validation_notes = null;
             $appointment->transfer_validated_at = null;
             $appointment->transfer_validated_by = null;
+
+            // ✅ Si payment_paid_at venía de la validación de transferencia, lo limpiamos también
+            if (($appointment->payment_paid_at_date_source ?? null) === 'transfer_validated_at') {
+                $appointment->payment_paid_at = null;
+                $appointment->payment_paid_at_date_source = null;
+            }
         }
 
         if ($pm === 'transfer' && $touched && in_array($validation, ['validated', 'rejected'], true)) {
@@ -575,6 +587,12 @@ class AppointmentController extends Controller
             // ✅ SOLO auditoría
             $appointment->transfer_validated_at = now();
             $appointment->transfer_validated_by = Auth::id();
+
+            // ✅ Si se VALIDÓ la transferencia, usar esta fecha como payment_paid_at (sin tocar status/payment_status)
+            if ($validation === 'validated') {
+                $appointment->payment_paid_at = $appointment->transfer_validated_at;
+                $appointment->payment_paid_at_date_source = 'transfer_validated_at';
+            }
 
             // Guardar notas (si vienen)
             if ($request->has('transfer_validation_notes')) {
