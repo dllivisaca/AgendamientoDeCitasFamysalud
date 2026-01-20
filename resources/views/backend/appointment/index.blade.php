@@ -841,7 +841,40 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="small text-muted mb-1">Selecciona una fecha</label>
-                                <input type="date" class="form-control" id="rescheduleDateInput">
+
+                                <div class="card mb-4" id="reschedule-calendar-card">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="reschedule-prev-month">
+                                            <i class="fas fa-chevron-left"></i>
+                                        </button>
+
+                                        <h5 class="mb-0" id="reschedule-current-month">Enero 2026</h5>
+
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="reschedule-next-month">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </button>
+                                    </div>
+
+                                    <div class="card-body">
+                                        <table class="table table-calendar mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>Dom</th>
+                                                    <th>Lun</th>
+                                                    <th>Mar</th>
+                                                    <th>Mié</th>
+                                                    <th>Jue</th>
+                                                    <th>Vie</th>
+                                                    <th>Sáb</th>
+                                                </tr>
+                                            </thead>
+
+                                            <tbody id="reschedule-calendar-body">
+                                                <!-- Calendar will be generated dynamically -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
                                 <div class="small text-muted mt-1" id="rescheduleOldText">Antes: N/A</div>
                             </div>
 
