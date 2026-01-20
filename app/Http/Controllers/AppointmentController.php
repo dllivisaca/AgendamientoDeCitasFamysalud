@@ -349,14 +349,14 @@ class AppointmentController extends Controller
 
         $appointment = Appointment::findOrFail($request->appointment_id);
 
-        // ✅ Snapshot ANTES (para auditoría)
-        $tracked = [
+        // ✅ Campos que SÍ vamos a considerar para auditoría
+        $allTrackable = [
             // Estados
             'status', 'payment_method', 'payment_status',
 
             // Montos y pago
             'amount', 'amount_paid', 'payment_paid_at', 'client_transaction_id',
-            'payment_paid_at_date_source', 'payment_channel', 'payment_notes',
+            'payment_notes',
 
             // Paciente
             'patient_full_name', 'patient_doc_type', 'patient_doc_number', 'patient_dob',
@@ -367,20 +367,32 @@ class AppointmentController extends Controller
             'billing_name', 'billing_doc_type', 'billing_doc_number',
             'billing_email', 'billing_phone', 'billing_address',
 
-            // Transferencia
+            // Transferencia (solo data “editable”)
             'transfer_bank_origin', 'transfer_payer_name', 'transfer_date', 'transfer_reference',
             'transfer_receipt_path',
-
-            // Validación de transferencia
-            'transfer_validation_status', 'transfer_validation_notes',
-            'transfer_validated_at', 'transfer_validated_by',
-
-            // Precios / descuentos / términos
-            'amount_standard', 'discount_amount',
-            'terms_accepted', 'terms_accepted_at',
         ];
 
-        $before = $appointment->only($tracked);
+        // ✅ Campos que NO queremos auditar porque son "auto" (side-effects)
+        $neverAudit = [
+            'payment_channel',
+            'payment_paid_at_date_source',
+            'transfer_validated_at',
+            'transfer_validated_by',
+            'transfer_validation_status',
+            'transfer_validation_notes',
+            'terms_accepted',
+            'terms_accepted_at',
+            'amount_standard',
+            'discount_amount',
+        ];
+
+        // ✅ Solo auditar lo que realmente llegó en el request
+        $tracked = array_values(array_diff(
+            array_intersect($allTrackable, array_keys($request->all())),
+            $neverAudit
+        ));
+
+        $before = !empty($tracked) ? $appointment->only($tracked) : [];
 
         // ✅ Solo cambiar status si realmente viene (y no por efecto del método de pago)
         if ($request->filled('status')) {
@@ -685,7 +697,7 @@ class AppointmentController extends Controller
         $appointment->save();
 
         // ✅ Snapshot DESPUÉS + calcular diferencias (auditoría)
-        $after = $appointment->fresh()->only($tracked);
+        $after = !empty($tracked) ? $appointment->fresh()->only($tracked) : [];
 
         $changedFields = [];
         $oldValues = [];
@@ -707,7 +719,7 @@ class AppointmentController extends Controller
         }
 
         // ✅ Solo crear audit si realmente hubo cambios
-        if (!empty($changedFields)) {
+        if (!empty($tracked) && !empty($changedFields)) {
 
             $actorId = Auth::id();
 
