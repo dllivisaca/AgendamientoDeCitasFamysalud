@@ -4614,12 +4614,13 @@
         });
 
         // IMPORTANTE: generar cuando el modal ya abrió (si lo haces antes, a veces no pinta)
-        const modalEl = document.getElementById("rescheduleModal"); // <-- cambia este id si tu modal se llama distinto
+        const modalEl = document.getElementById("rescheduleWizardModal");
         if (modalEl) {
             modalEl.addEventListener("shown.bs.modal", function () {
             generateRescheduleCalendar();
             });
         }
+        generateRescheduleCalendar();
 
         })();
     </script>
