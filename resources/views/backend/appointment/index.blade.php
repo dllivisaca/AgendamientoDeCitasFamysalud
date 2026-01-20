@@ -28,6 +28,8 @@
         <input type="hidden" name="transfer_validation_notes" id="modalTransferValidationNotesInput" value="">
         <input type="hidden" id="modalPaymentMethodRaw" value="">
         <input type="hidden" name="payment_method" id="modalPaymentMethodHidden" value="">
+        <input type="hidden" name="change_reason" id="modalChangeReasonHidden" value="">
+        <input type="hidden" name="change_reason_other" id="modalChangeReasonOtherHidden" value="">
 
         <div class="modal fade" id="appointmentModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
@@ -743,6 +745,58 @@
         </div>
     </form>
 
+    <!-- ✅ Modal: Motivo del cambio -->
+    <div class="modal fade" id="changeReasonModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-change-reason">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Motivo del cambio</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div id="changeReasonHelp" class="small text-muted mb-2"></div>
+
+                    <div class="form-group mb-2">
+                        <label class="small text-muted mb-1">
+                            Selecciona un motivo
+                            <span id="changeReasonRequiredTag" class="text-danger" style="display:none;">(obligatorio)</span>
+                            <span id="changeReasonOptionalTag" class="text-muted" style="display:none;">(opcional)</span>
+                        </label>
+
+                        <select class="form-control form-control-sm" id="changeReasonSelect">
+                            <option value="">Seleccione una opción</option>
+                            <option value="typo">Error de tipeo</option>
+                            <option value="patient_update">Información actualizada por el paciente</option>
+                            <option value="admin_adjustment">Ajuste administrativo</option>
+                            <option value="other">Otro</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group mb-0" id="changeReasonOtherWrapper" style="display:none;">
+                        <label class="small text-muted mb-1">Especifica (opcional)</label>
+                        <textarea class="form-control form-control-sm" id="changeReasonOtherText"
+                                rows="2" maxlength="180"
+                                placeholder="Escribe un motivo breve..."></textarea>
+                        <div class="small text-muted mt-1">Máx. 180 caracteres.</div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">
+                        Cancelar
+                    </button>
+
+                    <button type="button" class="btn btn-primary" id="btnConfirmChangeReason">
+                        Continuar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ✅ Modal: Vista rápida del comprobante -->
     <div class="modal fade" id="transferReceiptModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-receipt" role="document">
@@ -1203,6 +1257,31 @@
 
     body.appt-edit-mode.transfer-notes-req #transferNotesRequired{
         display: inline !important;
+    }
+
+    /* Modal de motivo del cambio: más angosto que el principal */
+    .modal-change-reason {
+        max-width: 560px; /* ajusta: 480–600 suele verse bien */
+    }
+
+    /* ✅ Fix stacking: backdrop visible cuando se abre el 2do modal (Bootstrap 4) */
+    #changeReasonModal{
+        z-index: 1060 !important; /* por encima de appointmentModal (1050) */
+    }
+
+    .modal-backdrop.change-reason-backdrop{
+        z-index: 1055 !important; /* entre ambos modals */
+        background-color: rgba(0, 0, 0, 0.80) !important;
+    }
+
+    /* (Opcional) desactivar clics en el modal de detalles mientras el motivo esté abierto */
+    body.change-reason-open #appointmentModal {
+        pointer-events: none;
+    }
+
+    /* Backdrop más oscuro para el motivo */
+    .modal-backdrop.change-reason-backdrop {
+        background-color: rgba(0, 0, 0, 0.80) !important;
     }
 </style>
 @stop
@@ -2968,6 +3047,113 @@
 
         // ✅ Antes de enviar el form: valida reglas y llena hidden inputs
         $(document).on('submit', '#appointmentStatusForm', function (e) {
+            // ============================
+            // ✅ Motivo del cambio (modal)
+            // - Paciente + Facturación: opcional
+            // - Pago (transfer/card/cash): obligatorio
+            // - NO aplica para: patient_notes / payment_notes
+            // - NO aplica para validación de transferencia
+            // ============================
+            if (!window.__changeReasonBypassSubmit) {
+                const snap = window.__apptModalSnapshot || null;
+                if (snap && window.__apptIsEditMode) {
+                    const current = __getCurrentEditableState();
+
+                    // Keys que NO deben disparar modal (según tu regla)
+                    const excludedKeys = new Set([
+                        'patient_notes',          // Notas del paciente
+                        'payment_notes',          // Observaciones de pago
+                        'transfer_validation_status',
+                        'transfer_validation_notes'
+                    ]);
+
+                    // Paciente + Facturación (opcional)
+                    const patientBillingKeys = new Set([
+                        'patient_full_name',
+                        'patient_doc_type',
+                        'patient_doc_number',
+                        'patient_dob',
+                        'patient_email',
+                        'patient_phone',
+                        'patient_address',
+                        'patient_timezone',
+
+                        'billing_name',
+                        'billing_doc_type',
+                        'billing_doc_number',
+                        'billing_email',
+                        'billing_phone',
+                        'billing_address'
+                    ]);
+
+                    // Pago (obligatorio)
+                    // Incluye método + montos + fechas + datos de transferencia + comprobante
+                    // (NO incluye payment_notes)
+                    const paymentKeys = new Set([
+                        'pmRaw',
+                        'payment_status',
+                        'amount',
+                        'amount_paid',
+                        'payment_paid_at',
+
+                        'transfer_bank_origin',
+                        'transfer_payer_name',
+                        'transfer_date',
+                        'transfer_reference',
+                        'transfer_receipt_file_selected'
+                    ]);
+
+                    // Detectar qué cambió (comparando snapshot vs current)
+                    const changedKeys = [];
+                    for (const k of Object.keys(current)) {
+                        if (excludedKeys.has(k)) continue;
+
+                        if (__norm(current[k]) !== __norm(snap[k])) {
+                            changedKeys.push(k);
+                        }
+                    }
+
+                    const changedPatientBilling = changedKeys.some(k => patientBillingKeys.has(k));
+                    const changedPayment = changedKeys.some(k => paymentKeys.has(k));
+
+                    // Si NO cambió nada “relevante”, NO mostramos modal
+                    if (changedPatientBilling || changedPayment) {
+                        const mandatory = changedPayment; // pago manda (obligatorio)
+
+                        // Reset valores del modal
+                        $('#changeReasonSelect').val('');
+                        $('#changeReasonOtherText').val('');
+                        $('#changeReasonOtherWrapper').hide();
+
+                        // Pintar etiquetas
+                        $('#changeReasonRequiredTag').toggle(mandatory);
+                        $('#changeReasonOptionalTag').toggle(!mandatory);
+
+                        // Mensajito
+                        if (mandatory) {
+                            $('#changeReasonHelp').text('Estás cambiando información de pago. Debes seleccionar un motivo para continuar.');
+                        } else {
+                            $('#changeReasonHelp').text('Estás cambiando datos del paciente / facturación. Seleccionar un motivo es opcional.');
+                        }
+
+                        // Guardar si es obligatorio para validación del botón
+                        window.__changeReasonIsMandatory = mandatory;
+
+                        // Detener submit y abrir modal
+                        e.preventDefault();
+                        $('body').addClass('change-reason-open');
+                        $('#changeReasonModal').modal('show');
+                        setTimeout(() => {
+                            const $bd = $('.modal-backdrop').last();
+                            $bd.addClass('change-reason-backdrop')
+                            .css('z-index', '1055');
+
+                            $('#changeReasonModal').css('z-index', '1060');
+                        }, 0);
+                        return false;
+                    }
+                }
+            }
             console.log('================= SUBMIT appointmentStatusForm =================');
             console.log('[patient_full_name]', $('#modalPatientFullNameInput').val());
             console.log('[patient_doc_type]', $('#modalDocTypeInput').val());
@@ -3161,6 +3347,59 @@
            
             return true;
         });
+
+        // ============================
+        // ✅ Modal motivo del cambio - handlers
+        // ============================
+        $(document).on('change', '#changeReasonSelect', function () {
+            const v = String($(this).val() || '').trim();
+
+            if (v === 'other') {
+                $('#changeReasonOtherWrapper').show();
+            } else {
+                $('#changeReasonOtherWrapper').hide();
+                $('#changeReasonOtherText').val('');
+            }
+        });
+
+        $(document).on('click', '#btnConfirmChangeReason', function () {
+            const reason = String($('#changeReasonSelect').val() || '').trim();
+            const otherText = String($('#changeReasonOtherText').val() || '').trim();
+
+            const mandatory = !!window.__changeReasonIsMandatory;
+
+            // Si es obligatorio, exige motivo
+            if (mandatory && !reason) {
+                alert('Debes seleccionar un motivo para continuar.');
+                return;
+            }
+
+            // Si eligió "Otro" y es obligatorio, exige texto breve
+            if (mandatory && reason === 'other' && !otherText) {
+                alert('Por favor, especifica el motivo en “Otro”.');
+                return;
+            }
+
+            // Guardar a hidden inputs para backend
+            $('#modalChangeReasonHidden').val(reason);
+            $('#modalChangeReasonOtherHidden').val(reason === 'other' ? otherText : '');
+
+            // Cerrar modal y reintentar submit una sola vez
+            window.__changeReasonBypassSubmit = true;
+            $('#changeReasonModal').modal('hide');
+
+            // Re-disparar submit
+            $('#appointmentStatusForm')[0].submit();
+        });
+
+        // Al cerrar el modal (cancelar), limpiamos bypass para que no quede sucio
+        $('#changeReasonModal').on('hidden.bs.modal', function () {
+            window.__changeReasonBypassSubmit = false;
+            $('body').removeClass('change-reason-open');
+            $('.modal-backdrop').removeClass('change-reason-backdrop');
+            $('#changeReasonModal').css('z-index', '');
+            $('.modal-backdrop').css('z-index', '');
+        });
     </script>
 
     <script>
@@ -3243,6 +3482,12 @@
             $('#modalCardNotesInput').val('');
             $('#modalTransferNotesInput').val('');
             $('#modalPaymentNotesHidden').val('');
+
+            // ✅ Reset motivo del cambio
+            $('#modalChangeReasonHidden').val('');
+            $('#modalChangeReasonOtherHidden').val('');
+            window.__changeReasonBypassSubmit = false;
+            window.__changeReasonIsMandatory = false;
 
             // ✅ snapshot fuera, para que el siguiente open lo regenere desde BD
             window.__apptModalSnapshot = null;
