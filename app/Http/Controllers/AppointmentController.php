@@ -11,6 +11,7 @@ use App\Events\BookingCreated;
 use App\Events\StatusUpdated;
 use Illuminate\Support\Facades\Storage; 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Carbon;
 
 class AppointmentController extends Controller
 {
@@ -696,25 +697,65 @@ class AppointmentController extends Controller
         }
         $appointment->save();
 
-        // ✅ Snapshot DESPUÉS + calcular diferencias (auditoría)
-        $after = !empty($tracked) ? $appointment->fresh()->only($tracked) : [];
-
+        // ✅ Calcular diferencias SOLO por lo que vino del request (evita falsos cambios por formato)
         $changedFields = [];
         $oldValues = [];
         $newValues = [];
 
+        // Normalizador de valores para evitar "cambios fantasmas" (null vs "", fechas, números)
+        $norm = function ($key, $val) {
+            if ($val === '') return null;
+
+            // Si viene Carbon/DateTime del modelo
+            if ($val instanceof \DateTimeInterface) {
+                // transfer_date y patient_dob son fechas (solo día)
+                if (in_array($key, ['transfer_date', 'patient_dob'], true)) {
+                    return Carbon::instance($val)->toDateString(); // Y-m-d
+                }
+                // payment_paid_at es datetime (manténlo como string estándar)
+                if ($key === 'payment_paid_at') {
+                    return Carbon::instance($val)->format('Y-m-d H:i:s');
+                }
+                return Carbon::instance($val)->toDateTimeString();
+            }
+
+            // Fechas que vienen como string desde el request
+            if (is_string($val) && in_array($key, ['transfer_date', 'patient_dob'], true)) {
+                $val = trim($val);
+                if ($val === '') return null;
+                try { return Carbon::parse($val)->toDateString(); } catch (\Throwable $e) { return $val; }
+            }
+
+            if (is_string($val) && $key === 'payment_paid_at') {
+                $val = trim($val);
+                if ($val === '') return null;
+                try { return Carbon::parse($val)->format('Y-m-d H:i:s'); } catch (\Throwable $e) { return $val; }
+            }
+
+            // Números: compara como número (evita "10" vs "10.00")
+            if (in_array($key, ['amount', 'amount_paid'], true)) {
+                if ($val === null) return null;
+                return (string) ((float) $val);
+            }
+
+            return is_string($val) ? trim($val) : $val;
+        };
+
         foreach ($tracked as $key) {
+
+            // Solo si vino en el request (tu $tracked ya filtra, pero por seguridad)
+            if (!$request->has($key)) continue;
+
             $old = $before[$key] ?? null;
-            $new = $after[$key] ?? null;
+            $incoming = $request->input($key);
 
-            // Normalización simple para comparar (evita falsos cambios por espacios)
-            $oldNorm = is_string($old) ? trim($old) : $old;
-            $newNorm = is_string($new) ? trim($new) : $new;
+            $oldNorm = $norm($key, $old);
+            $inNorm  = $norm($key, $incoming);
 
-            if ($oldNorm !== $newNorm) {
+            if ($oldNorm !== $inNorm) {
                 $changedFields[] = $key;
-                $oldValues[$key] = $old;
-                $newValues[$key] = $new;
+                $oldValues[$key] = $oldNorm;
+                $newValues[$key] = $inNorm;
             }
         }
 
