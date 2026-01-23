@@ -1520,6 +1520,27 @@
         cursor: not-allowed;
         opacity: .45;
     }
+
+    /* Flecha atrás deshabilitada: sin hover, sin click, sin efecto */
+    #reschedule-prev-month.disabled,
+    #reschedule-prev-month:disabled {
+        pointer-events: none !important;
+        cursor: not-allowed !important;
+        opacity: 0.45 !important;
+    }
+
+    /* Si por Bootstrap/estilos se pinta al hover, lo anulamos */
+    #reschedule-prev-month.disabled:hover,
+    #reschedule-prev-month:disabled:hover,
+    #reschedule-prev-month.disabled:focus,
+    #reschedule-prev-month:disabled:focus,
+    #reschedule-prev-month.disabled:active,
+    #reschedule-prev-month:disabled:active {
+        background-color: inherit !important;
+        border-color: inherit !important;
+        box-shadow: none !important;
+        color: inherit !important;
+    }
 </style>
 @stop
 
@@ -4705,24 +4726,27 @@
 
         function updateReschedulePrevArrow() {
 
-            const isMinMonth =
-                (resYear === minYear && resMonth === minMonth);
+            const today = new Date();
+            const minMonth = today.getMonth();
+            const minYear  = today.getFullYear();
 
-            const $prevBtn = $('#resPrevMonth');
+            const isMinMonth = (resYear === minYear && resMonth === minMonth);
+
+            const $prevBtn = $('#reschedule-prev-month');
 
             if (isMinMonth) {
                 $prevBtn.prop('disabled', true)
-                        .addClass('disabled')
-                        .css({ opacity: 0.4, cursor: 'not-allowed' });
+                    .addClass('disabled')
+                    .css({ opacity: 0.4, cursor: 'not-allowed', pointerEvents: 'none' });
             } else {
                 $prevBtn.prop('disabled', false)
-                        .removeClass('disabled')
-                        .css({ opacity: 1, cursor: 'pointer' });
+                    .removeClass('disabled')
+                    .css({ opacity: 1, cursor: 'pointer', pointerEvents: 'auto' });
             }
         }
 
         // Navegación
-        $(document).on("click", "#reschedule-prev-month", function () {
+        $(document).on("click", "#reschedule-prev-month", function (e) {
 
             const today = new Date();
             const minMonth = today.getMonth();
@@ -4730,7 +4754,9 @@
 
             // ⛔ Si ya estamos en el mes mínimo, no hacer nada
             if (resYear === minYear && resMonth === minMonth) {
-                return;
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                return false;
             }
 
             resMonth--;
