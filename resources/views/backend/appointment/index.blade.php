@@ -4404,6 +4404,69 @@
         // ============================
         window.__rescheduleSelected = null;
 
+        // ============================
+        // ✅ HOLDs para Reagendar (appointment_holds)
+        // ============================
+        window.__rescheduleHoldId = null;
+
+        function __csrfToken() {
+            return $('meta[name="csrf-token"]').attr('content') || '';
+        }
+
+        // Libera el hold actual (si existe)
+        async function __releaseRescheduleHold() {
+            if (!window.__rescheduleHoldId) return;
+
+            try {
+                await fetch('/appointment-holds/release', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': __csrfToken()
+                    },
+                    body: JSON.stringify({ hold_id: window.__rescheduleHoldId })
+                });
+            } catch (e) {
+                console.warn('Release hold failed:', e);
+            } finally {
+                window.__rescheduleHoldId = null;
+            }
+        }
+
+        // Crea un hold en BD al seleccionar turno
+        async function __createRescheduleHold(ctx, dateStr, start, end) {
+            // ctx debe traer appointment_id y employee_id (tú ya lo usas arriba)
+            const payload = {
+                appointment_id: ctx.appointment_id,
+                employee_id: ctx.employee_id,
+                date: dateStr,
+                start: start,
+                end: end
+            };
+
+            const res = await fetch('/appointment-holds', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': __csrfToken()
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+
+            const data = await res.json();
+
+            // Esperado: { hold_id: 123 } (ajústalo si tu backend devuelve otro nombre)
+            if (!data || !data.hold_id) throw new Error('No hold_id in response');
+
+            window.__rescheduleHoldId = data.hold_id;
+        }
+
         // URL para cargar horas disponibles (ajústala a tu ruta real si ya la tienes)
         window.__RESCHEDULE_SLOTS_URL = window.__RESCHEDULE_SLOTS_URL || '/appointments/reschedule/slots';
 
@@ -4599,6 +4662,13 @@
 
             // Reset selección
             window.__rescheduleSelected = null;
+
+            // ✅ Si ya había un hold tomado por un turno anterior, lo liberamos
+            await __releaseRescheduleHold();
+
+            // ✅ reset selección de slot
+            window.__rescheduleSelectedSlot = null;
+
             validateRescheduleStep1();
 
             if (!ctx || !ctx.employee_id || !dateStr) return;
@@ -4607,7 +4677,7 @@
         });
 
         // Click en un slot => seleccionar
-        $(document).on('click', '.js-reschedule-slot', function () {
+        $(document).on('click', '.js-reschedule-slot', async function () {
             $('.js-reschedule-slot').removeClass('active');
             $(this).addClass('active');
 
@@ -4615,6 +4685,32 @@
             const end = String($(this).data('end') || '').trim();
 
             window.__rescheduleSelectedSlot = { start, end };
+
+            // ✅ Crear HOLD en BD al seleccionar turno
+            try {
+                const ctx = window.__rescheduleContext || null;
+                const dateStr = String($('#rescheduleDateInput').val() || '').trim();
+
+                if (!ctx || !ctx.appointment_id || !ctx.employee_id || !dateStr || !start) {
+                    throw new Error('Missing reschedule context/date/slot');
+                }
+
+                // Si ya había un hold anterior (porque cambió de turno), liberarlo primero
+                await __releaseRescheduleHold();
+
+                // Crear el nuevo hold
+                await __createRescheduleHold(ctx, dateStr, start, end);
+
+            } catch (e) {
+                console.error('Hold create error:', e);
+                alert('No se pudo reservar ese turno. Intenta con otro horario.');
+
+                // UI revert
+                $(this).removeClass('active');
+                window.__rescheduleSelectedSlot = null;
+                validateRescheduleStep1();
+                return;
+            }
 
             // Habilitar siguiente
            validateRescheduleStep1();
@@ -4638,7 +4734,7 @@
         // Botón Siguiente (paso 1 => paso 2)
         $(document).on('click', '#rescheduleNextBtn', function () {
             const dateStr = String($('#rescheduleDateInput').val() || '').trim();
-            const sel = window.__rescheduleSelected;
+            const sel = window.__rescheduleSelectedSlot;
 
             if (!dateStr || !sel || !sel.start) return;
 
@@ -4680,7 +4776,10 @@
         });
 
         // Al cerrar wizard, reabrir modal de detalles si quieres seguir viendo info
-        $('#rescheduleWizardModal').on('hidden.bs.modal', function () {
+        $('#rescheduleWizardModal').on('hidden.bs.modal', async function () {
+            // ✅ Si el usuario cerró sin confirmar, liberar el hold
+            await __releaseRescheduleHold();
+
             // Limpieza simple
             __rescheduleResetWizard();
         });
