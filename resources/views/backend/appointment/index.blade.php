@@ -1515,6 +1515,11 @@
         border-radius: 8px;
         font-weight: 700;
     }
+
+    #reschedule-calendar-body td.disabled{
+        cursor: not-allowed;
+        opacity: .45;
+    }
 </style>
 @stop
 
@@ -4698,17 +4703,51 @@
             }
         }
 
+        function updateReschedulePrevArrow() {
+
+            const isMinMonth =
+                (resYear === minYear && resMonth === minMonth);
+
+            const $prevBtn = $('#resPrevMonth');
+
+            if (isMinMonth) {
+                $prevBtn.prop('disabled', true)
+                        .addClass('disabled')
+                        .css({ opacity: 0.4, cursor: 'not-allowed' });
+            } else {
+                $prevBtn.prop('disabled', false)
+                        .removeClass('disabled')
+                        .css({ opacity: 1, cursor: 'pointer' });
+            }
+        }
+
         // Navegación
         $(document).on("click", "#reschedule-prev-month", function () {
+
+            const today = new Date();
+            const minMonth = today.getMonth();
+            const minYear  = today.getFullYear();
+
+            // ⛔ Si ya estamos en el mes mínimo, no hacer nada
+            if (resYear === minYear && resMonth === minMonth) {
+                return;
+            }
+
             resMonth--;
-            if (resMonth < 0) { resMonth = 11; resYear--; }
+            if (resMonth < 0) {
+                resMonth = 11;
+                resYear--;
+            }
+
             generateRescheduleCalendar();
+            updateReschedulePrevArrow();
         });
 
         $(document).on("click", "#reschedule-next-month", function () {
             resMonth++;
             if (resMonth > 11) { resMonth = 0; resYear++; }
             generateRescheduleCalendar();
+            updateReschedulePrevArrow();
         });
 
         // Click en un día del calendario
@@ -4721,9 +4760,10 @@
             today.setHours(0,0,0,0);
 
             const picked = new Date(dateStr + "T00:00:00");
-            if (picked <= today) {
-                // Si quieres permitir HOY, cambia <= por <
-                $('#rescheduleSlotsHint').show().text('Selecciona una fecha futura.');
+
+            // ✅ Bloquear solo fechas pasadas (HOY sí se permite)
+            if (picked < today) {
+                $('#rescheduleSlotsHint').show().text('Selecciona una fecha desde hoy.');
                 $('#rescheduleSlots').empty();
                 return;
             }
@@ -4753,9 +4793,11 @@
         if (modalEl) {
             modalEl.addEventListener("shown.bs.modal", function () {
             generateRescheduleCalendar();
+            updateReschedulePrevArrow();
             });
         }
         generateRescheduleCalendar();
+        updateReschedulePrevArrow();
 
         })();
     </script>
