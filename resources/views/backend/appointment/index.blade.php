@@ -1451,6 +1451,57 @@
         opacity: 0.35;
         pointer-events: none;
     }
+
+    /* =========================
+    Calendar (Reagendar) - Centrado header + tabla
+    ========================= */
+
+    /* Header: que las flechas queden simétricas y el mes centrado */
+    #reschedule-calendar-card .card-header{
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px;
+    }
+
+    #reschedule-calendar-card #reschedule-current-month{
+    flex: 1 !important;
+    text-align: center !important;
+    margin: 0 !important;
+    }
+
+    /* Botones: mismo ancho para que el título quede centrado de verdad */
+    #reschedule-calendar-card #reschedule-prev-month,
+    #reschedule-calendar-card #reschedule-next-month{
+    width: 40px;
+    flex: 0 0 40px;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    }
+
+    /* Tabla: columnas uniformes y todo centrado */
+    #reschedule-calendar-card .table-calendar{
+    width: 100% !important;
+    table-layout: fixed !important;
+    }
+
+    #reschedule-calendar-card .table-calendar th,
+    #reschedule-calendar-card .table-calendar td{
+    text-align: center !important;
+    vertical-align: middle !important;
+    }
+
+    /* Opcional: que los headings no “corran” por padding distinto */
+    #reschedule-calendar-card .table-calendar thead th{
+    padding: .9rem .25rem !important;
+    }
+
+    #reschedule-calendar-card .table-calendar tbody td{
+    padding: .9rem .25rem !important;
+    }
 </style>
 @stop
 

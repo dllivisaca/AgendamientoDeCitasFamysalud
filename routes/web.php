@@ -15,6 +15,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AppointmentHoldController;
 use App\Http\Controllers\PayphoneController;
 use App\Http\Controllers\Admin\TransferReceiptController;
+use App\Http\Controllers\Admin\AdminAvailabilityController;
 
 use Illuminate\Http\Request;
 
@@ -43,6 +44,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/appointments/{appointment}/transfer-receipt/view', [TransferReceiptController::class, 'view'])
     ->middleware('permission:appointments.view')
     ->name('admin.appointments.transfer_receipt.view');
+
+    // Admin: disponibilidad (reagendar)
+    Route::get('/admin/employees/{employee}/available-dates', [AdminAvailabilityController::class, 'getEmployeeAvailableDates'])
+        ->name('admin.employees.available_dates');
+
+    Route::get('/admin/employees/{employee}/availability/{date?}', [AdminAvailabilityController::class, 'getEmployeeAvailability'])
+        ->name('admin.employees.availability');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
