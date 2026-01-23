@@ -4538,8 +4538,25 @@
 
             const formattedDate = formatDateES(ctx.old_date);
 
+            function toAmPmSafe(t) {
+                if (!t) return '';
+                const s = String(t).trim();
+                const hhmm = s.includes(':') ? s.slice(0,5) : s; // "15:30:00" -> "15:30"
+                const [hh, mm] = hhmm.split(':');
+                const h = parseInt(hh, 10);
+                const m = parseInt(mm, 10);
+                if (Number.isNaN(h) || Number.isNaN(m)) return hhmm;
+
+                const ampm = h >= 12 ? 'PM' : 'AM';
+                let h12 = h % 12;
+                if (h12 === 0) h12 = 12;
+
+                // sin cero a la izquierda, tipo 3:30 PM
+                return `${h12}:${String(m).padStart(2,'0')} ${ampm}`;
+            }
+
             const beforeTxt = (ctx.old_date && ctx.old_start_time)
-                ? `${formattedDate} ${ctx.old_start_time}${ctx.old_end_time ? (' - ' + ctx.old_end_time) : ''}`
+                ? `${formattedDate} ${toAmPmSafe(ctx.old_start_time)}${ctx.old_end_time ? (' - ' + toAmPmSafe(ctx.old_end_time)) : ''}`
                 : 'N/A';
 
             $('#rescheduleOldText').text('Antes: ' + beforeTxt);
