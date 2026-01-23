@@ -4517,7 +4517,7 @@
         }
 
         function validateRescheduleStep1() {
-            const date = String($('#rescheduleDateInput').val() || '').trim();
+            const date = String(window.__rescheduleSelectedDate || $('#rescheduleDateInput').val() || '').trim();
             const slotSelected = window.__rescheduleSelectedSlot && window.__rescheduleSelectedSlot.start;
             const reason = String($('#rescheduleReasonSelect').val() || '').trim();
 
@@ -4661,7 +4661,8 @@
             const dateStr = String($(this).val() || '').trim();
 
             // Reset selección
-            window.__rescheduleSelected = null;
+            window.__rescheduleSelectedSlot = null;
+            validateRescheduleStep1();
 
             // ✅ Si ya había un hold tomado por un turno anterior, lo liberamos
             await __releaseRescheduleHold();
@@ -4686,10 +4687,19 @@
 
             window.__rescheduleSelectedSlot = { start, end };
 
+            // ✅ si por alguna razón el input de fecha no está seteado, no sigas
+            const dateStrNow = String($('#rescheduleDateInput').val() || '').trim();
+            if (!dateStrNow) {
+                alert('Primero selecciona una fecha.');
+                window.__rescheduleSelectedSlot = null;
+                $(this).removeClass('active');
+                return;
+            }
+
             // ✅ Crear HOLD en BD al seleccionar turno
             try {
                 const ctx = window.__rescheduleContext || null;
-                const dateStr = String($('#rescheduleDateInput').val() || '').trim();
+                const dateStr = __getRescheduleDateStr();
 
                 if (!ctx || !ctx.appointment_id || !ctx.employee_id || !dateStr || !start) {
                     throw new Error('Missing reschedule context/date/slot');
@@ -4716,7 +4726,13 @@
            validateRescheduleStep1();
 
             // Preview “Nuevo”
-            const dateStr = String($('#rescheduleDateInput').val() || '').trim();
+            const dateStr = String(window.__rescheduleSelectedDate || $('#rescheduleDateInput').val() || '').trim();
+
+            // ✅ sincroniza el input si por alguna razón está vacío
+            if (dateStr && !String($('#rescheduleDateInput').val() || '').trim()) {
+                $('#rescheduleDateInput').val(dateStr);
+            }
+
             const afterTxt = dateStr && start ? `${dateStr} ${start}${end ? (' - ' + end) : ''}` : 'N/A';
             $('#rescheduleConfirmAfter').text(afterTxt);
         });
@@ -4731,9 +4747,20 @@
             $('#rescheduleConfirmBtn').addClass('d-none');
         });
 
+        function __getRescheduleDateStr() {
+            const d = String(window.__rescheduleSelectedDate || $('#rescheduleDateInput').val() || '').trim();
+
+            // Mantener el input sincronizado si vino del calendario
+            if (d && !String($('#rescheduleDateInput').val() || '').trim()) {
+                $('#rescheduleDateInput').val(d);
+            }
+
+            return d;
+        }
+
         // Botón Siguiente (paso 1 => paso 2)
         $(document).on('click', '#rescheduleNextBtn', function () {
-            const dateStr = String($('#rescheduleDateInput').val() || '').trim();
+            const dateStr = __getRescheduleDateStr();
             const sel = window.__rescheduleSelectedSlot;
 
             if (!dateStr || !sel || !sel.start) return;
@@ -4749,10 +4776,12 @@
         // Confirmar reagendamiento => set hidden inputs + submit
         $(document).on('click', '#rescheduleConfirmBtn', function () {
             const ctx = window.__rescheduleContext || null;
-            const dateStr = String($('#rescheduleDateInput').val() || '').trim();
+            const dateStr = __getRescheduleDateStr();
             const sel = window.__rescheduleSelectedSlot;
 
             if (!ctx || !ctx.appointment_id || !dateStr || !sel || !sel.start) return;
+
+            $('#rescheduleDateInput').val(dateStr);
 
             const reason = String($('#rescheduleReasonSelect').val() || '').trim();
             const reasonOther = String($('#rescheduleReasonOtherInput').val() || '').trim();
