@@ -23,15 +23,39 @@ class AppointmentHoldController extends Controller
 
         $data = $request->validate([
             'employee_id' => ['required', 'integer'],
-            'service_id' => ['required', 'integer'],
+            'service_id' => ['nullable', 'integer'], // ✅ en admin puede venir vacío y lo sacamos de la cita
+            'appointment_id' => ['nullable', 'integer', 'exists:appointments,id'], // ✅ para reagendar
+            'is_admin' => ['nullable', 'boolean'], // ✅ para hold 10 min en admin
             'appointment_date' => ['required', 'date'],
             'appointment_time' => ['required', 'string', 'max:255'], // start (H:i) o rango
             'appointment_end_time' => ['nullable', 'string', 'max:255'], // end (H:i) opcional
         ]);
 
         $sessionId = $request->session()->getId();
-        $holdMinutes = 20;
+
+        // ✅ Admin: 10 min | Paciente: 20 min
+        $isAdmin = $request->boolean('is_admin');
+        $holdMinutes = $isAdmin ? 10 : 20;
+
         $expiresAt = now()->addMinutes($holdMinutes);
+
+        // ✅ Si no viene service_id, lo sacamos de la cita (útil en reagendar admin)
+        if (empty($data['service_id'])) {
+            if (!empty($data['appointment_id'])) {
+                $appt = Appointment::find($data['appointment_id']);
+                if ($appt && !empty($appt->service_id)) {
+                    $data['service_id'] = (int) $appt->service_id;
+                }
+            }
+        }
+
+        // Si aún no hay service_id, no podemos crear hold
+        if (empty($data['service_id'])) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Falta service_id para crear el hold.',
+            ], 422);
+        }
 
         // Normalizar start/end:
         // - Si viene "4:45 PM - 5:05 PM" lo convertimos a H:i

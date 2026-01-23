@@ -323,8 +323,8 @@ class AdminAvailabilityController extends Controller
             ->whereNotIn('status', ['Cancelled'])
             ->get(['appointment_time', 'appointment_end_time']);
 
-        // ✅ Admin: por defecto NO usar holds (son del flujo paciente)
-        $useHoldsInAdmin = false;
+        // ✅ Admin: SÍ usar holds para no mostrar turnos tomados temporalmente por pacientes
+        $useHoldsInAdmin = true;
 
         $activeHolds = collect();
         if ($useHoldsInAdmin) {
