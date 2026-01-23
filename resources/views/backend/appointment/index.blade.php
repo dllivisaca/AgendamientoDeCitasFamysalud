@@ -4408,7 +4408,8 @@
         window.__RESCHEDULE_SLOTS_URL = window.__RESCHEDULE_SLOTS_URL || '/appointments/reschedule/slots';
 
         function __rescheduleResetWizard() {
-            window.__rescheduleSelected = null;
+            window.__rescheduleSelectedDate = null;
+            window.__rescheduleSelectedSlot = null;
 
             // Step 1 visible, Step 2 oculto
             $('#rescheduleStep1').removeClass('d-none');
@@ -4454,7 +4455,7 @@
 
         function validateRescheduleStep1() {
             const date = String($('#rescheduleDateInput').val() || '').trim();
-            const slotSelected = window.__rescheduleSelected && window.__rescheduleSelected.start;
+            const slotSelected = window.__rescheduleSelectedSlot && window.__rescheduleSelectedSlot.start;
             const reason = String($('#rescheduleReasonSelect').val() || '').trim();
 
             const isValid = date && slotSelected && reason;
@@ -4475,7 +4476,9 @@
             slots.forEach(function (s) {
                 const start = String(s.start || '').trim();
                 const end = String(s.end || '').trim();
-                const label = String(s.label || (start && end ? (start + ' - ' + end) : start)).trim();
+                const label = String(
+                    s.label || s.display || (start && end ? (start + ' - ' + end) : start)
+                ).trim();
 
                 const $btn = $(`
                     <button type="button" class="btn btn-outline-primary btn-sm mr-2 mb-2 js-reschedule-slot"
@@ -4494,7 +4497,8 @@
             $('#rescheduleSlotsHint').show().text('Cargando horas disponibles...');
             $('#rescheduleSlots').empty();
 
-            const url = `${window.__RESCHEDULE_SLOTS_URL}?employee_id=${encodeURIComponent(employeeId)}&date=${encodeURIComponent(dateStr)}`;
+            const base = String(window.__RESCHEDULE_SLOTS_URL || '').replace(/\/+$/,''); // sin slash final
+            const url = `${base}/${encodeURIComponent(employeeId)}/${encodeURIComponent(dateStr)}`;
 
             try {
                 const res = await fetch(url, {
@@ -4508,7 +4512,10 @@
                 const data = await res.json();
 
                 // Espera: { slots: [ {start,end,label}, ... ] } o directamente [ ... ]
-                const slots = Array.isArray(data) ? data : (data.slots || []);
+                const slots = Array.isArray(data)
+                    ? data
+                    : (data.slots || data.available_slots || []);
+
                 __renderRescheduleSlots(slots);
 
             } catch (e) {
@@ -4607,7 +4614,7 @@
             const start = String($(this).data('start') || '').trim();
             const end = String($(this).data('end') || '').trim();
 
-            window.__rescheduleSelected = { start, end };
+            window.__rescheduleSelectedSlot = { start, end };
 
             // Habilitar siguiente
            validateRescheduleStep1();
@@ -4647,7 +4654,7 @@
         $(document).on('click', '#rescheduleConfirmBtn', function () {
             const ctx = window.__rescheduleContext || null;
             const dateStr = String($('#rescheduleDateInput').val() || '').trim();
-            const sel = window.__rescheduleSelected;
+            const sel = window.__rescheduleSelectedSlot;
 
             if (!ctx || !ctx.appointment_id || !dateStr || !sel || !sel.start) return;
 
@@ -4815,8 +4822,11 @@
             $("#reschedule-calendar-body .calendar-day").removeClass("active selected");
             $(this).addClass("active selected");
 
-            // Guardar selección global
-            window.__rescheduleSelected = dateStr;
+            // Guardar fecha seleccionada (NO pisa el slot)
+            window.__rescheduleSelectedDate = dateStr;
+
+            // Sincroniza la fecha al input real (para que valide y para que el confirm use esa fecha)
+            $('#rescheduleDateInput').val(dateStr).trigger('change');
 
             // Actualizar resumen "después" (solo fecha por ahora; la hora se setea cuando elijas slot)
             $('#rescheduleConfirmAfter').text(dateStr);
