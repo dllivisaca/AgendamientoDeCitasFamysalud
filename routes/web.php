@@ -45,6 +45,9 @@ Route::middleware(['auth'])->group(function () {
     ->middleware('permission:appointments.view')
     ->name('admin.appointments.transfer_receipt.view');
 
+    Route::get('/appointments/reschedule/slots', [AdminAvailabilityController::class, 'getEmployeeAvailability'])
+    ->name('admin.appointments.reschedule.slots');
+
     // Admin: disponibilidad (reagendar)
     Route::get('/admin/employees/{employee}/available-dates', [AdminAvailabilityController::class, 'getEmployeeAvailableDates'])
         ->name('admin.employees.available_dates');

@@ -1502,6 +1502,19 @@
     #reschedule-calendar-card .table-calendar tbody td{
     padding: .9rem .25rem !important;
     }
+
+    #reschedule-calendar-body .calendar-day { cursor: pointer; }
+
+    #reschedule-calendar-body .calendar-day.disabled{
+        cursor: not-allowed;
+        opacity: .35;
+        pointer-events: none;
+    }
+
+    #reschedule-calendar-body .calendar-day.selected {
+        border-radius: 8px;
+        font-weight: 700;
+    }
 </style>
 @stop
 
@@ -4659,13 +4672,23 @@
                 } else if (date > daysInMonth) {
                 row.append(`<td class="text-center py-2"></td>`);
                 } else {
-                // UI: día clickeable (sin reglas todavía)
-                row.append(`
-                    <td class="text-center py-2 calendar-day" data-date="${resYear}-${String(resMonth+1).padStart(2,'0')}-${String(date).padStart(2,'0')}">
-                    ${date}
-                    </td>
-                `);
-                date++;
+
+                    const today = new Date();
+                    today.setHours(0,0,0,0);
+
+                    const cellDate = new Date(resYear, resMonth, date);
+                    cellDate.setHours(0,0,0,0);
+
+                    const dateISO = `${resYear}-${String(resMonth+1).padStart(2,'0')}-${String(date).padStart(2,'0')}`;
+                    const isPastOrToday = (cellDate < today);
+
+                    row.append(`
+                        <td class="text-center py-2 calendar-day ${isPastOrToday ? 'disabled text-muted' : ''}" data-date="${dateISO}">
+                        ${date}
+                        </td>
+                    `);
+
+                    date++;
                 }
             }
 
@@ -4686,6 +4709,43 @@
             resMonth++;
             if (resMonth > 11) { resMonth = 0; resYear++; }
             generateRescheduleCalendar();
+        });
+
+        // Click en un día del calendario
+        $(document).on("click", "#reschedule-calendar-body .calendar-day", async function () {
+            const dateStr = String($(this).data("date") || "").trim();
+            if (!dateStr) return;
+
+            // Política admin: solo futuro (sin 24h, sin sábado)
+            const today = new Date();
+            today.setHours(0,0,0,0);
+
+            const picked = new Date(dateStr + "T00:00:00");
+            if (picked <= today) {
+                // Si quieres permitir HOY, cambia <= por <
+                $('#rescheduleSlotsHint').show().text('Selecciona una fecha futura.');
+                $('#rescheduleSlots').empty();
+                return;
+            }
+
+            // UI: marcar seleccionado
+            $("#reschedule-calendar-body .calendar-day").removeClass("active selected");
+            $(this).addClass("active selected");
+
+            // Guardar selección global
+            window.__rescheduleSelected = dateStr;
+
+            // Actualizar resumen "después" (solo fecha por ahora; la hora se setea cuando elijas slot)
+            $('#rescheduleConfirmAfter').text(dateStr);
+
+            // Cargar turnos
+            const ctx = window.__rescheduleContext || null;
+            if (!ctx || !ctx.employee_id) {
+                $('#rescheduleSlotsHint').show().text('No se pudo detectar el doctor/empleado.');
+                return;
+            }
+
+            await __loadRescheduleSlots(ctx.employee_id, dateStr);
         });
 
         // IMPORTANTE: generar cuando el modal ya abrió (si lo haces antes, a veces no pinta)
