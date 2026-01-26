@@ -23,6 +23,9 @@ class AdminAvailabilityController extends Controller
     {
         $date = $date ? Carbon::parse($date) : now();
 
+        // ✅ Admin: limpiar holds expirados para no saturar appointment_holds
+        AppointmentHold::where('expires_at', '<', now())->delete();
+
         // ✅ Solo futuras (desde hoy)
         if ($date->lt(now()->startOfDay())) {
             return response()->json([
