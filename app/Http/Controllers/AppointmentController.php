@@ -357,6 +357,29 @@ class AppointmentController extends Controller
 
         $appointment = Appointment::findOrFail($request->appointment_id);
 
+        // ✅ Si viene reagendamiento, "mapeamos" reschedule_* a appointment_*
+        // para que la auditoría detecte cambios en fecha/hora.
+        if ($request->filled('status') && $request->status === 'rescheduled') {
+
+            if ($request->filled('reschedule_date')) {
+                $request->merge(['appointment_date' => $request->input('reschedule_date')]);
+            }
+            if ($request->filled('reschedule_time')) {
+                $request->merge(['appointment_time' => $request->input('reschedule_time')]);
+            }
+            if ($request->filled('reschedule_end_time')) {
+                $request->merge(['appointment_end_time' => $request->input('reschedule_end_time')]);
+            }
+
+            // (opcional) también auditar el motivo de reagendamiento
+            if ($request->has('reschedule_reason')) {
+                $request->merge(['audit_reschedule_reason' => $request->input('reschedule_reason')]);
+            }
+            if ($request->has('reschedule_reason_other')) {
+                $request->merge(['audit_reschedule_reason_other' => $request->input('reschedule_reason_other')]);
+            }
+        }
+
         // ✅ Campos que SÍ vamos a considerar para auditoría
         $allTrackable = [
             // Estados
@@ -364,6 +387,9 @@ class AppointmentController extends Controller
 
             // Cita (reagendamiento)
             'appointment_date', 'appointment_time', 'appointment_end_time',
+
+            // Motivo de reagendamiento (solo para audit)
+            'audit_reschedule_reason', 'audit_reschedule_reason_other',
 
             // Montos y pago
             'amount', 'amount_paid', 'payment_paid_at', 'client_transaction_id',
