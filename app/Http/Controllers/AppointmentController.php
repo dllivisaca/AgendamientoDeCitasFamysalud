@@ -527,7 +527,7 @@ class AppointmentController extends Controller
 
         // ✅ Guardar monto pagado SOLO si viene con valor (evita setear null en columnas NOT NULL)
         // Nota: "0" y "0.00" cuentan como valor válido
-        if ($request->has('amount_paid')) {
+        if ($request->filled('amount_paid')) {
             $raw = $request->input('amount_paid');
 
             if ($raw !== null) {
@@ -556,7 +556,7 @@ class AppointmentController extends Controller
         }
 
         // ✅ Guardar observaciones de pago (payment_notes) si vienen en el request
-        if ($request->has('payment_notes')) {
+        if ($request->filled('payment_notes')) {
             $valNotes = $request->input('payment_notes');
             $valNotes = is_string($valNotes) ? trim($valNotes) : $valNotes;
 

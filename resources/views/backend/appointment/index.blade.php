@@ -166,7 +166,7 @@
                                         <option value="completed">Completada</option>
                                         <option value="no_show">No asistió</option>
                                         <option value="on_hold">En espera</option>
-                                        <option value="rescheduled">Reagendada</option>
+                                        <option value="rescheduled" disabled hidden>Reagendada</option>
                                     </select>
                                 </div>
 
@@ -4293,6 +4293,14 @@
             $('body').addClass('appt-edit-mode');
 
             $('#editModeBanner').show();
+
+            const currentStatus = String($('#modalStatusHidden').val() || '').trim().toLowerCase();
+            if (currentStatus === 'rescheduled') {
+                $('#modalStatusSelect').prop('disabled', true);
+            } else {
+                $('#modalStatusSelect').prop('disabled', false);
+            }
+
             $('#btnCancelEditMode').show();
             $('#apptModeBadge').show();
 
@@ -4867,6 +4875,15 @@
 
             // Cerrar wizard y enviar
             $('#rescheduleWizardModal').modal('hide');
+
+            // ✅ Reagendar NO debe tocar nada de pago (evita que se sobreescriba con "" / null / 0)
+            $('#modalPaymentMethodHidden').prop('disabled', true);
+            $('#modalPaymentStatusHidden').prop('disabled', true);
+            $('#modalAmountPaidHidden').prop('disabled', true);
+            $('#modalPaymentPaidAtHidden').prop('disabled', true);
+            $('#modalClientTransactionIdHidden').prop('disabled', true);
+            $('#modalPaymentNotesHidden').prop('disabled', true);
+
             $('#appointmentStatusForm')[0].submit();
         });
 
