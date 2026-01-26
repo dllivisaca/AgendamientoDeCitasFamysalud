@@ -4335,12 +4335,24 @@
             // 1) Actualizar los data-* del botón "Ver detalles" de esa cita
             const $btn = $(`.view-appointment-btn[data-id="${p.appointment_id}"]`);
             if ($btn.length) {
+
+                // ✅ 1) Actualiza atributos HTML
                 $btn.attr('data-date', p.date);
                 $btn.attr('data-start-time', p.start);
                 $btn.attr('data-end-time', p.end);
-
-                // si tienes también data-start:
                 $btn.attr('data-start', `${p.date} ${p.start}`);
+
+                // ✅ 2) MATA el caché de jQuery .data() (clave para que el modal lea lo nuevo)
+                $btn.removeData('date');
+                $btn.removeData('startTime');  // data-start-time => startTime
+                $btn.removeData('endTime');    // data-end-time   => endTime
+                $btn.removeData('start');
+
+                // ✅ 3) (Opcional pero recomendado) setea también el cache nuevo
+                $btn.data('date', p.date);
+                $btn.data('startTime', p.start);
+                $btn.data('endTime', p.end);
+                $btn.data('start', `${p.date} ${p.start}`);
             }
 
             // 2) Actualizar la fila de la tabla (recomendado: agregar clases/ids, ver paso 3)
