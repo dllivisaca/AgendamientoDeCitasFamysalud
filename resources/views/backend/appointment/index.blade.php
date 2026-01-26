@@ -1160,11 +1160,11 @@
                                                 <td>
                                                     {{ $appointment->service->title ?? 'NA' }}
                                                 </td>
-                                                <td>
+                                                <td class="appt-date">
                                                     {{ \Carbon\Carbon::parse($appointment->appointment_date)->translatedFormat('d M Y') }}
                                                 </td>
-                                                <td>
-                                                    {{ 
+                                                <td class="appt-time">
+                                                    {{
                                                         \Carbon\Carbon::parse($appointment->appointment_time)->format('g:i A')
                                                     }}
                                                     -
@@ -3733,6 +3733,14 @@
             window.__changeReasonBypassSubmit = true;
             $('#changeReasonModal').modal('hide');
 
+            // ✅ Guardar lo que se eligió para refrescar UI sin recargar
+            window.__pendingRescheduleUi = {
+            appointment_id: ctx.appointment_id,
+            date: dateStr,          // "YYYY-MM-DD"
+            start: sel.start,       // "HH:MM"
+            end: sel.end || ''      // "HH:MM"
+            };
+
             // Re-disparar submit
             $('#appointmentStatusForm')[0].submit();
 
@@ -4319,6 +4327,64 @@
             window.__apptModalSnapshot = null;
             $('#btnSaveChanges').prop('disabled', true);
         });
+
+        function __applyPendingRescheduleUi() {
+            const p = window.__pendingRescheduleUi;
+            if (!p || !p.appointment_id) return;
+
+            // 1) Actualizar los data-* del botón "Ver detalles" de esa cita
+            const $btn = $(`.view-appointment-btn[data-id="${p.appointment_id}"]`);
+            if ($btn.length) {
+                $btn.attr('data-date', p.date);
+                $btn.attr('data-start-time', p.start);
+                $btn.attr('data-end-time', p.end);
+
+                // si tienes también data-start:
+                $btn.attr('data-start', `${p.date} ${p.start}`);
+            }
+
+            // 2) Actualizar la fila de la tabla (recomendado: agregar clases/ids, ver paso 3)
+            const $row = $btn.closest('tr');
+            if ($row.length) {
+                // OJO: aquí depende de tu estructura exacta de columnas.
+                // Te dejo la forma robusta (ver paso 3 para poner clases y que sea exacto).
+                const dateTxt = new Intl.DateTimeFormat('es-EC', { day:'2-digit', month:'short', year:'numeric' })
+                .format(new Date(p.date + "T00:00:00"));
+
+                const to12h = (hhmm) => {
+                const [hh, mm] = String(hhmm).slice(0,5).split(':').map(Number);
+                const t = new Date(2000,0,1,hh,mm,0);
+                return new Intl.DateTimeFormat('en-US',{hour:'numeric',minute:'2-digit',hour12:true}).format(t);
+                };
+
+                const timeTxt = `${to12h(p.start)} - ${to12h(p.end)}`;
+
+                // Si NO tienes clases en los <td>, esto puede variar.
+                // Mejor aplica el paso 3 abajo para hacerlo exacto.
+                $row.find('td.appt-date').text(dateTxt);
+                $row.find('td.appt-time').text(timeTxt);
+            }
+
+            // 3) Si el modal está abierto ahora mismo, refrescar lo que muestra también
+            // (muchas veces tu modal usa #modalDateTime / #modalDateTime2, etc.)
+            // Si esos IDs existen en tu modal, actualízalos aquí:
+            if ($('#appointmentModal').hasClass('show')) {
+                const dateTxt = new Intl.DateTimeFormat('es-EC', { day:'2-digit', month:'short', year:'numeric' })
+                .format(new Date(p.date + "T00:00:00"));
+
+                const to12h = (hhmm) => {
+                const [hh, mm] = String(hhmm).slice(0,5).split(':').map(Number);
+                const t = new Date(2000,0,1,hh,mm,0);
+                return new Intl.DateTimeFormat('en-US',{hour:'numeric',minute:'2-digit',hour12:true}).format(t);
+                };
+
+                $('#modalDateTime').text(dateTxt); // si tu modal usa ese id
+                $('#modalDateTime2').text(`${to12h(p.start)} - ${to12h(p.end)}`); // si tu modal usa ese id
+            }
+
+            // limpiar
+            window.__pendingRescheduleUi = null;
+            }
     </script>
 
     <script>
@@ -4948,6 +5014,14 @@
 
             $('#modalAmountPaidHidden').val(String($('#modalAmountPaidHidden').val() || '0').trim());
 
+            // ✅ Guardar payload para actualizar UI sin recargar (tabla + botón + modal)
+            window.__pendingRescheduleUi = {
+                appointment_id: ctx.appointment_id,
+                date: dateStr,            // "YYYY-MM-DD"
+                start: sel.start,         // "HH:MM"
+                end: sel.end || ''        // "HH:MM"
+            };
+
             // Cerrar wizard y enviar
             $('#rescheduleWizardModal').modal('hide');
 
@@ -4979,8 +5053,18 @@
 
                     if (res.ok && data && data.success) {
                         showFlash('success', data.message || 'Cambios guardados correctamente.');
+
+                        // ✅ APLICAR CAMBIO DE FECHA/HORA EN UI SIN RECARGAR
+                        if (typeof __applyPendingRescheduleUi === 'function') {
+                            __applyPendingRescheduleUi();
+                        }
                     } else {
-                        showFlash('danger', (data && data.message) ? data.message : ('No se pudo reagendar (HTTP ' + res.status + ').'));
+                        showFlash(
+                            'danger',
+                            (data && data.message)
+                                ? data.message
+                                : ('No se pudo reagendar (HTTP ' + res.status + ').')
+                        );
                     }
                 } catch (e) {
                     showFlash('danger', 'Error de red. No se pudo reagendar.');
