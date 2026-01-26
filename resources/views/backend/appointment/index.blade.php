@@ -1006,6 +1006,7 @@
     </div>
 
     <div class="">
+        <div id="jsFlashContainer"></div>
         @if (session('success'))
             <div class="alert alert-success alert-dismissable">
                 <button type="button" class="close" data-dismiss="alert" aria-label="Close">
@@ -3318,6 +3319,34 @@
             __updateSaveButtonState();
         });
 
+        function showFlash(type, message) {
+            const safeMsg = String(message || '').trim() || 'Cambios guardados correctamente.';
+
+            // Si existe un contenedor, úsalo; si no, lo crea arriba de la página
+            let $c = $('#jsFlashContainer');
+            if (!$c.length) {
+                $('body').prepend('<div id="jsFlashContainer" style="position:fixed;top:15px;left:15px;right:15px;z-index:9999;"></div>');
+                $c = $('#jsFlashContainer');
+            }
+
+            $c.html(`
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${safeMsg}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            `);
+
+            // Scroll suave hacia el mensaje (opcional)
+            try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) {}
+
+            // auto-ocultar en 4s (opcional)
+            setTimeout(() => {
+                try { $c.find('.alert').alert('close'); } catch(e) {}
+            }, 4000);
+        }
+
         // ✅ Antes de enviar el form: valida reglas y llena hidden inputs
         $(document).on('submit', '#appointmentStatusForm', function (e) {
             // ============================
@@ -3614,11 +3643,54 @@
                 return false;
             }
 
-            return true;
-            console.log('[hidden transfer_validation_status]', $('#modalTransferValidationStatusInput').val());
-            console.log('[hidden transfer_validation_notes]', $('#modalTransferValidationNotesInput').val());
-           
-            return true;
+            // ✅ Enviar por AJAX para poder mostrar el mensaje verde sin depender del reload
+            e.preventDefault();
+
+            const form = this;
+            const fd = new FormData(form);
+
+            // (Opcional) Deshabilitar botón para evitar doble click
+            const $btn = $('#rescheduleConfirmBtn');
+            if ($btn.length) $btn.prop('disabled', true);
+
+            fetch(form.action, {
+                method: (form.method || 'POST').toUpperCase(),
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                body: fd
+            })
+            .then(async (resp) => {
+                const ct = (resp.headers.get('content-type') || '').toLowerCase();
+                let data = null;
+
+                if (ct.includes('application/json')) {
+                    data = await resp.json().catch(() => null);
+                }
+
+                if (!resp.ok) {
+                    const msg = (data && (data.message || data.error)) ? (data.message || data.error) : 'No se pudo guardar.';
+                    throw new Error(msg);
+                }
+
+                showFlash('success', (data && data.message) ? data.message : 'Cambios guardados correctamente.');
+
+                // ✅ Si tienes modal, ciérralo (si aplica)
+                try { $('#appointmentModal').modal('hide'); } catch(e) {}
+                try { $('#rescheduleModal').modal('hide'); } catch(e) {}
+
+                // ✅ Recargar para ver tabla actualizada (recomendado)
+                window.location.reload();
+            })
+            .catch((err) => {
+                showFlash('danger', err.message || 'Error al guardar.');
+            })
+            .finally(() => {
+                if ($btn.length) $btn.prop('disabled', false);
+            });
+
+            return false;
         });
 
         // ============================
@@ -3663,6 +3735,9 @@
 
             // Re-disparar submit
             $('#appointmentStatusForm')[0].submit();
+
+            // ✅ Reset: para que no se quede bypass encendido para futuros submits
+            setTimeout(() => { window.__changeReasonBypassSubmit = false; }, 0);
         });
 
         // Al cerrar el modal (cancelar), limpiamos bypass para que no quede sucio
@@ -4884,7 +4959,41 @@
             $('#modalClientTransactionIdHidden').prop('disabled', true);
             $('#modalPaymentNotesHidden').prop('disabled', true);
 
-            $('#appointmentStatusForm')[0].submit();
+            // ✅ Enviar por AJAX para mostrar flash sin recargar
+            (async () => {
+                const form = document.getElementById('appointmentStatusForm');
+                const fd = new FormData(form);
+
+                try {
+                    const res = await fetch(form.action, {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': __csrfToken(),
+                        },
+                        body: fd,
+                    });
+
+                    const data = await res.json().catch(() => null);
+
+                    if (res.ok && data && data.success) {
+                        showFlash('success', data.message || 'Cambios guardados correctamente.');
+                    } else {
+                        showFlash('danger', (data && data.message) ? data.message : ('No se pudo reagendar (HTTP ' + res.status + ').'));
+                    }
+                } catch (e) {
+                    showFlash('danger', 'Error de red. No se pudo reagendar.');
+                } finally {
+                    // ✅ Rehabilitar lo que deshabilitaste
+                    $('#modalPaymentMethodHidden').prop('disabled', false);
+                    $('#modalPaymentStatusHidden').prop('disabled', false);
+                    $('#modalAmountPaidHidden').prop('disabled', false);
+                    $('#modalPaymentPaidAtHidden').prop('disabled', false);
+                    $('#modalClientTransactionIdHidden').prop('disabled', false);
+                    $('#modalPaymentNotesHidden').prop('disabled', false);
+                }
+            })();
         });
 
         // Al cerrar wizard, reabrir modal de detalles si quieres seguir viendo info

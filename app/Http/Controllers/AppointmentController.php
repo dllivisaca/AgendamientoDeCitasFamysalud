@@ -921,6 +921,14 @@ class AppointmentController extends Controller
 
         event(new StatusUpdated($appointment));
 
+        // ✅ Responder JSON también para fetch/AJAX aunque no venga Accept: application/json
+        if ($request->expectsJson() || $request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Cambios guardados correctamente.'
+            ]);
+        }
+
         return redirect()->back()->with('success', 'Cambios guardados correctamente.');
     }
 
