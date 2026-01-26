@@ -436,7 +436,10 @@ class AppointmentController extends Controller
                 $appointment->save();
 
                 $reason = strtolower(trim((string) $request->input('reschedule_reason')));
-                $allowedReasons = ['patient_requested', 'doctor_requested', 'admin_requested', 'other'];
+                if ($reason === 'admin_requested') {
+                    $reason = 'admin';
+                }
+                $allowedReasons = ['patient_requested', 'doctor_requested', 'admin', 'other'];
                 if (!in_array($reason, $allowedReasons, true)) {
                     $reason = 'other';
                 }
@@ -459,6 +462,22 @@ class AppointmentController extends Controller
                     'rescheduled_by_user_id' => Auth::id(),
                     'created_at' => now(),
                 ]);
+
+                // ✅ Consumir/eliminar el HOLD del nuevo turno (ya fue usado para reagendar)
+                AppointmentHold::where('employee_id', $appointment->employee_id)
+                    ->where('appointment_date', $newDate)
+                    ->where('appointment_time', $newTime)
+                    ->where('appointment_end_time', $newEnd)
+                    ->where('expires_at', '>', now()) // opcional pero recomendado
+                    ->delete();
+
+                // ✅ Limpieza extra: borrar hold del turno anterior si existiera (evita basura)
+                AppointmentHold::where('employee_id', $appointment->employee_id)
+                    ->where('appointment_date', $oldDate)
+                    ->where('appointment_time', $oldTime)
+                    ->where('appointment_end_time', $oldEnd)
+                    ->where('expires_at', '>', now())
+                    ->delete();
             });
         }
 
