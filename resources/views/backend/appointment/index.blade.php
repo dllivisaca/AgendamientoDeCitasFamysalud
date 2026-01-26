@@ -166,6 +166,7 @@
                                         <option value="completed">Completada</option>
                                         <option value="no_show">No asistió</option>
                                         <option value="on_hold">En espera</option>
+                                        <option value="rescheduled">Reagendada</option>
                                     </select>
                                 </div>
 
@@ -1198,7 +1199,7 @@
                                                             'confirmed' => 'Confirmada',
                                                             'completed' => 'Completada',
                                                             'on_hold' => 'En espera',
-                                                            'rescheduled' => 'Reprogramada',
+                                                            'rescheduled' => 'Reagendada',
                                                             'no_show' => 'No asistió',
                                                             'pending_verification' => 'Pendiente de verificación',
                                                         ];
@@ -2745,7 +2746,7 @@
                     confirmed: 'Confirmada',
                     completed: 'Completada',
                     on_hold: 'En espera',
-                    rescheduled: 'Reprogramada',
+                    rescheduled: 'Reagendada',
                     no_show: 'No asistió',
                     pending_verification: 'Pendiente de verificación',
                 };
@@ -4856,6 +4857,13 @@
 
             // Opcional: marcar estado como rescheduled si tu backend lo espera
             $('#modalStatusHidden').val('rescheduled');
+
+            // Reagendar no debería tocar pagos
+            $('#modalAmountPaidHidden').val('');
+            $('#modalPaymentPaidAtHidden').val('');
+            $('#modalClientTransactionIdHidden').val('');
+
+            $('#modalAmountPaidHidden').val(String($('#modalAmountPaidHidden').val() || '0').trim());
 
             // Cerrar wizard y enviar
             $('#rescheduleWizardModal').modal('hide');

@@ -525,9 +525,19 @@ class AppointmentController extends Controller
             $appointment->payment_status = $request->payment_status;
         }
 
-        // ✅ Guardar monto pagado / fecha pago / transaction id (aunque vengan en 0 o vacíos)
+        // ✅ Guardar monto pagado SOLO si viene con valor (evita setear null en columnas NOT NULL)
+        // Nota: "0" y "0.00" cuentan como valor válido
         if ($request->has('amount_paid')) {
-            $appointment->amount_paid = $request->input('amount_paid');
+            $raw = $request->input('amount_paid');
+
+            if ($raw !== null) {
+                $raw = is_string($raw) ? trim($raw) : $raw;
+
+                // Si viene vacío, NO lo tocamos (ej: reagendar no debería modificar pagos)
+                if ($raw !== '') {
+                    $appointment->amount_paid = $raw;
+                }
+            }
         }
 
         // ✅ Guardar payment_paid_at EXACTAMENTE como lo manda el admin
