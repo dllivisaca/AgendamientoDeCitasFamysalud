@@ -295,6 +295,13 @@ class AppointmentController extends Controller
             'appointment_id' => 'required|exists:appointments,id',
             'status' => 'required|in:pending_verification,pending_payment,on_hold,confirmed,paid,completed,cancelled,no_show,rescheduled',
 
+            // ✅ Reagendamiento (viene desde el wizard)
+            'reschedule_date'      => 'nullable|date',
+            'reschedule_time'      => 'nullable|string|max:5',
+            'reschedule_end_time'  => 'nullable|string|max:5',
+            'reschedule_reason'        => 'nullable|in:patient_requested,doctor_requested,admin_requested,other',
+            'reschedule_reason_other'  => 'nullable|string|max:180',
+
             // ✅ Guardar método/monto/estado pago desde el modal
             'payment_method' => 'nullable|in:transfer,card,cash',
             'amount' => 'nullable|numeric|min:0',
@@ -355,6 +362,9 @@ class AppointmentController extends Controller
             // Estados
             'status', 'payment_method', 'payment_status',
 
+            // Cita (reagendamiento)
+            'appointment_date', 'appointment_time', 'appointment_end_time',
+
             // Montos y pago
             'amount', 'amount_paid', 'payment_paid_at', 'client_transaction_id',
             'payment_notes',
@@ -398,6 +408,58 @@ class AppointmentController extends Controller
         // ✅ Solo cambiar status si realmente viene (y no por efecto del método de pago)
         if ($request->filled('status')) {
             $appointment->status = $request->status;
+        }
+
+        // ✅ Si es reagendamiento: actualizar fecha/hora de la cita + guardar historial
+        if ($request->filled('status') && $request->status === 'rescheduled') {
+
+            $newDate = $request->input('reschedule_date');
+            $newTime = $request->input('reschedule_time');
+            $newEnd  = $request->input('reschedule_end_time');
+
+            // No hacemos cambios silenciosos si faltan datos
+            if (!$newDate || !$newTime || !$newEnd) {
+                return redirect()->back()->with('error', 'Para reagendar, debe seleccionar fecha y horario.');
+            }
+
+            // Valores anteriores (para historial)
+            $oldDate = $appointment->appointment_date;
+            $oldTime = $appointment->appointment_time;
+            $oldEnd  = $appointment->appointment_end_time;
+
+            DB::transaction(function () use ($request, $appointment, $oldDate, $oldTime, $oldEnd, $newDate, $newTime, $newEnd) {
+
+                // 1) ✅ Actualizar appointment (cita real)
+                $appointment->appointment_date = $newDate;
+                $appointment->appointment_time = $newTime;
+                $appointment->appointment_end_time = $newEnd;
+                $appointment->save();
+
+                $reason = strtolower(trim((string) $request->input('reschedule_reason')));
+                $allowedReasons = ['patient_requested', 'doctor_requested', 'admin_requested', 'other'];
+                if (!in_array($reason, $allowedReasons, true)) {
+                    $reason = 'other';
+                }
+
+                // 2) ✅ Guardar historial en appointment_reschedules
+                DB::table('appointment_reschedules')->insert([
+                    'appointment_id' => $appointment->id,
+
+                    // ANTES (inicio + fin)
+                    'from_datetime'     => Carbon::parse($oldDate . ' ' . $oldTime),
+                    'from_end_datetime' => Carbon::parse($oldDate . ' ' . $oldEnd),
+
+                    // DESPUÉS (inicio + fin)
+                    'to_datetime'       => Carbon::parse($newDate . ' ' . $newTime),
+                    'to_end_datetime'   => Carbon::parse($newDate . ' ' . $newEnd),
+
+                    'reason' => $reason,
+                    'note'   => $request->input('reschedule_reason_other'),
+
+                    'rescheduled_by_user_id' => Auth::id(),
+                    'created_at' => now(),
+                ]);
+            });
         }
 
         // ✅ Guardar datos del paciente SOLO si vienen en el request
@@ -705,7 +767,9 @@ class AppointmentController extends Controller
             // ✅ guardar el nuevo
             $appointment->transfer_receipt_path = $request->file('tr_file')->store('transfer_proofs', 'public');
         }
-        $appointment->save();
+        if (!($request->filled('status') && $request->status === 'rescheduled')) {
+            $appointment->save();
+        }
 
         // ✅ Calcular diferencias SOLO por lo que vino del request (evita falsos cambios por formato)
         $changedFields = [];
