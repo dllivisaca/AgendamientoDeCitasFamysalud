@@ -16,6 +16,7 @@ class AppointmentHold extends Model
         'appointment_time',
         'appointment_end_time',
         'session_id',
+        'created_by_user_id',
         'expires_at',
         'created_at',
     ];

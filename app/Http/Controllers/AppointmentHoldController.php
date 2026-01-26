@@ -8,6 +8,7 @@ use App\Models\AppointmentHold;
 use App\Models\Appointment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class AppointmentHoldController extends Controller
 {
@@ -36,6 +37,7 @@ class AppointmentHoldController extends Controller
         // ✅ Admin: 10 min | Paciente: 20 min
         $isAdmin = $request->boolean('is_admin');
         $holdMinutes = $isAdmin ? 10 : 20;
+        $createdByUserId = $isAdmin ? Auth::id() : null;
 
         $expiresAt = now()->addMinutes($holdMinutes);
 
@@ -139,6 +141,11 @@ class AppointmentHoldController extends Controller
                 $existing->expires_at = $expiresAt;
                 $existing->appointment_time = $data['appointment_time'];
                 $existing->appointment_end_time = $data['appointment_end_time'];
+
+                if ($isAdmin) {
+                    $existing->created_by_user_id = $createdByUserId;
+                }
+
                 $existing->save();
 
                 DB::commit();
@@ -157,6 +164,7 @@ class AppointmentHoldController extends Controller
                 'appointment_time' => $data['appointment_time'],
                 'appointment_end_time' => $data['appointment_end_time'],
                 'session_id' => $sessionId,
+                'created_by_user_id' => $createdByUserId,
                 'expires_at' => $expiresAt,
                 'created_at' => now(),
             ]);

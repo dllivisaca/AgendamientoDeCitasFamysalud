@@ -4414,6 +4414,33 @@
             return $('meta[name="csrf-token"]').attr('content') || '';
         }
 
+        function __formatRescheduleSummary(dateStr, startHHMM, endHHMM) {
+            // dateStr: "2026-01-27"
+            // startHHMM/endHHMM: "09:15" / "09:25"
+
+            const [y, m, d] = dateStr.split('-').map(Number);
+            const dt = new Date(y, m - 1, d);
+
+            // "10 ene 2026" (en Ecuador, español)
+            const datePart = new Intl.DateTimeFormat('es-EC', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+            }).format(dt);
+
+            const to12h = (hhmm) => {
+                const [hh, mm] = hhmm.split(':').map(Number);
+                const t = new Date(2000, 0, 1, hh, mm, 0);
+                return new Intl.DateTimeFormat('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+                }).format(t); // e.g. "3:30 PM"
+            };
+
+            return `${datePart} ${to12h(startHHMM)} - ${to12h(endHHMM)}`;
+        }
+
         // Libera el hold actual (si existe)
         async function __releaseRescheduleHold() {
             if (!window.__rescheduleHoldId) return;
@@ -4434,6 +4461,32 @@
             } finally {
                 window.__rescheduleHoldId = null;
             }
+        }
+
+        function __formatRescheduleSummary(dateStr, startHHMM, endHHMM) {
+            const [y, m, d] = dateStr.split('-').map(Number);
+            const dt = new Date(y, m - 1, d);
+
+            // "10 ene 2026"
+            const datePart = new Intl.DateTimeFormat('es-EC', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+            }).format(dt);
+
+            const to12h = (hhmm) => {
+                const [hh, mm] = hhmm.split(':').map(Number);
+                const t = new Date(2000, 0, 1, hh, mm);
+                return new Intl.DateTimeFormat('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                }).format(t);
+            };
+
+            if (!startHHMM) return datePart;
+
+            return `${datePart} ${to12h(startHHMM)} - ${to12h(endHHMM)}`;
         }
 
         // Crea un hold en BD al seleccionar turno
@@ -4735,7 +4788,10 @@
                 $('#rescheduleDateInput').val(dateStr);
             }
 
-            const afterTxt = dateStr && start ? `${dateStr} ${start}${end ? (' - ' + end) : ''}` : 'N/A';
+            const afterTxt = (dateStr && start && end)
+                ? __formatRescheduleSummary(dateStr, start, end)
+                : 'N/A';
+
             $('#rescheduleConfirmAfter').text(afterTxt);
         });
 
