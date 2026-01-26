@@ -847,6 +847,7 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="small text-muted mb-1">Selecciona una fecha</label>
+                                <input type="hidden" id="rescheduleDateInput" name="reschedule_date" value="">
 
                                 <div class="card mb-4" id="reschedule-calendar-card">
                                     <div class="card-header d-flex justify-content-between align-items-center">
@@ -4441,9 +4442,10 @@
             const payload = {
                 appointment_id: ctx.appointment_id,
                 employee_id: ctx.employee_id,
-                date: dateStr,
-                start: start,
-                end: end
+                appointment_date: dateStr,
+                appointment_time: start,
+                appointment_end_time: end,
+                is_admin: true
             };
 
             const res = await fetch('/appointment-holds', {
