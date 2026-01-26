@@ -429,7 +429,25 @@ class AppointmentController extends Controller
             $neverAudit
         ));
 
+        // ✅ Obtener último reschedule previo (para auditoría OLD values)
+        $prevReschedule = DB::table('appointment_reschedules')
+            ->where('appointment_id', $appointment->id)
+            ->latest('id')
+            ->first();
+
+        $prevRescheduleReason = $prevReschedule->reason ?? null;
+        $prevRescheduleNote   = $prevReschedule->note ?? null;
+
         $before = !empty($tracked) ? $appointment->only($tracked) : [];
+
+        // ✅ Inyectar OLD values reales del reschedule (si aplica)
+        if (in_array('audit_reschedule_reason', $tracked, true)) {
+            $before['audit_reschedule_reason'] = $prevRescheduleReason;
+        }
+
+        if (in_array('audit_reschedule_reason_other', $tracked, true)) {
+            $before['audit_reschedule_reason_other'] = $prevRescheduleNote;
+        }
 
         // ✅ Solo cambiar status si realmente viene (y no por efecto del método de pago)
         if ($request->filled('status')) {
