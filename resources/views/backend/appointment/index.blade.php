@@ -2773,6 +2773,13 @@
                 .replace(/\s+/g, '_')
                 .replace('cancelled', 'canceled'); // ✅ fuerza tu formato en BD
 
+                // ✅ Ocultar "Confirmar cita" si ya está confirmada
+                if (normalizedStatus === 'confirmed') {
+                    $('#btnConfirmarCita').addClass('d-none');
+                } else {
+                    $('#btnConfirmarCita').removeClass('d-none');
+                }
+
             // Colores por status normalizado
             const statusColors = {
                 // ✅ nuevos
