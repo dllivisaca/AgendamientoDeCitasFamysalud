@@ -162,7 +162,7 @@
                                         <option value="pending_verification">Pendiente de verificación</option>
                                         <option value="pending_payment">Pendiente de pago</option>
                                         <option value="paid">Pagada</option>
-                                        <option value="confirmed">Confirmada</option>
+                                        <option value="confirmed" disabled hidden>Confirmada</option>
                                         <option value="completed">Completada</option>
                                         <option value="no_show">No asistió</option>
                                         <option value="on_hold">En espera</option>
