@@ -155,7 +155,7 @@
                                     <div class="small text-muted">Estado de la cita</div>
 
                                     {{-- Texto (badge) --}}
-                                    <div class="text-dark js-edit-text" id="modalStatusBadge">N/A</div>
+                                    <div class="text-dark js-edit-text appt-status-modal" id="modalStatusBadge">N/A</div>
 
                                     {{-- Select (modo edición) --}}
                                     <select class="form-control form-control-sm js-edit-input" id="modalStatusSelect">
@@ -1173,7 +1173,7 @@
                                                             \Carbon\Carbon::parse($appointment->appointment_end_time)->format('g:i A')
                                                         }}
                                                     </td>
-                                                    <td>
+                                                    <td class="appt-status">
                                                         @php
                                                             $rawStatus = $appointment->status;
 
@@ -1871,6 +1871,13 @@
         };
         $(document).on('click', '.view-appointment-btn', function() {
             // ✅ RESET DURO: al abrir, limpia cualquier "draft" viejo (evita glitch de valores fantasma)
+            // Limpia hiddens de reagendamiento por defecto (se volverán a setear si la cita está rescheduled)
+            $('#rescheduleDateHidden').val('');
+            $('#rescheduleTimeHidden').val('');
+            $('#rescheduleEndTimeHidden').val('');
+            $('#rescheduleReasonHidden').val('');
+            $('#rescheduleReasonOtherHidden').val('');
+
             $('#btnSaveChanges').prop('disabled', true);
             window.__apptIsEditMode = false;
             $('body').removeClass('appt-edit-mode appt-quick-transfer-mode transfer-notes-visible transfer-notes-opt transfer-notes-req');
@@ -2031,6 +2038,27 @@
             const date = $(this).data('date');
             const startTime = $(this).data('start-time');
             const endTime = $(this).data('end-time');
+
+            // ✅ Si la cita YA está reagendada, precargar los hidden de reagendamiento
+            // para que "Guardar cambios" no dispare la validación de reagendar.
+            const __rawStatusForReschedule = String($(this).data('status') || '').trim().toLowerCase()
+                .replace(/\s+/g, '_')
+                .replace('cancelled', 'canceled');
+
+            if (__rawStatusForReschedule === 'rescheduled') {
+                const dStr = String(date || '').trim();                 // YYYY-MM-DD
+                const sStr = String(startTime || '').trim().slice(0, 5); // HH:MM
+                const eStr = String(endTime || '').trim().slice(0, 5);   // HH:MM
+
+                $('#rescheduleDateHidden').val(dStr);
+                $('#rescheduleTimeHidden').val(sStr);
+                $('#rescheduleEndTimeHidden').val(eStr);
+            } else {
+                // Si NO está reagendada, limpiar para no enviar basura
+                $('#rescheduleDateHidden').val('');
+                $('#rescheduleTimeHidden').val('');
+                $('#rescheduleEndTimeHidden').val('');
+            }
 
             // ✅ Parsear YYYY-MM-DD sin que se corra por zona horaria
             let formattedDate = 'N/A';
@@ -3443,7 +3471,10 @@
         });
 
         function showFlash(type, message) {
-            const safeMsg = String(message || '').trim() || 'Cambios guardados correctamente.';
+            const rawMsg = String(message || '').trim() || 'Cambios guardados correctamente.';
+
+            // Quitar cualquier HTML (ej. <strong>, <b>, etc.) para que no cambie el estilo según el endpoint
+            const safeMsg = rawMsg.replace(/<[^>]*>/g, '');
 
             // Si existe un contenedor, úsalo; si no, lo crea arriba de la página
             let $c = $('#jsFlashContainer');
@@ -3453,8 +3484,8 @@
             }
 
             $c.html(`
-                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                    ${safeMsg}
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert" style="font-weight:700;">
+                ${safeMsg}
                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -3770,6 +3801,29 @@
             e.preventDefault();
 
             const form = this;
+
+            // ============================
+            // ✅ Si NO estoy reagendando AHORA, no mandes payload de reagendamiento
+            // (evita el error rojo y evita auditoría de “reagendado”)
+            // ============================
+            const rDate = String($('#rescheduleDateHidden').val() || '').trim();
+            const rTime = String($('#rescheduleTimeHidden').val() || '').trim();
+            const isRescheduleNow = (rDate !== '' && rTime !== '');
+
+            const $rescheduleInputs = $('#rescheduleDateHidden, #rescheduleTimeHidden, #rescheduleEndTimeHidden, #rescheduleReasonHidden, #rescheduleReasonOtherHidden');
+
+            if (!isRescheduleNow) {
+                // No enviar campos de reagendamiento vacíos
+                $rescheduleInputs.prop('disabled', true);
+
+                // Y MUY IMPORTANTE: si el status hidden está en rescheduled (porque la cita YA fue reagendada),
+                // no lo mandes en un “editar normal”
+                const stHidden = String($('#modalStatusHidden').val() || '').trim().toLowerCase();
+                if (stHidden === 'rescheduled') {
+                    $('#modalStatusHidden').prop('disabled', true);
+                }
+            }
+
             const fd = new FormData(form);
 
             // (Opcional) Deshabilitar botón para evitar doble click
@@ -3811,6 +3865,9 @@
             })
             .finally(() => {
                 if ($btn.length) $btn.prop('disabled', false);
+                // Rehabilitar por si se deshabilitaron
+                $('#rescheduleDateHidden, #rescheduleTimeHidden, #rescheduleEndTimeHidden, #rescheduleReasonHidden, #rescheduleReasonOtherHidden').prop('disabled', false);
+                $('#modalStatusHidden').prop('disabled', false);
             });
 
             return false;
@@ -4463,6 +4520,11 @@
                 $btn.removeData('endTime');    // data-end-time   => endTime
                 $btn.removeData('start');
 
+                // ✅ NUEVO: también actualizar estado a "rescheduled" y matar caché
+                $btn.attr('data-status', 'rescheduled');
+                $btn.removeData('status');     // 👈 clave: data-status queda cacheado
+                $btn.data('status', 'rescheduled'); // (opcional) setear cache nuevo
+
                 // ✅ 3) (Opcional pero recomendado) setea también el cache nuevo
                 $btn.data('date', p.date);
                 $btn.data('startTime', p.start);
@@ -4490,6 +4552,11 @@
                 // Mejor aplica el paso 3 abajo para hacerlo exacto.
                 $row.find('td.appt-date').text(dateTxt);
                 $row.find('td.appt-time').text(timeTxt);
+
+                // ✅ NUEVO: actualizar status en la tabla SIN recargar
+                // Requiere que el <td> del status tenga clase "appt-status"
+                $row.find('td.appt-status')
+                    .html('<span class="badge px-2 py-1" style="background-color:#f1c40f;color:white;">Reagendada</span>');
             }
 
             // 3) Si el modal está abierto ahora mismo, refrescar lo que muestra también
@@ -4507,6 +4574,17 @@
 
                 $('#modalDateTime').text(dateTxt); // si tu modal usa ese id
                 $('#modalDateTime2').text(`${to12h(p.start)} - ${to12h(p.end)}`); // si tu modal usa ese id
+
+                // ✅ NUEVO: repintar estado "Reagendada" en el modal sin recargar
+                $('#modalStatusHidden').val('rescheduled');
+                $('#modalStatusSelect').val('rescheduled');
+
+                // Badge igual al que ya usas arriba para rescheduled
+                $('#modalStatusBadge').html('<span class="badge px-2 py-1" style="background-color:#f1c40f;color:white;">Reagendada</span>');
+                $('#modalStatusBadgeLegacy').html('<span class="badge px-2 py-1" style="background-color:#f1c40f;color:white;">Reagendada</span>');
+
+                // Bloquear select como ya haces cuando entra a edición en rescheduled
+                $('#modalStatusSelect').prop('disabled', true);
             }
 
             // limpiar
