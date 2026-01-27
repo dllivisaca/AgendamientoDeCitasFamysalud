@@ -1597,6 +1597,48 @@
     width: 100% !important;
     table-layout: fixed;              /* clave para que header/body calculen igual */
     }
+
+    /* Columna índice (#) */
+    #myTable th:first-child,
+    #myTable td:first-child {
+        width: 48px !important;
+        min-width: 48px;
+        max-width: 48px;
+        text-align: center;
+        white-space: nowrap;
+    }
+
+    /* Columna Paciente */
+    #myTable th:nth-child(2),
+    #myTable td:nth-child(2) {
+        min-width: 200px;
+        white-space: normal;
+    }
+
+    /* Columna Estado */
+    #myTable th:nth-child(9),
+    #myTable td:nth-child(9) {
+        min-width: 160px;
+        text-align: center;
+        white-space: nowrap;
+    }
+
+    /* Columna Acción */
+    #myTable th:nth-child(10),
+    #myTable td:nth-child(10) {
+        min-width: 130px;
+        text-align: center;
+        white-space: nowrap;
+    }
+
+    /* Espacio visual entre Estado y Acción */
+    #myTable td:nth-child(9) {
+        padding-right: 12px;
+    }
+
+    #myTable td:nth-child(10) {
+        padding-left: 12px;
+    }
 </style>
 @stop
 
