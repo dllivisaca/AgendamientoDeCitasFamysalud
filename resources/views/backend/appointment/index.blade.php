@@ -5257,6 +5257,18 @@
                 return;
             }
 
+            // ✅ Validar estado del pago antes de confirmar
+            const payStatus = String(
+                $('#modalPaymentStatusHidden').val() || $('#modalPaymentStatusSelect').val() || ''
+            ).trim();
+
+            const allowedPayStatuses = ['unpaid', 'partial', 'paid'];
+
+            if (!allowedPayStatuses.includes(payStatus)) {
+                alert('Antes de confirmar la cita, actualiza el estado del pago a: No pagado, Pagado parcialmente o Pagado.');
+                return;
+            }
+
             try {
                 const res = await fetch(`/appointments/${apptId}/confirm`, {
                     method: 'POST',
