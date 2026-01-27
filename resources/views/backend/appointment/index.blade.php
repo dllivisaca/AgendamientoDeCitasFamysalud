@@ -1050,226 +1050,228 @@
                         <div class="card py-2 px-2">
 
                             <div class="card-body p-0">
-                                <table id="myTable" class="table table-striped projects ">
-                                    <thead>
-                                        <tr>
-                                            <th style="width: 1%">
-                                                #
-                                            </th>
-                                            <th style="width: 15%">
-                                                Paciente
-                                            </th>
-                                            {{-- 
-                                            <th style="width: 15%">
-                                                Correo
-                                            </th>
-                                            --}}
-                                            <th style="width: 10%">
-                                                Teléfono
-                                            </th>
-                                            <th style="width: 10%">
-                                                Profesional
-                                            </th>
-                                            <th style="width: 12%">
-                                                Área
-                                            </th>
-
-                                            <th style="width: 10%">
-                                                Servicio
-                                            </th>
-                                            <th style="width: 10%">
-                                                Fecha
-                                            </th>
-                                            <th style="width: 10%">
-                                                Hora
-                                            </th>
-
-
-                                            <th style="width: 15%" class="text-center">
-                                                Estado
-                                            </th>
-                                            <th style="width: 18%">
-                                                Acción
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @php
-                                            $statusColors = [
-                                                // ✅ NUEVOS (los que sí quieres)
-                                                'pending_verification' => '#7f8c8d',
-                                                'pending_payment' => '#f39c12',
-                                                'paid' => '#2ecc71',
-                                                'confirmed' => '#3498db',
-                                                'completed' => '#008000',
-                                                'canceled' => '#ff0000',
-                                                'rescheduled' => '#f1c40f',
-                                                'no_show' => '#e67e22',
-                                                'on_hold' => '#95a5a6',
-                                            ];
-
-                                            $statusLabels = [
-                                                // ✅ NUEVOS
-                                                'pending_verification' => 'Pendiente de verificación',
-                                                'pending_payment'=> 'Pendiente de pago',
-                                                'paid' => 'Pagada',
-                                                'confirmed' => 'Confirmada',
-                                                'completed' => 'Completada',
-                                                'canceled' => 'Cancelada',
-                                                'rescheduled' => 'Reagendada',
-                                                'no_show' => 'No asistió',
-                                                'on_hold' => 'En espera',
-                                            ];
-                                        @endphp
-                                        @foreach ($appointments as $appointment)
+                                <div class="table-responsive w-100" style="overflow-x:auto; -webkit-overflow-scrolling: touch;">
+                                    <table id="myTable" class="table table-striped projects ">
+                                        <thead>
                                             <tr>
-                                                <td>
-                                                    {{ $loop->iteration }}
-                                                </td>
-                                                <td>
-                                                    <a>
-                                                        {{ $appointment->patient_full_name }}
-                                                    </a>
-
-                                                    <div class="small text-muted">
-                                                        <span class="font-weight-bold">
-                                                            {{ $appointment->booking_id ?? ('FS-' . $appointment->id) }}
-                                                        </span>
-                                                    </div>
-                                                    {{-- 
-                                                    <br>
-                                                    <small>
-                                                        {{ $appointment->created_at->format('d M Y') }}
-                                                    </small>
-                                                    --}}
-                                                </td>
-                                                {{--
-                                                <td>
-                                                    {{ $appointment->patient_email }}
-                                                </td>
+                                                <th style="width: 1%">
+                                                    #
+                                                </th>
+                                                <th style="width: 15%">
+                                                    Paciente
+                                                </th>
+                                                {{-- 
+                                                <th style="width: 15%">
+                                                    Correo
+                                                </th>
                                                 --}}
-                                                <td>
-                                                    {{ $appointment->patient_phone }}
-                                                </td>
-                                                <td>
-                                                    {{ $appointment->employee->user->name }}
-                                                </td>
-                                                <td>
-                                                    {{ $appointment->service->category->title ?? 'NA' }}
-                                                </td>
-                                                <td>
-                                                    {{ $appointment->service->title ?? 'NA' }}
-                                                </td>
-                                                <td class="appt-date">
-                                                    {{ \Carbon\Carbon::parse($appointment->appointment_date)->translatedFormat('d M Y') }}
-                                                </td>
-                                                <td class="appt-time">
-                                                    {{
-                                                        \Carbon\Carbon::parse($appointment->appointment_time)->format('g:i A')
-                                                    }}
-                                                    -
-                                                    {{
-                                                        \Carbon\Carbon::parse($appointment->appointment_end_time)->format('g:i A')
-                                                    }}
-                                                </td>
-                                                <td>
-                                                    @php
-                                                        $rawStatus = $appointment->status;
+                                                <th style="width: 10%">
+                                                    Teléfono
+                                                </th>
+                                                <th style="width: 10%">
+                                                    Profesional
+                                                </th>
+                                                <th style="width: 12%">
+                                                    Área
+                                                </th>
 
-                                                        // Normalizar el status para evitar problemas de mayúsculas/minúsculas
-                                                        $status = strtolower(str_replace(' ', '_', $rawStatus));
+                                                <th style="width: 10%">
+                                                    Servicio
+                                                </th>
+                                                <th style="width: 10%">
+                                                    Fecha
+                                                </th>
+                                                <th style="width: 10%">
+                                                    Hora
+                                                </th>
 
-                                                        $statusColors = [
-                                                            'pending_payment' => '#f39c12',
-                                                            'processing' => '#3498db',
-                                                            'paid' => '#2ecc71',
-                                                            'cancelled' => '#ff0000',
-                                                            'confirmed' => '#3498db',
-                                                            'completed' => '#008000',
-                                                            'on_hold' => '#95a5a6',
-                                                            'rescheduled' => '#f1c40f',
-                                                            'no_show' => '#e67e22',
-                                                            'pending_verification' => '#7f8c8d',
-                                                        ];
 
-                                                        $statusLabels = [
-                                                            'pending_payment' => 'Pendiente de pago',
-                                                            'processing' => 'Procesando',
-                                                            'paid' => 'Pagada',
-                                                            'cancelled' => 'Cancelada',
-                                                            'confirmed' => 'Confirmada',
-                                                            'completed' => 'Completada',
-                                                            'on_hold' => 'En espera',
-                                                            'rescheduled' => 'Reagendada',
-                                                            'no_show' => 'No asistió',
-                                                            'pending_verification' => 'Pendiente de verificación',
-                                                        ];
-
-                                                        $color = $statusColors[$status] ?? '#7f8c8d';
-                                                        $label = $statusLabels[$status] ?? 'Estado desconocido';
-                                                    @endphp
-                                                    <span class="badge px-2 py-1"
-                                                        style="background-color: {{ $color }}; color: white;">
-                                                        {{ $label }}
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <button class="btn btn-primary btn-sm py-0 px-1 view-appointment-btn"
-                                                        data-toggle="modal" data-target="#appointmentModal"
-                                                        data-id="{{ $appointment->id }}"
-                                                        data-booking-code="{{ $appointment->booking_id ?? ('FS-' . $appointment->id) }}"
-                                                        data-name="{{ $appointment->patient_full_name }}"
-                                                        data-area="{{ $appointment->service->category->title ?? 'No definida' }}"
-                                                        data-service="{{ 
-                                                        $appointment->service->title ?? 'MA' }}"
-                                                        data-email="{{ $appointment->patient_email }}"
-                                                        data-phone="{{ $appointment->patient_phone }}"
-                                                        data-doc-type="{{ $appointment->patient_doc_type }}"
-                                                        data-doc-number="{{ $appointment->patient_doc_number }}"
-                                                        data-patient-age="{{ !empty($appointment->patient_dob) ? \Carbon\Carbon::parse($appointment->patient_dob)->age : '' }}"
-                                                        data-patient-dob="{{ $appointment->patient_dob ?? '' }}"
-                                                        data-address="{{ $appointment->patient_address }}"
-                                                        data-timezone="{{ $appointment->patient_timezone }}"
-                                                        data-timezone-label="{{ $appointment->patient_timezone_label }}"
-                                                        data-employee="{{ $appointment->employee->user->name }}"
-                                                        data-employee-id="{{ $appointment->employee_id }}"
-                                                        data-date="{{ $appointment->appointment_date }}"
-                                                        data-start-time="{{ $appointment->appointment_time }}"
-                                                        data-end-time="{{ $appointment->appointment_end_time }}"
-                                                        data-start="{{ $appointment->appointment_date . ' ' . $appointment->appointment_time }}"
-                                                        data-amount="{{ $appointment->amount }}"
-                                                        data-notes="{{ $appointment->patient_notes }}"
-                                                        data-appointment-mode="{{ $appointment->appointment_mode }}"
-                                                        data-billing-name="{{ $appointment->billing_name ?? '' }}"
-                                                        data-billing-doc-type="{{ $appointment->billing_doc_type ?? '' }}"
-                                                        data-billing-doc-number="{{ $appointment->billing_doc_number ?? '' }}"
-                                                        data-billing-email="{{ $appointment->billing_email ?? '' }}"
-                                                        data-billing-phone="{{ $appointment->billing_phone ?? '' }}"
-                                                        data-billing-address="{{ $appointment->billing_address ?? '' }}"
-                                                        data-billing-timezone="{{ $appointment->billing_timezone ?? '' }}"
-                                                        data-billing-timezone-label="{{ $appointment->billing_timezone_label ?? '' }}"
-                                                        data-payment-method="{{ $appointment->payment_method ?? '' }}"
-                                                        data-client-transaction-id="{{ $appointment->client_transaction_id ?? '' }}"
-                                                        data-payment-status="{{ $appointment->payment_status ?? '' }}"
-                                                        data-payment-paid-at="{{ $appointment->payment_paid_at ?? '' }}"
-                                                        data-payment-notes="{{ $appointment->payment_notes ?? '' }}"
-                                                        data-transfer-bank-origin="{{ $appointment->transfer_bank_origin ?? '' }}"
-                                                        data-transfer-payer-name="{{ $appointment->transfer_payer_name ?? '' }}"
-                                                        data-transfer-date="{{ $appointment->transfer_date ?? '' }}"
-                                                        data-transfer-reference="{{ $appointment->transfer_reference ?? '' }}"
-                                                        data-transfer-receipt-path="{{ $appointment->transfer_receipt_path ?? '' }}"
-                                                        data-transfer-validation-status="{{ $appointment->transfer_validation_status ?? '' }}"
-                                                        data-transfer-validated-at="{{ $appointment->transfer_validated_at ?? '' }}"
-                                                        data-transfer-validated-by="{{ optional($appointment->transferValidatedBy)->name ?? '' }}"
-                                                        data-transfer-validation-notes="{{ $appointment->transfer_validation_notes ?? '' }}"
-                                                        data-paid-amount="{{ $appointment->amount_paid ?? '' }}"
-                                                        data-created-at="{{ $appointment->created_at }}"
-                                                        data-status="{{ $appointment->status }}">Ver detalles</button>
-                                                </td>
+                                                <th style="width: 15%" class="text-center">
+                                                    Estado
+                                                </th>
+                                                <th style="width: 140px;" class="text-center">
+                                                    Acción
+                                                </th>
                                             </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                            @php
+                                                $statusColors = [
+                                                    // ✅ NUEVOS (los que sí quieres)
+                                                    'pending_verification' => '#7f8c8d',
+                                                    'pending_payment' => '#f39c12',
+                                                    'paid' => '#2ecc71',
+                                                    'confirmed' => '#3498db',
+                                                    'completed' => '#008000',
+                                                    'canceled' => '#ff0000',
+                                                    'rescheduled' => '#f1c40f',
+                                                    'no_show' => '#e67e22',
+                                                    'on_hold' => '#95a5a6',
+                                                ];
+
+                                                $statusLabels = [
+                                                    // ✅ NUEVOS
+                                                    'pending_verification' => 'Pendiente de verificación',
+                                                    'pending_payment'=> 'Pendiente de pago',
+                                                    'paid' => 'Pagada',
+                                                    'confirmed' => 'Confirmada',
+                                                    'completed' => 'Completada',
+                                                    'canceled' => 'Cancelada',
+                                                    'rescheduled' => 'Reagendada',
+                                                    'no_show' => 'No asistió',
+                                                    'on_hold' => 'En espera',
+                                                ];
+                                            @endphp
+                                            @foreach ($appointments as $appointment)
+                                                <tr>
+                                                    <td>
+                                                        {{ $loop->iteration }}
+                                                    </td>
+                                                    <td>
+                                                        <a>
+                                                            {{ $appointment->patient_full_name }}
+                                                        </a>
+
+                                                        <div class="small text-muted">
+                                                            <span class="font-weight-bold">
+                                                                {{ $appointment->booking_id ?? ('FS-' . $appointment->id) }}
+                                                            </span>
+                                                        </div>
+                                                        {{-- 
+                                                        <br>
+                                                        <small>
+                                                            {{ $appointment->created_at->format('d M Y') }}
+                                                        </small>
+                                                        --}}
+                                                    </td>
+                                                    {{--
+                                                    <td>
+                                                        {{ $appointment->patient_email }}
+                                                    </td>
+                                                    --}}
+                                                    <td>
+                                                        {{ $appointment->patient_phone }}
+                                                    </td>
+                                                    <td>
+                                                        {{ $appointment->employee->user->name }}
+                                                    </td>
+                                                    <td>
+                                                        {{ $appointment->service->category->title ?? 'NA' }}
+                                                    </td>
+                                                    <td>
+                                                        {{ $appointment->service->title ?? 'NA' }}
+                                                    </td>
+                                                    <td class="appt-date">
+                                                        {{ \Carbon\Carbon::parse($appointment->appointment_date)->translatedFormat('d M Y') }}
+                                                    </td>
+                                                    <td class="appt-time">
+                                                        {{
+                                                            \Carbon\Carbon::parse($appointment->appointment_time)->format('g:i A')
+                                                        }}
+                                                        -
+                                                        {{
+                                                            \Carbon\Carbon::parse($appointment->appointment_end_time)->format('g:i A')
+                                                        }}
+                                                    </td>
+                                                    <td>
+                                                        @php
+                                                            $rawStatus = $appointment->status;
+
+                                                            // Normalizar el status para evitar problemas de mayúsculas/minúsculas
+                                                            $status = strtolower(str_replace(' ', '_', $rawStatus));
+
+                                                            $statusColors = [
+                                                                'pending_payment' => '#f39c12',
+                                                                'processing' => '#3498db',
+                                                                'paid' => '#2ecc71',
+                                                                'cancelled' => '#ff0000',
+                                                                'confirmed' => '#3498db',
+                                                                'completed' => '#008000',
+                                                                'on_hold' => '#95a5a6',
+                                                                'rescheduled' => '#f1c40f',
+                                                                'no_show' => '#e67e22',
+                                                                'pending_verification' => '#7f8c8d',
+                                                            ];
+
+                                                            $statusLabels = [
+                                                                'pending_payment' => 'Pendiente de pago',
+                                                                'processing' => 'Procesando',
+                                                                'paid' => 'Pagada',
+                                                                'cancelled' => 'Cancelada',
+                                                                'confirmed' => 'Confirmada',
+                                                                'completed' => 'Completada',
+                                                                'on_hold' => 'En espera',
+                                                                'rescheduled' => 'Reagendada',
+                                                                'no_show' => 'No asistió',
+                                                                'pending_verification' => 'Pendiente de verificación',
+                                                            ];
+
+                                                            $color = $statusColors[$status] ?? '#7f8c8d';
+                                                            $label = $statusLabels[$status] ?? 'Estado desconocido';
+                                                        @endphp
+                                                        <span class="badge px-2 py-1"
+                                                            style="background-color: {{ $color }}; color: white;">
+                                                            {{ $label }}
+                                                        </span>
+                                                    </td>
+                                                    <td class="text-center" style="white-space: nowrap;">
+                                                        <button class="btn btn-primary btn-sm py-0 px-1 view-appointment-btn"
+                                                            data-toggle="modal" data-target="#appointmentModal"
+                                                            data-id="{{ $appointment->id }}"
+                                                            data-booking-code="{{ $appointment->booking_id ?? ('FS-' . $appointment->id) }}"
+                                                            data-name="{{ $appointment->patient_full_name }}"
+                                                            data-area="{{ $appointment->service->category->title ?? 'No definida' }}"
+                                                            data-service="{{ 
+                                                            $appointment->service->title ?? 'MA' }}"
+                                                            data-email="{{ $appointment->patient_email }}"
+                                                            data-phone="{{ $appointment->patient_phone }}"
+                                                            data-doc-type="{{ $appointment->patient_doc_type }}"
+                                                            data-doc-number="{{ $appointment->patient_doc_number }}"
+                                                            data-patient-age="{{ !empty($appointment->patient_dob) ? \Carbon\Carbon::parse($appointment->patient_dob)->age : '' }}"
+                                                            data-patient-dob="{{ $appointment->patient_dob ?? '' }}"
+                                                            data-address="{{ $appointment->patient_address }}"
+                                                            data-timezone="{{ $appointment->patient_timezone }}"
+                                                            data-timezone-label="{{ $appointment->patient_timezone_label }}"
+                                                            data-employee="{{ $appointment->employee->user->name }}"
+                                                            data-employee-id="{{ $appointment->employee_id }}"
+                                                            data-date="{{ $appointment->appointment_date }}"
+                                                            data-start-time="{{ $appointment->appointment_time }}"
+                                                            data-end-time="{{ $appointment->appointment_end_time }}"
+                                                            data-start="{{ $appointment->appointment_date . ' ' . $appointment->appointment_time }}"
+                                                            data-amount="{{ $appointment->amount }}"
+                                                            data-notes="{{ $appointment->patient_notes }}"
+                                                            data-appointment-mode="{{ $appointment->appointment_mode }}"
+                                                            data-billing-name="{{ $appointment->billing_name ?? '' }}"
+                                                            data-billing-doc-type="{{ $appointment->billing_doc_type ?? '' }}"
+                                                            data-billing-doc-number="{{ $appointment->billing_doc_number ?? '' }}"
+                                                            data-billing-email="{{ $appointment->billing_email ?? '' }}"
+                                                            data-billing-phone="{{ $appointment->billing_phone ?? '' }}"
+                                                            data-billing-address="{{ $appointment->billing_address ?? '' }}"
+                                                            data-billing-timezone="{{ $appointment->billing_timezone ?? '' }}"
+                                                            data-billing-timezone-label="{{ $appointment->billing_timezone_label ?? '' }}"
+                                                            data-payment-method="{{ $appointment->payment_method ?? '' }}"
+                                                            data-client-transaction-id="{{ $appointment->client_transaction_id ?? '' }}"
+                                                            data-payment-status="{{ $appointment->payment_status ?? '' }}"
+                                                            data-payment-paid-at="{{ $appointment->payment_paid_at ?? '' }}"
+                                                            data-payment-notes="{{ $appointment->payment_notes ?? '' }}"
+                                                            data-transfer-bank-origin="{{ $appointment->transfer_bank_origin ?? '' }}"
+                                                            data-transfer-payer-name="{{ $appointment->transfer_payer_name ?? '' }}"
+                                                            data-transfer-date="{{ $appointment->transfer_date ?? '' }}"
+                                                            data-transfer-reference="{{ $appointment->transfer_reference ?? '' }}"
+                                                            data-transfer-receipt-path="{{ $appointment->transfer_receipt_path ?? '' }}"
+                                                            data-transfer-validation-status="{{ $appointment->transfer_validation_status ?? '' }}"
+                                                            data-transfer-validated-at="{{ $appointment->transfer_validated_at ?? '' }}"
+                                                            data-transfer-validated-by="{{ optional($appointment->transferValidatedBy)->name ?? '' }}"
+                                                            data-transfer-validation-notes="{{ $appointment->transfer_validation_notes ?? '' }}"
+                                                            data-paid-amount="{{ $appointment->amount_paid ?? '' }}"
+                                                            data-created-at="{{ $appointment->created_at }}"
+                                                            data-status="{{ $appointment->status }}">Ver detalles</button>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
 
                             </div>
                             <!-- /.card-body -->
@@ -1544,6 +1546,57 @@
         box-shadow: none !important;
         color: inherit !important;
     }
+
+    /* ✅ Evita que el card se “abra” por culpa de la tabla */
+    .card .card-body{
+    overflow-x: auto !important;
+    }
+
+    /* ✅ Asegura que el wrapper sí genere scroll */
+    .card .table-responsive{
+    overflow-x: auto !important;
+    width: 100% !important;
+    }
+
+    /* ✅ A veces el ancho se rompe por estilos de AdminLTE/DataTables */
+    #myTable{
+    width: 100% !important;
+    }
+
+    div.dataTables_wrapper {
+        width: 100%;
+    }
+
+        div.dataTables_wrapper .dataTables_scrollBody {
+        overflow-x: auto !important;
+    }
+
+    /* ✅ Fix: header y body se comportan igual en responsive */
+    table.dataTable,
+    table.dataTable thead,
+    table.dataTable tbody,
+    table.dataTable th,
+    table.dataTable td {
+    box-sizing: border-box;
+    }
+
+    /* ✅ Permitir que los títulos NO se queden “estáticos” */
+    table.dataTable thead th {
+    white-space: normal !important;   /* permite salto de línea */
+    word-break: break-word;
+    }
+
+    /* ✅ Que el cuerpo no “encoga” distinto al header */
+    table.dataTable td {
+    white-space: normal;              /* si quieres NO wrap, cambia a nowrap */
+    word-break: break-word;
+    }
+
+    /* ✅ Layout consistente para que columnas no se descuadren */
+    table.dataTable {
+    width: 100% !important;
+    table-layout: fixed;              /* clave para que header/body calculen igual */
+    }
 </style>
 @stop
 
@@ -1559,7 +1612,8 @@
     <script>
         $(document).ready(function() {
             $('#myTable').DataTable({
-                responsive: true,
+                responsive: false,
+                autoWidth: false,
                 language: {
                     lengthMenu: "Mostrar _MENU_ registros",
                     search: "Buscar:",
