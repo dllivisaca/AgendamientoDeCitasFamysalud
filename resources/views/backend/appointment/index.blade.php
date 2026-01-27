@@ -3853,14 +3853,6 @@
             window.__changeReasonBypassSubmit = true;
             $('#changeReasonModal').modal('hide');
 
-            // ✅ Guardar lo que se eligió para refrescar UI sin recargar
-            window.__pendingRescheduleUi = {
-            appointment_id: ctx.appointment_id,
-            date: dateStr,          // "YYYY-MM-DD"
-            start: sel.start,       // "HH:MM"
-            end: sel.end || ''      // "HH:MM"
-            };
-
             // Re-disparar submit
             $('#appointmentStatusForm')[0].submit();
 

@@ -956,24 +956,58 @@ class AppointmentController extends Controller
     {
         // ✅ Evitar reconfirmar citas ya confirmadas
         if ($appointment->status !== 'confirmed') {
+
+            // 1) Guardar status anterior para auditoría
+            $oldStatus = $appointment->status;
+
+            // 2) Actualizar estado
             $appointment->status = 'confirmed';
             $appointment->save();
 
-            // 📧 Notificar al paciente si tiene email
+            // 3) ✅ Registrar en appointment_audits
+            $actorId = Auth::id();
+
+            // actor_role: intento 1 (Spatie), fallback a null
+            $actorRole = null;
+            if (auth()->check()) {
+                try {
+                    if (method_exists(auth()->user(), 'getRoleNames')) {
+                        $roles = auth()->user()->getRoleNames();
+                        $actorRole = $roles && count($roles) ? $roles[0] : null;
+                    }
+                } catch (\Throwable $e) {
+                    $actorRole = null;
+                }
+            }
+
+            DB::table('appointment_audits')->insert([
+                'appointment_id' => $appointment->id,
+                'actor_user_id'  => $actorId,
+                'actor_role'     => $actorRole,
+
+                // Acción consistente (puedes dejar 'update' o cambiar a 'confirm')
+                'action'         => 'update',
+
+                'changed_fields' => json_encode(['status'], JSON_UNESCAPED_UNICODE),
+                'old_values'     => json_encode(['status' => $oldStatus], JSON_UNESCAPED_UNICODE),
+                'new_values'     => json_encode(['status' => 'confirmed'], JSON_UNESCAPED_UNICODE),
+
+                // Si tu tabla permite null, queda ok. Si no, cámbialo a 'admin_adjustment'
+                'reason'         => 'admin_adjustment',
+                'reason_other'   => null,
+                // 'created_at'  => now(), // opcional si tu tabla ya tiene default current_timestamp
+            ]);
+
+            // 4) 📧 Notificar al paciente si tiene email
             $email = trim((string) ($appointment->patient_email ?? ''));
             if ($email !== '') {
                 Notification::route('mail', $email)
                     ->notify(new PatientNotificationAppointmentConfirmed($appointment));
             }
 
-            // Mantener coherencia con el sistema
+            // 5) Mantener coherencia con el sistema
             event(new StatusUpdated($appointment));
         }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Cita confirmada y notificación enviada al paciente.',
-        ]);
     }
 
 }
