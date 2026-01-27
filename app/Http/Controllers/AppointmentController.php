@@ -358,10 +358,32 @@ class AppointmentController extends Controller
 
         $appointment = Appointment::findOrFail($request->appointment_id);
 
-        $isRescheduleNow = ($request->input('status') === 'rescheduled')
+        $newDate = $request->input('reschedule_date');
+        $newTime = $request->input('reschedule_time');
+        $newEnd  = $request->input('reschedule_end_time');
+
+        $isRescheduleNow =
+            ($request->input('status') === 'rescheduled')
             && $request->filled('reschedule_date')
             && $request->filled('reschedule_time')
-            && $request->filled('reschedule_end_time');
+            && $request->filled('reschedule_end_time')
+            // ✅ SOLO si realmente cambió vs lo que ya tiene la cita
+            && (
+                (string) $newDate !== (string) $appointment->appointment_date
+                || (string) $newTime !== (string) $appointment->appointment_time
+                || (string) $newEnd  !== (string) $appointment->appointment_end_time
+            );
+
+        // ✅ Si no hay reagendamiento real, ignoramos cualquier campo reschedule/audit que venga del front
+        if (!$isRescheduleNow) {
+            $request->request->remove('audit_reschedule_reason');
+            $request->request->remove('audit_reschedule_reason_other');
+            $request->request->remove('reschedule_date');
+            $request->request->remove('reschedule_time');
+            $request->request->remove('reschedule_end_time');
+            $request->request->remove('reschedule_reason');
+            $request->request->remove('reschedule_reason_other');
+        }
 
         // ✅ Solo cuando es un reagendamiento REAL en esta acción
         if ($isRescheduleNow) {
@@ -429,6 +451,17 @@ class AppointmentController extends Controller
             array_intersect($allTrackable, array_keys($request->all())),
             $neverAudit
         ));
+
+        // ✅ Si NO es reagendamiento real, no auditar nada de cita/reschedule
+        if (!$isRescheduleNow) {
+            $tracked = array_values(array_diff($tracked, [
+                'appointment_date',
+                'appointment_time',
+                'appointment_end_time',
+                'audit_reschedule_reason',
+                'audit_reschedule_reason_other',
+            ]));
+        }
 
         // ✅ Obtener último reschedule previo (para auditoría OLD values)
         $prevReschedule = DB::table('appointment_reschedules')
