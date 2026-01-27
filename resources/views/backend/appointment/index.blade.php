@@ -4422,9 +4422,14 @@
                 $('#transferNotesOptional').hide();
             }
 
-            // Cash
-            $('#modalCashNotesInput').val(String(snap.payment_notes || ''));
-            $('#modalPaymentNotesHidden').val(String(snap.payment_notes || ''));
+            // ✅ Payment notes (restaurar en los 3 inputs)
+            const pn = String(snap.payment_notes || '');
+
+            $('#modalCashNotesInput').val(pn);
+            $('#modalCardNotesInput').val(pn);
+            $('#modalTransferNotesInput').val(pn);
+
+            $('#modalPaymentNotesHidden').val(pn);
 
             // Monto pagado hidden
             $('#modalAmountPaidHidden').val(String(snap.amount_paid || ''));
@@ -4486,12 +4491,28 @@
             __updateSaveButtonState();
         });
 
-        $(document).on('input change', '#modalPatientFullNameInput,#modalDocTypeInput,#modalPatientDobInput,#modalDocNumberInput,#modalEmailInput,#modalPhoneInput,#modalAddressInput,#modalPatientTimezoneInput,#modalNotesInput,#modalBillingNameInput,#modalBillingDocTypeInput,#modalBillingDocNumberInput,#modalBillingEmailInput,#modalBillingPhoneInput,#modalBillingAddressInput,#modalAmountInput,#modalTransferBankOriginInput,#modalTransferPayerNameInput,#modalTransferDateInput,#modalTransferReferenceInput,#modalStatusSelect,#modalPaymentStatusSelect,#modalTransferReceiptFile,#modalAmountInputCash,#modalCashPaidAtInput,#modalCashNotesInput,#modalPaymentMethodSelectCash,#modalClientTransactionIdInput,#modalPaymentPaidAtInput,#modalPaymentStatusSelectCard,#modalPaidAmountInputCard,#modalPaidAmountInputTransfer,#modalPaidAmountInputCash', function () {
+        $(document).on('input change', '#modalPatientFullNameInput,#modalDocTypeInput,#modalPatientDobInput,#modalDocNumberInput,#modalEmailInput,#modalPhoneInput,#modalAddressInput,#modalPatientTimezoneInput,#modalNotesInput,#modalBillingNameInput,#modalBillingDocTypeInput,#modalBillingDocNumberInput,#modalBillingEmailInput,#modalBillingPhoneInput,#modalBillingAddressInput,#modalAmountInput,#modalTransferBankOriginInput,#modalTransferPayerNameInput,#modalTransferDateInput,#modalTransferReferenceInput,#modalStatusSelect,#modalPaymentStatusSelect,#modalTransferReceiptFile,#modalAmountInputCash,#modalCashPaidAtInput,#modalCashNotesInput,#modalPaymentMethodSelectCash,#modalClientTransactionIdInput,#modalPaymentPaidAtInput,#modalPaymentStatusSelectCard,#modalPaidAmountInputCard,#modalPaidAmountInputTransfer,#modalPaidAmountInputCash,#modalCardNotesInput,#modalTransferNotesInput', function () {
             __updateSaveButtonState();
         });
 
         $(document).on('input', '#modalCashNotesInput', function () {
             $('#modalCashNotesHidden').val(String($(this).val() || ''));
+            __updateSaveButtonState();
+        });
+
+        $(document).on('input', '#modalCardNotesInput, #modalTransferNotesInput', function () {
+            const pmNow = String($('#modalPaymentMethodRaw').val() || '').trim().toLowerCase();
+
+            let paymentNotesNow = '';
+            if (pmNow === 'card') {
+                paymentNotesNow = String($('#modalCardNotesInput').val() || '');
+            } else if (pmNow === 'transfer') {
+                paymentNotesNow = String($('#modalTransferNotesInput').val() || '');
+            } else if (pmNow === 'cash') {
+                paymentNotesNow = String($('#modalCashNotesInput').val() || '');
+            }
+
+            $('#modalPaymentNotesHidden').val(paymentNotesNow);
             __updateSaveButtonState();
         });
 
