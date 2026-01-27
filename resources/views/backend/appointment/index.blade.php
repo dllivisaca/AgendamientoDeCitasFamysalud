@@ -81,10 +81,6 @@
                                         <i class="fas fa-check-circle mr-2"></i>Confirmar cita
                                     </button>
 
-                                    <button type="button" class="dropdown-item" id="btnNoAsistio">
-                                        <i class="fas fa-user-times mr-2"></i>Marcar como no asistida
-                                    </button>
-
                                     <button type="button" class="dropdown-item text-danger" id="btnCancelarCita">
                                         <i class="fas fa-ban mr-2"></i>Cancelar cita
                                     </button>
@@ -5249,6 +5245,11 @@
         });
 
         $('#btnConfirmarCita').on('click', async function () {
+
+            // ✅ 1) Confirmación como "Guardar cambios"
+            const ok = confirm('¿Estás seguro que quieres confirmar esta cita?');
+            if (!ok) return;
+
             const apptId = String($('#modalAppointmentId').val() || '').trim();
 
             if (!apptId) {
@@ -5272,22 +5273,13 @@
                     return;
                 }
 
-                // ✅ si tienes showFlash en el archivo, úsalo; si no, deja el alert
-                if (typeof showFlash === 'function') {
-                    showFlash('success', data.message || 'Cita confirmada correctamente.');
-                } else {
-                    alert(data.message || 'Cita confirmada correctamente.');
-                }
+                // ✅ 2) Mostrar mensaje para que el usuario lo lea (bloqueante)
+                alert(data.message || 'Cita confirmada correctamente.');
 
-                // ✅ cerrar el dropdown
-                try { $('#apptActionsDropdown').dropdown('hide'); } catch(e) {}
+                // ✅ 3) Cerrar modal (para que el mensaje verde no quede detrás)
+                try { $('#apptDetailsModal').modal('hide'); } catch (e) {}
 
-                // ✅ actualizar badge en el modal (tu UI ya maneja colores/labels)
-                if (typeof __applyAppointmentStatusUi === 'function') {
-                    __applyAppointmentStatusUi('confirmed');
-                }
-
-                // ✅ recomendado: recargar para refrescar la tabla (si aún no tienes update en caliente)
+                // ✅ 4) Recargar inmediatamente (el flash se verá arriba, como quieres)
                 window.location.reload();
 
             } catch (e) {
