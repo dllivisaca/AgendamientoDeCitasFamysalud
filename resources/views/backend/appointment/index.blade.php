@@ -1639,6 +1639,26 @@
     #myTable td:nth-child(10) {
         padding-left: 12px;
     }
+
+    /* Evita que el badge de Estado se sobreponga con Acción */
+    #myTable td:nth-child(9) {
+        overflow: hidden;          /* corta lo que se salga */
+    }
+
+    #myTable td:nth-child(9) .badge,
+    #myTable td:nth-child(9) .btn,
+    #myTable td:nth-child(9) span {
+        display: inline-block;
+        max-width: 100%;
+        white-space: normal;       /* permite que "Pendiente de verificación" baje */
+        word-break: break-word;
+    }
+
+    #myTable td:nth-child(9),
+    #myTable td:nth-child(10) {
+        padding-left: 14px !important;
+        padding-right: 14px !important;
+    }
 </style>
 @stop
 
