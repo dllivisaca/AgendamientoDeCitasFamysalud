@@ -94,6 +94,10 @@
                                     <button type="button" class="dropdown-item" id="btnVerHistorial">
                                         <i class="fas fa-history mr-2"></i>Ver historial de cambios
                                     </button>
+
+                                    <button type="button" class="dropdown-item d-none" id="btnSendReminder3h">
+                                        <i class="fas fa-bell mr-2"></i>Enviar recordatorio (3h)
+                                    </button>
                                 </div>
                             </div>
 
@@ -4668,9 +4672,44 @@
             __exitEditModeUI();
         });
 
+        function __toggleReminder3hActionByTime($btn) {
+            const $action = $('#btnSendReminder3h');
+            if (!$action.length) return;
+
+            const dateStr = String($btn.attr('data-date') || '').trim();        // YYYY-MM-DD
+            const timeStr = String($btn.attr('data-start-time') || '').trim(); // HH:MM o HH:MM:SS
+
+            if (!dateStr || !timeStr) {
+                $action.addClass('d-none');
+                return;
+            }
+
+            const hhmm = timeStr.slice(0, 5);
+
+            const [y, m, d] = dateStr.split('-').map(Number);
+            const [hh, mm] = hhmm.split(':').map(Number);
+
+            if (!y || !m || !d || isNaN(hh) || isNaN(mm)) {
+                $action.addClass('d-none');
+                return;
+            }
+
+            const apptDt = new Date(y, m - 1, d, hh, mm, 0, 0);
+            const now = new Date();
+
+            const diffMs = apptDt.getTime() - now.getTime();
+            const diffHours = diffMs / (1000 * 60 * 60);
+
+            // ✅ regla: futura y ≤ 3 horas
+            const shouldShow = diffHours >= 0 && diffHours <= 3;
+
+            $action.toggleClass('d-none', !shouldShow);
+        }
+
         // Al abrir modal: siempre volver a solo lectura
         $(document).on('click', '.view-appointment-btn', function() {
             __exitEditModeUI();
+            __toggleReminder3hActionByTime($(this)); // ✅ NUEVO: mostrar/ocultar acción 3h
         });
 
         // Al cerrar modal: resetear
@@ -5218,7 +5257,7 @@
         });
 
         // (Opcional) Por ahora: estos botones solo muestran alerta placeholder
-        $(document).on('click', '#btnConfirmarCita,#btnNoAsistio,#btnCancelarCita,#btnVerHistorial', function(){
+        $(document).on('click', '#btnConfirmarCita,#btnNoAsistio,#btnCancelarCita,#btnVerHistorial,#btnSendReminder3h', function(){
             alert('Acción pendiente de implementar (solo UI en este paso).');
             $('#apptActionsDropdown').dropdown('hide');
         });
