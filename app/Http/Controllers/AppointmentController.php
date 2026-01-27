@@ -954,8 +954,15 @@ class AppointmentController extends Controller
 
     public function confirm(Appointment $appointment, Request $request)
     {
-        // ✅ Evitar reconfirmar citas ya confirmadas
-        if ($appointment->status !== 'confirmed') {
+        try {
+
+            // ✅ Si ya está confirmada, no volver a confirmar
+            if ($appointment->status === 'confirmed') {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'La cita ya estaba confirmada.',
+                ]);
+            }
 
             // 1) Guardar status anterior para auditoría
             $oldStatus = $appointment->status;
@@ -985,28 +992,51 @@ class AppointmentController extends Controller
                 'actor_user_id'  => $actorId,
                 'actor_role'     => $actorRole,
 
-                // Acción consistente (puedes dejar 'update' o cambiar a 'confirm')
-                'action'         => 'update',
+                // ✅ Mejor: acción específica
+                'action'         => 'confirm',
 
                 'changed_fields' => json_encode(['status'], JSON_UNESCAPED_UNICODE),
                 'old_values'     => json_encode(['status' => $oldStatus], JSON_UNESCAPED_UNICODE),
                 'new_values'     => json_encode(['status' => 'confirmed'], JSON_UNESCAPED_UNICODE),
 
-                // Si tu tabla permite null, queda ok. Si no, cámbialo a 'admin_adjustment'
-                'reason'         => 'admin_adjustment',
+                'reason'         => null,
                 'reason_other'   => null,
-                // 'created_at'  => now(), // opcional si tu tabla ya tiene default current_timestamp
             ]);
 
-            // 4) 📧 Notificar al paciente si tiene email
+            // 4) 📧 Notificar al paciente si tiene email (sin tumbar la confirmación si falla)
             $email = trim((string) ($appointment->patient_email ?? ''));
             if ($email !== '') {
-                Notification::route('mail', $email)
-                    ->notify(new PatientNotificationAppointmentConfirmed($appointment));
+                try {
+                    Notification::route('mail', $email)
+                        ->notify(new PatientNotificationAppointmentConfirmed($appointment));
+                } catch (\Throwable $e) {
+                    logger()->error('CONFIRM: email notification failed', [
+                        'appointment_id' => $appointment->id,
+                        'email' => $email,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
             }
 
             // 5) Mantener coherencia con el sistema
             event(new StatusUpdated($appointment));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Cita confirmada correctamente.',
+            ]);
+
+        } catch (\Throwable $e) {
+
+            logger()->error('CONFIRM: failed', [
+                'appointment_id' => $appointment->id ?? null,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'No se pudo confirmar la cita.',
+            ], 500);
         }
     }
 
