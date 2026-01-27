@@ -3804,15 +3804,16 @@
 
             // ============================
             // ✅ Si NO estoy reagendando AHORA, no mandes payload de reagendamiento
-            // (evita el error rojo y evita auditoría de “reagendado”)
+            // (evita inserts y evita auditoría de “reagendado”)
             // ============================
-            const rDate = String($('#rescheduleDateHidden').val() || '').trim();
-            const rTime = String($('#rescheduleTimeHidden').val() || '').trim();
-            const isRescheduleNow = (rDate !== '' && rTime !== '');
+            const isRescheduleNow = (window.__isRescheduleNow === true);
 
             const $rescheduleInputs = $('#rescheduleDateHidden, #rescheduleTimeHidden, #rescheduleEndTimeHidden, #rescheduleReasonHidden, #rescheduleReasonOtherHidden');
 
             if (!isRescheduleNow) {
+                // ✅ Blindaje extra: si por algún motivo tienes inputs de auditoría para reagendar, NO mandarlos aquí
+                $('#audit_reschedule_reason, #reschedule_reason, #auditRescheduleReasonHidden, #rescheduleReasonAuditHidden')
+                    .prop('disabled', true);
                 // No enviar campos de reagendamiento vacíos
                 $rescheduleInputs.prop('disabled', true);
 
@@ -4795,6 +4796,9 @@
         // ============================
         window.__rescheduleSelected = null;
 
+        // ✅ Flag: SOLO true cuando se confirma el wizard de Reagendar
+        window.__isRescheduleNow = false;
+
         // ============================
         // ✅ HOLDs para Reagendar (appointment_holds)
         // ============================
@@ -5244,6 +5248,9 @@
             $('#rescheduleReasonHidden').val(reason);
             $('#rescheduleReasonOtherHidden').val(reason === 'other' ? reasonOther : '');
 
+            // ✅ Marca que ESTE submit sí es reagendar real
+            window.__isRescheduleNow = true;
+
             // Opcional: marcar estado como rescheduled si tu backend lo espera
             $('#modalStatusHidden').val('rescheduled');
 
@@ -5316,6 +5323,8 @@
                     $('#modalPaymentPaidAtHidden').prop('disabled', false);
                     $('#modalClientTransactionIdHidden').prop('disabled', false);
                     $('#modalPaymentNotesHidden').prop('disabled', false);
+                    // ✅ Reset flag (ya terminó el flujo de reagendar)
+                    window.__isRescheduleNow = false;
                 }
             })();
         });

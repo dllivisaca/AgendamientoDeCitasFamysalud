@@ -358,21 +358,21 @@ class AppointmentController extends Controller
 
         $appointment = Appointment::findOrFail($request->appointment_id);
 
-        // ✅ Si viene reagendamiento, "mapeamos" reschedule_* a appointment_*
-        // para que la auditoría detecte cambios en fecha/hora.
-        if ($request->filled('status') && $request->status === 'rescheduled') {
+        $isRescheduleNow = ($request->input('status') === 'rescheduled')
+            && $request->filled('reschedule_date')
+            && $request->filled('reschedule_time')
+            && $request->filled('reschedule_end_time');
 
-            if ($request->filled('reschedule_date')) {
-                $request->merge(['appointment_date' => $request->input('reschedule_date')]);
-            }
-            if ($request->filled('reschedule_time')) {
-                $request->merge(['appointment_time' => $request->input('reschedule_time')]);
-            }
-            if ($request->filled('reschedule_end_time')) {
-                $request->merge(['appointment_end_time' => $request->input('reschedule_end_time')]);
-            }
+        // ✅ Solo cuando es un reagendamiento REAL en esta acción
+        if ($isRescheduleNow) {
 
-            // (opcional) también auditar el motivo de reagendamiento
+            $request->merge([
+                'appointment_date' => $request->input('reschedule_date'),
+                'appointment_time' => $request->input('reschedule_time'),
+                'appointment_end_time' => $request->input('reschedule_end_time'),
+            ]);
+
+            // ✅ (opcional) auditar el motivo SOLO si hubo reagendamiento real
             if ($request->has('reschedule_reason')) {
                 $request->merge(['audit_reschedule_reason' => $request->input('reschedule_reason')]);
             }
@@ -455,8 +455,8 @@ class AppointmentController extends Controller
             $appointment->status = $request->status;
         }
 
-        // ✅ Si es reagendamiento: actualizar fecha/hora de la cita + guardar historial
-        if ($request->filled('status') && $request->status === 'rescheduled') {
+        // ✅ Si es reagendamiento REAL: actualizar fecha/hora de la cita + guardar historial
+        if ($isRescheduleNow) {
 
             $newDate = $request->input('reschedule_date');
             $newTime = $request->input('reschedule_time');
@@ -831,9 +831,7 @@ class AppointmentController extends Controller
             // ✅ guardar el nuevo
             $appointment->transfer_receipt_path = $request->file('tr_file')->store('transfer_proofs', 'public');
         }
-        if (!($request->filled('status') && $request->status === 'rescheduled')) {
-            $appointment->save();
-        }
+        $appointment->save();
 
         // ✅ Calcular diferencias SOLO por lo que vino del request (evita falsos cambios por formato)
         $changedFields = [];
