@@ -5256,8 +5256,42 @@
             __rescheduleResetWizard();
         });
 
+        $('#btnConfirmarCita').on('click', async function () {
+            const apptId = $('#appointmentDetailsModal').data('appointment-id');
+
+            if (!apptId) {
+                alert('No se encontró el ID de la cita en el modal.');
+                return;
+            }
+
+            try {
+                const res = await fetch(`/appointments/${apptId}/confirm`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json'
+                }
+                });
+
+                const data = await res.json();
+
+                if (!res.ok || !data.success) {
+                alert(data.message || 'No se pudo confirmar la cita.');
+                return;
+                }
+
+                alert(data.message || 'Cita confirmada correctamente.');
+
+                // opcional: refrescar tabla o re-cargar datos del modal
+                // location.reload();
+            } catch (e) {
+                console.error(e);
+                alert('Error inesperado al confirmar la cita.');
+            }
+        });
+
         // (Opcional) Por ahora: estos botones solo muestran alerta placeholder
-        $(document).on('click', '#btnConfirmarCita,#btnNoAsistio,#btnCancelarCita,#btnVerHistorial,#btnSendReminder3h', function(){
+        $(document).on('click', '#btnNoAsistio,#btnCancelarCita,#btnVerHistorial,#btnSendReminder3h', function(){
             alert('Acción pendiente de implementar (solo UI en este paso).');
             $('#apptActionsDropdown').dropdown('hide');
         });

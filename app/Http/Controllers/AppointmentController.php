@@ -12,6 +12,8 @@ use App\Events\StatusUpdated;
 use Illuminate\Support\Facades\Storage; 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\PatientNotificationAppointmentConfirmed;
 
 class AppointmentController extends Controller
 {
@@ -948,6 +950,30 @@ class AppointmentController extends Controller
         }
 
         return redirect()->back()->with('success', 'Cambios guardados correctamente.');
+    }
+
+    public function confirm(Appointment $appointment, Request $request)
+    {
+        // ✅ Evitar reconfirmar citas ya confirmadas
+        if ($appointment->status !== 'confirmed') {
+            $appointment->status = 'confirmed';
+            $appointment->save();
+
+            // 📧 Notificar al paciente si tiene email
+            $email = trim((string) ($appointment->patient_email ?? ''));
+            if ($email !== '') {
+                Notification::route('mail', $email)
+                    ->notify(new PatientNotificationAppointmentConfirmed($appointment));
+            }
+
+            // Mantener coherencia con el sistema
+            event(new StatusUpdated($appointment));
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Cita confirmada y notificación enviada al paciente.',
+        ]);
     }
 
 }

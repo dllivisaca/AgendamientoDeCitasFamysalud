@@ -125,6 +125,10 @@ Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard
 
     Route::post('/appointments/update-status', [AppointmentController::class, 'updateStatus'])->name('appointments.update.status');
 
+    Route::post('/admin/appointments/{appointment}/confirm', [AppointmentController::class, 'confirm'])
+    ->middleware('permission:appointments.view')
+    ->name('admin.appointments.confirm');
+
 });
 
 
