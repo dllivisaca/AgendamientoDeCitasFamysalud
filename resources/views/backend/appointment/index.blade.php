@@ -5500,6 +5500,118 @@
             }
         });
 
+        // ✅ Traducciones de etiquetas (campos)
+        const AUDIT_FIELD_LABELS_ES = {
+        status: 'Estado de la cita',
+        appointment_date: 'Fecha',
+        appointment_time: 'Hora inicio',
+        appointment_end_time: 'Hora fin',
+        payment_method: 'Método de pago',
+        payment_status: 'Estado del pago',
+        amount: 'Monto total',
+        amount_paid: 'Monto pagado',
+        payment_paid_at: 'Fecha de pago',
+        transfer_bank_origin: 'Banco de origen',
+        transfer_payer_name: 'Nombre del titular',
+        audit_reschedule_reason: 'Motivo de reagendamiento',
+        transfer_date: 'Fecha de transferencia',
+        };
+
+        // ✅ Traducciones de valores comunes
+        const AUDIT_VALUE_ES = {
+        confirmed: 'Confirmada',
+        cancelled: 'Cancelada',
+        rescheduled: 'Reagendada',
+        pending_verification: 'Pendiente de verificación',
+        waiting: 'En espera',
+
+        unpaid: 'No pagado',
+        partial: 'Pagado parcialmente',
+        paid: 'Pagado',
+        pending: 'Pendiente',
+        refunded: 'Reembolsado',
+
+        card: 'Tarjeta',
+        cash: 'Efectivo',
+        transfer: 'Transferencia',
+
+        admin_requested: 'Solicitado por el administrador',
+        patient_requested: 'Solicitado por el paciente',
+        doctor_requested: 'Solicitado por el profesional'
+        };
+
+        function titleCaseEs(str) {
+        return String(str || '')
+            .toLowerCase()
+            .split(' ')
+            .filter(Boolean)
+            .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(' ');
+        }
+
+        function translateFieldLabel(fieldKey) {
+        if (!fieldKey) return 'Campo';
+        return AUDIT_FIELD_LABELS_ES[fieldKey] || titleCaseEs(String(fieldKey).replaceAll('_', ' '));
+        }
+
+        function translateValue(value) {
+            const raw = String(value ?? '').trim();
+            if (!raw || raw === '—' || raw === '-') return '—';
+
+            const key = raw.toLowerCase();
+            if (AUDIT_VALUE_ES[key]) return AUDIT_VALUE_ES[key];
+
+            // humaniza snake_case o kebab-case
+            return titleCaseEs(raw.replaceAll('_', ' ').replaceAll('-', ' '));
+        }
+
+        // ✅ Formatear hora a AM / PM
+        function formatTimeAmPm(value) {
+            if (!value || value === '—') return '—';
+
+            // soporta "14:30" o "14:30:00"
+            const [h, m] = value.split(':');
+            if (h === undefined || m === undefined) return value;
+
+            const date = new Date();
+            date.setHours(Number(h), Number(m), 0);
+
+            return new Intl.DateTimeFormat('es-EC', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            }).format(date);
+        }
+
+        // ✅ Formatear fecha a "10 ene 2026"
+        function formatDateEs(value) {
+            if (!value || value === '—') return '—';
+
+            const date = new Date(value.replace(' ', 'T'));
+            if (isNaN(date)) return value;
+
+            return new Intl.DateTimeFormat('es-EC', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            }).format(date);
+        }
+
+        // ✅ Formatear montos con $
+        function formatMoney(value) {
+            if (value === null || value === undefined || value === '—') return '—';
+
+            const num = Number(value);
+            if (isNaN(num)) return value;
+
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(num);
+        }
+
         // ✅ Historial de cambios (REAL)
         $(document).on('click', '#btnVerHistorial', async function () {
             $('#apptActionsDropdown').dropdown('hide');
@@ -5570,11 +5682,41 @@
             const whenHuman = formatAuditDate(a.created_at || a.date || '');
             const lines = Object.keys(changed).map(key => {
                 const item = changed[key] || {};
-                const before = (item.before ?? item.old ?? item.from ?? '—');
-                const after  = (item.after  ?? item.new ?? item.to   ?? '—');
+
+                const beforeRaw = (item.before ?? item.old ?? item.from ?? '—');
+                const afterRaw  = (item.after  ?? item.new ?? item.to   ?? '—');
+
+                const label = translateFieldLabel(key);
+
+                let before = translateValue(beforeRaw);
+                let after  = translateValue(afterRaw);
+
+                // 🕒 Horas
+                if (key === 'appointment_time' || key === 'appointment_end_time') {
+                before = formatTimeAmPm(beforeRaw);
+                after  = formatTimeAmPm(afterRaw);
+                }
+
+                // 📅 Fechas
+                if (
+                key === 'appointment_date' ||
+                key === 'payment_paid_at' ||
+                key === 'transfer_date'
+                ) {
+                before = formatDateEs(beforeRaw);
+                after  = formatDateEs(afterRaw);
+                }
+
+                // 💵 Montos
+                if (key === 'amount' || key === 'amount_paid') {
+                before = formatMoney(beforeRaw);
+                after  = formatMoney(afterRaw);
+                }
+
                 return `
                     <div class="small">
-                        - <strong>${prettyField(key)}:</strong> ${escapeHtml(String(before))} → ${escapeHtml(String(after))}
+                        - <strong>${escapeHtml(label)}:</strong>
+                        ${escapeHtml(before)} → ${escapeHtml(after)}
                     </div>
                 `;
             }).join('');
