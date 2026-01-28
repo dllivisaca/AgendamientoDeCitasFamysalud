@@ -53,7 +53,7 @@ class AdminAppointmentCreateController extends Controller
             ->map(function ($s) {
                 return [
                     'id' => $s->id,
-                    'sername' => $s->title, // 👈 mantenemos sername para el JS
+                    'servname' => $s->title,// 👈 mantenemos sername para el JS
                     'category_id' => $s->category_id,
                 ];
             })

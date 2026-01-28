@@ -308,7 +308,7 @@
       const services = data?.data || [];
 
       services.forEach((s) => {
-        const text = s.name || s.servname || s.service_name || ('Servicio #' + s.id);
+        const text = s.name || s.servname || s.sername || s.service_name || ('Servicio #' + s.id);
         $(UI.serviceSelect).append(`<option value="${s.id}">${text}</option>`);
       });
 
