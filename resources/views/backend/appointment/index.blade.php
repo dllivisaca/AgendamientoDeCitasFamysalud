@@ -829,7 +829,7 @@
                     </button>
                 </div>
 
-                <div class="modal-body">
+                <div class="modal-body audit-history-body">
                     <div id="auditHistoryLoading" class="text-center py-4" style="display:none;">
                         <div class="spinner-border" role="status" aria-hidden="true"></div>
                         <div class="small text-muted mt-2">Cargando historial...</div>
@@ -1708,6 +1708,17 @@
     #myTable td:nth-child(10) {
         padding-left: 14px !important;
         padding-right: 14px !important;
+    }
+
+    /* Evita que el modal se salga por abajo: scroll interno */
+    #auditHistoryModal .audit-history-body{
+        max-height: calc(100vh - 220px); /* header + footer + márgenes */
+        overflow-y: auto;
+    }
+
+    /* Para que el contenedor de items no genere márgenes raros */
+    #auditHistoryModal #auditHistoryList{
+        padding-bottom: 4px;
     }
 </style>
 @stop
