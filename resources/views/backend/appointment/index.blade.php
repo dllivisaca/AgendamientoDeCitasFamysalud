@@ -1799,6 +1799,14 @@
             if (isCard) $('#modalPaymentMethodSelectCard').prop('disabled', false);
             if (isTransfer) $('#modalPaymentMethodSelectTransfer').prop('disabled', false);
             if (isCash) $('#modalPaymentMethodSelectCash').prop('disabled', false);
+
+            // ✅ Refrescar asteriscos según modo (solo deben verse en edición)
+            __toggleRequiredAsterisks(!!window.__apptIsEditMode);
+
+            // ✅ Solo en edición tiene sentido recalcular estado del botón
+            if (window.__apptIsEditMode) {
+                __updateSaveButtonState();
+            }
         };
 
         // ✅ Regla: "Pendiente de verificación" SOLO puede existir si método = transferencia
