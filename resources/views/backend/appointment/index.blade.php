@@ -190,7 +190,6 @@
 
                                     {{-- Select (modo edición) --}}
                                     <select class="form-control form-control-sm js-edit-input" id="modalPaymentStatusSelect">
-                                        <option value="" disabled selected>Seleccione una opción</option>
                                         <option value="pending">Pendiente</option>
                                         <option value="unpaid">No pagado</option>
                                         <option value="partial">Pagado parcialmente</option> <!-- ✅ NUEVO -->
@@ -431,7 +430,6 @@
 
                                         {{-- Edición --}}
                                         <select class="form-control form-control-sm js-edit-input" id="modalPaymentStatusSelectCard">
-                                            <option value="" disabled selected>Seleccione una opción</option>
                                             <option value="pending">Pendiente</option>
                                             <option value="unpaid">No pagado</option>
                                             <option value="partial">Pagado parcialmente</option> <!-- ✅ NUEVO -->
@@ -785,7 +783,7 @@
                         </label>
 
                         <select class="form-control form-control-sm" id="changeReasonSelect">
-                            <option value="">Seleccione una opción</option>
+                            <option value="" disabled selected>Seleccione una opción</option>
                             <option value="typo">Error de tipeo</option>
                             <option value="patient_update">Información actualizada por el paciente</option>
                             <option value="admin_adjustment">Ajuste administrativo</option>
@@ -969,7 +967,7 @@
                                 Motivo de reagendamiento <span class="text-danger">*</span>
                             </label>
                             <select class="form-control" id="rescheduleReasonSelect" required>
-                                <option value="">Seleccione una opción</option>
+                                <option value="" disabled selected>Seleccione una opción</option>
                                 <option value="patient_requested">Paciente pidió</option>
                                 <option value="doctor_requested">Doctor pidió</option>
                                 <option value="admin_requested">Admin</option>
@@ -2892,6 +2890,7 @@
             // ✅ Hiddens que se envían al backend
             $('#modalStatusHidden').val(normalizedStatus || 'pending_verification');
             $('#modalPaymentStatusHidden').val(pStat);
+            __togglePaymentPlaceholder(false);
             $('#modalPaymentStatusSelectCard').val(pStat);
             $('#modalPaymentStatusSelect').data('last_valid', pStat);
             $('#modalPaymentStatusSelectCard').data('last_valid', pStat);
@@ -2946,11 +2945,39 @@
                 __updateSaveButtonState();
             });
 
+            function __togglePaymentPlaceholder(show) {
+                const $p1 = $('#modalPaymentStatusSelect');
+                const $p2 = $('#modalPaymentStatusSelectCard');
+
+                [$p1, $p2].forEach($sel => {
+                    const $opt = $sel.find('option[value=""]');
+
+                    if (show) {
+                        if (!$opt.length) {
+                            // lo insertamos arriba de todo
+                            $sel.prepend('<option value="" disabled selected>Seleccione una opción</option>');
+                        } else {
+                            $opt.prop('disabled', true).prop('selected', true).show();
+                        }
+                    } else {
+                        // si existe, lo quitamos para que NO aparezca al abrir el modal
+                        if ($opt.length) $opt.remove();
+                    }
+                });
+            }
+
             function __syncPaymentStatusEverywhere(v, source) {
                 const val = String(v || '').trim().toLowerCase();
 
                 // Hidden que se envía
                 $('#modalPaymentStatusHidden').val(val);
+
+                // ✅ placeholder SOLO cuando forzamos "sin selección"
+                if (!val) {
+                    __togglePaymentPlaceholder(true);
+                } else {
+                    __togglePaymentPlaceholder(false);
+                }
 
                 // Selects (arriba + tarjeta)
                 if (source !== 'top')  $('#modalPaymentStatusSelect').val(val);
@@ -5524,6 +5551,7 @@
         rescheduled: 'Reagendada',
         pending_verification: 'Pendiente de verificación',
         waiting: 'En espera',
+        no_show: 'No asistió',
 
         unpaid: 'No pagado',
         partial: 'Pagado parcialmente',
@@ -5668,7 +5696,7 @@
 
 
         // (Opcional) seguir dejando placeholder en los otros botones
-        $(document).on('click', '#btnNoAsistio,#btnCancelarCita,#btnSendReminder3h', function(){
+        $(document).on('click', '#btnNoAsistio,#btnSendReminder3h', function(){
             alert('Acción pendiente de implementar (solo UI en este paso).');
             $('#apptActionsDropdown').dropdown('hide');
         });
