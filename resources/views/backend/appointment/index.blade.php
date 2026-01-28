@@ -1789,8 +1789,6 @@
 
 @section('js')
 
-    <script src="{{ asset('assets/js/admin-appointments-create.js') }}"></script>
-
     {{-- hide notifcation --}}
     <script>
         $(document).ready(function() {
@@ -6111,7 +6109,9 @@
 
         <div class="modal-header">
             <h5 class="modal-title">Crear cita</h5>
-            <button type="button" class="ca-btn-close" data-bs-dismiss="modal" aria-label="Cerrar">×</button>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
         </div>
 
         <div class="modal-body">
@@ -6457,7 +6457,7 @@
         </div>
 
         <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
             <button type="button" class="btn btn-success" id="btnSubmitCreateAppointment">
             Guardar cita
             </button>
@@ -6466,4 +6466,7 @@
         </div>
     </div>
     </div>
+    @push('scripts')
+        <script src="{{ asset('assets/js/admin-appointments-create.js') }}?v={{ time() }}"></script>
+    @endpush
 @endsection

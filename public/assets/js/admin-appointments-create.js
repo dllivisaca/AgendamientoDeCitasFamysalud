@@ -5,6 +5,7 @@
  */
 
 (function () {
+  console.log('[CreateAppt] JS cargado ✅');
   const $ = window.jQuery;
   if (!$) return;
 
@@ -755,7 +756,7 @@
 
       // success
       alert(data?.message || 'Cita creada correctamente.');
-      $(UI.modal).modal('hide');
+      hideCreateApptModal();
       window.location.reload();
 
     } catch (e) {
@@ -769,6 +770,29 @@
   // =========================
   // 11) INIT
   // =========================
+  function hideCreateApptModal() {
+    const el = document.querySelector(UI.modal);
+    if (!el) return;
+
+    // Bootstrap 5
+    if (window.bootstrap && window.bootstrap.Modal) {
+        const inst = window.bootstrap.Modal.getInstance(el) || new window.bootstrap.Modal(el);
+        inst.hide();
+        return;
+    }
+
+    // Bootstrap 4 (jQuery plugin)
+    if (window.jQuery && window.jQuery.fn && window.jQuery.fn.modal) {
+        window.jQuery(el).modal('hide');
+    }
+    }
+
+    // ✅ Cierre universal para X y botón Cerrar (aunque data-* no funcione)
+    $(document).on('click', `${UI.modal} [data-bs-dismiss="modal"], ${UI.modal} [data-dismiss="modal"], ${UI.modal} .btn-close, ${UI.modal} .close`, function (e) {
+    e.preventDefault();
+    hideCreateApptModal();
+});
+
   function init() {
     // Estado inicial de selects
     disable(UI.serviceSelect, true);
