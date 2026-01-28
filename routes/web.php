@@ -16,6 +16,7 @@ use App\Http\Controllers\AppointmentHoldController;
 use App\Http\Controllers\PayphoneController;
 use App\Http\Controllers\Admin\TransferReceiptController;
 use App\Http\Controllers\Admin\AdminAvailabilityController;
+use App\Http\Controllers\Admin\AdminAppointmentCreateController;
 
 use Illuminate\Http\Request;
 
@@ -23,6 +24,27 @@ use Illuminate\Http\Request;
 Auth::routes([
     'register' => false
 ]);
+
+// ================================
+// ADMIN - CREAR CITA (wizard)
+// ================================
+Route::middleware(['auth'])->group(function () {
+
+    Route::get('/admin/appointments/create/options/categories', [AdminAppointmentCreateController::class, 'categories'])
+        ->name('admin.appointments.create.categories');
+
+    Route::get('/admin/appointments/create/options/services', [AdminAppointmentCreateController::class, 'services'])
+        ->name('admin.appointments.create.services');
+
+    Route::get('/admin/appointments/create/options/employees', [AdminAppointmentCreateController::class, 'employees'])
+        ->name('admin.appointments.create.employees');
+
+    Route::get('/admin/appointments/create/options/slots', [AdminAppointmentCreateController::class, 'slots'])
+        ->name('admin.appointments.create.slots');
+
+    Route::post('/admin/appointments/create/store', [AdminAppointmentCreateController::class, 'store'])
+        ->name('admin.appointments.create.store');
+});
 
 Route::post('/appointment-holds', [AppointmentHoldController::class, 'create'])->name('appointment.holds.create');
 

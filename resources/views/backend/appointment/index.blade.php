@@ -9,9 +9,13 @@
         </div>
 
         <div class="col-sm-6 text-sm-right mt-2 mt-sm-0">
-            <button type="button" class="btn btn-success" id="btnCreateAppointment">
-                <i class="fas fa-plus mr-1"></i> Crear cita
-            </button>
+            <button type="button"
+                class="btn btn-success"
+                id="btnCreateAppointment"
+                data-toggle="modal"
+                data-target="#modalCreateAppointment">
+            <i class="fas fa-plus mr-1"></i> Crear cita
+        </button>
         </div>
     </div>
 @stop
@@ -1769,10 +1773,23 @@
     font-size: 16px;
     line-height: 1;
     }
+
+    .ca-btn-close{
+        border: 0;
+        background: transparent;
+        font-size: 1.6rem;
+        line-height: 1;
+        padding: .25rem .5rem;
+        cursor: pointer;
+        opacity: .7;
+    }
+    .ca-btn-close:hover{ opacity: 1; }
 </style>
 @stop
 
 @section('js')
+
+    <script src="{{ asset('assets/js/admin-appointments-create.js') }}"></script>
 
     {{-- hide notifcation --}}
     <script>
@@ -6084,4 +6101,369 @@
 
         })();
     </script>
+
+    <!-- =========================
+    MODAL: CREAR CITA (ADMIN)
+    ========================= -->
+    <div class="modal fade" id="modalCreateAppointment" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+
+        <div class="modal-header">
+            <h5 class="modal-title">Crear cita</h5>
+            <button type="button" class="ca-btn-close" data-bs-dismiss="modal" aria-label="Cerrar">×</button>
+        </div>
+
+        <div class="modal-body">
+
+            <!-- ALERT -->
+            <div class="alert alert-danger d-none" id="createApptError"></div>
+
+            <!-- FORM -->
+            <form id="formCreateAppointment" enctype="multipart/form-data">
+            <input type="hidden" name="_token" value="{{ csrf_token() }}">
+
+            <!-- Hidden para slot -->
+            <input type="hidden" name="employee_id" id="ca_employee_id">
+            <input type="hidden" name="service_id" id="ca_service_id">
+            <input type="hidden" name="appointment_date" id="ca_appointment_date">
+            <input type="hidden" name="appointment_time" id="ca_appointment_time">
+            <input type="hidden" name="appointment_end_time" id="ca_appointment_end_time">
+            <input type="hidden" name="hold_id" id="ca_hold_id">
+
+            <!-- =======================
+                PASO 1-4: Selecciones
+            ======================== -->
+            <div class="card mb-3">
+                <div class="card-body">
+
+                <div class="row g-3">
+
+                    <!-- 1) Área -->
+                    <div class="col-md-3">
+                    <label class="form-label">Área de atención <span class="text-danger">*</span></label>
+                    <select class="form-control" id="ca_category_id">
+                        <option value="" selected disabled>Seleccione…</option>
+                    </select>
+                    </div>
+
+                    <!-- 2) Servicio -->
+                    <div class="col-md-3">
+                    <label class="form-label">Servicio <span class="text-danger">*</span></label>
+                    <select class="form-control" id="ca_service_select" disabled>
+                        <option value="" selected disabled>Seleccione…</option>
+                    </select>
+                    </div>
+
+                    <!-- 3) Profesional -->
+                    <div class="col-md-3">
+                    <label class="form-label">Profesional <span class="text-danger">*</span></label>
+                    <select class="form-control" id="ca_employee_select" disabled>
+                        <option value="" selected disabled>Seleccione…</option>
+                    </select>
+                    </div>
+
+                    <!-- 4) Modalidad -->
+                    <div class="col-md-3">
+                    <label class="form-label">Modalidad <span class="text-danger">*</span></label>
+                    <select class="form-control" id="ca_mode_select" name="appointment_mode" disabled>
+                        <option value="" selected disabled>Seleccione…</option>
+                        <option value="presencial">Presencial</option>
+                        <option value="virtual">Virtual</option>
+                    </select>
+                    </div>
+
+                </div>
+                </div>
+            </div>
+
+            <!-- =======================
+                PASO 5: Calendario + Turnos
+            ======================== -->
+            <div class="card mb-3">
+                <div class="card-body">
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+                    <div class="fw-bold mb-2">Selecciona una fecha</div>
+                    <!-- Contenedor calendario -->
+                    <div id="ca_calendar_container" class="border rounded p-2 bg-white">
+                        <div class="text-muted small">Primero selecciona Área → Servicio → Profesional → Modalidad.</div>
+                    </div>
+
+                    <div class="small text-muted mt-2" id="ca_selected_slot_label"></div>
+                    </div>
+
+                    <div class="col-md-6">
+                    <div class="fw-bold mb-2">Turnos disponibles</div>
+                    <div class="text-muted small mb-2">Todos los turnos están en hora local de Ecuador (GMT-5)</div>
+
+                    <div id="ca_slots_container" class="d-grid gap-2" style="grid-template-columns: repeat(2, 1fr);">
+                        <!-- Botones de turnos -->
+                    </div>
+                    </div>
+
+                </div>
+                </div>
+            </div>
+
+            <!-- =======================
+                PASO 6: Paciente + Facturación
+            ======================== -->
+            <div class="card mb-3">
+                <div class="card-body">
+
+                <div class="row g-3">
+                    <div class="col-md-12">
+                    <div class="fw-bold">Datos del paciente</div>
+                    </div>
+
+                    <div class="col-md-6">
+                    <label class="form-label">Nombre y apellido <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" name="patient_full_name" id="ca_patient_full_name">
+                    </div>
+
+                    <div class="col-md-3">
+                    <label class="form-label">Fecha de nacimiento</label>
+                    <input type="date" class="form-control" name="patient_dob" id="ca_patient_dob">
+                    </div>
+
+                    <div class="col-md-3">
+                    <label class="form-label">Teléfono <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" name="patient_phone" id="ca_patient_phone">
+                    </div>
+
+                    <div class="col-md-6">
+                    <label class="form-label">Correo <span class="text-danger">*</span></label>
+                    <input type="email" class="form-control" name="patient_email" id="ca_patient_email">
+                    </div>
+
+                    <div class="col-md-3">
+                    <label class="form-label">Tipo doc.</label>
+                    <input type="text" class="form-control" name="patient_doc_type" id="ca_patient_doc_type" placeholder="Cédula / Pasaporte">
+                    </div>
+
+                    <div class="col-md-3">
+                    <label class="form-label">Nro doc.</label>
+                    <input type="text" class="form-control" name="patient_doc_number" id="ca_patient_doc_number">
+                    </div>
+
+                    <div class="col-md-12">
+                    <label class="form-label">Dirección</label>
+                    <input type="text" class="form-control" name="patient_address" id="ca_patient_address">
+                    </div>
+
+                    <div class="col-md-12">
+                    <label class="form-label">Notas</label>
+                    <textarea class="form-control" name="patient_notes" id="ca_patient_notes" rows="2"></textarea>
+                    </div>
+
+                    <hr class="my-2">
+
+                    <div class="col-md-12">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fa fa-file-invoice"></i>
+                        <div class="fw-bold">Datos de facturación</div>
+                    </div>
+
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="checkbox" id="ca_billing_same_as_patient">
+                        <label class="form-check-label" for="ca_billing_same_as_patient">
+                        Usar los mismos datos del paciente para la facturación
+                        </label>
+                    </div>
+
+                    <div class="text-muted small mt-1 d-none" id="ca_minor_hint">
+                        Para menores de edad, la facturación debe registrarse a nombre del representante.
+                    </div>
+                    </div>
+
+                    <div class="col-md-6">
+                    <label class="form-label">Nombre en factura <span class="text-danger" id="ca_bill_req_star">*</span></label>
+                    <input type="text" class="form-control" name="billing_name" id="ca_billing_name">
+                    </div>
+
+                    <div class="col-md-3">
+                    <label class="form-label">Tipo doc.</label>
+                    <input type="text" class="form-control" name="billing_doc_type" id="ca_billing_doc_type">
+                    </div>
+
+                    <div class="col-md-3">
+                    <label class="form-label">Nro doc.</label>
+                    <input type="text" class="form-control" name="billing_doc_number" id="ca_billing_doc_number">
+                    </div>
+
+                    <div class="col-md-6">
+                    <label class="form-label">Correo</label>
+                    <input type="email" class="form-control" name="billing_email" id="ca_billing_email">
+                    </div>
+
+                    <div class="col-md-6">
+                    <label class="form-label">Teléfono</label>
+                    <input type="text" class="form-control" name="billing_phone" id="ca_billing_phone">
+                    </div>
+
+                    <div class="col-md-12">
+                    <label class="form-label">Dirección</label>
+                    <input type="text" class="form-control" name="billing_address" id="ca_billing_address">
+                    </div>
+
+                </div>
+                </div>
+            </div>
+
+            <!-- =======================
+                PASO 7: Pago dinámico
+            ======================== -->
+            <div class="card mb-3">
+                <div class="card-body">
+                <div class="row g-3">
+
+                    <div class="col-md-12">
+                    <div class="fw-bold">Información de pago</div>
+                    </div>
+
+                    <div class="col-md-4">
+                    <label class="form-label">Método <span class="text-danger">*</span></label>
+                    <select class="form-control" name="payment_method" id="ca_payment_method">
+                        <option value="" selected disabled>Seleccione…</option>
+                        <option value="cash">Efectivo</option>
+                        <option value="transfer">Transferencia</option>
+                        <option value="card">Tarjeta</option>
+                    </select>
+                    </div>
+
+                    <div class="col-md-4">
+                    <label class="form-label">Monto total a pagar <span class="text-danger">*</span></label>
+                    <input type="number" step="0.01" class="form-control" name="amount" id="ca_amount" value="0.00">
+                    </div>
+
+                    <div class="col-md-4">
+                    <label class="form-label">Monto pagado <span class="text-danger">*</span></label>
+                    <input type="number" step="0.01" class="form-control" name="amount_paid" id="ca_amount_paid" value="0.00">
+                    </div>
+
+                    <div class="col-md-4">
+                    <label class="form-label">Estado del pago <span class="text-danger">*</span></label>
+                    <select class="form-control" name="payment_status" id="ca_payment_status">
+                        <option value="" selected disabled>Seleccione…</option>
+                        <option value="unpaid">No pagado</option>
+                        <option value="partial">Pagado parcialmente</option>
+                        <option value="paid">Pagado</option>
+                        <option value="pending">Pendiente</option>
+                        <option value="refunded">Reembolsado</option>
+                    </select>
+                    </div>
+
+                    <div class="col-md-4">
+                    <label class="form-label" id="ca_paid_at_label">Fecha del pago <span class="text-danger">*</span></label>
+                    <input type="datetime-local" class="form-control" name="payment_paid_at" id="ca_payment_paid_at">
+                    </div>
+
+                    <div class="col-md-4 d-none" id="ca_client_tx_wrap">
+                    <label class="form-label">Client Transaction ID (opcional)</label>
+                    <input type="text" class="form-control" name="client_transaction_id" id="ca_client_transaction_id" placeholder="Ej: 33b7a262-...">
+                    </div>
+
+                    <div class="col-md-12">
+                    <label class="form-label">Observaciones de pago (opcional)</label>
+                    <textarea class="form-control" name="payment_notes" id="ca_payment_notes" rows="2"></textarea>
+                    </div>
+
+                    <!-- Transfer fields -->
+                    <div class="col-md-12 d-none" id="ca_transfer_block">
+                    <div class="fw-bold mt-2">Datos de la transferencia</div>
+
+                    <div class="row g-3 mt-1">
+                        <div class="col-md-6">
+                        <label class="form-label">Banco de origen <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="transfer_bank_origin" id="ca_transfer_bank_origin">
+                        </div>
+
+                        <div class="col-md-6">
+                        <label class="form-label">Nombre del titular <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="transfer_payer_name" id="ca_transfer_payer_name">
+                        </div>
+
+                        <div class="col-md-6">
+                        <label class="form-label">Fecha de la transferencia <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" name="transfer_date" id="ca_transfer_date">
+                        </div>
+
+                        <div class="col-md-6">
+                        <label class="form-label">Número de referencia (opcional)</label>
+                        <input type="text" class="form-control" name="transfer_reference" id="ca_transfer_reference">
+                        </div>
+
+                        <div class="col-md-12">
+                        <label class="form-label">Comprobante (opcional)</label>
+                        <input type="file" class="form-control" name="tr_file" id="ca_tr_file" accept=".jpg,.jpeg,.png,.pdf">
+                        </div>
+                    </div>
+                    </div>
+
+                </div>
+                </div>
+            </div>
+
+            <!-- =======================
+                PASO 8: Canal (opcional)
+            ======================== -->
+            <div class="card mb-3">
+                <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                    <label class="form-label">Canal por el que se solicitó la cita (opcional)</label>
+                    <select class="form-control" name="appointment_channel" id="ca_appointment_channel">
+                        <option value="" selected>Sin especificar</option>
+                        <option value="whatsapp">WhatsApp</option>
+                        <option value="instagram">Instagram</option>
+                        <option value="tiktok">TikTok</option>
+                        <option value="facebook">Facebook</option>
+                        <option value="phone_call">Llamada telefónica</option>
+                        <option value="walk_in">En recepción</option>
+                        <option value="referral">Recomendación</option>
+                        <option value="other">Otro</option>
+                    </select>
+                    </div>
+
+                    <div class="col-md-6">
+                    <label class="form-label">Estado de la cita <span class="text-danger">*</span></label>
+                    <select class="form-control" name="status" id="ca_status">
+                        <option value="pending_verification">Pendiente verificación</option>
+                        <option value="pending_payment">Pendiente pago</option>
+                        <option value="confirmed">Confirmada</option>
+                        <option value="paid">Pagada</option>
+                        <option value="completed">Completada</option>
+                        <option value="no_show">No asistió</option>
+                        <option value="cancelled">Cancelada</option>
+                    </select>
+                    </div>
+
+                    <div class="col-md-12">
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="checkbox" name="data_consent" id="ca_data_consent" value="1" checked>
+                        <label class="form-check-label" for="ca_data_consent">
+                        Confirmo que el paciente aceptó el tratamiento de datos.
+                        </label>
+                    </div>
+                    </div>
+
+                </div>
+                </div>
+            </div>
+
+            </form>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            <button type="button" class="btn btn-success" id="btnSubmitCreateAppointment">
+            Guardar cita
+            </button>
+        </div>
+
+        </div>
+    </div>
+    </div>
 @endsection
