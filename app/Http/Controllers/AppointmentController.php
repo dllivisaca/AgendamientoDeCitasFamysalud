@@ -293,9 +293,18 @@ class AppointmentController extends Controller
             'url' => request()->fullUrl(),
             'method' => request()->method(),
         ]);
+
+        // ✅ Normalizar status para que la BD (ENUM) no reviente
+        if ($request->filled('status')) {
+            $status = strtolower(trim($request->status));
+            if ($status === 'canceled') {
+                $request->merge(['status' => 'cancelled']);
+            }
+        }
+
         $request->validate([
             'appointment_id' => 'required|exists:appointments,id',
-            'status' => 'required|in:pending_verification,pending_payment,on_hold,confirmed,paid,completed,cancelled,no_show,rescheduled',
+            'status' => 'required|in:pending_verification,pending_payment,on_hold,confirmed,paid,completed,cancelled,canceled,no_show,rescheduled',
 
             // ✅ Reagendamiento (viene desde el wizard)
             'reschedule_date'      => 'nullable|date',

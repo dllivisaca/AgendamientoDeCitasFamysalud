@@ -3001,6 +3001,25 @@
                 $p1.find('option').prop('disabled', false).show();
                 $p2.find('option').prop('disabled', false).show();
 
+                // ✅ Regla CANCELADA: permitir unpaid, partial, paid, refunded y pending
+                if (s === 'canceled' || s === 'cancelled') {
+                    const allowed = new Set(['unpaid', 'partial', 'paid', 'refunded','pending']);
+
+                    [$p1, $p2].forEach($sel => {
+                        $sel.find('option').each(function () {
+                            const v = String($(this).val() || '').trim().toLowerCase();
+                            if (!allowed.has(v)) {
+                                $(this).prop('disabled', true); // solo deshabilita
+                            }
+                        });
+                    });
+
+                    const current = String($('#modalPaymentStatusHidden').val() || '').trim().toLowerCase();
+                    if (!allowed.has(current)) {
+                        __syncPaymentStatusEverywhere('', 'rule'); // fuerza placeholder si quedó inválido
+                    }
+                }
+
                 // ✅ Regla #1: si la cita está EN ESPERA (on_hold)
                 if (s === 'on_hold') {
                     const allowed = new Set(['unpaid', 'pending', 'partial', 'paid']);
