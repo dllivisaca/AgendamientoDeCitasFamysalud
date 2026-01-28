@@ -3326,7 +3326,7 @@
 
             $(document).on('change.paymentMethodSelect', '#modalPaymentMethodSelectCard, #modalPaymentMethodSelectTransfer, #modalPaymentMethodSelectCash', function () {
                 // ✅ Captura el método ANTES de cualquier update (para evitar limpiar sin cambio real)
-                const prevPm = String($('#modalPaymentMethodRaw').val() || '').trim().toLowerCase();
+                let prevPm = String($('#modalPaymentMethodRaw').val() || '').trim().toLowerCase();
 
                 const pm = String($(this).val() || '').trim().toLowerCase();
 
@@ -3338,9 +3338,6 @@
                 // ✅ Solo limpia draft si REALMENTE cambió el método
                 if (window.__apptIsEditMode && pm !== prevPm) {
                     window.__clearPaymentDraftFields(pm);
-
-                    // 🔑 CLAVE: sincronizar el método previo
-                    prevPm = pm;
 
                     // ✅ Forzar repintado de asteriscos luego de mostrar/ocultar bloques
                     setTimeout(function () {
