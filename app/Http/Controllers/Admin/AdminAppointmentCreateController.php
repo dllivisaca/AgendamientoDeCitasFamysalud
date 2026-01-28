@@ -92,27 +92,35 @@ class AdminAppointmentCreateController extends Controller
             return response()->json(['success' => true, 'data' => $rows]);
         }
 
-        // Caso B: tabla pivote employee_services
-        $hasPivot = DB::getSchemaBuilder()->hasTable('employee_services');
+        // Caso B: tabla employee_service
+        $hasPivot = DB::getSchemaBuilder()->hasTable('employee_service');
 
         if ($hasPivot) {
             $rows = Employee::query()
-                ->whereIn('id', function ($q) use ($serviceId) {
-                    $q->select('employee_id')->from('employee_services')->where('service_id', $serviceId);
+                ->whereIn('employees.id', function ($q) use ($serviceId) {
+                    $q->select('employee_id')
+                    ->from('employee_service')
+                    ->where('service_id', $serviceId);
                 })
-                ->with('user:id,name')
+                ->leftJoin('users', 'users.id', '=', 'employees.user_id')
+                ->select([
+                    'employees.id',
+                    DB::raw("COALESCE(users.name, CONCAT('Profesional #', employees.id)) as name")
+                ])
+                ->orderBy('name')
                 ->get()
                 ->map(function ($e) {
-                    return ['id' => $e->id, 'name' => $e->user->name ?? ('Profesional #' . $e->id)];
+                    return ['id' => $e->id, 'name' => $e->name];
                 })
                 ->values();
+
             return response()->json(['success' => true, 'data' => $rows]);
         }
 
         // Si no hay forma de deducir relación sin romper tu app:
         return response()->json([
             'success' => false,
-            'message' => 'No se encontró relación servicio → profesional (services.employee_id o pivote employee_services).'
+            'message' => 'No se encontró relación servicio → profesional (services.employee_id o pivote employee_service).'
         ], 422);
     }
 
