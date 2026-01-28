@@ -128,6 +128,9 @@ Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard
     Route::post('/appointments/{appointment}/confirm', [AppointmentController::class, 'confirm'])
     ->name('appointments.confirm');
 
+    Route::get('/appointments/{appointment}/audits', [AppointmentController::class, 'audits'])
+    ->name('appointments.audits');
+
     Route::post('/appointments/{appointment}/cancel', [AppointmentController::class, 'cancel'])
     ->middleware('permission:appointments.edit|appointments.delete|appointments.cancel')
     ->name('appointments.cancel');

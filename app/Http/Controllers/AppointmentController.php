@@ -1184,4 +1184,75 @@ class AppointmentController extends Controller
         }
     }
 
+    public function audits(Appointment $appointment)
+    {
+        // Traer audits + nombre del actor
+        $rows = DB::table('appointment_audits as a')
+            ->leftJoin('users as u', 'u.id', '=', 'a.actor_user_id')
+            ->where('a.appointment_id', $appointment->id)
+            ->orderByDesc('a.id')
+            ->select([
+                'a.id',
+                'a.created_at',
+                'a.actor_role',
+                'a.action',
+                'a.reason',
+                'a.reason_other',
+                'a.changed_fields',
+                'a.old_values',
+                'a.new_values',
+                DB::raw("COALESCE(u.name, 'Sistema') as actor_name"),
+            ])
+            ->get();
+
+        $audits = $rows->map(function ($r) {
+
+            // changed_fields: JSON array ["status","appointment_date",...]
+            $changedFields = [];
+            if (!empty($r->changed_fields)) {
+                $tmp = json_decode($r->changed_fields, true);
+                if (is_array($tmp)) $changedFields = $tmp;
+            }
+
+            // old_values: JSON object {"status":"pending",...}
+            $old = [];
+            if (!empty($r->old_values)) {
+                $tmp = json_decode($r->old_values, true);
+                if (is_array($tmp)) $old = $tmp;
+            }
+
+            // new_values: JSON object {"status":"confirmed",...}
+            $new = [];
+            if (!empty($r->new_values)) {
+                $tmp = json_decode($r->new_values, true);
+                if (is_array($tmp)) $new = $tmp;
+            }
+
+            // Armar formato simple: { field: {before, after} }
+            $changes = [];
+            foreach ($changedFields as $field) {
+                $changes[$field] = [
+                    'before' => $old[$field] ?? null,
+                    'after'  => $new[$field] ?? null,
+                ];
+            }
+
+            return [
+                'id' => $r->id,
+                'created_at' => $r->created_at,
+                'actor_name' => $r->actor_name,
+                'actor_role' => $r->actor_role,
+                'action' => $r->action,
+                'reason' => $r->reason,
+                'reason_other' => $r->reason_other,
+                'changed_fields' => $changes,
+            ];
+        })->values();
+
+        return response()->json([
+            'success' => true,
+            'audits' => $audits,
+        ]);
+    }
+
 }

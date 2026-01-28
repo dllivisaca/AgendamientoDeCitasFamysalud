@@ -806,6 +806,44 @@
         </div>
     </div>
 
+    <!-- ✅ Modal: Historial de cambios -->
+    <div class="modal fade" id="auditHistoryModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-history mr-2"></i>Historial de cambios
+                    </h5>
+
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div id="auditHistoryLoading" class="text-center py-4" style="display:none;">
+                        <div class="spinner-border" role="status" aria-hidden="true"></div>
+                        <div class="small text-muted mt-2">Cargando historial...</div>
+                    </div>
+
+                    <div id="auditHistoryEmpty" class="alert alert-light border mb-0" style="display:none;">
+                        No hay cambios registrados para esta cita.
+                    </div>
+
+                    <div id="auditHistoryError" class="alert alert-danger mb-0" style="display:none;">
+                        No se pudo cargar el historial. Intenta nuevamente.
+                    </div>
+
+                    <div id="auditHistoryList" class="mt-2"></div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ✅ Modal Wizard: Reagendar (2 pasos) -->
     <div class="modal fade" id="rescheduleWizardModal" tabindex="-1" role="dialog" aria-labelledby="rescheduleWizardModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg" role="document">
@@ -5435,11 +5473,146 @@
             }
         });
 
-        // (Opcional) Por ahora: estos botones solo muestran alerta placeholder
-        $(document).on('click', '#btnNoAsistio,#btnVerHistorial,#btnSendReminder3h', function(){
+        // ✅ Historial de cambios (REAL)
+        $(document).on('click', '#btnVerHistorial', async function () {
+            $('#apptActionsDropdown').dropdown('hide');
+
+            const apptId = String($('#modalAppointmentId').val() || '').trim();
+            if (!apptId) {
+                alert('No se encontró el ID de la cita en el modal.');
+                return;
+            }
+
+            // Reset UI
+            $('#auditHistoryList').empty();
+            $('#auditHistoryEmpty').hide();
+            $('#auditHistoryError').hide();
+            $('#auditHistoryLoading').show();
+
+            // Abrir modal
+            $('#auditHistoryModal').modal('show');
+
+            try {
+                // ✅ Ajusta esta URL a tu ruta real
+                const res = await fetch(`/appointments/${apptId}/audits`, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                });
+
+                const data = await res.json().catch(() => null);
+
+                $('#auditHistoryLoading').hide();
+
+                if (!res.ok || !data) {
+                    $('#auditHistoryError').show();
+                    return;
+                }
+
+                // Esperado: data.audits = [...]
+                const audits = Array.isArray(data.audits) ? data.audits : [];
+
+                if (!audits.length) {
+                    $('#auditHistoryEmpty').show();
+                    return;
+                }
+
+                // Render simple como lo quieres
+                const html = audits.map(a => renderAuditItem(a)).join('');
+                $('#auditHistoryList').html(html);
+
+            } catch (e) {
+                console.error(e);
+                $('#auditHistoryLoading').hide();
+                $('#auditHistoryError').show();
+            }
+        });
+
+
+        // (Opcional) seguir dejando placeholder en los otros botones
+        $(document).on('click', '#btnNoAsistio,#btnCancelarCita,#btnSendReminder3h', function(){
             alert('Acción pendiente de implementar (solo UI en este paso).');
             $('#apptActionsDropdown').dropdown('hide');
         });
+
+        function renderAuditItem(a) {
+            // Soporta que te venga changed_fields como objeto o como string JSON
+            const changed = normalizeObject(a.changed_fields || a.changes || {});
+            const actor = a.actor_name || a.user_name || a.performed_by || 'Sistema';
+            const role  = a.actor_role || a.user_role || 'Admin';
+
+            const whenHuman = formatAuditDate(a.created_at || a.date || '');
+            const lines = Object.keys(changed).map(key => {
+                const item = changed[key] || {};
+                const before = (item.before ?? item.old ?? item.from ?? '—');
+                const after  = (item.after  ?? item.new ?? item.to   ?? '—');
+                return `
+                    <div class="small">
+                        - <strong>${prettyField(key)}:</strong> ${escapeHtml(String(before))} → ${escapeHtml(String(after))}
+                    </div>
+                `;
+            }).join('');
+
+            return `
+                <div class="border rounded p-3 mb-2">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="font-weight-bold">${escapeHtml(whenHuman)}</div>
+                        <div class="text-muted small">${escapeHtml(actor)} (${escapeHtml(role)})</div>
+                    </div>
+
+                    <div class="mt-2">
+                        <div class="small text-muted font-weight-bold">Cambios:</div>
+                        ${lines || `<div class="small text-muted">Sin detalle de cambios.</div>`}
+                    </div>
+                </div>
+            `;
+        }
+
+        function normalizeObject(x) {
+            if (!x) return {};
+            if (typeof x === 'object') return x;
+            try { return JSON.parse(x); } catch(e) { return {}; }
+        }
+
+        function formatAuditDate(s) {
+            // si ya viene bonito, lo mostramos; si no, intenta Date()
+            if (!s) return '';
+            const d = new Date(s);
+            if (isNaN(d.getTime())) return String(s);
+
+            // Ej: 28 Ene 2026 · 10:42 PM (en español)
+            const meses = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+            const dd = String(d.getDate()).padStart(2,'0');
+            const mm = meses[d.getMonth()];
+            const yyyy = d.getFullYear();
+
+            let hh = d.getHours();
+            const min = String(d.getMinutes()).padStart(2,'0');
+            const ampm = hh >= 12 ? 'PM' : 'AM';
+            hh = hh % 12; if (hh === 0) hh = 12;
+
+            return `${dd} ${mm} ${yyyy} · ${hh}:${min} ${ampm}`;
+        }
+
+        function prettyField(key) {
+            const map = {
+                appointment_date: 'Fecha',
+                appointment_time: 'Hora',
+                employee_id: 'Profesional',
+                service_id: 'Servicio',
+                status: 'Estado',
+                payment_status: 'Estado del pago',
+            };
+            return map[key] || key.replaceAll('_',' ');
+        }
+
+        function escapeHtml(str) {
+            return str
+            .replaceAll('&','&amp;')
+            .replaceAll('<','&lt;')
+            .replaceAll('>','&gt;')
+            .replaceAll('"','&quot;')
+            .replaceAll("'",'&#039;');
+        }
 
         // ✅ Cancelar cita (real)
         $(document).on('click', '#btnCancelarCita', async function () {
