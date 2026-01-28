@@ -5561,6 +5561,7 @@
         transfer_payer_name: 'Nombre del titular',
         audit_reschedule_reason: 'Motivo de reagendamiento',
         transfer_date: 'Fecha de transferencia',
+        payment_notes: 'Observaciones de pago'
         };
 
         // ✅ Traducciones de valores comunes
