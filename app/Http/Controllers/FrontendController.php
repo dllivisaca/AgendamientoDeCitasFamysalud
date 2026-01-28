@@ -205,7 +205,7 @@ class FrontendController extends Controller
         // Get existing appointments for this date and employee
         $existingAppointments = Appointment::where('appointment_date', $date->toDateString())
             ->where('employee_id', $employeeId)
-            ->whereNotIn('status', ['Cancelled'])
+            ->whereNotIn('status', ['cancelled', 'Cancelled'])
             ->get(['appointment_time', 'appointment_end_time']);
 
         $activeHolds = AppointmentHold::where('appointment_date', $date->toDateString())
@@ -441,7 +441,7 @@ class FrontendController extends Controller
             // ---- citas existentes del rango (para saber si un día se llenó) ----
             $existingAppointments = Appointment::whereBetween('appointment_date', [$start->toDateString(), $end->toDateString()])
                 ->where('employee_id', $employee->id)
-                ->whereNotIn('status', ['Cancelled'])
+                ->whereNotIn('status', ['cancelled', 'Cancelled'])
                 ->get(['appointment_date', 'appointment_time', 'appointment_end_time']);
 
             $activeHolds = AppointmentHold::whereBetween('appointment_date', [$start->toDateString(), $end->toDateString()])

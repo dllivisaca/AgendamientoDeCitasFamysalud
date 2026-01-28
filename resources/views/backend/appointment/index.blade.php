@@ -5431,9 +5431,48 @@
         });
 
         // (Opcional) Por ahora: estos botones solo muestran alerta placeholder
-        $(document).on('click', '#btnNoAsistio,#btnCancelarCita,#btnVerHistorial,#btnSendReminder3h', function(){
+        $(document).on('click', '#btnNoAsistio,#btnVerHistorial,#btnSendReminder3h', function(){
             alert('Acción pendiente de implementar (solo UI en este paso).');
             $('#apptActionsDropdown').dropdown('hide');
+        });
+
+        // ✅ Cancelar cita (real)
+        $(document).on('click', '#btnCancelarCita', async function () {
+            $('#apptActionsDropdown').dropdown('hide');
+
+            const ok = confirm('¿Estás seguro que quieres cancelar esta cita?');
+            if (!ok) return;
+
+            const apptId = String($('#modalAppointmentId').val() || '').trim();
+            if (!apptId) {
+                alert('No se encontró el ID de la cita en el modal.');
+                return;
+            }
+
+            try {
+                const res = await fetch(`/appointments/${apptId}/cancel`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const data = await res.json().catch(() => null);
+
+                if (!res.ok || !data || !data.success) {
+                    alert((data && data.message) ? data.message : 'No se pudo cancelar la cita.');
+                    return;
+                }
+
+                alert(data.message || 'Cita cancelada exitosamente.');
+                try { $('#apptDetailsModal').modal('hide'); } catch (e) {}
+                window.location.reload();
+
+            } catch (e) {
+                console.error(e);
+                alert('Error inesperado al cancelar la cita.');
+            }
         });
 
         // ================================

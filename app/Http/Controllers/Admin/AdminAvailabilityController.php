@@ -178,7 +178,7 @@ class AdminAvailabilityController extends Controller
             // ---- citas existentes del rango ----
             $existingAppointments = Appointment::whereBetween('appointment_date', [$start->toDateString(), $end->toDateString()])
                 ->where('employee_id', $employee->id)
-                ->whereNotIn('status', ['Cancelled'])
+                ->whereNotIn('status', ['cancelled', 'Cancelled'])
                 ->get(['appointment_date', 'appointment_time', 'appointment_end_time']);
 
             // ✅ Admin: por defecto NO usar holds (son del flujo paciente)
@@ -323,7 +323,7 @@ class AdminAvailabilityController extends Controller
 
         $existingAppointments = Appointment::where('appointment_date', $date->toDateString())
             ->where('employee_id', $employeeId)
-            ->whereNotIn('status', ['Cancelled'])
+            ->whereNotIn('status', ['cancelled', 'Cancelled'])
             ->get(['appointment_time', 'appointment_end_time']);
 
         // ✅ Admin: SÍ usar holds para no mostrar turnos tomados temporalmente por pacientes

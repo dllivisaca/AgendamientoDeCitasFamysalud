@@ -1106,4 +1106,82 @@ class AppointmentController extends Controller
         }
     }
 
+     public function cancel(Appointment $appointment, Request $request)
+    {
+        try {
+
+            // ✅ Si ya está cancelada, no volver a cancelar
+            if (($appointment->status ?? null) === 'cancelled') {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'La cita ya estaba cancelada.',
+                ]);
+            }
+
+            // 1) Guardar status anterior para auditoría
+            $oldStatus = $appointment->status;
+
+            // 2) Actualizar estado
+            $appointment->status = 'cancelled';
+            $appointment->save();
+
+            // 3) ✅ Registrar en appointment_audits (similar a confirm)
+            $actorId = Auth::id();
+
+            $actorRole = null;
+            if (auth()->check()) {
+                try {
+                    if (method_exists(auth()->user(), 'getRoleNames')) {
+                        $roles = auth()->user()->getRoleNames();
+                        $actorRole = $roles && count($roles) ? $roles[0] : null;
+                    }
+                } catch (\Throwable $e) {
+                    $actorRole = null;
+                }
+            }
+
+            DB::table('appointment_audits')->insert([
+                'appointment_id' => $appointment->id,
+                'actor_user_id'  => $actorId,
+                'actor_role'     => $actorRole,
+
+                'action'         => 'cancel',
+
+                'changed_fields' => json_encode(['status'], JSON_UNESCAPED_UNICODE),
+                'old_values'     => json_encode(['status' => $oldStatus], JSON_UNESCAPED_UNICODE),
+                'new_values'     => json_encode(['status' => 'cancelled'], JSON_UNESCAPED_UNICODE),
+
+                'reason'         => null,
+                'reason_other'   => null,
+            ]);
+
+            // ✅ Si existiera un hold “colgado” de ese mismo turno, lo limpiamos
+            AppointmentHold::where('employee_id', $appointment->employee_id)
+                ->where('appointment_date', $appointment->appointment_date)
+                ->where('appointment_time', $appointment->appointment_time)
+                ->where('appointment_end_time', $appointment->appointment_end_time)
+                ->delete();
+
+            // 4) Mantener coherencia con el sistema
+            event(new StatusUpdated($appointment));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Cita cancelada exitosamente.',
+            ]);
+
+        } catch (\Throwable $e) {
+
+            logger()->error('CANCEL: failed', [
+                'appointment_id' => $appointment->id ?? null,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'No se pudo cancelar la cita.',
+            ], 500);
+        }
+    }
+
 }
