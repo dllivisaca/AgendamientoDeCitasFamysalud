@@ -1718,6 +1718,57 @@
     #auditHistoryModal #auditHistoryList{
         padding-bottom: 4px;
     }
+
+    /* ===== Reagendar: slots como tarjetas (estilo paciente) ===== */
+    #rescheduleSlots.slots-grid{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    }
+
+    @media (max-width: 576px){
+    #rescheduleSlots.slots-grid{
+        grid-template-columns: 1fr;
+    }
+    }
+
+    /* Botón/tarjeta del turno */
+    .reschedule-slot{
+    width: 100%;
+    text-align: center;
+    padding: 14px 12px;
+    border: 1px solid #d6dbe1;
+    border-radius: 10px;
+    background: #fff;
+    color: #0d6efd;
+    font-weight: 600;
+    transition: transform .05s ease, box-shadow .1s ease, border-color .1s ease;
+    }
+
+    .reschedule-slot:hover{
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(0,0,0,.06);
+    border-color: #b7c7ff;
+    }
+
+    /* Estado seleccionado */
+    .reschedule-slot.is-selected{
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 3px rgba(13,110,253,.15);
+    }
+
+    /* Contenido interno (icono + texto centrados) */
+    .reschedule-slot .slot-inner{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    }
+
+    .reschedule-slot .slot-icon{
+    font-size: 16px;
+    line-height: 1;
+    }
 </style>
 @stop
 
