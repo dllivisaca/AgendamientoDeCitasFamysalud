@@ -167,6 +167,7 @@
                                         <option value="no_show">No asistió</option>
                                         <option value="on_hold">En espera</option>
                                         <option value="rescheduled" disabled hidden>Reagendada</option>
+                                        <option value="canceled" disabled hidden>Cancelada</option>
                                     </select>
                                 </div>
 
@@ -2781,6 +2782,7 @@
                 confirmed: '#3498db',
                 completed: '#008000',
                 canceled: '#ff0000',
+                cancelled: '#ff0000',
                 rescheduled: '#f1c40f',
                 no_show: '#e67e22',
                 on_hold: '#95a5a6',
@@ -2793,6 +2795,7 @@
                 confirmed: 'Confirmada',
                 completed: 'Completada',
                 canceled: 'Cancelada',
+                cancelled: 'Cancelada',
                 rescheduled: 'Reagendada',
                 no_show: 'No asistió',
                 on_hold: 'En espera',
@@ -2847,6 +2850,7 @@
                     processing: '#3498db',
                     paid: '#2ecc71',
                     cancelled: '#ff0000',
+                    canceled: '#ff0000',
                     confirmed: '#3498db',
                     completed: '#008000',
                     on_hold: '#95a5a6',
@@ -2860,6 +2864,7 @@
                     processing: 'Procesando',
                     paid: 'Pagada',
                     cancelled: 'Cancelada',
+                    canceled: 'Cancelada',
                     confirmed: 'Confirmada',
                     completed: 'Completada',
                     on_hold: 'En espera',
