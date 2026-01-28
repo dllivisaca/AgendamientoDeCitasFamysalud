@@ -1788,6 +1788,7 @@
 @stop
 
 @section('js')
+    <script src="{{ asset('assets/js/admin-appointments-create.js') }}?v={{ time() }}"></script>
 
     {{-- hide notifcation --}}
     <script>
@@ -6466,7 +6467,4 @@
         </div>
     </div>
     </div>
-    @push('scripts')
-        <script src="{{ asset('assets/js/admin-appointments-create.js') }}?v={{ time() }}"></script>
-    @endpush
 @endsection

@@ -24,9 +24,16 @@ class AdminAppointmentCreateController extends Controller
     public function categories()
     {
         $rows = Category::query()
-            ->select(['id', 'catname'])
-            ->orderBy('catname')
-            ->get();
+            ->select(['id', 'title'])
+            ->orderBy('title')
+            ->get()
+            ->map(function ($c) {
+                return [
+                    'id' => $c->id,
+                    'catname' => $c->title, // 👈 mantenemos catname para el JS
+                ];
+            })
+            ->values();
 
         return response()->json(['success' => true, 'data' => $rows]);
     }
@@ -40,9 +47,17 @@ class AdminAppointmentCreateController extends Controller
 
         $rows = Service::query()
             ->where('category_id', $request->category_id)
-            ->select(['id', 'sername', 'category_id'])
-            ->orderBy('sername')
-            ->get();
+            ->select(['id', 'title', 'category_id'])
+            ->orderBy('title')
+            ->get()
+            ->map(function ($s) {
+                return [
+                    'id' => $s->id,
+                    'sername' => $s->title, // 👈 mantenemos sername para el JS
+                    'category_id' => $s->category_id,
+                ];
+            })
+            ->values();
 
         return response()->json(['success' => true, 'data' => $rows]);
     }
@@ -313,3 +328,4 @@ class AdminAppointmentCreateController extends Controller
             'message' => 'Cita creada correctamente.'
         ]);
     }
+}
