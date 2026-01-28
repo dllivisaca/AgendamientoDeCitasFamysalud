@@ -358,6 +358,29 @@ class AppointmentController extends Controller
 
         $appointment = Appointment::findOrFail($request->appointment_id);
 
+        // ✅ BACKEND FIX: si es EFECTIVO y NO viene payment_paid_at,
+        // usar cash_paid_at como fuente (por si el front no lo está enviando)
+        $pmIncoming = strtolower(trim((string) $request->input('payment_method', $appointment->payment_method)));
+
+        if ($pmIncoming === 'cash') {
+            // Si tu form manda cash_paid_at (hidden), úsalo como payment_paid_at
+            if (!$request->filled('payment_paid_at') && $request->filled('cash_paid_at')) {
+                $request->merge([
+                    'payment_paid_at' => $request->input('cash_paid_at'),
+                ]);
+            }
+        }
+
+        logger()->info('UPDATE STATUS - incoming payment fields', [
+            'appointment_id' => $request->appointment_id,
+            'payment_method_in' => $request->input('payment_method'),
+            'payment_paid_at_in' => $request->input('payment_paid_at'),
+            'amount_paid_in' => $request->input('amount_paid'),
+            'payment_notes_in' => $request->input('payment_notes'),
+            'cash_paid_at_in' => $request->input('cash_paid_at'),
+            'pm_effective_in' => $request->input('payment_method', $appointment->payment_method),
+        ]);
+
         $newDate = $request->input('reschedule_date');
         $newTime = $request->input('reschedule_time');
         $newEnd  = $request->input('reschedule_end_time');
@@ -699,15 +722,28 @@ class AppointmentController extends Controller
             }
         }
 
-        // ✅ Guardar payment_paid_at EXACTAMENTE como lo manda el admin
+        // ✅ Guardar payment_paid_at (normalizado a DATETIME MySQL)
         $valPaidAt = $request->input('payment_paid_at', null);
 
         if ($valPaidAt !== null) {
-            $valPaidAt = trim((string)$valPaidAt);
+            $valPaidAt = trim((string) $valPaidAt);
 
             if ($valPaidAt !== '') {
-                $appointment->payment_paid_at = $valPaidAt;
-                $appointment->payment_paid_at_date_source = 'manual';
+                try {
+                    // Soporta "YYYY-MM-DDTHH:MM" (datetime-local) y "YYYY-MM-DD HH:MM:SS"
+                    $appointment->payment_paid_at = Carbon::parse($valPaidAt)->format('Y-m-d H:i:s');
+                    $appointment->payment_paid_at_date_source = 'manual';
+                } catch (\Throwable $e) {
+                    // Si llega un formato inválido, NO guardes basura
+                    $appointment->payment_paid_at = null;
+                    $appointment->payment_paid_at_date_source = null;
+
+                    logger()->warning('payment_paid_at invalid format', [
+                        'appointment_id' => $appointment->id ?? null,
+                        'incoming' => $valPaidAt,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
             } else {
                 $appointment->payment_paid_at = null;
                 $appointment->payment_paid_at_date_source = null;

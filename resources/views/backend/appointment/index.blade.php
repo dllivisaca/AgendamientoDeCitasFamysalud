@@ -464,6 +464,7 @@
                                         <input type="datetime-local"
                                             class="form-control form-control-sm js-edit-input"
                                             id="modalPaymentPaidAtInput"
+                                            name="payment_paid_at"
                                             value="">
                                     </div>
 
@@ -713,6 +714,7 @@
                                         <input type="datetime-local"
                                             class="form-control form-control-sm js-edit-input"
                                             id="modalCashPaidAtInput"
+                                            name="payment_paid_at"
                                             value="">
                                     </div>
 
@@ -782,7 +784,7 @@
                     </div>
 
                     <div class="form-group mb-0" id="changeReasonOtherWrapper" style="display:none;">
-                        <label class="small text-muted mb-1">Especifica (opcional)</label>
+                        <label class="small text-muted mb-1">Especifica</label>
                         <textarea class="form-control form-control-sm" id="changeReasonOtherText"
                                 rows="2" maxlength="180"
                                 placeholder="Escribe un motivo breve..."></textarea>
@@ -2261,10 +2263,18 @@
 
             function __toDatetimeLocalValue(dateRaw) {
                 if (!dateRaw || String(dateRaw).trim() === '') return '';
-                const d = new Date(String(dateRaw));
+
+                // Normalizar "YYYY-MM-DD HH:MM:SS" -> "YYYY-MM-DDTHH:MM:SS"
+                let s = String(dateRaw).trim();
+                if (/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}(:\d{2})?$/.test(s)) {
+                    s = s.replace(' ', 'T');
+                }
+
+                const d = new Date(s);
                 if (isNaN(d.getTime())) return '';
+
                 const pad = (n) => String(n).padStart(2, '0');
-                return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+                return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
             }
 
             function __formatNiceDateTime(dateRaw) {
@@ -2384,59 +2394,6 @@
                     __toggleRequiredAsterisks(true);
                     __updateSaveButtonState();
                 }
-            }
-
-            // ✅ NUEVO: limpiar campos del método NUEVO (solo draft / edición)
-            function __clearPaymentDraftFields(pm) {
-                const method = String(pm || '').trim().toLowerCase();
-
-                // 1) Limpia inputs comunes (monto total + monto pagado) en TODOS
-                __syncAmountAll('');
-                __syncPaidAmountAll('');
-
-                // 2) Limpia estado de pago (arriba + tarjeta + badges)
-                //    Deja selects en vacío visualmente (pendiente si quieres), pero lo más "limpio" es vacío.
-                $('#modalPaymentStatusSelect').val('');          // top
-                $('#modalPaymentStatusSelectCard').val('');      // card
-                $('#modalPaymentStatusHidden').val('');
-
-                // Opcional: badges a N/A en edición (no asusta porque en edición se ven inputs)
-                $('#modalPaymentStatusBadge').html(paymentStatusBadge(''));
-                $('#modalPaymentStatusBadge2').html(paymentStatusBadge(''));
-
-                // 3) Limpia tarjeta
-                $('#modalClientTransactionIdInput').val('');
-                $('#modalPaymentPaidAtInput').val('');
-                $('#modalClientTransactionIdHidden').val('');
-                $('#modalPaymentPaidAtHidden').val('');
-
-                // 4) Limpia transferencia
-                $('#modalTransferBankOriginInput').val('');
-                $('#modalTransferPayerNameInput').val('');
-                $('#modalTransferDateInput').val('');
-                $('#modalTransferReferenceInput').val('');
-                $('#modalTransferReceiptFile').val(''); // limpia selección de archivo
-
-                // Validación de transferencia (draft)
-                $('#modalTransferValidationSelect').val('');
-                $('#modalTransferValidationNotes').val('');
-                $('#modalTransferValidationStatusInput').val('');
-                $('#modalTransferValidationNotesInput').val('');
-                $('#transferValidationNotesWrapper').hide();
-                $('#transferNotesRequired').hide();
-                $('#transferNotesOptional').hide();
-
-                // 5) Limpia efectivo
-                $('#modalCashPaidAtInput').val('');
-                $('#modalCashNotesInput').val('');
-                $('#modalCashPaidAtHidden').val('');
-                $('#modalCashNotesHidden').val('');
-
-                // 6) Limpia hidden de monto pagado
-                $('#modalAmountPaidHidden').val('');
-
-                // 7) IMPORTANTE: el método seleccionado queda como "raw" (draft)
-                $('#modalPaymentMethodRaw').val(method);
             }
 
             const pm = String(paymentMethodRaw || '').trim().toLowerCase();
@@ -3360,14 +3317,22 @@
             $(document).off('change.paymentMethodSelect');
 
             $(document).on('change.paymentMethodSelect', '#modalPaymentMethodSelectCard, #modalPaymentMethodSelectTransfer, #modalPaymentMethodSelectCash', function () {
+                // ✅ Captura el método ANTES de cualquier update (para evitar limpiar sin cambio real)
+                const prevPm = String($('#modalPaymentMethodRaw').val() || '').trim().toLowerCase();
+
                 const pm = String($(this).val() || '').trim().toLowerCase();
+
                 window.__setPaymentMethodUI(pm);
                 __applyAppointmentStatusOptionsByPaymentMethod(pm);
                 __setQuickValidateVisibility(pm);
                 __applyPaymentOptionsByAppointmentStatus($('#modalStatusSelect').val());
 
-                if (window.__apptIsEditMode) {
+                // ✅ Solo limpia draft si REALMENTE cambió el método
+                if (window.__apptIsEditMode && pm !== prevPm) {
                     window.__clearPaymentDraftFields(pm);
+
+                    // 🔑 CLAVE: sincronizar el método previo
+                    prevPm = pm;
 
                     // ✅ Forzar repintado de asteriscos luego de mostrar/ocultar bloques
                     setTimeout(function () {
@@ -3501,6 +3466,17 @@
             }, 4000);
         }
 
+        // ✅ Mantener payment_paid_at SIEMPRE sincronizado (card + cash)
+        $(document).on('change input', '#modalPaymentPaidAtInput', function () {
+            const v = String($(this).val() || '').trim();
+            $('#modalPaymentPaidAtHidden').prop('disabled', false).val(v);
+        });
+
+        $(document).on('change input', '#modalCashPaidAtInput', function () {
+            const v = String($(this).val() || '').trim();
+            $('#modalPaymentPaidAtHidden').prop('disabled', false).val(v);
+        });
+
         // ✅ Antes de enviar el form: valida reglas y llena hidden inputs
         $(document).on('submit', '#appointmentStatusForm', function (e) {
             // ============================
@@ -3611,6 +3587,13 @@
                 }
             }
             console.log('================= SUBMIT appointmentStatusForm =================');
+            // ✅ Asegurar que hiddens críticos NO estén disabled (si están disabled, NO se envían)
+            $('#modalPaymentPaidAtHidden').prop('disabled', false);
+            $('#modalAmountPaidHidden').prop('disabled', false);
+            $('#modalPaymentMethodHidden').prop('disabled', false);
+            $('#modalPaymentStatusHidden').prop('disabled', false);
+            console.log('[SUBMIT] payment_method_raw:', $('#modalPaymentMethodRaw').val());
+            console.log('[SUBMIT] payment_paid_at_hidden:', $('#modalPaymentPaidAtHidden').val());
             console.log('[patient_full_name]', $('#modalPatientFullNameInput').val());
             console.log('[patient_doc_type]', $('#modalDocTypeInput').val());
             console.log('[patient_doc_number]', $('#modalDocNumberInput').val());
@@ -3725,7 +3708,13 @@
 
             // ✅ Caso EFECTIVO: fuerza reglas
             if (isCash) {
-                const cashPaidAt = String($('#modalCashPaidAtInput').val() || '').trim(); // datetime-local
+                let cashPaidAt = String($('#modalCashPaidAtInput').val() || '').trim(); // datetime-local
+
+                // Normalizar a MySQL "YYYY-MM-DD HH:MM:SS"
+                if (cashPaidAt.includes('T')) {
+                    cashPaidAt = cashPaidAt.replace('T', ' ');
+                    if (cashPaidAt.length === 16) cashPaidAt += ':00';
+                }
                 const cashNotes = String($('#modalCashNotesInput').val() || '').trim();
 
                 // ✅ Normalizar monto pagado (cash)
@@ -3741,7 +3730,6 @@
                 }
 
                 // Mandar al backend
-                $('#modalCashPaidAtHidden').val(cashPaidAt);
                 $('#modalPaymentPaidAtHidden').val(cashPaidAt);
                 $('#modalPaymentNotesHidden').val(cashNotes);
 
@@ -3825,7 +3813,19 @@
                 }
             }
 
+            // ✅ (Re)habilitar hiddens críticos
+            $('#modalPaymentPaidAtHidden').prop('disabled', false);
+            $('#modalAmountPaidHidden').prop('disabled', false);
+            $('#modalPaymentMethodHidden').prop('disabled', false);
+            $('#modalPaymentStatusHidden').prop('disabled', false);
+
+            // ✅ Crear FormData AL FINAL, cuando ya llenaste todos los hidden
             const fd = new FormData(form);
+
+            // ✅ Debug real: confirma lo que se enviará
+            console.log('[FD] payment_paid_at =>', fd.get('payment_paid_at'));
+            console.log('[FD] payment_method =>', fd.get('payment_method'));
+            console.log('[FD] amount_paid =>', fd.get('amount_paid'));
 
             // (Opcional) Deshabilitar botón para evitar doble click
             const $btn = $('#rescheduleConfirmBtn');
@@ -4105,10 +4105,20 @@
                 pmRaw,
 
                 appointment_status: __norm($('#modalStatusSelect').val()).toLowerCase(),
-                payment_status: __norm($('#modalPaymentStatusSelect').val()).toLowerCase(),
+                payment_status: __norm(
+                    pmRaw === 'card'
+                        ? $('#modalPaymentStatusSelectCard').val()
+                        : $('#modalPaymentStatusSelect').val()
+                ).toLowerCase(),
 
                 client_transaction_id: __norm($('#modalClientTransactionIdInput').val()),
-                payment_paid_at: __norm($('#modalPaymentPaidAtInput').val()),
+                payment_paid_at: __norm(
+                    pmRaw === 'cash'
+                        ? $('#modalCashPaidAtInput').val()
+                        : (pmRaw === 'card'
+                            ? $('#modalPaymentPaidAtInput').val()
+                            : '')
+                ),
                 payment_notes: __norm(
                     (String($('#modalPaymentMethodRaw').val() || '').trim().toLowerCase() === 'cash')
                         ? $('#modalCashNotesInput').val()
