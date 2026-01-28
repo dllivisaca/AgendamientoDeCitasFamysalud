@@ -3,11 +3,16 @@
 @section('title', 'Todas las citas · FamySalud')
 
 @section('content_header')
-    <div class="row mb-2">
+    <div class="row mb-2 align-items-center">
         <div class="col-sm-6">
-            <h1>Todas las citas</h1>
+            <h1 class="mb-0">Todas las citas</h1>
         </div>
 
+        <div class="col-sm-6 text-sm-right mt-2 mt-sm-0">
+            <button type="button" class="btn btn-success" id="btnCreateAppointment">
+                <i class="fas fa-plus mr-1"></i> Crear cita
+            </button>
+        </div>
     </div>
 @stop
 
@@ -89,6 +94,10 @@
 
                                     <button type="button" class="dropdown-item" id="btnVerHistorial">
                                         <i class="fas fa-history mr-2"></i>Ver historial de cambios
+                                    </button>
+
+                                    <button type="button" class="dropdown-item" id="btnCrearNuevaCitaConDatos">
+                                        <i class="fas fa-copy mr-2"></i>Crear nueva cita con estos datos
                                     </button>
 
                                     <button type="button" class="dropdown-item d-none" id="btnSendReminder3h">
