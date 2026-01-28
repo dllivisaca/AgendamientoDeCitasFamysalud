@@ -2812,6 +2812,13 @@
                     $('#btnConfirmarCita').removeClass('d-none');
                 }
 
+                // ✅ Ocultar "Cancelar cita" si ya está cancelada
+                if (normalizedStatus === 'cancelled' || normalizedStatus === 'canceled') {
+                    $('#btnCancelarCita').addClass('d-none');
+                } else {
+                    $('#btnCancelarCita').removeClass('d-none');
+                }
+
             // Colores por status normalizado
             const statusColors = {
                 // ✅ nuevos
