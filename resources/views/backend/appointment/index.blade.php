@@ -6601,42 +6601,46 @@
                 </div>
 
                 <div class="col-md-6">
-                    <label class="form-label">Nombre y apellido <span class="text-danger">*</span></label>
+                    <label class="form-label">Nombre completo <span class="text-danger">*</span></label>
                     <input type="text" class="form-control" name="patient_full_name" id="ca_patient_full_name">
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label">Fecha de nacimiento</label>
-                    <input type="date" class="form-control" name="patient_dob" id="ca_patient_dob">
+                    <label class="form-label">Fecha de nacimiento <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" name="patient_dob" id="ca_patient_dob" required>
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label">Teléfono <span class="text-danger">*</span></label>
+                    <label class="form-label">Número de celular <span class="text-danger">*</span></label>
                     <input type="text" class="form-control" name="patient_phone" id="ca_patient_phone">
                 </div>
 
                 <div class="col-md-6">
-                    <label class="form-label">Correo <span class="text-danger">*</span></label>
+                    <label class="form-label">Correo electrónico <span class="text-danger">*</span></label>
                     <input type="email" class="form-control" name="patient_email" id="ca_patient_email">
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label">Tipo doc.</label>
-                    <input type="text" class="form-control" name="patient_doc_type" id="ca_patient_doc_type" placeholder="Cédula / Pasaporte">
+                    <label class="form-label">Tipo de documento <span class="text-danger">*</span></label>
+                    <select class="form-control" name="patient_doc_type" id="ca_patient_doc_type" required>
+                        <option value="" selected disabled>Seleccione…</option>
+                        <option value="cedula">Cédula</option>
+                        <option value="pasaporte">Pasaporte</option>
+                    </select>
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label">Nro doc.</label>
-                    <input type="text" class="form-control" name="patient_doc_number" id="ca_patient_doc_number">
+                    <label class="form-label">Número de documento <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" name="patient_doc_number" id="ca_patient_doc_number" required>
                 </div>
 
                 <div class="col-md-12">
-                    <label class="form-label">Dirección</label>
-                    <input type="text" class="form-control" name="patient_address" id="ca_patient_address">
+                    <label class="form-label">Dirección <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" name="patient_address" id="ca_patient_address" required>
                 </div>
 
                 <div class="col-md-12">
-                    <label class="form-label">Notas</label>
+                    <label class="form-label">Comentario (opcional)</label>
                     <textarea class="form-control" name="patient_notes" id="ca_patient_notes" rows="2"></textarea>
                 </div>
                 </div>
@@ -6660,7 +6664,7 @@
                 <div class="form-check m-0">
                     <input class="form-check-input" type="checkbox" id="ca_billing_same_as_patient">
                     <label class="form-check-label" for="ca_billing_same_as_patient">
-                    Usar los mismos datos del paciente
+                    Usar los mismos datos del paciente para la facturación
                     </label>
                 </div>
                 </div>
@@ -6671,33 +6675,38 @@
 
                 <div class="row g-3">
                 <div class="col-md-6">
-                    <label class="form-label">Nombre en factura <span class="text-danger" id="ca_bill_req_star">*</span></label>
+                    <label class="form-label">Nombre completo <span class="text-danger" id="ca_bill_req_star">*</span></label>
                     <input type="text" class="form-control" name="billing_name" id="ca_billing_name">
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label">Tipo doc.</label>
-                    <input type="text" class="form-control" name="billing_doc_type" id="ca_billing_doc_type">
+                    <label class="form-label">Tipo de documento <span class="text-danger">*</span></label>
+                    <select class="form-control" name="billing_doc_type" id="ca_billing_doc_type" required>
+                        <option value="" selected disabled>Seleccione…</option>
+                        <option value="cedula">Cédula</option>
+                        <option value="pasaporte">Pasaporte</option>
+                        <option value="ruc">RUC</option>
+                    </select>
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label">Nro doc.</label>
-                    <input type="text" class="form-control" name="billing_doc_number" id="ca_billing_doc_number">
+                    <label class="form-label">Número de documento <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" name="billing_doc_number" id="ca_billing_doc_number" required>
                 </div>
 
                 <div class="col-md-6">
-                    <label class="form-label">Correo</label>
-                    <input type="email" class="form-control" name="billing_email" id="ca_billing_email">
+                    <label class="form-label">Correo electrónico <span class="text-danger">*</span></label>
+                    <input type="email" class="form-control" name="billing_email" id="ca_billing_email" required>
                 </div>
 
                 <div class="col-md-6">
-                    <label class="form-label">Teléfono</label>
-                    <input type="text" class="form-control" name="billing_phone" id="ca_billing_phone">
+                    <label class="form-label">Número de celular <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" name="billing_phone" id="ca_billing_phone" required>
                 </div>
 
                 <div class="col-md-12">
-                    <label class="form-label">Dirección</label>
-                    <input type="text" class="form-control" name="billing_address" id="ca_billing_address">
+                    <label class="form-label">Dirección <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" name="billing_address" id="ca_billing_address" required>
                 </div>
                 </div>
 
