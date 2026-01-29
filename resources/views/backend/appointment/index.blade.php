@@ -1990,10 +1990,19 @@
     }
 
     /* tablet: 2 columnas */
-    @media (max-width: 992px){
+    /* ✅ cuando el modal ya se empieza a apretar, baja a 2 columnas */
+    @media (max-width: 1500px){
     #ca_slots_container{
         grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     }
+    }
+
+    /* ✅ Apilar calendario + turnos antes (cuando se empieza a apretar el modal) */
+    @media (max-width: 1500px){
+        #modalCreateAppointment .ca-step5-row > .col-md-6{
+            flex: 0 0 100% !important;
+            max-width: 100% !important;
+        }
     }
 
     /* móvil: 1 columna */
@@ -2008,7 +2017,21 @@
     width: 100% !important;
     display: block !important;
     text-align: center !important;
-    white-space: nowrap;
+
+    /* ✅ clave anti-desborde */
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+
+    /* ✅ un pelín más compacto para que quepa mejor */
+    padding: 10px 8px !important;
+    font-size: .85rem !important;
+    }
+
+    #ca_slots_container > *{
+    min-width: 0 !important; /* ✅ permite que los hijos del grid se encojan */
     }
 
     /* ===== Crear cita: mensajes (loading / empty) deben ocupar TODAS las columnas ===== */
@@ -6507,7 +6530,7 @@
             ======================== -->
             <div class="card mb-3">
                 <div class="card-body">
-                <div class="row g-3">
+                <div class="row g-3 ca-step5-row">
 
                     <div class="col-md-6">
                     <div class="ca-cal-title">Seleccione una fecha</div>
