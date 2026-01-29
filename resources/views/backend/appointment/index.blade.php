@@ -5926,6 +5926,8 @@
             }).format(num);
         }
 
+        let reopenDetailsAfterHistory = false;
+
         // ✅ Historial de cambios (REAL)
         $(document).on('click', '#btnVerHistorial', async function () {
             $('#apptActionsDropdown').dropdown('hide');
@@ -5942,7 +5944,13 @@
             $('#auditHistoryError').hide();
             $('#auditHistoryLoading').show();
 
-            // Abrir modal
+            // Guardar si "Detalles" estaba abierto y ocultarlo para evitar superposición
+            reopenDetailsAfterHistory = $('#appointmentModal').hasClass('show');
+            if (reopenDetailsAfterHistory) {
+            $('#appointmentModal').modal('hide');
+            }
+
+            // Abrir modal de historial
             $('#auditHistoryModal').modal('show');
 
             try {
@@ -5980,6 +5988,12 @@
             }
         });
 
+        $('#auditHistoryModal').on('hidden.bs.modal', function () {
+            if (reopenDetailsAfterHistory) {
+                reopenDetailsAfterHistory = false;
+                $('#appointmentModal').modal('show');
+            }
+        });
 
         // (Opcional) seguir dejando placeholder en los otros botones
         $(document).on('click', '#btnNoAsistio,#btnSendReminder3h', function(){
