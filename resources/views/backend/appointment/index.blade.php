@@ -1336,6 +1336,50 @@
             </div><!-- /.container-fluid -->
         </section>
     </div>
+    <!-- =========================
+     MODAL: MOTIVO DE CANCELACIÓN
+    ========================= -->
+    <div class="modal fade" id="cancelReasonModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+
+        <div class="modal-header">
+            <h5 class="modal-title">Motivo de cancelación</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+
+        <div class="modal-body">
+            <input type="hidden" id="cancel_appt_id">
+
+            <div class="form-group">
+            <label class="mb-1">Motivo <span class="text-danger">*</span></label>
+            <select class="form-control" id="cancel_reason_select" required>
+                <option value="" selected disabled>Seleccione…</option>
+                <option value="patient_requested">Solicitado por el paciente</option>
+                <option value="doctor_requested">Solicitado por el profesional</option>
+                <option value="admin_requested">Solicitado por el administrador</option>
+                <option value="other">Otro</option>
+            </select>
+            <small class="text-muted">Este campo es obligatorio.</small>
+            </div>
+
+            <div class="form-group d-none" id="cancel_note_group">
+            <label class="mb-1">Comentario <span class="text-muted">(opcional)</span></label>
+            <textarea class="form-control" id="cancel_note_text" rows="3" placeholder="Escribe un comentario (solo si seleccionas 'Otro')"></textarea>
+            <small class="text-muted">Si eliges “Otro”, aquí sí te recomiendo escribir el motivo.</small>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Volver</button>
+            <button type="button" class="btn btn-danger" id="btnConfirmCancelWithReason">Cancelar cita</button>
+        </div>
+
+        </div>
+    </div>
+    </div>
 @stop
 
 @section('css')
@@ -1925,6 +1969,16 @@
     font-weight:700;
     color:#6c757d;   /* gris */
     margin-bottom:.5rem;
+    }
+
+    /* =========================
+    Modal jerarquía: cancelación sobre detalles
+    ========================= */
+
+    /* cuando el modal de cancelación está abierto */
+    body.cancel-modal-open #appointmentModal .modal-content {
+    filter: brightness(0.6);
+    pointer-events: none; /* evita clicks debajo */
     }
 </style>
 @stop
@@ -5769,6 +5823,8 @@
         transfer_bank_origin: 'Banco de origen',
         transfer_payer_name: 'Nombre del titular',
         audit_reschedule_reason: 'Motivo de reagendamiento',
+        audit_cancel_reason: 'Motivo de cancelación',
+        audit_cancel_note: 'Comentario de cancelación',
         transfer_date: 'Fecha de transferencia',
         payment_notes: 'Observaciones de pago'
         };
@@ -6040,6 +6096,8 @@
             .replaceAll("'",'&#039;');
         }
 
+        window.__cancelConfirmed = false;
+
         // ✅ Cancelar cita (real)
         $(document).on('click', '#btnCancelarCita', async function () {
             $('#apptActionsDropdown').dropdown('hide');
@@ -6049,33 +6107,103 @@
 
             const apptId = String($('#modalAppointmentId').val() || '').trim();
             if (!apptId) {
-                alert('No se encontró el ID de la cita en el modal.');
-                return;
+            alert('No se encontró el ID de la cita en el modal.');
+            return;
             }
 
-            try {
-                const res = await fetch(`/appointments/${apptId}/cancel`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        'Accept': 'application/json'
-                    }
-                });
+            // ✅ Abrir modal de motivo
+            $('#cancel_appt_id').val(apptId);
+            $('#cancel_reason_select').val('');
+            $('#cancel_note_text').val('');
+            $('#cancel_note_group').addClass('d-none');
 
-                const data = await res.json().catch(() => null);
+            $('body').addClass('cancel-modal-open');
 
-                if (!res.ok || !data || !data.success) {
-                    alert((data && data.message) ? data.message : 'No se pudo cancelar la cita.');
-                    return;
-                }
+            window.__cancelConfirmed = false;
 
-                alert(data.message || 'Cita cancelada exitosamente.');
-                try { $('#apptDetailsModal').modal('hide'); } catch (e) {}
-                window.location.reload();
+            // ✅ Oculta "Detalles de la cita" antes de abrir el motivo
+            $('#appointmentModal').modal('hide');
 
-            } catch (e) {
-                console.error(e);
-                alert('Error inesperado al cancelar la cita.');
+            $('#cancelReasonModal').modal('show');
+        });
+
+        // ✅ Mostrar/ocultar comentario si motivo = other
+        $(document).on('change', '#cancel_reason_select', function () {
+        const val = String($(this).val() || '').trim();
+        if (val === 'other') {
+            $('#cancel_note_group').removeClass('d-none');
+        } else {
+            $('#cancel_note_text').val('');
+            $('#cancel_note_group').addClass('d-none');
+        }
+        });
+
+        $('#cancelReasonModal').on('hidden.bs.modal', function () {
+        $('body').removeClass('cancel-modal-open');
+        $('#appointmentModal').modal('show');
+        });
+
+        // ✅ Confirmar cancelación con motivo
+        $(document).on('click', '#btnConfirmCancelWithReason', async function () {
+        const apptId = String($('#cancel_appt_id').val() || '').trim();
+        const reason = String($('#cancel_reason_select').val() || '').trim();
+        const note = String($('#cancel_note_text').val() || '').trim();
+
+        if (!apptId) {
+            alert('No se encontró el ID de la cita.');
+            return;
+        }
+        if (!reason) {
+            alert('Selecciona el motivo de cancelación.');
+            return;
+        }
+        if (reason === 'other' && !note) {
+            alert('Si seleccionas "Otro", escribe un comentario.');
+            return;
+        }
+
+        const $btn = $('#btnConfirmCancelWithReason');
+        $btn.prop('disabled', true).text('Cancelando...');
+
+        try {
+            const res = await fetch(`/appointments/${apptId}/cancel`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                cancel_reason: reason,
+                cancel_note: note
+            })
+            });
+
+            const data = await res.json().catch(() => null);
+
+            if (!res.ok || !data || !data.success) {
+            alert((data && data.message) ? data.message : 'No se pudo cancelar la cita.');
+            return;
+            }
+
+            $('#cancelReasonModal').modal('hide');
+            alert(data.message || 'Cita cancelada exitosamente.');
+            try { $('#apptDetailsModal').modal('hide'); } catch (e) {}
+            window.location.reload();
+
+        } catch (e) {
+            console.error(e);
+            alert('Error inesperado al cancelar la cita.');
+        } finally {
+            $btn.prop('disabled', false).text('Cancelar cita');
+        }
+        });
+
+        $('#cancelReasonModal').on('hidden.bs.modal', function () {
+            $('body').removeClass('cancel-modal-open');
+
+            if (!window.__cancelConfirmed) {
+                $('#apptDetailsModal').modal('show');
             }
         });
 
