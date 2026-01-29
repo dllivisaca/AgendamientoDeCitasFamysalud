@@ -6494,110 +6494,117 @@
             </div>
 
             <!-- =======================
-                PASO 6: Paciente + Facturación
+                PASO 6A: Datos del paciente
             ======================== -->
             <div class="card mb-3">
-                <div class="card-body">
+            <div class="card-body">
 
                 <div class="row g-3">
-                    <div class="col-md-12">
+                <div class="col-md-12">
                     <div class="fw-bold">Datos del paciente</div>
-                    </div>
+                </div>
 
-                    <div class="col-md-6">
+                <div class="col-md-6">
                     <label class="form-label">Nombre y apellido <span class="text-danger">*</span></label>
                     <input type="text" class="form-control" name="patient_full_name" id="ca_patient_full_name">
-                    </div>
+                </div>
 
-                    <div class="col-md-3">
+                <div class="col-md-3">
                     <label class="form-label">Fecha de nacimiento</label>
                     <input type="date" class="form-control" name="patient_dob" id="ca_patient_dob">
-                    </div>
+                </div>
 
-                    <div class="col-md-3">
+                <div class="col-md-3">
                     <label class="form-label">Teléfono <span class="text-danger">*</span></label>
                     <input type="text" class="form-control" name="patient_phone" id="ca_patient_phone">
-                    </div>
+                </div>
 
-                    <div class="col-md-6">
+                <div class="col-md-6">
                     <label class="form-label">Correo <span class="text-danger">*</span></label>
                     <input type="email" class="form-control" name="patient_email" id="ca_patient_email">
-                    </div>
+                </div>
 
-                    <div class="col-md-3">
+                <div class="col-md-3">
                     <label class="form-label">Tipo doc.</label>
                     <input type="text" class="form-control" name="patient_doc_type" id="ca_patient_doc_type" placeholder="Cédula / Pasaporte">
-                    </div>
+                </div>
 
-                    <div class="col-md-3">
+                <div class="col-md-3">
                     <label class="form-label">Nro doc.</label>
                     <input type="text" class="form-control" name="patient_doc_number" id="ca_patient_doc_number">
-                    </div>
+                </div>
 
-                    <div class="col-md-12">
+                <div class="col-md-12">
                     <label class="form-label">Dirección</label>
                     <input type="text" class="form-control" name="patient_address" id="ca_patient_address">
-                    </div>
+                </div>
 
-                    <div class="col-md-12">
+                <div class="col-md-12">
                     <label class="form-label">Notas</label>
                     <textarea class="form-control" name="patient_notes" id="ca_patient_notes" rows="2"></textarea>
-                    </div>
-
-                    <hr class="my-2">
-
-                    <div class="col-md-12">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="fa fa-file-invoice"></i>
-                        <div class="fw-bold">Datos de facturación</div>
-                    </div>
-
-                    <div class="form-check mt-2">
-                        <input class="form-check-input" type="checkbox" id="ca_billing_same_as_patient">
-                        <label class="form-check-label" for="ca_billing_same_as_patient">
-                        Usar los mismos datos del paciente para la facturación
-                        </label>
-                    </div>
-
-                    <div class="text-muted small mt-1 d-none" id="ca_minor_hint">
-                        Para menores de edad, la facturación debe registrarse a nombre del representante.
-                    </div>
-                    </div>
-
-                    <div class="col-md-6">
-                    <label class="form-label">Nombre en factura <span class="text-danger" id="ca_bill_req_star">*</span></label>
-                    <input type="text" class="form-control" name="billing_name" id="ca_billing_name">
-                    </div>
-
-                    <div class="col-md-3">
-                    <label class="form-label">Tipo doc.</label>
-                    <input type="text" class="form-control" name="billing_doc_type" id="ca_billing_doc_type">
-                    </div>
-
-                    <div class="col-md-3">
-                    <label class="form-label">Nro doc.</label>
-                    <input type="text" class="form-control" name="billing_doc_number" id="ca_billing_doc_number">
-                    </div>
-
-                    <div class="col-md-6">
-                    <label class="form-label">Correo</label>
-                    <input type="email" class="form-control" name="billing_email" id="ca_billing_email">
-                    </div>
-
-                    <div class="col-md-6">
-                    <label class="form-label">Teléfono</label>
-                    <input type="text" class="form-control" name="billing_phone" id="ca_billing_phone">
-                    </div>
-
-                    <div class="col-md-12">
-                    <label class="form-label">Dirección</label>
-                    <input type="text" class="form-control" name="billing_address" id="ca_billing_address">
-                    </div>
-
                 </div>
                 </div>
+
+            </div>
             </div>
 
+            <!-- =======================
+                PASO 6B: Datos de facturación
+            ======================== -->
+            <div class="card mb-3">
+            <div class="card-body">
+
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="fw-bold">Datos de facturación</div>
+                </div>
+
+                <div class="form-check m-0">
+                    <input class="form-check-input" type="checkbox" id="ca_billing_same_as_patient">
+                    <label class="form-check-label" for="ca_billing_same_as_patient">
+                    Usar los mismos datos del paciente
+                    </label>
+                </div>
+                </div>
+
+                <div class="text-muted small mb-3 d-none" id="ca_minor_hint">
+                Para menores de edad, la facturación debe registrarse a nombre del representante.
+                </div>
+
+                <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Nombre en factura <span class="text-danger" id="ca_bill_req_star">*</span></label>
+                    <input type="text" class="form-control" name="billing_name" id="ca_billing_name">
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Tipo doc.</label>
+                    <input type="text" class="form-control" name="billing_doc_type" id="ca_billing_doc_type">
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Nro doc.</label>
+                    <input type="text" class="form-control" name="billing_doc_number" id="ca_billing_doc_number">
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Correo</label>
+                    <input type="email" class="form-control" name="billing_email" id="ca_billing_email">
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Teléfono</label>
+                    <input type="text" class="form-control" name="billing_phone" id="ca_billing_phone">
+                </div>
+
+                <div class="col-md-12">
+                    <label class="form-label">Dirección</label>
+                    <input type="text" class="form-control" name="billing_address" id="ca_billing_address">
+                </div>
+                </div>
+
+            </div>
+            </div>
             <!-- =======================
                 PASO 7: Pago dinámico
             ======================== -->
@@ -6716,8 +6723,8 @@
                     <div class="col-md-6">
                     <label class="form-label">Estado de la cita <span class="text-danger">*</span></label>
                     <select class="form-control" name="status" id="ca_status">
-                        <option value="pending_verification">Pendiente verificación</option>
-                        <option value="pending_payment">Pendiente pago</option>
+                        <option value="pending_verification">Pendiente de verificación</option>
+                        <option value="pending_payment">Pendiente de pago</option>
                         <option value="confirmed">Confirmada</option>
                         <option value="paid">Pagada</option>
                         <option value="completed">Completada</option>
