@@ -2042,6 +2042,21 @@
     #ca_slots_container > .text-muted{
     grid-column: 1 / -1 !important;  /* por si el mensaje viene sin text-center */
     }
+
+    /* ===== Títulos de sección (Crear cita) ===== */
+    .ca-section-title{
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 700;
+        color: #0d6efd;          /* azul Bootstrap */
+        font-size: 1rem;
+        margin-bottom: .75rem;
+    }
+
+    .ca-section-title i{
+        font-size: 1.05rem;
+    }
 </style>
 @stop
 
@@ -6544,7 +6559,7 @@
 
                     <div class="col-md-6">
                     <!-- TÍTULO estilo Reagendar -->
-                    <label class="small text-muted mb-1">Turnos disponibles</label>
+                    <label class="ca-cal-title mb-1">Turnos disponibles</label>
 
                     <!-- Contenedor con borde -->
                     <div class="card">
@@ -6580,7 +6595,9 @@
 
                 <div class="row g-3">
                 <div class="col-md-12">
-                    <div class="fw-bold">Datos del paciente</div>
+                    <div class="ca-section-title">
+                        Datos del paciente
+                    </div>
                 </div>
 
                 <div class="col-md-6">
@@ -6635,7 +6652,9 @@
 
                 <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
                 <div class="d-flex align-items-center gap-2">
-                    <div class="fw-bold">Datos de facturación</div>
+                    <div class="ca-section-title">
+                        Datos de facturación
+                    </div>
                 </div>
 
                 <div class="form-check m-0">
@@ -6692,7 +6711,9 @@
                 <div class="row g-3">
 
                     <div class="col-md-12">
-                    <div class="fw-bold">Información de pago</div>
+                    <div class="ca-section-title">
+                        Información de pago
+                    </div>
                     </div>
 
                     <div class="col-md-4">
