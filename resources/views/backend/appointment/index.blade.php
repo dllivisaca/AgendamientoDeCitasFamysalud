@@ -1784,6 +1784,86 @@
         opacity: .7;
     }
     .ca-btn-close:hover{ opacity: 1; }
+
+    /* =========================
+    Calendar (Crear cita) - estilo igual a Reagendar
+    ========================= */
+    #ca-calendar-card .card-header{
+    display:flex !important;
+    align-items:center !important;
+    justify-content:space-between !important;
+    gap:10px;
+    }
+
+    #ca-calendar-card #ca-current-month{
+    flex:1 !important;
+    text-align:center !important;
+    margin:0 !important;
+    }
+
+    /* Flechas mismo ancho para centrar el mes */
+    #ca-calendar-card #caCalPrev,
+    #ca-calendar-card #caCalNext{
+    width:40px;
+    flex:0 0 40px;
+    padding-left:0 !important;
+    padding-right:0 !important;
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    }
+
+    /* Tabla: columnas uniformes */
+    #ca-calendar-card .table-calendar{
+    width:100% !important;
+    table-layout:fixed !important;
+    }
+
+    #ca-calendar-card .table-calendar th,
+    #ca-calendar-card .table-calendar td{
+    text-align:center !important;
+    vertical-align:middle !important;
+    }
+
+    #ca-calendar-card .table-calendar thead th{
+    padding:.9rem .25rem !important;
+    font-size:.85rem;
+    color:#6c757d;
+    font-weight:600;
+    }
+
+    #ca-calendar-card .table-calendar tbody td{
+    padding:.9rem .25rem !important;
+    }
+
+    /* Día clickeable */
+    #ca-calendar-card .ca-cal-day{
+    cursor:pointer;
+    border-radius:8px;
+    transition: background-color .12s ease, box-shadow .12s ease, transform .05s ease;
+    }
+
+    #ca-calendar-card .ca-cal-day:hover{
+    transform: translateY(-1px);
+    }
+
+    /* Deshabilitado (fechas pasadas) */
+    #ca-calendar-card .ca-cal-day.disabled{
+    cursor:not-allowed;
+    opacity:.35;
+    pointer-events:none;
+    }
+
+    /* Seleccionado */
+    #ca-calendar-card .ca-cal-day.selected{
+    font-weight:700;
+    box-shadow: 0 0 0 3px rgba(13,110,253,.15);
+    }
+
+    /* Para que no se rompa el card en pantallas pequeñas */
+    #ca-calendar-card .card-body{
+    overflow-x:auto !important;
+    }
 </style>
 @stop
 

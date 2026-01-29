@@ -403,98 +403,123 @@
     const year = State.calYear;
     const month = State.calMonth;
 
-    const first = new Date(year, month, 1);
-    const firstDay = first.getDay(); // 0=Dom
+    const firstDay = new Date(year, month, 1).getDay(); // 0=Dom
     const daysInMonth = new Date(year, month + 1, 0).getDate();
 
     const monthNames = [
-      'Enero','Febrero','Marzo','Abril','Mayo','Junio',
-      'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'
+        'Enero','Febrero','Marzo','Abril','Mayo','Junio',
+        'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'
     ];
 
-    const header = `
-      <div class="d-flex align-items-center justify-content-between mb-2">
-        <button type="button" class="btn btn-light btn-sm" id="caCalPrev">&lt;</button>
-        <div class="fw-bold">${monthNames[month]} ${year}</div>
-        <button type="button" class="btn btn-light btn-sm" id="caCalNext">&gt;</button>
-      </div>
-      <div class="d-grid" style="grid-template-columns: repeat(7, 1fr); gap: 6px;">
-        <div class="text-muted small text-center">Dom</div>
-        <div class="text-muted small text-center">Lun</div>
-        <div class="text-muted small text-center">Mar</div>
-        <div class="text-muted small text-center">Mié</div>
-        <div class="text-muted small text-center">Jue</div>
-        <div class="text-muted small text-center">Vie</div>
-        <div class="text-muted small text-center">Sáb</div>
-      </div>
-    `;
-
-    let grid = `<div class="d-grid mt-2" style="grid-template-columns: repeat(7, 1fr); gap: 6px;">`;
-
-    // blanks before day 1
-    for (let i = 0; i < firstDay; i++) {
-      grid += `<div></div>`;
-    }
-
     const today = new Date();
+    today.setHours(0,0,0,0);
     const todayYMD = toYMD(today);
 
-    for (let day = 1; day <= daysInMonth; day++) {
-      const d = new Date(year, month, day);
-      const ymd = toYMD(d);
+    // Header tipo "Reagendar"
+    const header = `
+        <div class="card mb-0" id="ca-calendar-card">
+        <div class="card-header">
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="caCalPrev" aria-label="Mes anterior">
+            <i class="fas fa-chevron-left"></i>
+            </button>
 
-      // opcional: bloquear días pasados
-      const isPast = ymd < todayYMD;
+            <h5 class="mb-0" id="ca-current-month">${monthNames[month]} ${year}</h5>
 
-      grid += `
-        <button type="button"
-          class="btn btn-outline-secondary btn-sm ca-cal-day"
-          data-ymd="${ymd}"
-          ${isPast ? 'disabled' : ''}>
-          ${day}
-        </button>
-      `;
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="caCalNext" aria-label="Mes siguiente">
+            <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+
+        <div class="card-body p-0">
+            <table class="table table-calendar mb-0">
+            <thead>
+                <tr>
+                <th>Dom</th><th>Lun</th><th>Mar</th><th>Mié</th><th>Jue</th><th>Vie</th><th>Sáb</th>
+                </tr>
+            </thead>
+            <tbody id="ca-calendar-body"></tbody>
+            </table>
+        </div>
+        </div>
+    `;
+
+    $(UI.calendarContainer).html(header);
+
+    // Body (tabla) similar a Reagendar
+    const $body = $('#ca-calendar-body');
+    $body.empty();
+
+    let date = 1;
+
+    for (let i = 0; i < 6; i++) {
+        const $row = $('<tr></tr>');
+
+        for (let j = 0; j < 7; j++) {
+        if (i === 0 && j < firstDay) {
+            $row.append('<td class="text-center py-2"></td>');
+            continue;
+        }
+
+        if (date > daysInMonth) {
+            $row.append('<td class="text-center py-2"></td>');
+            continue;
+        }
+
+        const d = new Date(year, month, date);
+        const ymd = toYMD(d);
+        const isPast = (ymd < todayYMD);
+
+        $row.append(`
+            <td class="text-center py-2 ca-cal-day ${isPast ? 'disabled text-muted' : ''}"
+                data-ymd="${ymd}">
+            ${date}
+            </td>
+        `);
+
+        date++;
+        }
+
+        $body.append($row);
+        if (date > daysInMonth) break;
     }
 
-    grid += `</div>`;
-
-    $(UI.calendarContainer).html(header + grid);
-
-    // nav prev/next
+    // Nav prev/next (igual que tenías)
     $('#caCalPrev').off('click').on('click', async function () {
         await deleteHoldIfAny();
-      State.calMonth--;
-      if (State.calMonth < 0) {
+        State.calMonth--;
+        if (State.calMonth < 0) {
         State.calMonth = 11;
         State.calYear--;
-      }
-      renderCalendar();
-      clearSlot();
+        }
+        renderCalendar();
+        clearSlot();
     });
 
     $('#caCalNext').off('click').on('click', function () {
-      State.calMonth++;
-      if (State.calMonth > 11) {
+        State.calMonth++;
+        if (State.calMonth > 11) {
         State.calMonth = 0;
         State.calYear++;
-      }
-      renderCalendar();
-      clearSlot();
+        }
+        renderCalendar();
+        clearSlot();
     });
 
-    // day click
-    $('.ca-cal-day').off('click').on('click', async function () {
-      const ymd = $(this).data('ymd');
-      $('.ca-cal-day').removeClass('active');
-      $(this).addClass('active');
+    // Click día
+    $('#ca-calendar-body .ca-cal-day').off('click').on('click', async function () {
+        const ymd = String($(this).data('ymd') || '').trim();
+        if (!ymd) return;
 
-      await deleteHoldIfAny();
+        $('#ca-calendar-body .ca-cal-day').removeClass('active selected');
+        $(this).addClass('active selected');
 
-      clearSlot();
-      $(UI.selectedSlotLabel).text(`Fecha seleccionada: ${ymd}`);
-      await loadSlotsForDate(ymd);
+        await deleteHoldIfAny();
+
+        clearSlot();
+        $(UI.selectedSlotLabel).text(`Fecha seleccionada: ${ymd}`);
+        await loadSlotsForDate(ymd);
     });
-  }
+    }
 
   // =========================
   // 7) SLOTS + HOLD
