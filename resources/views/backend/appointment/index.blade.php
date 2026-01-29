@@ -1545,6 +1545,22 @@
     table-layout: fixed !important;
     }
 
+    /* ✅ Quitar líneas (borders) que mete Bootstrap .table */
+    #reschedule-calendar-card .table-calendar{
+    border-collapse: separate !important;
+    border-spacing: 8px 8px !important;   /* separa las casillas */
+    }
+
+    #reschedule-calendar-card .table-calendar > :not(caption) > * > *{
+    border-bottom: 0 !important;          /* elimina líneas horizontales */
+    }
+
+    #reschedule-calendar-card .table-calendar td,
+    #reschedule-calendar-card .table-calendar th{
+    border: 0 !important;                 /* por si hay borders laterales */
+    background-clip: padding-box;
+    }
+
     #reschedule-calendar-card .table-calendar th,
     #reschedule-calendar-card .table-calendar td{
     text-align: center !important;
@@ -1569,8 +1585,10 @@
     }
 
     #reschedule-calendar-body .calendar-day.selected {
-        border-radius: 8px;
-        font-weight: 700;
+        font-weight:700;
+        background:#0d6efd;
+        color:#fff !important;
+        border-radius:10px;
     }
 
     #reschedule-calendar-body td.disabled{
@@ -1819,6 +1837,22 @@
     table-layout:fixed !important;
     }
 
+    /* ✅ Quitar líneas (borders) que mete Bootstrap .table */
+    #ca-calendar-card .table-calendar{
+    border-collapse: separate !important;
+    border-spacing: 8px 8px !important;   /* separa las casillas */
+    }
+
+    #ca-calendar-card .table-calendar > :not(caption) > * > *{
+    border-bottom: 0 !important;          /* elimina líneas horizontales */
+    }
+
+    #ca-calendar-card .table-calendar td,
+    #ca-calendar-card .table-calendar th{
+    border: 0 !important;                 /* por si hay borders laterales */
+    background-clip: padding-box;
+    }
+
     #ca-calendar-card .table-calendar th,
     #ca-calendar-card .table-calendar td{
     text-align:center !important;
@@ -1856,8 +1890,16 @@
 
     /* Seleccionado */
     #ca-calendar-card .ca-cal-day.selected{
-    font-weight:700;
-    box-shadow: 0 0 0 3px rgba(13,110,253,.15);
+        font-weight:700;
+        background:#0d6efd;
+        color:#fff !important;
+        border-radius:10px;
+    }
+
+    #ca-calendar-card .ca-cal-day:focus,
+    #ca-calendar-card .ca-cal-day:active{
+    outline:none !important;
+    box-shadow:none !important;
     }
 
     /* Para que no se rompa el card en pantallas pequeñas */
