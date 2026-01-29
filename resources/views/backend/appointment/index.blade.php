@@ -6726,15 +6726,6 @@
                     </select>
                     </div>
 
-                    <div class="col-md-12">
-                    <div class="form-check mt-2">
-                        <input class="form-check-input" type="checkbox" name="data_consent" id="ca_data_consent" value="1" checked>
-                        <label class="form-check-label" for="ca_data_consent">
-                        Confirmo que el paciente aceptó el tratamiento de datos.
-                        </label>
-                    </div>
-                    </div>
-
                 </div>
                 </div>
             </div>

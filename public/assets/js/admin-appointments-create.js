@@ -92,7 +92,7 @@
     // estos 3 reciben querystring (ver abajo)
     services: '/admin/appointments/create/options/services',
     employees: '/admin/appointments/create/options/employees',
-    slots: '/admin/appointments/create/options/slots',
+    slots: '/appointments/reschedule/slots',
 
     createHold: '/holds',
     store: '/admin/appointments/create/store'
@@ -516,7 +516,6 @@
         await deleteHoldIfAny();
 
         clearSlot();
-        $(UI.selectedSlotLabel).text(`Fecha seleccionada: ${ymd}`);
         await loadSlotsForDate(ymd);
     });
     }
@@ -531,9 +530,11 @@
 
     try {
       const data = await fetchJSON(
-        `${API.slots}?employee_id=${encodeURIComponent(State.employeeId)}&date=${encodeURIComponent(dateYMD)}&mode=${encodeURIComponent(State.mode)}`
+        `${API.slots}/${encodeURIComponent(State.employeeId)}/${encodeURIComponent(dateYMD)}`
         );
-      const slots = data?.data || [];
+
+        // En este endpoint, los slots vienen en data.available_slots
+        const slots = Array.isArray(data?.available_slots) ? data.available_slots : [];
 
       if (!slots.length) {
         $(UI.slotsContainer).html(`<div class="text-muted small">No hay turnos disponibles.</div>`);
@@ -542,20 +543,20 @@
 
       // 2 columnas como tu grid
       const html = slots.map((s) => {
-        const start = s.start || s.appointment_time || '';
-        const end = s.end || s.appointment_end_time || '';
-        const label = s.label || `${start} - ${end}`;
+        const start = s.start || '';
+        const end = s.end || '';
+        const label = s.display || `${start} - ${end}`;
 
         return `
-          <button type="button"
+            <button type="button"
             class="btn btn-outline-primary btn-sm ca-slot"
             data-start="${start}"
             data-end="${end}"
             data-label="${label}">
             ${label}
-          </button>
+            </button>
         `;
-      }).join('');
+        }).join('');
 
       $(UI.slotsContainer).html(html);
 
