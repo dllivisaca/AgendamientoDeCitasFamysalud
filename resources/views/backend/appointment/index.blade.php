@@ -1572,6 +1572,14 @@
     padding: .9rem .25rem !important;
     }
 
+    #reschedule-calendar-card .table-calendar thead th{
+    white-space: nowrap !important;  /* ✅ no se parte Dom */
+    word-break: normal !important;
+    overflow: hidden;
+    text-overflow: clip;
+    font-size: .85rem;               /* opcional: un pelín más compacto */
+    }
+
     #reschedule-calendar-card .table-calendar tbody td{
     padding: .9rem .25rem !important;
     }
@@ -1864,6 +1872,11 @@
     font-size:.85rem;
     color:#6c757d;
     font-weight:600;
+
+    white-space: nowrap !important;  /* ✅ no se parte Dom */
+    word-break: normal !important;
+    overflow: hidden;
+    text-overflow: clip;
     }
 
     #ca-calendar-card .table-calendar tbody td{
