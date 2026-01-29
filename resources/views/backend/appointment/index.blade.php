@@ -5837,6 +5837,7 @@
         pending_verification: 'Pendiente de verificación',
         waiting: 'En espera',
         no_show: 'No asistió',
+        on_hold: 'En espera',
 
         unpaid: 'No pagado',
         partial: 'Pagado parcialmente',

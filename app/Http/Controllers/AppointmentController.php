@@ -1127,12 +1127,32 @@ class AppointmentController extends Controller
                 ]);
             }
 
+            // ✅ Validar motivo de cancelación (viene del modal)
+            $request->validate([
+                'cancel_reason' => 'required|in:patient_requested,doctor_requested,admin_requested,other',
+                'cancel_note'   => 'nullable|string',
+            ]);
+
+            $cancelReason = $request->input('cancel_reason'); // ya viene validado
+            $cancelNote   = trim((string) $request->input('cancel_note'));
+            $cancelNote   = ($cancelNote !== '') ? $cancelNote : null;
+
             // 1) Guardar status anterior para auditoría
             $oldStatus = $appointment->status;
 
             // 2) Actualizar estado
             $appointment->status = 'cancelled';
             $appointment->save();
+
+            // ✅ Guardar historial en appointment_cancellations
+            DB::table('appointment_cancellations')->insert([
+                'appointment_id'       => $appointment->id,
+                'cancelled_at'         => now(),
+                'reason'               => $cancelReason,
+                'note'                 => $cancelNote,
+                'cancelled_by_user_id' => Auth::id(),
+                'created_at'           => now(),
+            ]);
 
             // 3) ✅ Registrar en appointment_audits (similar a confirm)
             $actorId = Auth::id();
@@ -1156,12 +1176,12 @@ class AppointmentController extends Controller
 
                 'action'         => 'cancel',
 
-                'changed_fields' => json_encode(['status'], JSON_UNESCAPED_UNICODE),
-                'old_values'     => json_encode(['status' => $oldStatus], JSON_UNESCAPED_UNICODE),
-                'new_values'     => json_encode(['status' => 'cancelled'], JSON_UNESCAPED_UNICODE),
+                'changed_fields' => json_encode(['status','cancel_reason','cancel_note'], JSON_UNESCAPED_UNICODE),
+                'old_values'     => json_encode(['status' => $oldStatus, 'cancel_reason' => null, 'cancel_note' => null], JSON_UNESCAPED_UNICODE),
+                'new_values'     => json_encode(['status' => 'cancelled', 'cancel_reason' => $cancelReason, 'cancel_note' => $cancelNote], JSON_UNESCAPED_UNICODE),
 
-                'reason'         => null,
-                'reason_other'   => null,
+                'reason'         => $cancelReason,
+                'reason_other'   => $cancelNote,
             ]);
 
             // ✅ Si existiera un hold “colgado” de ese mismo turno, lo limpiamos
