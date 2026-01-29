@@ -6481,13 +6481,30 @@
                     </div>
 
                     <div class="col-md-6">
-                    <div class="fw-bold mb-2">Turnos disponibles</div>
-                    <div class="text-muted small mb-2">Todos los turnos están en hora local de Ecuador (GMT-5)</div>
+                    <!-- TÍTULO estilo Reagendar -->
+                    <label class="small text-muted mb-1">Turnos disponibles</label>
 
-                    <div id="ca_slots_container" class="d-grid gap-2" style="grid-template-columns: repeat(2, 1fr);">
-                        <!-- Botones de turnos -->
+                    <!-- Contenedor con borde -->
+                    <div class="card">
+                        <div class="card-body">
+
+                            <!-- INFO ZONA HORARIA -->
+                            <div class="d-flex align-items-center text-muted small mb-3">
+                                <i class="bi bi-clock me-2"></i>
+                                Todos los turnos están en hora local de Ecuador (GMT-5)
+                            </div>
+
+                            <!-- Mensaje centrado (cuando no hay nada aún / vacío) -->
+                            <div class="text-center text-muted w-100 py-4" id="ca_slots_hint">
+                                Selecciona una fecha para visualizar los turnos disponibles
+                            </div>
+
+                            <!-- Aquí tu JS inyecta los botones -->
+                            <div id="ca_slots_container" class="slots-grid"></div>
+
+                        </div>
                     </div>
-                    </div>
+                </div>
 
                 </div>
                 </div>

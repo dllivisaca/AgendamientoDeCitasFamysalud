@@ -523,10 +523,11 @@
   // =========================
   // 7) SLOTS + HOLD
   // =========================
+  $('#ca_slots_hint').hide();
   async function loadSlotsForDate(dateYMD) {
     if (!State.employeeId || !State.mode) return;
 
-    $(UI.slotsContainer).html(`<div class="text-muted small">Cargando turnos…</div>`);
+    $(UI.slotsContainer).html(`<div class="text-center text-muted w-100 py-4">Cargando horas disponibles.</div>`);
 
     try {
       const data = await fetchJSON(
@@ -537,7 +538,8 @@
         const slots = Array.isArray(data?.available_slots) ? data.available_slots : [];
 
       if (!slots.length) {
-        $(UI.slotsContainer).html(`<div class="text-muted small">No hay turnos disponibles.</div>`);
+        $(UI.slotsContainer).html(`<div class="text-center text-muted w-100 py-4">No hay horas disponibles para esa fecha.</div>`);
+        $('#ca_slots_hint').hide();
         return;
       }
 
@@ -583,8 +585,6 @@
             setHidden(UI.hidDate, dateYMD);
             setHidden(UI.hidTime, start);
             setHidden(UI.hidEnd, end);
-
-            $(UI.selectedSlotLabel).text(`Turno seleccionado: ${label} (${dateYMD})`);
 
             $('.ca-slot').removeClass('active');
             $(this).addClass('active');
