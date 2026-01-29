@@ -902,3 +902,97 @@
 
   $(document).ready(init);
 })();
+
+(function () {
+  function setupIntlPhone(inputId, hiddenId, hintId) {
+    const input  = document.getElementById(inputId);
+    const hidden = document.getElementById(hiddenId);
+    const hintEl = document.getElementById(hintId);
+
+    if (!input || !hidden || typeof window.intlTelInput !== "function") return null;
+
+    // Evita doble init si abres/cierra el modal
+    if (input.dataset.itiInit === "1") return window._itiByInputId?.[inputId] || null;
+    input.dataset.itiInit = "1";
+
+    const iti = window.intlTelInput(input, {
+      initialCountry: "ec",
+      separateDialCode: true,
+      nationalMode: true,
+      formatOnDisplay: false,
+      preferredCountries: ["ec", "us", "co", "pe", "es"],
+      utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/utils.js"
+    });
+
+    // Hint dinámico
+    function updatePhoneHint() {
+      if (!hintEl) return;
+      const iso2 = (iti.getSelectedCountryData()?.iso2 || "ec");
+      hintEl.textContent = (iso2 === "ec")
+        ? "Para Ecuador, registre el número sin el 0 inicial."
+        : "Verifique que el país seleccionado sea el correcto.";
+    }
+
+    // Limpieza de input (sin validaciones “pesadas”)
+    function enforceDigitsAndEcuadorRule() {
+      const iso2 = (iti.getSelectedCountryData()?.iso2 || "");
+      let digits = (input.value || "").replace(/\D/g, "");
+
+      if (iso2 === "ec") {
+        if (digits.startsWith("593")) digits = digits.slice(3);
+        if (digits.startsWith("0")) digits = digits.slice(1);
+        if (digits.length > 9) digits = digits.slice(0, 9);
+      }
+
+      if (input.value !== digits) input.value = digits;
+    }
+
+    // Sync al hidden (por ahora lo guardo en E164; luego tú lo separas prefijo/nacional)
+    function syncHidden() {
+      const number = (window.intlTelInputUtils && window.intlTelInputUtils.numberFormat)
+        ? iti.getNumber(intlTelInputUtils.numberFormat.E164)
+        : iti.getNumber();
+
+      hidden.value = number || "";
+    }
+
+    // Inicial
+    updatePhoneHint();
+    enforceDigitsAndEcuadorRule();
+    syncHidden();
+
+    input.addEventListener("input", () => {
+      enforceDigitsAndEcuadorRule();
+      syncHidden();
+    });
+
+    input.addEventListener("blur", () => {
+      enforceDigitsAndEcuadorRule();
+      syncHidden();
+    });
+
+    input.addEventListener("countrychange", () => {
+      updatePhoneHint();
+      enforceDigitsAndEcuadorRule();
+      syncHidden();
+    });
+
+    window._itiByInputId = window._itiByInputId || {};
+    window._itiByInputId[inputId] = iti;
+
+    return iti;
+  }
+
+  // Si usas Bootstrap 5: cuando se abre el modal, inicializa
+  const modal = document.getElementById("modalCreateAppointment");
+  if (modal) {
+    modal.addEventListener("shown.bs.modal", function () {
+      setupIntlPhone("ca_patient_phone_ui", "ca_patient_phone", "ca_patient_phone_hint");
+      setupIntlPhone("ca_billing_phone_ui", "ca_billing_phone", "ca_billing_phone_hint");
+    });
+  } else {
+    // fallback por si tu modal se renderiza sin evento
+    setupIntlPhone("ca_patient_phone_ui", "ca_patient_phone", "ca_patient_phone_hint");
+    setupIntlPhone("ca_billing_phone_ui", "ca_billing_phone", "ca_billing_phone_hint");
+  }
+})();

@@ -1,9 +1,13 @@
 @extends('adminlte::page')
 
+@section('css')
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/css/intlTelInput.css">
+@stop
+
 @section('title', 'Todas las citas · FamySalud')
 
 @section('content_header')
-    <div class="row mb-2 align-items-center">
+    <div class="row mb-2 align-items-center">   
         <div class="col-sm-6">
             <h1 class="mb-0">Todas las citas</h1>
         </div>
@@ -2062,6 +2066,8 @@
 
 @section('js')
     <script src="{{ asset('assets/js/admin-appointments-create.js') }}?v={{ time() }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/intlTelInput.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/utils.js"></script>
 
     {{-- hide notifcation --}}
     <script>
@@ -6612,7 +6618,15 @@
 
                 <div class="col-md-3">
                     <label class="form-label">Número de celular <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" name="patient_phone" id="ca_patient_phone">
+
+                    <!-- Visible UI (con banderita) -->
+                    <input type="tel" class="form-control phone-input" id="ca_patient_phone_ui">
+
+                    <!-- Hidden real (lo que envías al backend) -->
+                    <input type="hidden" name="patient_phone" id="ca_patient_phone">
+
+                    <!-- Hint dinámico -->
+                    <div class="form-text" id="ca_patient_phone_hint"></div>
                 </div>
 
                 <div class="col-md-6">
@@ -6654,19 +6668,17 @@
             <div class="card mb-3">
             <div class="card-body">
 
-                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
-                <div class="d-flex align-items-center gap-2">
-                    <div class="ca-section-title">
-                        Datos de facturación
-                    </div>
+                <!-- Título -->
+                <div class="ca-section-title mb-1">
+                    Datos de facturación
                 </div>
 
-                <div class="form-check m-0">
+                <!-- Checkbox debajo del título -->
+                <div class="form-check mb-3">
                     <input class="form-check-input" type="checkbox" id="ca_billing_same_as_patient">
                     <label class="form-check-label" for="ca_billing_same_as_patient">
-                    Usar los mismos datos del paciente para la facturación
+                        Usar los mismos datos del paciente para la facturación
                     </label>
-                </div>
                 </div>
 
                 <div class="text-muted small mb-3 d-none" id="ca_minor_hint">
@@ -6701,7 +6713,15 @@
 
                 <div class="col-md-6">
                     <label class="form-label">Número de celular <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" name="billing_phone" id="ca_billing_phone" required>
+
+                    <!-- Visible UI (con banderita) -->
+                    <input type="tel" class="form-control phone-input" id="ca_billing_phone_ui">
+
+                    <!-- Hidden real (lo que envías al backend) -->
+                    <input type="hidden" name="billing_phone" id="ca_billing_phone">
+
+                    <!-- Hint dinámico -->
+                    <div class="form-text" id="ca_billing_phone_hint"></div>
                 </div>
 
                 <div class="col-md-12">
