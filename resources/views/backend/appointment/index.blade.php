@@ -1870,8 +1870,8 @@
     #ca-calendar-card .table-calendar thead th{
     padding:.9rem .25rem !important;
     font-size:.85rem;
-    color:#6c757d;
-    font-weight:600;
+    color:#000 !important;       /* ✅ negro */
+    font-weight:700 !important;  /* ✅ negrita */
 
     white-space: nowrap !important;  /* ✅ no se parte Dom */
     word-break: normal !important;
@@ -1918,6 +1918,13 @@
     /* Para que no se rompa el card en pantallas pequeñas */
     #ca-calendar-card .card-body{
     overflow-x:auto !important;
+    }
+
+    /* Crear cita - título igual a Reagendar */
+    .ca-cal-title{
+    font-weight:700;
+    color:#6c757d;   /* gris */
+    margin-bottom:.5rem;
     }
 </style>
 @stop
@@ -6321,9 +6328,9 @@
                 <div class="row g-3">
 
                     <div class="col-md-6">
-                    <div class="fw-bold mb-2">Selecciona una fecha</div>
+                    <div class="ca-cal-title">Seleccione una fecha</div>
                     <!-- Contenedor calendario -->
-                    <div id="ca_calendar_container" class="border rounded p-2 bg-white">
+                    <div id="ca_calendar_container" class="p-0 bg-transparent">
                         <div class="text-muted small">Primero selecciona Área → Servicio → Profesional → Modalidad.</div>
                     </div>
 
