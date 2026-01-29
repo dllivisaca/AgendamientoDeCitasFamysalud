@@ -1980,6 +1980,45 @@
     filter: brightness(0.6);
     pointer-events: none; /* evita clicks debajo */
     }
+
+    /* ===== Crear cita: slots en 3 columnas (mismo ancho) ===== */
+    #ca_slots_container{
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+    width: 100%;
+    }
+
+    /* tablet: 2 columnas */
+    @media (max-width: 992px){
+    #ca_slots_container{
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+    }
+
+    /* móvil: 1 columna */
+    @media (max-width: 576px){
+    #ca_slots_container{
+        grid-template-columns: 1fr !important;
+    }
+    }
+
+    /* que cada botón ocupe el ancho completo de su celda */
+    #ca_slots_container .ca-slot{
+    width: 100% !important;
+    display: block !important;
+    text-align: center !important;
+    white-space: nowrap;
+    }
+
+    /* ===== Crear cita: mensajes (loading / empty) deben ocupar TODAS las columnas ===== */
+    #ca_slots_container > .text-center{
+    grid-column: 1 / -1 !important;  /* ocupa las 3 columnas */
+    }
+
+    #ca_slots_container > .text-muted{
+    grid-column: 1 / -1 !important;  /* por si el mensaje viene sin text-center */
+    }
 </style>
 @stop
 
