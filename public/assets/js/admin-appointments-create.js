@@ -273,6 +273,80 @@
   }
 
   // =========================
+    // 3.B) VALIDACIÓN UI PARA HABILITAR SUBMIT
+    // =========================
+    function hasVal(sel) {
+    return String($(sel).val() || '').trim() !== '';
+    }
+
+    function hasHoldSelected() {
+    return hasVal(UI.hidHoldId) && hasVal(UI.hidDate) && hasVal(UI.hidTime) && hasVal(UI.hidEnd);
+    }
+
+    function isPositiveMoney(sel) {
+    const n = Number(String($(sel).val() || '').replace(',', '.'));
+    return !Number.isNaN(n) && n >= 0; // si quieres >= 0 ok. Si quieres >0 cambia aquí.
+    }
+
+    // Retorna { ok: boolean, reason?: string }
+    function validateRequiredForEnable() {
+    // Paso 1-4 (wizard)
+    if (!State.categoryId) return { ok: false, reason: 'Falta área' };
+    if (!State.serviceId) return { ok: false, reason: 'Falta servicio' };
+    if (!State.employeeId) return { ok: false, reason: 'Falta profesional' };
+    if (!State.mode) return { ok: false, reason: 'Falta modalidad' };
+    if (!hasHoldSelected()) return { ok: false, reason: 'Falta turno' };
+
+    // Paciente (según tu submit actual)
+    if (!hasVal(UI.patientName)) return { ok: false, reason: 'Falta nombre paciente' };
+    if (!hasVal(UI.patientEmail)) return { ok: false, reason: 'Falta email paciente' };
+    if (!hasVal(UI.patientPhone)) return { ok: false, reason: 'Falta teléfono paciente' };
+
+    // Pago base
+    const pm = String($(UI.paymentMethod).val() || '').trim(); // cash|card|transfer|''
+    if (!pm) return { ok: false, reason: 'Falta método de pago' };
+
+    // Montos
+    if (!hasVal(UI.amount) || !isPositiveMoney(UI.amount)) return { ok: false, reason: 'Falta monto' };
+    if (!hasVal(UI.amountPaid) || !isPositiveMoney(UI.amountPaid)) return { ok: false, reason: 'Falta monto pagado' };
+
+    // Estados
+    if (!hasVal(UI.status)) return { ok: false, reason: 'Falta estado cita' };
+    if (!hasVal(UI.paymentStatus)) return { ok: false, reason: 'Falta estado pago' };
+
+    // Fecha del pago: obligatoria SOLO en cash/card
+    if (pm !== 'transfer') {
+        if (!hasVal(UI.paidAt)) return { ok: false, reason: 'Falta fecha pago' };
+    }
+
+    // Transfer: 3 campos obligatorios según tu submit
+    if (pm === 'transfer') {
+        if (!hasVal(UI.transferBankOrigin)) return { ok: false, reason: 'Falta banco origen' };
+        if (!hasVal(UI.transferPayerName)) return { ok: false, reason: 'Falta titular' };
+        if (!hasVal(UI.transferDate)) return { ok: false, reason: 'Falta fecha transferencia' };
+    }
+
+    // Card: si quieres obligar transaction id, activa esto:
+    // if (pm === 'card' && !hasVal(UI.clientTx)) return { ok: false, reason: 'Falta transaction id' };
+
+    return { ok: true };
+    }
+
+    function updateSubmitEnabled() {
+    const v = validateRequiredForEnable();
+    const shouldEnable = v.ok;
+
+    disable(UI.submitBtn, !shouldEnable);
+
+    // opcional: cambia el texto / tooltip (suave)
+    if (!shouldEnable) {
+        $(UI.submitBtn).attr('title', 'Completa los campos obligatorios para habilitar el botón.');
+    } else {
+        $(UI.submitBtn).removeAttr('title');
+    }
+    }
+
+  // =========================
   // 4) RESET POR PASOS
   // =========================
   function clearSlot() {
@@ -290,6 +364,8 @@
     $(UI.selectedSlotLabel).text('');
 
     $('#ca_slots_hint').show(); // ✅ vuelve a mostrar el texto cuando no hay selección
+
+    updateSubmitEnabled();
   }
 
   function resetAfterCategory() {
@@ -372,6 +448,7 @@
       });
 
       disable(UI.serviceSelect, false);
+      updateSubmitEnabled();
     } catch (e) {
       showError(e.message);
     }
@@ -410,6 +487,7 @@
     } catch (e) {
       showError(e.message);
     }
+    updateSubmitEnabled();
   }
 
   function onEmployeeChange() {
@@ -424,6 +502,8 @@
     setHidden(UI.hidEmployeeId, State.employeeId);
 
     disable(UI.modeSelect, false);
+
+    updateSubmitEnabled();
   }
 
   function onModeChange() {
@@ -441,6 +521,8 @@
     // Render calendar ahora que ya hay employee + mode
     initCalendarToCurrentMonth();
     renderCalendar();
+
+    updateSubmitEnabled();
   }
 
   // =========================
@@ -651,6 +733,8 @@
 
             $('.ca-slot').removeClass('active');
             $(this).addClass('active');
+
+            updateSubmitEnabled();
 
         } catch (e) {
             showError(e.message);
@@ -1019,6 +1103,7 @@ if (prevValue === '') return;
         }
         // ✅ aplicar reglas status->payment_status cada vez que cambia el método
         applyPaymentStatusRules();
+        updateSubmitEnabled();
     }
 
   // =========================
@@ -1210,6 +1295,10 @@ if (prevValue === '') return;
         setTimeout(() => {
             applyPaymentStatusRules();
         }, 0);
+
+        setTimeout(() => {
+            updateSubmitEnabled();
+        }, 0);
     });
 
     // ✅ Monto: solo números y 1 punto mientras escribe
@@ -1240,6 +1329,37 @@ if (prevValue === '') return;
       e.preventDefault();
       onSubmit();
     });
+
+    // ✅ Re-evaluar habilitación del botón cuando cambie cualquier campo importante
+    $(document).on(
+    'input change',
+    [
+        UI.categorySelect,
+        UI.serviceSelect,
+        UI.employeeSelect,
+        UI.modeSelect,
+
+        UI.patientName,
+        UI.patientEmail,
+        UI.patientPhone,
+        '#ca_patient_phone_ui', // por intlTelInput
+
+        UI.paymentMethod,
+        UI.amount,
+        UI.amountPaid,
+        UI.paymentStatus,
+        UI.paidAt,
+        UI.status,
+
+        UI.transferBankOrigin,
+        UI.transferPayerName,
+        UI.transferDate,
+        UI.clientTx
+    ].join(','),
+    function () {
+        updateSubmitEnabled();
+    }
+    );
 
     // Cuando se abre el modal: cargar categorías y reset
     $(UI.modal).on('shown.bs.modal', function () {
@@ -1284,6 +1404,9 @@ if (prevValue === '') return;
 
       renderCalendarPlaceholder();
       loadCategories();
+
+      disable(UI.submitBtn, true);
+        updateSubmitEnabled();
     });
 
     $(UI.modal).on('hidden.bs.modal', async function () {
