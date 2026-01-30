@@ -759,6 +759,36 @@
   // 9) PAGO DINÁMICO
   // =========================
 
+  // =========================
+    // 9.A0) ESTADOS DE CITA (lista exacta del dropdown)
+    // - NO incluir confirmed ni cancelled
+    // - pending_verification solo si payment_method=transfer
+    // - on_hold SIEMPRE debe existir
+    // =========================
+    function rebuildAppointmentStatusOptions() {
+    const $sel = $(UI.status);
+    if (!$sel.length) return;
+
+    const placeholder = $sel.find('option:first').length
+        ? $sel.find('option:first')[0].outerHTML
+        : `<option value="">Seleccione una opción</option>`;
+
+    const options = [
+        { value: 'pending_verification', label: 'Pendiente de verificación', transferOnly: true },
+        { value: 'pending_payment',      label: 'Pendiente de pago' },
+        { value: 'paid',                 label: 'Pagada' },
+        { value: 'completed',            label: 'Completada' },
+        { value: 'no_show',              label: 'No asistió' },
+        { value: 'on_hold',              label: 'En espera' },
+    ];
+
+    // Reemplaza TODO (sin confirmed/cancelled)
+    $sel.html(
+        placeholder +
+        options.map(o => `<option value="${o.value}" data-transfer-only="${o.transferOnly ? '1' : '0'}">${o.label}</option>`).join('')
+    );
+    }
+
    // =========================
     // 9.A) REGLAS: status (cita) -> payment_status (pago)
     // =========================
@@ -775,7 +805,7 @@
         paid:                ['paid'],
         completed:           ['paid', 'refunded'],
         no_show:             ['unpaid', 'partial', 'paid', 'refunded'],
-        confirmed:           ['pending', 'unpaid', 'partial', 'paid'], // "En espera"
+        on_hold:             ['pending', 'unpaid', 'partial', 'paid'],
         };
 
         // Si el status no está en el mapa, no forzamos nada (por ejemplo cancelled si no lo pediste)
@@ -783,7 +813,8 @@
         if (!allowedRaw) return;
 
         // Regla extra: "pending" solo si es transferencia
-        const allowed = allowedRaw.filter(v => v !== 'pending' || isTransfer);
+        const pendingAllowedByAppt = (apptStatus === 'pending_verification' || apptStatus === 'on_hold');
+        const allowed = allowedRaw.filter(v => v !== 'pending' || (isTransfer && pendingAllowedByAppt));
 
         const $paySel = $(UI.paymentStatus);
 
@@ -800,11 +831,20 @@
         $opt.prop('hidden', false);
         });
 
-        // ✅ Regla especial: "pending" solo debe aparecer si es transferencia
+        // ✅ Regla especial: "pending"
+        // - Si NO es transferencia: no aparece
+        // - Si SÍ es transferencia: aparece, pero SOLO se habilita si está permitido por el estado de la cita
         const $optPending = $paySel.find('option[value="pending"]');
         if ($optPending.length) {
-        $optPending.prop('hidden', !isTransfer);
-        $optPending.prop('disabled', !isTransfer);
+        if (!isTransfer) {
+            $optPending.prop('hidden', true);
+            $optPending.prop('disabled', true);
+        } else {
+            $optPending.prop('hidden', false);
+            // OJO: aquí NO lo habilitamos "por ser transfer", sino solo si está en allowed
+            const pendingAllowed = allowed.includes('pending');
+            $optPending.prop('disabled', !pendingAllowed);
+        }
         }
 
         // Si lo seleccionado ya no es válido, escoger el primero permitido
@@ -862,6 +902,7 @@
         // =====================================================
         const isTransfer = (pm === 'transfer');
 
+        rebuildAppointmentStatusOptions();
         // Ocultar/mostrar opciones en los selects (sin eliminar)
         const $statusSel = $(UI.status);
         const $payStatusSel = $(UI.paymentStatus);
@@ -869,13 +910,19 @@
         // Estado cita: pending_verification
         const $optPendingVerif = $statusSel.find('option[value="pending_verification"]');
         if ($optPendingVerif.length) {
-            $optPendingVerif.prop('disabled', !isTransfer).toggle(isTransfer);
+        $optPendingVerif.prop('hidden', !isTransfer);
+        $optPendingVerif.prop('disabled', !isTransfer);
+
+        // Si no es transferencia y estaba seleccionado, corregir
+        if (!isTransfer && $statusSel.val() === 'pending_verification') {
+            $statusSel.val('pending_payment').trigger('change');
+        }
         }
 
         // Estado pago: pending
         const $optPayPending = $payStatusSel.find('option[value="pending"]');
         if ($optPayPending.length) {
-            $optPayPending.prop('disabled', !isTransfer).toggle(isTransfer);
+        $optPayPending.prop('hidden', !isTransfer);
         }
 
         // Si NO es transferencia y estaban seleccionados, corrige al instante
@@ -904,20 +951,6 @@
         }
         // ✅ aplicar reglas status->payment_status cada vez que cambia el método
         applyPaymentStatusRules();
-
-        // ✅ Regla especial: "pending_verification" solo debe aparecer si es transferencia
-        const $st = $(UI.status);
-        const $optPV = $st.find('option[value="pending_verification"]');
-        if ($optPV.length) {
-        const isTransfer = (String($(UI.paymentMethod).val() || '').trim() === 'transfer');
-        $optPV.prop('hidden', !isTransfer);
-        $optPV.prop('disabled', !isTransfer);
-
-        // Si estaba seleccionado y ya no aplica, corregir
-        if (!isTransfer && $st.val() === 'pending_verification') {
-            $st.val('pending_payment').trigger('change');
-        }
-        }
     }
 
   // =========================
@@ -1068,9 +1101,6 @@
     // Calendar placeholder
     renderCalendarPlaceholder();
 
-    // Payment
-    onPaymentMethodChange();
-
     // binds
     $(document).on('change', UI.categorySelect, onCategoryChange);
     $(document).on('change', UI.serviceSelect, onServiceChange);
@@ -1173,6 +1203,7 @@
       $(UI.minorHint).addClass('d-none');
 
       // payment
+      rebuildAppointmentStatusOptions();
       onPaymentMethodChange();
 
        applyPaymentStatusRules();
