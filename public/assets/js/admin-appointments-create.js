@@ -76,7 +76,6 @@
     // Channel/status/consent
     channel: '#ca_appointment_channel',
     status: '#ca_status',
-    consent: '#ca_data_consent',
 
     // Submit
     submitBtn: '#btnSubmitCreateAppointment',
@@ -257,6 +256,8 @@
 
     $(UI.slotsContainer).empty();
     $(UI.selectedSlotLabel).text('');
+
+    $('#ca_slots_hint').show(); // ✅ vuelve a mostrar el texto cuando no hay selección
   }
 
   function resetAfterCategory() {
@@ -553,6 +554,8 @@
   async function loadSlotsForDate(dateYMD) {
     if (!State.employeeId || !State.mode) return;
 
+    $('#ca_slots_hint').hide(); // ✅ al elegir una fecha, ocultar el texto
+
     $(UI.slotsContainer).html(`<div class="text-center text-muted w-100 py-4">Cargando horas disponibles.</div>`);
 
     try {
@@ -565,9 +568,9 @@
 
       if (!slots.length) {
         $(UI.slotsContainer).html(`<div class="text-center text-muted w-100 py-4">No hay horas disponibles para esa fecha.</div>`);
-        $('#ca_slots_hint').hide();
+        $('#ca_slots_hint').hide(); // o show() si quieres que el hint sea el mensaje
         return;
-      }
+    }
 
       // 2 columnas como tu grid
       const html = slots.map((s) => {
@@ -585,6 +588,8 @@
             </button>
         `;
         }).join('');
+
+        $('#ca_slots_hint').hide(); // ✅ por si acaso
 
       $(UI.slotsContainer).html(html);
 
@@ -898,17 +903,15 @@
       // comprobante es opcional en tu UI, no se valida
     }
 
-    // Consent (tu checkbox viene checked y con value=1)
-    // backend normalmente espera boolean
-    const consentChecked = $(UI.consent).is(':checked');
-    if (!consentChecked) return showError('Debe confirmar el tratamiento de datos.');
-
     // Construir FormData desde el form (incluye file automáticamente)
     const form = document.querySelector(UI.form);
     const fd = new FormData(form);
 
-    // Asegurar boolean data_consent como 1/0
-    fd.set('data_consent', consentChecked ? '1' : '0');
+    // ✅ Admin: no existe checkbox de consentimiento en este modal
+    fd.delete('data_consent');
+
+    // ✅ Admin: forzar términos aceptados para evitar NULL en DB
+    fd.set('terms_accepted', '1');
 
     // URL de store
     const action = $(UI.form).attr('action');
@@ -923,8 +926,10 @@
 
       // success
       alert(data?.message || 'Cita creada correctamente.');
-      hideCreateApptModal();
-      window.location.reload();
+        hideError();
+
+        // ✅ Recargar de una: al recargar, el modal desaparece y se actualiza la tabla
+        window.location.reload();
 
     } catch (e) {
       showError(e.message);
@@ -937,18 +942,10 @@
   // =========================
   // 11) INIT
   // =========================
-  function hideCreateApptModal() {
+    function hideCreateApptModal() {
     const el = document.querySelector(UI.modal);
     if (!el) return;
 
-    // Bootstrap 5
-    if (window.bootstrap && window.bootstrap.Modal) {
-        const inst = window.bootstrap.Modal.getInstance(el) || new window.bootstrap.Modal(el);
-        inst.hide();
-        return;
-    }
-
-    // Bootstrap 4 (jQuery plugin)
     if (window.jQuery && window.jQuery.fn && window.jQuery.fn.modal) {
         window.jQuery(el).modal('hide');
     }

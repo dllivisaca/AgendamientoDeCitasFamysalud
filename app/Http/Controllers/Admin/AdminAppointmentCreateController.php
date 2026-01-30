@@ -295,9 +295,9 @@ class AdminAppointmentCreateController extends Controller
             ], 409);
         }
 
-        // Admin crea: no hay consentimiento/tyc en este flujo
-        $validated['terms_accepted'] = null;
-        $validated['terms_accepted_at'] = null;
+        // Admin crea: forzar TyC/consentimiento como aceptado para cumplir NOT NULL
+        $validated['terms_accepted'] = 1;
+        $validated['terms_accepted_at'] = now();
 
         // booking_id
         $validated['booking_id'] = 'FS-' . strtoupper(uniqid());
