@@ -139,6 +139,38 @@
     $(sel).prop('disabled', yes);
   }
 
+  function ensureSelectPlaceholder(sel, text = 'Seleccione...') {
+    const $sel = $(sel);
+    if (!$sel.length) return;
+
+    // Si no existe opción value="" la creamos arriba
+    if ($sel.find('option[value=""]').length === 0) {
+        $sel.prepend(`<option value="">${text}</option>`);
+    }
+    }
+
+    function resetToPlaceholder(sel) {
+        const $sel = $(sel);
+        if (!$sel.length) return;
+
+        // 1) Asegurar placeholder value=""
+        ensureSelectPlaceholder(sel, 'Seleccione...');
+
+        // 2) Quitar selección REAL de todas las opciones y seleccionar placeholder
+        $sel.find('option').prop('selected', false);
+        $sel.find('option[value=""]').prop('selected', true);
+
+        // 3) Setear value vacío (doble seguro)
+        $sel.val('');
+
+        // 4) Refrescar UI (Select2 + normal)
+        if ($sel.hasClass('select2-hidden-accessible') || $sel.data('select2')) {
+            // Este es el que realmente hace que el texto visible vuelva a "Seleccione..."
+            $sel.trigger('change.select2');
+        }
+        $sel.trigger('change');
+    }
+
   function resetSelect(sel) {
     $(sel).val('');
     $(sel).find('option').not(':first').remove();
@@ -759,6 +791,23 @@
   // 9) PAGO DINÁMICO
   // =========================
 
+    // =========================
+    // 9.A00) BLOQUEO: status cita + status pago hasta escoger método
+    // =========================
+    function lockStatusFields(lock = true) {
+        // lock=true  => disabled
+        // lock=false => enabled
+        disable(UI.status, lock);
+        disable(UI.paymentStatus, lock);
+
+        if (lock) {
+        // opcional: limpiar selección para que no queden valores “fantasma”
+        $(UI.status).val('');
+        $(UI.paymentStatus).val('');
+        }
+    }
+
+
   // =========================
     // 9.A0) ESTADOS DE CITA (lista exacta del dropdown)
     // - NO incluir confirmed ni cancelled
@@ -818,6 +867,12 @@
 
         const $paySel = $(UI.paymentStatus);
 
+        // Guardar lo que estaba seleccionado ANTES de cambiar disabled/hidden
+        const prevValue = String($paySel.val() || '').trim();
+
+        // Asegurar placeholder "Seleccione..."
+        ensureSelectPlaceholder(UI.paymentStatus, 'Seleccione...');
+
         // Habilitar/ocultar opciones según allowed
         const all = ['pending','unpaid','partial','paid','refunded'];
 
@@ -847,11 +902,20 @@
         }
         }
 
-        // Si lo seleccionado ya no es válido, escoger el primero permitido
-        const current = String($paySel.val() || '').trim();
-        if (!allowed.includes(current)) {
-        $paySel.val(allowed[0] || '');
+        // Si "pending" quedó oculto y estaba seleccionado, reset a placeholder
+        if (!isTransfer && String($paySel.val() || '').trim() === 'pending') {
+            resetToPlaceholder(UI.paymentStatus);
         }
+
+        // Si lo que tenía seleccionado ya NO está permitido, resetea YA
+        // (usar prevValue evita que el browser/Select2 "pegue" el texto)
+        if (prevValue !== '' && !allowed.includes(prevValue)) {
+        resetToPlaceholder(UI.paymentStatus);
+        return;
+        }
+
+// Si estaba vacío, se queda vacío (no autoselecciona)
+if (prevValue === '') return;
     }
 
   function onPaymentMethodChange() {
@@ -884,10 +948,14 @@
         hide('#ca_paid_at_wrap');     // ✅ ocultar fecha del pago por defecto
         $(UI.paidAt).val('');         // ✅ limpiar valor
 
-        // 1) Si NO han elegido método, no mostrar nada más
+        // 1) Si NO han elegido método, bloquear estados y no mostrar nada más
         if (!pm) {
+            lockStatusFields(true);
             return;
         }
+
+        // 1.1) Ya hay método: habilitar estados
+        lockStatusFields(false);
 
         // 2) Mostrar campos base (monto/estado/fecha/obs)
         show('#ca_payment_fields_block');
@@ -1136,7 +1204,12 @@
 
      // ✅ Cuando cambia el estado de la cita, recalcular estados de pago permitidos
     $(document).on('change', UI.status, function () {
-      applyPaymentStatusRules();
+        applyPaymentStatusRules();
+
+        // ✅ 1 tick después, para que Select2 no se quede pegado visualmente
+        setTimeout(() => {
+            applyPaymentStatusRules();
+        }, 0);
     });
 
     // ✅ Monto: solo números y 1 punto mientras escribe
@@ -1204,6 +1277,7 @@
 
       // payment
       rebuildAppointmentStatusOptions();
+      lockStatusFields(true);
       onPaymentMethodChange();
 
        applyPaymentStatusRules();
