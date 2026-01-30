@@ -38,18 +38,24 @@ class Appointment extends Model
 
         // Pago
         'amount',
+        'amount_paid',
         'payment_method',
         'amount_standard',
         'discount_amount',
         'payment_status',
         'payment_channel',
+        'payment_paid_at',
+        'payment_paid_at_date_source',
+        'payment_notes',
         
         // Cita
         'appointment_date',
         'appointment_time',
         'appointment_end_time',
+        'appointment_mode',
         'status',
         'appointment_channel',
+        'appointment_request_source',
 
         // Consentimientos
         'data_consent',
@@ -75,6 +81,7 @@ class Appointment extends Model
         'terms_accepted_at' => 'datetime',
         'transfer_date' => 'date',
         'transfer_validated_at' => 'datetime',
+        'payment_paid_at' => 'datetime',
     ];
 
     public function service()

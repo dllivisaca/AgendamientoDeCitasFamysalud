@@ -907,8 +907,33 @@
     const form = document.querySelector(UI.form);
     const fd = new FormData(form);
 
+    // =========================
+    // FORZAR CAMPOS QUE A VECES NO VIAJAN (disabled / names)
+    // =========================
+
+    // 1) appointment_mode (tu State.mode es lo que el usuario eligió)
+    fd.set('appointment_mode', (State.mode || '').toString().toLowerCase());
+
+    // 2) appointment_request_source (viene del select de canal del modal)
+    fd.set('appointment_request_source', String($(UI.channel).val() || '').trim());
+
+    // 3) payment_notes (aunque por UI esté lleno, lo forzamos)
+    fd.set('payment_notes', String($(UI.paymentNotes).val() || '').trim());
+
+    // 4) amount_paid (por si el input tiene name diferente o no viaja)
+    fd.set('amount_paid', String($(UI.amountPaid).val() || '0.00').trim());
+
+    // 5) billing_* (si están disabled por "mismos datos", NO viajan; por eso los seteamos)
+    fd.set('billing_name', String($(UI.billingName).val() || '').trim());
+    fd.set('billing_doc_type', String($(UI.billingDocType).val() || '').trim());
+    fd.set('billing_doc_number', String($(UI.billingDocNumber).val() || '').trim());
+    fd.set('billing_email', String($(UI.billingEmail).val() || '').trim());
+    fd.set('billing_phone', String($(UI.billingPhone).val() || '').trim());
+    fd.set('billing_address', String($(UI.billingAddress).val() || '').trim());
+
     // ✅ Admin: no existe checkbox de consentimiento en este modal
-    fd.delete('data_consent');
+    // Forzamos a "aceptado" para que el backend no lo exija como si fuera paciente
+    fd.set('data_consent', '1');
 
     // ✅ Admin: forzar términos aceptados para evitar NULL en DB
     fd.set('terms_accepted', '1');

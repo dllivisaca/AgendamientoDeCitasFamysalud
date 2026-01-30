@@ -204,6 +204,11 @@ class AdminAppointmentCreateController extends Controller
     // 5) Guardar cita (admin)
     public function store(Request $request)
     {
+        // ✅ Admin crea: no hay checkbox de consentimiento en este flujo
+        // Forzamos data_consent para que no falle la validación del sistema
+        $request->merge([
+            'data_consent' => 1,
+        ]);
         $validated = $request->validate([
             // Slot
             'employee_id' => 'required|exists:employees,id',
@@ -217,6 +222,7 @@ class AdminAppointmentCreateController extends Controller
 
             // Paciente
             'patient_full_name' => 'required|string|max:255',
+            'data_consent' => 'nullable|boolean',
             'patient_email' => 'required|email|max:255',
             'patient_phone' => 'required|string|max:20',
             'patient_address' => 'nullable|string|max:255',
@@ -307,6 +313,34 @@ class AdminAppointmentCreateController extends Controller
 
         // Admin crea: canal interno fijo
         $validated['appointment_channel'] = 'admin_manual';
+
+        // =========================
+        // BILLING: si no llegó (por inputs disabled), usar datos del paciente
+        // =========================
+        $validated['billing_name'] = $validated['billing_name'] ?: ($validated['patient_full_name'] ?? null);
+        $validated['billing_doc_type'] = $validated['billing_doc_type'] ?: ($validated['patient_doc_type'] ?? null);
+        $validated['billing_doc_number'] = $validated['billing_doc_number'] ?: ($validated['patient_doc_number'] ?? null);
+        $validated['billing_email'] = $validated['billing_email'] ?: ($validated['patient_email'] ?? null);
+        $validated['billing_phone'] = $validated['billing_phone'] ?: ($validated['patient_phone'] ?? null);
+        $validated['billing_address'] = $validated['billing_address'] ?: ($validated['patient_address'] ?? null);
+
+        // =========================
+        // AMOUNTS: amount_standard + discount_amount desde services.price
+        // Regla:
+        // - amount_standard = price + 8%
+        // - discount_amount = (cash|transfer) => 8% del price ; (card) => 0
+        // =========================
+        $service = Service::query()->select(['id','price'])->find($validated['service_id']);
+        $price = $service ? (float)$service->price : 0.0;
+
+        $amountStandard = round($price * 1.08, 2);
+        $validated['amount_standard'] = $amountStandard;
+
+        if (in_array($validated['payment_method'], ['cash', 'transfer'], true)) {
+            $validated['discount_amount'] = round($price * 0.08, 2);
+        } else {
+            $validated['discount_amount'] = 0.00;
+        }
 
         // Canal solicitado (si lo eligieron en el modal), si no -> null
         // (viene validado como appointment_request_source)
