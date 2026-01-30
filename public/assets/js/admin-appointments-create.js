@@ -115,7 +115,9 @@
 
     // calendar
     calYear: null,
-    calMonth: null // 0-11
+    calMonth: null, // 0-11
+
+    lastPaymentMethod: null
   };
 
   // =========================
@@ -153,6 +155,29 @@
     const d = String(dateObj.getDate()).padStart(2, '0');
     return `${y}-${m}-${d}`;
   }
+
+  function normalizeMoney2(val) {
+    let s = String(val ?? '').trim();
+
+    // permitir coma como decimal
+    s = s.replace(',', '.');
+
+    // dejar solo dígitos y puntos
+    s = s.replace(/[^\d.]/g, '');
+
+    // si hay más de un punto, dejar solo el primero
+    const firstDot = s.indexOf('.');
+    if (firstDot !== -1) {
+        s = s.slice(0, firstDot + 1) + s.slice(firstDot + 1).replace(/\./g, '');
+    }
+
+    if (s === '' || s === '.') return '';
+
+    const n = Number(s);
+    if (Number.isNaN(n)) return '';
+
+    return n.toFixed(2);
+    }
 
   function isAdult(dobYMD) {
     if (!dobYMD) return false;
@@ -731,6 +756,22 @@
   function onPaymentMethodChange() {
         const pm = String($(UI.paymentMethod).val() || '').trim(); // '' | cash | transfer | card
 
+        // ✅ Si cambió el método, resetea montos y observaciones (como en edición)
+        const prev = State.lastPaymentMethod;
+        const changed = (prev && pm && prev !== pm);
+
+        if (changed) {
+        // Montos
+        $(UI.amount).val('0.00').trigger('blur');
+        $(UI.amountPaid).val('0.00').trigger('blur');
+
+        // Observaciones de pago (payment_notes)
+        $(UI.paymentNotes).val('');
+        }
+
+        // Guardar método actual
+        State.lastPaymentMethod = pm || null;
+
         const show = (sel) => $(sel).removeClass('d-none');
         const hide = (sel) => $(sel).addClass('d-none');
 
@@ -969,6 +1010,30 @@
 
     $(document).on('change', UI.paymentMethod, onPaymentMethodChange);
 
+    // ✅ Monto: solo números y 1 punto mientras escribe
+    $(document).on('input', `${UI.amount}, ${UI.amountPaid}`, function () {
+    let v = String(this.value || '');
+
+    v = v.replace(',', '.');
+    v = v.replace(/[^\d.]/g, '');
+
+    const dot = v.indexOf('.');
+    if (dot !== -1) {
+        v = v.slice(0, dot + 1) + v.slice(dot + 1).replace(/\./g, '');
+    }
+
+    this.value = v;
+    });
+
+    // ✅ Al salir del input: forzar 2 decimales
+    $(document).on('blur', `${UI.amount}, ${UI.amountPaid}`, function () {
+    const formatted = normalizeMoney2(this.value);
+
+    // si quedó vacío, lo dejamos vacío (se verá el placeholder 0.00)
+    // si prefieres que SIEMPRE quede 0.00, abajo te dejo esa opción
+    this.value = (formatted === '' ? '0.00' : formatted);
+    });
+
     $(document).on('click', UI.submitBtn, function (e) {
       e.preventDefault();
       onSubmit();
@@ -980,6 +1045,11 @@
 
       // reset UI
       $(UI.form)[0].reset();
+
+      State.lastPaymentMethod = null;
+
+      $(UI.amount).val('0.00');
+    $(UI.amountPaid).val('0.00');
 
       // reset state
       State.categoryId = null;

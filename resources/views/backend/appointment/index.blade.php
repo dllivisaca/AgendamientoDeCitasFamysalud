@@ -6833,12 +6833,16 @@
 
                     <div class="col-md-4">
                     <label class="form-label">Monto total a pagar <span class="text-danger">*</span></label>
-                    <input type="number" step="0.01" class="form-control" name="amount" id="ca_amount" value="0.00">
+                    <input type="text" inputmode="decimal" autocomplete="off"
+                    class="form-control" name="amount" id="ca_amount"
+                    value="" placeholder="0.00">
                     </div>
 
                     <div class="col-md-4">
                     <label class="form-label">Monto pagado <span class="text-danger">*</span></label>
-                    <input type="number" step="0.01" class="form-control" name="amount_paid" id="ca_amount_paid" value="0.00">
+                    <input type="text" inputmode="decimal" autocomplete="off"
+                        class="form-control" name="amount_paid" id="ca_amount_paid"
+                        value="" placeholder="0.00">
                     </div>
 
                     <div class="col-md-4" id="ca_paid_at_wrap">
