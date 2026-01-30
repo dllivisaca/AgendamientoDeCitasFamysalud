@@ -2047,6 +2047,10 @@
     grid-column: 1 / -1 !important;  /* por si el mensaje viene sin text-center */
     }
 
+    /* intl-tel-input: que ocupe todo el ancho como form-control */
+    .iti { width: 100%; }
+    .iti input { width: 100%; }
+
     /* ===== Títulos de sección (Crear cita) ===== */
     .ca-section-title{
         display: flex;
@@ -2065,9 +2069,9 @@
 @stop
 
 @section('js')
-    <script src="{{ asset('assets/js/admin-appointments-create.js') }}?v={{ time() }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/intlTelInput.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/utils.js"></script>
+    <script src="{{ asset('assets/js/admin-appointments-create.js') }}?v={{ time() }}"></script>
 
     {{-- hide notifcation --}}
     <script>

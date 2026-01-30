@@ -983,16 +983,38 @@
     return iti;
   }
 
-  // Si usas Bootstrap 5: cuando se abre el modal, inicializa
-  const modal = document.getElementById("modalCreateAppointment");
-  if (modal) {
-    modal.addEventListener("shown.bs.modal", function () {
-      setupIntlPhone("ca_patient_phone_ui", "ca_patient_phone", "ca_patient_phone_hint");
-      setupIntlPhone("ca_billing_phone_ui", "ca_billing_phone", "ca_billing_phone_hint");
-    });
-  } else {
-    // fallback por si tu modal se renderiza sin evento
-    setupIntlPhone("ca_patient_phone_ui", "ca_patient_phone", "ca_patient_phone_hint");
-    setupIntlPhone("ca_billing_phone_ui", "ca_billing_phone", "ca_billing_phone_hint");
-  }
+  // ✅ Inicializa intl-tel-input cuando el modal se abre (BS4/BS5)
+    (function () {
+    const $ = window.jQuery;
+
+    function initPhones() {
+        setupIntlPhone("ca_patient_phone_ui", "ca_patient_phone", "ca_patient_phone_hint");
+        setupIntlPhone("ca_billing_phone_ui", "ca_billing_phone", "ca_billing_phone_hint");
+    }
+
+    // Si hay jQuery (AdminLTE normalmente sí), usa el evento jQuery que sirve en BS4/BS5
+    if ($) {
+        $(document).off("shown.bs.modal.caPhones", "#modalCreateAppointment");
+        $(document).on("shown.bs.modal.caPhones", "#modalCreateAppointment", function () {
+        initPhones();
+        });
+
+        // fallback si por alguna razón no se dispara
+        $(document).ready(function () {
+        if (document.getElementById("modalCreateAppointment")) {
+            // no hace nada extra; solo asegura que el DOM exista
+        }
+        });
+
+        return;
+    }
+
+    // Fallback sin jQuery (raro en AdminLTE)
+    const modal = document.getElementById("modalCreateAppointment");
+    if (modal) {
+        modal.addEventListener("shown.bs.modal", initPhones);
+    } else {
+        initPhones();
+    }
+    })();
 })();
