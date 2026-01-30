@@ -238,7 +238,10 @@ class AdminAppointmentCreateController extends Controller
             'amount' => 'required|numeric|min:0',
             'amount_paid' => 'required|numeric|min:0',
             'payment_status' => 'required|in:pending,unpaid,partial,paid,refunded',
-            'payment_paid_at' => 'required|date',
+
+            // ⬇️ Solo se llena cuando NO es transferencia
+            'payment_paid_at' => 'nullable|required_if:payment_method,cash,card|date',
+
             'payment_notes' => 'nullable|string',
 
             'client_transaction_id' => 'nullable|string|max:120',
@@ -250,14 +253,12 @@ class AdminAppointmentCreateController extends Controller
             'transfer_reference' => 'nullable|string|max:120',
             'tr_file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
 
-            // Canal (opcional)
-            'appointment_channel' => 'nullable|string|max:30',
+            // Canal por el que se solicitó la cita (seleccionado en el modal)
+            // Si no selecciona nada, queda null
+            'appointment_request_source' => 'nullable|string|max:30',
 
             // Estado de cita
             'status' => 'required|in:pending_verification,pending_payment,confirmed,paid,completed,no_show,cancelled',
-
-            // Consentimiento
-            'data_consent' => 'nullable|boolean',
         ]);
 
         // ✅ Validar HOLD activo (para evitar choque de turnos)
@@ -294,10 +295,9 @@ class AdminAppointmentCreateController extends Controller
             ], 409);
         }
 
-        // Mapear consentimiento a columnas reales (como ya haces)
-        $validated['terms_accepted'] = !empty($validated['data_consent']) ? 1 : 0;
-        $validated['terms_accepted_at'] = $validated['terms_accepted'] ? now() : null;
-        unset($validated['data_consent']);
+        // Admin crea: no hay consentimiento/tyc en este flujo
+        $validated['terms_accepted'] = null;
+        $validated['terms_accepted_at'] = null;
 
         // booking_id
         $validated['booking_id'] = 'FS-' . strtoupper(uniqid());
@@ -305,15 +305,46 @@ class AdminAppointmentCreateController extends Controller
         // Admin crea: user_id null (como tu lógica)
         $validated['user_id'] = null;
 
-        // Normalizar payment_paid_at a formato MySQL DATETIME
-        $validated['payment_paid_at'] = Carbon::parse($validated['payment_paid_at'])->format('Y-m-d H:i:s');
-        $validated['payment_paid_at_date_source'] = 'manual';
+        // Admin crea: canal interno fijo
+        $validated['appointment_channel'] = 'admin_manual';
+
+        // Canal solicitado (si lo eligieron en el modal), si no -> null
+        // (viene validado como appointment_request_source)
+        $validated['appointment_request_source'] = $validated['appointment_request_source'] ?? null;
+
+        // payment_paid_at se llena SOLO para cash/card (transfer se llena luego al validar en edición)
+        $pm = $validated['payment_method'];
+
+        if ($pm === 'transfer') {
+            $validated['payment_paid_at'] = null;
+            $validated['payment_paid_at_date_source'] = null;
+        } else {
+            $validated['payment_paid_at'] = Carbon::parse($validated['payment_paid_at'])->format('Y-m-d H:i:s');
+            $validated['payment_paid_at_date_source'] = 'manual';
+        }
 
         // Definir payment_channel según método
         $pm = $validated['payment_method'];
         if ($pm === 'transfer') $validated['payment_channel'] = 'bank_transfer';
         if ($pm === 'cash')     $validated['payment_channel'] = 'cash_in_person';
         if ($pm === 'card')     $validated['payment_channel'] = !empty($validated['client_transaction_id']) ? 'payphone' : 'manual_card';
+
+        // =====================================================
+        // REGLAS: SOLO restringir combos inválidos
+        // - pending_verification solo para transfer
+        // - payment_status = pending solo para transfer
+        // NO recalcular por montos: se respeta lo que el admin selecciona
+        // =====================================================
+
+        // Si NO es transferencia y mandan pending_verification, lo ajustamos
+        if ($pm !== 'transfer' && ($validated['status'] ?? null) === 'pending_verification') {
+            $validated['status'] = 'pending_payment';
+        }
+
+        // Si NO es transferencia y mandan payment_status=pending, lo ajustamos (sin cálculos)
+        if ($pm !== 'transfer' && ($validated['payment_status'] ?? null) === 'pending') {
+            $validated['payment_status'] = 'unpaid';
+        }
 
         DB::transaction(function () use (&$validated, $request, $hold) {
 

@@ -753,6 +753,37 @@
         // Por defecto, mostrar fecha del pago (solo NO aplica para transferencia)
         show('#ca_paid_at_wrap');
 
+        // =====================================================
+        // REGLAS: opciones SOLO para transferencia (UI)
+        // - status: pending_verification solo transfer
+        // - payment_status: pending solo transfer
+        // =====================================================
+        const isTransfer = (pm === 'transfer');
+
+        // Ocultar/mostrar opciones en los selects (sin eliminar)
+        const $statusSel = $(UI.status);
+        const $payStatusSel = $(UI.paymentStatus);
+
+        // Estado cita: pending_verification
+        const $optPendingVerif = $statusSel.find('option[value="pending_verification"]');
+        if ($optPendingVerif.length) {
+            $optPendingVerif.prop('disabled', !isTransfer).toggle(isTransfer);
+        }
+
+        // Estado pago: pending
+        const $optPayPending = $payStatusSel.find('option[value="pending"]');
+        if ($optPayPending.length) {
+            $optPayPending.prop('disabled', !isTransfer).toggle(isTransfer);
+        }
+
+        // Si NO es transferencia y estaban seleccionados, corrige al instante
+        if (!isTransfer && $statusSel.val() === 'pending_verification') {
+            $statusSel.val('pending_payment'); // default en crear
+        }
+        if (!isTransfer && $payStatusSel.val() === 'pending') {
+            $payStatusSel.val('unpaid'); // default visual (backend recalcula si quieres)
+        }
+
         // 3) Mostrar según método
         if (pm === 'card') {
             show(UI.clientTxWrap);
@@ -800,6 +831,17 @@
 // canal es opcional, así que NO lo obligues
     // Fecha del pago: solo para cash/card (transfer usa "fecha de la transferencia")
     const pm = String($(UI.paymentMethod).val() || '').trim();
+
+    // 🔒 Refuerzo: si no es transferencia, NO permitir pending/pending_verification
+    if (pm !== 'transfer') {
+      if ($(UI.status).val() === 'pending_verification') {
+        $(UI.status).val('pending_payment');
+      }
+      if ($(UI.paymentStatus).val() === 'pending') {
+        $(UI.paymentStatus).val('unpaid');
+      }
+    }
+
     if (pm !== 'transfer') {
     if (!$(UI.paidAt).val()) return showError('Ingrese la fecha del pago.');
     } else {
