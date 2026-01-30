@@ -1188,12 +1188,29 @@
 
     // Sync al hidden (por ahora lo guardo en E164; luego tú lo separas prefijo/nacional)
     function syncHidden() {
-      const number = (window.intlTelInputUtils && window.intlTelInputUtils.numberFormat)
-        ? iti.getNumber(intlTelInputUtils.numberFormat.E164)
-        : iti.getNumber();
+        // dígitos nacionales (lo que el usuario escribe)
+        const digits = (input.value || "").replace(/\D/g, "");
 
-      hidden.value = number || "";
-    }
+        // 1) Intentar E164 real con utils
+        let number = "";
+        try {
+            if (window.intlTelInputUtils && window.intlTelInputUtils.numberFormat) {
+            number = iti.getNumber(intlTelInputUtils.numberFormat.E164) || "";
+            } else {
+            number = iti.getNumber() || "";
+            }
+        } catch (e) {
+            number = "";
+        }
+
+        // 2) Fallback: si no viene con +, armarlo manualmente con el dialCode
+        if (!number || number.charAt(0) !== "+") {
+            const dial = iti.getSelectedCountryData()?.dialCode || "";
+            number = (dial && digits) ? (`+${dial}${digits}`) : "";
+        }
+
+        hidden.value = number;
+        }
 
     // Inicial
     updatePhoneHint();
