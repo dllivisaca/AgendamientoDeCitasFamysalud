@@ -739,6 +739,9 @@
         hide(UI.transferBlock);  // #ca_transfer_block
         hide(UI.clientTxWrap);   // #ca_client_tx_wrap
 
+        hide('#ca_paid_at_wrap');     // ✅ ocultar fecha del pago por defecto
+        $(UI.paidAt).val('');         // ✅ limpiar valor
+
         // 1) Si NO han elegido método, no mostrar nada más
         if (!pm) {
             return;
@@ -746,6 +749,9 @@
 
         // 2) Mostrar campos base (monto/estado/fecha/obs)
         show('#ca_payment_fields_block');
+
+        // Por defecto, mostrar fecha del pago (solo NO aplica para transferencia)
+        show('#ca_paid_at_wrap');
 
         // 3) Mostrar según método
         if (pm === 'card') {
@@ -755,6 +761,9 @@
             show(UI.transferBlock);
             hide(UI.clientTxWrap);
             $(UI.clientTx).val('');
+
+            hide('#ca_paid_at_wrap');  // ✅ en transferencia NO va fecha del pago
+            $(UI.paidAt).val('');      // ✅ limpiar por si estaba seteado
         } else if (pm === 'cash') {
             hide(UI.transferBlock);
             hide(UI.clientTxWrap);
@@ -789,7 +798,14 @@
     if (!$(UI.paymentStatus).val()) return showError('Seleccione el estado del pago.');
     if (!$(UI.status).val()) return showError('Seleccione el estado de la cita.');
 // canal es opcional, así que NO lo obligues
+    // Fecha del pago: solo para cash/card (transfer usa "fecha de la transferencia")
+    const pm = String($(UI.paymentMethod).val() || '').trim();
+    if (pm !== 'transfer') {
     if (!$(UI.paidAt).val()) return showError('Ingrese la fecha del pago.');
+    } else {
+    // seguridad: si es transferencia, vaciamos payment_paid_at
+    $(UI.paidAt).val('');
+    }
 
     // Transfer required si aplica (tu UI tiene asteriscos en 3 campos)
     if ($(UI.paymentMethod).val() === 'transfer') {

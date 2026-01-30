@@ -6784,7 +6784,7 @@
                     <input type="number" step="0.01" class="form-control" name="amount_paid" id="ca_amount_paid" value="0.00">
                     </div>
 
-                    <div class="col-md-4">
+                    <div class="col-md-4" id="ca_paid_at_wrap">
                     <label class="form-label" id="ca_paid_at_label">Fecha del pago <span class="text-danger">*</span></label>
                     <input type="datetime-local" class="form-control" name="payment_paid_at" id="ca_payment_paid_at">
                     </div>
