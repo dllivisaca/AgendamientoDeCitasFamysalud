@@ -6772,6 +6772,7 @@
                     </div>
 
                     <div id="ca_payment_fields_block" class="d-none">
+                    <div class="row g-3">
 
                     <div class="col-md-4">
                     <label class="form-label">Monto total a pagar <span class="text-danger">*</span></label>
@@ -6841,6 +6842,7 @@
                         </div>
                     </div>
                     </div>
+                    </div> <!-- /.row -->
                 </div> <!-- /#ca_payment_fields_block -->
 
                 </div>
