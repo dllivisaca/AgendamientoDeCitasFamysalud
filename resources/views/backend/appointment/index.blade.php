@@ -6771,6 +6771,8 @@
                     </select>
                     </div>
 
+                    <div id="ca_payment_fields_block" class="d-none">
+
                     <div class="col-md-4">
                     <label class="form-label">Monto total a pagar <span class="text-danger">*</span></label>
                     <input type="number" step="0.01" class="form-control" name="amount" id="ca_amount" value="0.00">
@@ -6839,6 +6841,7 @@
                         </div>
                     </div>
                     </div>
+                </div> <!-- /#ca_payment_fields_block -->
 
                 </div>
                 </div>
@@ -6860,7 +6863,6 @@
                         <option value="facebook">Facebook</option>
                         <option value="phone_call">Llamada telefónica</option>
                         <option value="walk_in">En recepción</option>
-                        <option value="referral">Recomendación</option>
                         <option value="other">Otro</option>
                     </select>
                     </div>

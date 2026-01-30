@@ -729,29 +729,38 @@
   // 9) PAGO DINÁMICO
   // =========================
   function onPaymentMethodChange() {
-    const pm = $(UI.paymentMethod).val(); // cash|transfer|card
+        const pm = String($(UI.paymentMethod).val() || '').trim(); // '' | cash | transfer | card
 
-    // transferencia: mostrar bloque
-    if (pm === 'transfer') {
-      $(UI.transferBlock).removeClass('d-none');
-    } else {
-      $(UI.transferBlock).addClass('d-none');
-      // opcional: limpiar campos de transferencia al cambiar
-      $(UI.transferBankOrigin).val('');
-      $(UI.transferPayerName).val('');
-      $(UI.transferDate).val('');
-      $(UI.transferReference).val('');
-      $(UI.trFile).val('');
-    }
+        const show = (sel) => $(sel).removeClass('d-none');
+        const hide = (sel) => $(sel).addClass('d-none');
 
-    // tarjeta: mostrar client tx opcional
-    if (pm === 'card') {
-      $(UI.clientTxWrap).removeClass('d-none');
-    } else {
-      $(UI.clientTxWrap).addClass('d-none');
-      $(UI.clientTx).val('');
+        // 0) Ocultar todo lo dinámico
+        hide('#ca_payment_fields_block');
+        hide(UI.transferBlock);  // #ca_transfer_block
+        hide(UI.clientTxWrap);   // #ca_client_tx_wrap
+
+        // 1) Si NO han elegido método, no mostrar nada más
+        if (!pm) {
+            return;
+        }
+
+        // 2) Mostrar campos base (monto/estado/fecha/obs)
+        show('#ca_payment_fields_block');
+
+        // 3) Mostrar según método
+        if (pm === 'card') {
+            show(UI.clientTxWrap);
+            hide(UI.transferBlock);
+        } else if (pm === 'transfer') {
+            show(UI.transferBlock);
+            hide(UI.clientTxWrap);
+            $(UI.clientTx).val('');
+        } else if (pm === 'cash') {
+            hide(UI.transferBlock);
+            hide(UI.clientTxWrap);
+            $(UI.clientTx).val('');
+        }
     }
-  }
 
   // =========================
   // 10) SUBMIT
