@@ -2250,6 +2250,14 @@
         }
 
         // ✅ Limpiar draft global (la usas al cambiar método en modo edición)
+
+        // ✅ Cache de notas originales por método (para restaurar al volver)
+        window.__paymentNotesCache = window.__paymentNotesCache || {
+        card: null,
+        transfer: null,
+        cash: null
+        };
+
         window.__clearPaymentDraftFields = function (pm) {
             const method = String(pm || '').trim().toLowerCase();
 
@@ -2290,6 +2298,40 @@
             $('#modalCashNotesInput').val('');
             $('#modalCashPaidAtHidden').val('');
             $('#modalCashNotesHidden').val('');
+
+            // ✅ Limpia Observaciones de pago al cambiar método (payment_notes)
+            $('#modalCardNotesInput').val('');
+            $('#modalTransferNotesInput').val('');
+            $('#modalCashNotesInput').val('');
+            $('#modalPaymentNotesHidden').val('');
+
+            // ✅ Capturar notas iniciales de cada método (solo al abrir modal)
+            window.__paymentNotesCache.cash = ($('#modalCashNotesInput').val() || '');
+            window.__paymentNotesCache.transfer = ($('#modalTransferNotesInput').val() || '');
+            window.__paymentNotesCache.card = ($('#modalCardNotesInput').val() || '');
+
+            // ✅ Limpia inputs visibles
+            $('#modalCardNotesInput').val('');
+            $('#modalTransferNotesInput').val('');
+            $('#modalCashNotesInput').val('');
+            $('#modalPaymentNotesHidden').val('');
+
+            // ✅ Si vuelven a un método, restaurar nota original de ese método (solo visual)
+            const m = String(pm || '').trim(); // 'cash' | 'transfer' | 'card'
+            if (m === 'cash') {
+            $('#modalCashNotesInput').val(window.__paymentNotesCache.cash ?? '');
+            }
+            if (m === 'transfer') {
+            $('#modalTransferNotesInput').val(window.__paymentNotesCache.transfer ?? '');
+            }
+            if (m === 'card') {
+            $('#modalCardNotesInput').val(window.__paymentNotesCache.card ?? '');
+            }
+
+            // (Opcional) si también quieres limpiar el texto de modo lectura:
+            $('#modalCardNotesText').html('<span class="text-muted font-italic small">N/A</span>');
+            $('#modalTransferNotesText').html('<span class="text-muted font-italic small">N/A</span>');
+            $('#modalCashNotesText').html('<span class="text-muted font-italic small">N/A</span>');
 
             $('#modalAmountPaidHidden').val('');
             $('#modalPaymentMethodRaw').val(method);
