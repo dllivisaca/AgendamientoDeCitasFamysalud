@@ -6716,16 +6716,20 @@
                 </div>
 
                 <div class="col-md-6">
-                    <label class="form-label">Número de celular <span class="text-danger">*</span></label>
+                    <label class="form-label d-block">
+                        Número de celular <span class="text-danger">*</span>
+                    </label>
 
-                    <!-- Visible UI (con banderita) -->
-                    <input type="tel" class="form-control phone-input" id="ca_billing_phone_ui">
+                    <div class="w-100">
+                        <!-- Visible UI (con banderita) -->
+                        <input type="tel" class="form-control phone-input" id="ca_billing_phone_ui">
 
-                    <!-- Hidden real (lo que envías al backend) -->
-                    <input type="hidden" name="billing_phone" id="ca_billing_phone">
+                        <!-- Hidden real (lo que envías al backend) -->
+                        <input type="hidden" name="billing_phone" id="ca_billing_phone">
 
-                    <!-- Hint dinámico -->
-                    <div class="form-text" id="ca_billing_phone_hint"></div>
+                        <!-- Hint dinámico -->
+                        <div class="form-text d-block mt-1" id="ca_billing_phone_hint"></div>
+                    </div>
                 </div>
 
                 <div class="col-md-12">
