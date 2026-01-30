@@ -911,6 +911,30 @@
 
     if (!input || !hidden || typeof window.intlTelInput !== "function") return null;
 
+    // ✅ Nombres de países en español (sin cargar i18n externo)
+    let localizedEs = {};
+    try {
+    const dn = new Intl.DisplayNames(["es"], { type: "region" });
+    const data = (window.intlTelInputGlobals && window.intlTelInputGlobals.getCountryData)
+        ? window.intlTelInputGlobals.getCountryData()
+        : [];
+    data.forEach(c => {
+        const code = (c.iso2 || "").toUpperCase();
+        const nameEs = dn.of(code);
+        if (nameEs) localizedEs[c.iso2] = nameEs;
+    });
+    } catch (e) {
+    localizedEs = {};
+    }
+
+    // ✅ v19: traducir el dataset GLOBAL que usa el dropdown
+    try {
+    const data = window.intlTelInputGlobals.getCountryData();
+    data.forEach(c => {
+        if (localizedEs[c.iso2]) c.name = localizedEs[c.iso2];
+    });
+    } catch (e) {}
+
     // Evita doble init si abres/cierra el modal
     if (input.dataset.itiInit === "1") return window._itiByInputId?.[inputId] || null;
     input.dataset.itiInit = "1";
