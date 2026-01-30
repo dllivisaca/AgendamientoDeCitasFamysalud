@@ -4962,6 +4962,21 @@
 
             $('#modalPaymentNotesHidden').val(pn);
 
+            // ✅ REPINTAR modo lectura de Observaciones de pago
+            (function () {
+            const t = String(pn || '').trim();
+            if (t !== '') {
+                $('#modalCashNotesText').text(t);
+                $('#modalCardNotesText').text(t);
+                $('#modalTransferNotesText').text(t);
+            } else {
+                const na = '<span class="text-muted font-italic small">N/A</span>';
+                $('#modalCashNotesText').html(na);
+                $('#modalCardNotesText').html(na);
+                $('#modalTransferNotesText').html(na);
+            }
+            })();
+
             // Monto pagado hidden
             $('#modalAmountPaidHidden').val(String(snap.amount_paid || ''));
 
