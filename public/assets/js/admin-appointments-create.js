@@ -54,6 +54,7 @@
     billingDocNumber: '#ca_billing_doc_number',
     billingEmail: '#ca_billing_email',
     billingPhone: '#ca_billing_phone',
+    billingPhoneUI: '#ca_billing_phone_ui',
     billingAddress: '#ca_billing_address',
 
     // Payment
@@ -648,6 +649,7 @@
     disable(UI.billingDocNumber, !enabled);
     disable(UI.billingEmail, !enabled);
     disable(UI.billingPhone, !enabled);
+    disable(UI.billingPhoneUI, !enabled);
     disable(UI.billingAddress, !enabled);
   }
 
@@ -656,7 +658,20 @@
     $(UI.billingDocType).val($(UI.patientDocType).val() || '');
     $(UI.billingDocNumber).val($(UI.patientDocNumber).val() || '');
     $(UI.billingEmail).val($(UI.patientEmail).val() || '');
-    $(UI.billingPhone).val($(UI.patientPhone).val() || '');
+    // ✅ Phone: copiar hidden (E164)
+    const e164 = $(UI.patientPhone).val() || '';
+    $(UI.billingPhone).val(e164);
+
+    // ✅ Refrescar el input UI (banderita) de billing
+    try {
+    const itiBill = window._itiByInputId?.["ca_billing_phone_ui"];
+    if (itiBill && e164) {
+        itiBill.setNumber(e164); // actualiza bandera + valor visible
+    } else {
+        // fallback si no hay iti (raro)
+        $('#ca_billing_phone_ui').val($('#ca_patient_phone_ui').val() || '');
+    }
+    } catch (e) {}
     $(UI.billingAddress).val($(UI.patientAddress).val() || '');
   }
 
@@ -846,10 +861,18 @@
     $(document).on('change', UI.billingSameChk, onBillingSameToggle);
 
     // si editan datos del paciente y está marcado "same", re-sincroniza
-    $(document).on('input', UI.patientName + ',' + UI.patientDocType + ',' + UI.patientDocNumber + ',' + UI.patientEmail + ',' + UI.patientPhone + ',' + UI.patientAddress, function () {
-      if ($(UI.billingSameChk).is(':checked') && !$(UI.billingSameChk).is(':disabled')) {
-        syncBillingFromPatient();
-      }
+    $(document).on('input',
+        UI.patientName + ',' +
+        UI.patientDocType + ',' +
+        UI.patientDocNumber + ',' +
+        UI.patientEmail + ',' +
+        '#ca_patient_phone_ui,' +   // ✅ importante
+        UI.patientPhone + ',' +
+        UI.patientAddress,
+        function () {
+        if ($(UI.billingSameChk).is(':checked') && !$(UI.billingSameChk).is(':disabled')) {
+            syncBillingFromPatient();
+        }
     });
 
     $(document).on('change', UI.paymentMethod, onPaymentMethodChange);
@@ -940,13 +963,21 @@
     input.dataset.itiInit = "1";
 
     const iti = window.intlTelInput(input, {
-      initialCountry: "ec",
-      separateDialCode: true,
-      nationalMode: true,
-      formatOnDisplay: false,
-      preferredCountries: ["ec", "us", "co", "pe", "es"],
-      utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/utils.js"
+        initialCountry: "ec",
+        separateDialCode: true,
+        nationalMode: true,
+        formatOnDisplay: false,
+
+        // 🚫 DESACTIVA placeholder automático
+        autoPlaceholder: "off",
+
+        preferredCountries: ["ec", "us", "co", "pe", "es"],
+        utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/utils.js"
     });
+
+    // 🔒 limpieza final
+    input.removeAttribute("placeholder");
+    input.placeholder = "";
 
     // Hint dinámico
     function updatePhoneHint() {
