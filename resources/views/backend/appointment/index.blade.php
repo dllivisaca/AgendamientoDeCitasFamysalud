@@ -1,9 +1,5 @@
 @extends('adminlte::page')
 
-@section('css')
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/css/intlTelInput.css">
-@stop
-
 @section('title', 'Todas las citas · FamySalud')
 
 @section('content_header')
@@ -1387,6 +1383,7 @@
 @stop
 
 @section('css')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/css/intlTelInput.css">
 <style>
     #editModeBanner{
         border-left: 4px solid #f39c12;
@@ -2064,6 +2061,17 @@
 
     .ca-section-title i{
         font-size: 1.05rem;
+    }
+
+     /* ✅ Hint dinámico teléfonos (Admin) - FORZADO */
+    #modalCreateAppointment #ca_patient_phone_hint,
+    #modalCreateAppointment #ca_billing_phone_hint{
+      font-size: 12px !important;
+      color: #6c757d !important;
+      line-height: 1.2 !important;
+      margin-top: 4px !important;
+      font-weight: 400 !important;
+      display: block !important;
     }
 </style>
 @stop
@@ -6630,7 +6638,7 @@
                     <input type="hidden" name="patient_phone" id="ca_patient_phone">
 
                     <!-- Hint dinámico -->
-                    <div class="form-text" id="ca_patient_phone_hint"></div>
+                    <div class="form-text phone-hint" id="ca_patient_phone_hint"></div>
                 </div>
 
                 <div class="col-md-6">
@@ -6728,7 +6736,7 @@
                         <input type="hidden" name="billing_phone" id="ca_billing_phone">
 
                         <!-- Hint dinámico -->
-                        <div class="form-text d-block mt-1" id="ca_billing_phone_hint"></div>
+                        <div class="form-text d-block mt-1 phone-hint" id="ca_billing_phone_hint"></div>
                     </div>
                 </div>
 
