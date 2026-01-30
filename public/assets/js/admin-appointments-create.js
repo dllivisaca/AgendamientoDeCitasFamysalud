@@ -658,20 +658,25 @@
     $(UI.billingDocType).val($(UI.patientDocType).val() || '');
     $(UI.billingDocNumber).val($(UI.patientDocNumber).val() || '');
     $(UI.billingEmail).val($(UI.patientEmail).val() || '');
-    // ✅ Phone: copiar hidden (E164)
-    const e164 = $(UI.patientPhone).val() || '';
-    $(UI.billingPhone).val(e164);
+    // ✅ Phone: copiar UI→UI (sin código país en el input visible)
+    const pUI = document.getElementById('ca_patient_phone_ui');
+    const bUI = document.getElementById('ca_billing_phone_ui');
 
-    // ✅ Refrescar el input UI (banderita) de billing
-    try {
-    const itiBill = window._itiByInputId?.["ca_billing_phone_ui"];
-    if (itiBill && e164) {
-        itiBill.setNumber(e164); // actualiza bandera + valor visible
-    } else {
-        // fallback si no hay iti (raro)
-        $('#ca_billing_phone_ui').val($('#ca_patient_phone_ui').val() || '');
+    if (pUI && bUI) {
+    // 1) Copiar solo los dígitos visibles (nacional)
+    bUI.value = (pUI.value || '').replace(/\D/g, '');
+
+    // 2) Copiar también el país seleccionado (bandera)
+    const itiP = window._itiByInputId?.['ca_patient_phone_ui'];
+    const itiB = window._itiByInputId?.['ca_billing_phone_ui'];
+    if (itiP && itiB) {
+        const iso2 = itiP.getSelectedCountryData()?.iso2;
+        if (iso2) itiB.setCountry(iso2);
     }
-    } catch (e) {}
+
+    // 3) Forzar que setupIntlPhone regenere el hidden E164 en billing
+    bUI.dispatchEvent(new Event('input', { bubbles: true }));
+    }
     $(UI.billingAddress).val($(UI.patientAddress).val() || '');
   }
 
