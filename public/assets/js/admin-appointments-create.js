@@ -654,31 +654,42 @@
   }
 
   function syncBillingFromPatient() {
-    $(UI.billingName).val($(UI.patientName).val() || '');
-    $(UI.billingDocType).val($(UI.patientDocType).val() || '');
-    $(UI.billingDocNumber).val($(UI.patientDocNumber).val() || '');
-    $(UI.billingEmail).val($(UI.patientEmail).val() || '');
-    // ✅ Phone: copiar UI→UI (sin código país en el input visible)
-    const pUI = document.getElementById('ca_patient_phone_ui');
-    const bUI = document.getElementById('ca_billing_phone_ui');
+        $(UI.billingName).val($(UI.patientName).val() || '');
+        $(UI.billingDocType).val($(UI.patientDocType).val() || '');
+        $(UI.billingDocNumber).val($(UI.patientDocNumber).val() || '');
+        $(UI.billingEmail).val($(UI.patientEmail).val() || '');
 
-    if (pUI && bUI) {
-    // 1) Copiar solo los dígitos visibles (nacional)
-    bUI.value = (pUI.value || '').replace(/\D/g, '');
+        const pUI = document.getElementById('ca_patient_phone_ui');
+        const bUI = document.getElementById('ca_billing_phone_ui');
+        if (pUI && bUI) {
+            const itiP = window._itiByInputId?.['ca_patient_phone_ui'];
+            const itiB = window._itiByInputId?.['ca_billing_phone_ui'];
 
-    // 2) Copiar también el país seleccionado (bandera)
-    const itiP = window._itiByInputId?.['ca_patient_phone_ui'];
-    const itiB = window._itiByInputId?.['ca_billing_phone_ui'];
-    if (itiP && itiB) {
-        const iso2 = itiP.getSelectedCountryData()?.iso2;
-        if (iso2) itiB.setCountry(iso2);
+            // Si todavía no está listo el plugin (raro), reintenta en breve
+            if (!itiP || !itiB) {
+            setTimeout(syncBillingFromPatient, 50);
+            } else {
+            const iso2 = itiP.getSelectedCountryData()?.iso2;
+
+            // Si billing está disabled por "mismos datos", lo habilitamos 1ms para setear país/valor
+            const wasDisabled = bUI.disabled;
+            if (wasDisabled) bUI.disabled = false;
+
+            if (iso2) itiB.setCountry(iso2);
+
+            // Copiar SOLO dígitos visibles (nacional) para que no se pegue +593 en el UI
+            bUI.value = (pUI.value || '').replace(/\D/g, '');
+
+            // Forzar que billing regenere su hidden E164 (tu setupIntlPhone lo hace en input)
+            bUI.dispatchEvent(new Event('input', { bubbles: true }));
+
+            // Restaurar disabled si estaba bloqueado
+            if (wasDisabled) bUI.disabled = true;
+            }
+        }
+
+        $(UI.billingAddress).val($(UI.patientAddress).val() || '');
     }
-
-    // 3) Forzar que setupIntlPhone regenere el hidden E164 en billing
-    bUI.dispatchEvent(new Event('input', { bubbles: true }));
-    }
-    $(UI.billingAddress).val($(UI.patientAddress).val() || '');
-  }
 
   function onPatientDobChange() {
     const dob = $(UI.patientDob).val();
@@ -878,6 +889,13 @@
         if ($(UI.billingSameChk).is(':checked') && !$(UI.billingSameChk).is(':disabled')) {
             syncBillingFromPatient();
         }
+    });
+
+    // ✅ Si cambian la bandera del teléfono del paciente, también sincronizar facturación
+    $(document).on('countrychange', '#ca_patient_phone_ui', function () {
+    if ($(UI.billingSameChk).is(':checked') && !$(UI.billingSameChk).is(':disabled')) {
+        syncBillingFromPatient();
+    }
     });
 
     $(document).on('change', UI.paymentMethod, onPaymentMethodChange);
