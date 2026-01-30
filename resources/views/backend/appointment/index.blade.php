@@ -6771,7 +6771,7 @@
                     </select>
                     </div>
 
-                    <div id="ca_payment_fields_block" class="d-none">
+                    <div id="ca_payment_fields_block" class="col-md-12 d-none">
                     <div class="row g-3">
 
                     <div class="col-md-4">
@@ -6782,18 +6782,6 @@
                     <div class="col-md-4">
                     <label class="form-label">Monto pagado <span class="text-danger">*</span></label>
                     <input type="number" step="0.01" class="form-control" name="amount_paid" id="ca_amount_paid" value="0.00">
-                    </div>
-
-                    <div class="col-md-4">
-                    <label class="form-label">Estado del pago <span class="text-danger">*</span></label>
-                    <select class="form-control" name="payment_status" id="ca_payment_status">
-                        <option value="" selected disabled>Seleccione…</option>
-                        <option value="unpaid">No pagado</option>
-                        <option value="partial">Pagado parcialmente</option>
-                        <option value="paid">Pagado</option>
-                        <option value="pending">Pendiente</option>
-                        <option value="refunded">Reembolsado</option>
-                    </select>
                     </div>
 
                     <div class="col-md-4">
@@ -6858,7 +6846,7 @@
                     <div class="col-md-6">
                     <label class="form-label">Canal por el que se solicitó la cita (opcional)</label>
                     <select class="form-control" name="appointment_channel" id="ca_appointment_channel">
-                        <option value="" selected>Sin especificar</option>
+                        <option value="" selected disabled>Seleccione…</option>
                         <option value="whatsapp">WhatsApp</option>
                         <option value="instagram">Instagram</option>
                         <option value="tiktok">TikTok</option>
@@ -6869,9 +6857,10 @@
                     </select>
                     </div>
 
-                    <div class="col-md-6">
+                    <div class="col-md-3">
                     <label class="form-label">Estado de la cita <span class="text-danger">*</span></label>
                     <select class="form-control" name="status" id="ca_status">
+                        <option value="" selected disabled>Seleccione…</option>
                         <option value="pending_verification">Pendiente de verificación</option>
                         <option value="pending_payment">Pendiente de pago</option>
                         <option value="confirmed">Confirmada</option>
@@ -6880,6 +6869,18 @@
                         <option value="no_show">No asistió</option>
                         <option value="cancelled">Cancelada</option>
                     </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Estado del pago <span class="text-danger">*</span></label>
+                        <select class="form-control" name="payment_status" id="ca_payment_status">
+                            <option value="" selected disabled>Seleccione…</option>
+                            <option value="unpaid">No pagado</option>
+                            <option value="partial">Pagado parcialmente</option>
+                            <option value="paid">Pagado</option>
+                            <option value="pending">Pendiente</option>
+                            <option value="refunded">Reembolsado</option>
+                        </select>
                     </div>
 
                 </div>

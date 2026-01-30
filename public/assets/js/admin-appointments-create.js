@@ -787,6 +787,8 @@
     if (!$(UI.amount).val()) return showError('Ingrese el monto total a pagar.');
     if (!$(UI.amountPaid).val()) return showError('Ingrese el monto pagado.');
     if (!$(UI.paymentStatus).val()) return showError('Seleccione el estado del pago.');
+    if (!$(UI.status).val()) return showError('Seleccione el estado de la cita.');
+// canal es opcional, así que NO lo obligues
     if (!$(UI.paidAt).val()) return showError('Ingrese la fecha del pago.');
 
     // Transfer required si aplica (tu UI tiene asteriscos en 3 campos)
