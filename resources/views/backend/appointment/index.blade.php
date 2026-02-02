@@ -2159,6 +2159,13 @@
     box-shadow: none !important;
     color: inherit !important;
     }
+
+    /* Modal de edición queda “opacado” y sin interacción */
+    body.refund-open #appointmentModal .modal-content{
+    opacity: .15;
+    pointer-events: none;
+    filter: blur(1px);
+    }
 </style>
 @stop
 
@@ -3728,6 +3735,7 @@
 
 
             $(document).on('change.apptStatusSelects', '#modalPaymentStatusSelect', function () {
+                const prev = String($('#modalPaymentStatusHidden').val() || '').trim().toLowerCase();
                 const $sel = $(this);
                 const next = String($sel.val() || '').trim().toLowerCase();
 
@@ -4106,9 +4114,6 @@
 
                 // 🔒 IMPORTANTÍSIMO: evita que hidden.bs.modal te mate el modo edición / reseteos
                 window.__suspendApptModalHiddenCleanup = true;
-
-                // ✅ Oculta "Detalles de la cita" UNA sola vez
-                $('#appointmentModal').modal('hide');
 
                 // Abre reembolso
                 $('#refundModal').modal('show');
@@ -4513,6 +4518,8 @@
             return false;
         });
 
+        $(document).off('click', '#btnConfirmRefund');
+
         // ✅ Confirmar reembolso: llena hidden + re-envía el form real
         $(document).on('click', '#btnConfirmRefund', function (e) {
             e.preventDefault();
@@ -4563,10 +4570,12 @@
             // ✅ re-enviar el form (ya no se frenará porque __refundBypassSubmit=true)
             $('#appointmentStatusForm').trigger('submit');
 
-            window.__refundBypassSubmit = false;
+            // ✅ NO apagues el bypass aquí.
+            // Si lo apagas, al reintentar el submit (por el modal de "motivo del cambio") vuelve a abrir reembolso y se hace bucle.
             window.__suspendApptModalHiddenCleanup = false;
         });
 
+        $(document).off('click', '#refundCancelBtn');
         // ✅ Si cancela o cierra el modal de reembolso, volver a edición y revertir selección
         $(document).on('click', '#refundCancelBtn', function (e) {
             e.preventDefault();
@@ -4628,7 +4637,7 @@
             $('#changeReasonModal').modal('hide');
 
             // Re-disparar submit
-            $('#appointmentStatusForm')[0].submit();
+            $('#appointmentStatusForm').trigger('submit');
 
             // ✅ Reset: para que no se quede bypass encendido para futuros submits
             setTimeout(() => { window.__changeReasonBypassSubmit = false; }, 0);
@@ -4670,42 +4679,41 @@
         return n.toFixed(2);
         }
 
-        // Confirmar reembolso => llenar hidden + re-submit
-        $(document).on('click', '#btnConfirmRefund', function () {
-            const amount = __normalizeMoney2($('#refundAmountInput').val());
-            const at     = String($('#refundAtInput').val() || '').trim();
-            const reason = String($('#refundReasonSelect').val() || '').trim();
-            const other  = String($('#refundReasonOtherText').val() || '').trim();
-
-            if (!amount) { alert('Ingresa el monto reembolsado.'); return; }
-            if (!at)     { alert('Ingresa la fecha y hora del reembolso.'); return; }
-            if (!reason) { alert('Selecciona el motivo del reembolso.'); return; }
-            if (reason === 'other' && !other) { alert('Especifica el motivo en "Otro".'); return; }
-
-            // ✅ estos SÍ son tus hidden del edit modal
-            $('#modalAmountRefundedHidden').val(amount);
-            $('#modalRefundedAtHidden').val(at);
-            $('#modalRefundReasonHidden').val(reason);
-            $('#modalRefundReasonOtherHidden').val(reason === 'other' ? other : '');
-
-            window.__refundBypassSubmit = true;
-            $('#refundModal').modal('hide');
-
-            // Re-disparar submit
-            $('#appointmentStatusForm')[0].submit();
-
-            setTimeout(() => { window.__refundBypassSubmit = false; }, 0);
+        // ✅ Auto-formatear a 2 decimales al salir del campo
+        $(document).on('blur', '#refundAmountInput', function () {
+            const fixed = __normalizeMoney2($(this).val());
+            if (fixed !== '') $(this).val(fixed);
         });
 
         // Al cerrar modal, limpiar bypass
         $('#refundModal').on('hidden.bs.modal', function () {
-            // siempre limpia bypass
+
+            // ✅ Si confirmó, NO limpiamos bypass aquí.
+            // El bypass se puede limpiar luego de guardar (tu flujo hace reload), o si canceló.
+            if (window.__refundConfirmed) {
+                return;
+            }
+
+            // Si NO confirmó (canceló/cerró), recién ahí limpiamos bypass
             window.__refundBypassSubmit = false;
 
-            // Si NO confirmó y veníamos del modal de edición, lo regresamos
-            if (window.__returnToApptAfterRefund && !window.__refundConfirmed) {
-                $('#appointmentModal').modal('show');
+            // ✅ si NO confirmó, revertir a estado anterior
+            if (!window.__refundConfirmed) {
+                const prev = String(window.__refundPrevPaymentStatus || '').trim();
+                if (prev) {
+                    $('#modalPaymentStatusHidden').val(prev);
+                    $('#modalPaymentStatusSelect').val(prev).trigger('change');
+                }
+
+                // limpiar hiddens de reembolso (por si quedaron)
+                $('#modalAmountRefundedHidden').val('');
+                $('#modalRefundedAtHidden').val('');
+                $('#modalRefundReasonHidden').val('');
+                $('#modalRefundReasonOtherHidden').val('');
             }
+
+            // ✅ quitar “modo reembolso” del modal de edición (ya no lo estamos ocultando por reembolso)
+            window.__suppressApptModalReset = false;
 
             // reset flags
             window.__returnToApptAfterRefund = false;
@@ -4764,8 +4772,14 @@
         });
 
         $('#appointmentModal').on('hidden.bs.modal', function () {
-            // ✅ si lo ocultamos SOLO para abrir reembolso, NO mates el modo edición
-            if (window.__suspendApptModalHiddenCleanup) return;
+            // ✅ SI lo ocultamos SOLO para abrir el reembolso, NO limpies nada
+            if (window.__suspendApptModalHiddenCleanup === true) {
+                return;
+            }
+            // ✅ Si estamos abriendo el modal de reembolso, NO resetees el modal de edición
+            if (window.__suppressApptModalReset) {
+                return;
+            }
 
             // ✅ mata cualquier draft no guardado
             $('#btnSaveChanges').prop('disabled', true);
