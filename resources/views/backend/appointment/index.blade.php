@@ -279,7 +279,8 @@
                                     </div>
 
                                     <div class="col-md-12 mb-0">
-                                        <div class="small text-muted">Zona horaria del paciente</div>
+                                        <div class="small text-muted js-edit-input">Zona horaria del paciente (opcional)</div>
+                                        <div class="small text-muted js-edit-text">Zona horaria del paciente</div>
                                         <div class="text-dark js-edit-text" id="modalPatientTimezone">N/A</div>
                                         <input type="text" class="form-control form-control-sm js-edit-input"
                                             id="modalPatientTimezoneInput" name="patient_timezone" value=""
@@ -4764,7 +4765,6 @@
                 '#modalEmailInput',
                 '#modalPhoneInput',
                 '#modalAddressInput',
-                '#modalPatientTimezoneInput',
 
                 // billing
                 '#modalBillingNameInput',
@@ -4864,7 +4864,6 @@
                 '#modalEmailInput',
                 '#modalPhoneInput',
                 '#modalAddressInput',
-                '#modalPatientTimezoneInput',
                 '#modalBillingNameInput',
                 '#modalBillingDocTypeInput',
                 '#modalBillingDocNumberInput',
@@ -5983,6 +5982,7 @@
 
         // ✅ Traducciones de etiquetas (campos)
         const AUDIT_FIELD_LABELS_ES = {
+        patient_full_name: 'Nombre completo',
         status: 'Estado de la cita',
         appointment_date: 'Fecha',
         appointment_time: 'Hora inicio',
@@ -6010,6 +6010,7 @@
         waiting: 'En espera',
         no_show: 'No asistió',
         on_hold: 'En espera',
+        pending_payment: 'Pendiente de pago',
 
         unpaid: 'No pagado',
         partial: 'Pagado parcialmente',
