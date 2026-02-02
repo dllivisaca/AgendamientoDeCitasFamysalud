@@ -586,6 +586,29 @@
 
     $(UI.calendarContainer).html(header);
 
+    // ✅ Bloquear navegación hacia meses pasados (mes mínimo = mes actual)
+    function updateCreatePrevArrow() {
+      const today = new Date();
+      const minMonth = today.getMonth();
+      const minYear  = today.getFullYear();
+
+      const isMinMonth = (State.calYear === minYear && State.calMonth === minMonth);
+      const $prevBtn = $('#caCalPrev');
+
+      if (isMinMonth) {
+        $prevBtn.prop('disabled', true)
+          .addClass('disabled')
+          .css({ opacity: 0.4, cursor: 'not-allowed', pointerEvents: 'none' });
+      } else {
+        $prevBtn.prop('disabled', false)
+          .removeClass('disabled')
+          .css({ opacity: 1, cursor: 'pointer', pointerEvents: 'auto' });
+      }
+    }
+
+    // Ejecutar apenas renderiza el calendario (para el mes actual)
+    updateCreatePrevArrow();
+
     // Body (tabla) similar a Reagendar
     const $body = $('#ca-calendar-body');
     $body.empty();
@@ -625,15 +648,28 @@
     }
 
     // Nav prev/next (igual que tenías)
-    $('#caCalPrev').off('click').on('click', async function () {
-        await deleteHoldIfAny();
-        State.calMonth--;
-        if (State.calMonth < 0) {
+    $('#caCalPrev').off('click').on('click', async function (e) {
+      const today = new Date();
+      const minMonth = today.getMonth();
+      const minYear  = today.getFullYear();
+
+      // ⛔ Si ya estamos en el mes mínimo, no hacer nada
+      if (State.calYear === minYear && State.calMonth === minMonth) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        return false;
+      }
+
+      await deleteHoldIfAny();
+
+      State.calMonth--;
+      if (State.calMonth < 0) {
         State.calMonth = 11;
         State.calYear--;
-        }
-        renderCalendar();
-        clearSlot();
+      }
+
+      renderCalendar();
+      clearSlot();
     });
 
     $('#caCalNext').off('click').on('click', function () {

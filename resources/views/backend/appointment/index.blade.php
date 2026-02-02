@@ -2073,6 +2073,26 @@
       font-weight: 400 !important;
       display: block !important;
     }
+
+    /* Flecha atrás deshabilitada (Crear cita): sin hover, sin click, sin efecto */
+    #caCalPrev.disabled,
+    #caCalPrev:disabled{
+    pointer-events: none !important;
+    cursor: not-allowed !important;
+    opacity: 0.45 !important;
+    }
+
+    #caCalPrev.disabled:hover,
+    #caCalPrev:disabled:hover,
+    #caCalPrev.disabled:focus,
+    #caCalPrev:disabled:focus,
+    #caCalPrev.disabled:active,
+    #caCalPrev:disabled:active{
+    background-color: inherit !important;
+    border-color: inherit !important;
+    box-shadow: none !important;
+    color: inherit !important;
+    }
 </style>
 @stop
 
