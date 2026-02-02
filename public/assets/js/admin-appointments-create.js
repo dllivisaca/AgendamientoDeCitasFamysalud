@@ -1167,6 +1167,13 @@ if (prevValue === '') return;
     if (!$(UI.amount).val()) return showError('Ingrese el monto total a pagar.');
     if (!$(UI.amountPaid).val()) return showError('Ingrese el monto pagado.');
     if (!$(UI.paymentStatus).val()) return showError('Seleccione el estado del pago.');
+    if (String($(UI.paymentStatus).val() || '') === 'refunded') {
+      // abre el mismo modal refundModal y al confirmar setea estos hidden del create form:
+      // #ca_amount_refunded, #ca_refunded_at, #ca_refund_reason, #ca_refund_reason_other
+      // y recién ahí continúas con el submit
+      $('#refundModal').modal('show');
+      return;
+    }
     if (!$(UI.status).val()) return showError('Seleccione el estado de la cita.');
 // canal es opcional, así que NO lo obligues
     // Fecha del pago: solo para cash/card (transfer usa "fecha de la transferencia")

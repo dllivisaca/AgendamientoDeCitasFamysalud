@@ -39,6 +39,11 @@
         <input type="hidden" name="payment_paid_at" id="modalPaymentPaidAtHidden" value="">
         <input type="hidden" name="payment_notes" id="modalPaymentNotesHidden" value="">
         <input type="hidden" name="amount_paid" id="modalAmountPaidHidden" value="">
+        {{-- Refund --}}
+        <input type="hidden" name="amount_refunded" id="modalAmountRefundedHidden" value="">
+        <input type="hidden" name="refunded_at" id="modalRefundedAtHidden" value="">
+        <input type="hidden" name="refund_reason" id="modalRefundReasonHidden" value="">
+        <input type="hidden" name="refund_reason_other" id="modalRefundReasonOtherHidden" value="">
         <input type="hidden" name="transfer_validation_notes" id="modalTransferValidationNotesInput" value="">
         <input type="hidden" id="modalPaymentMethodRaw" value="">
         <input type="hidden" name="payment_method" id="modalPaymentMethodHidden" value="">
@@ -814,6 +819,66 @@
                         Continuar
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="refundModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+            <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Registrar reembolso</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                Seleccionaste <b>Reembolsado</b>. Completa estos datos para guardar.
+                </div>
+
+                <div class="form-group">
+                <label class="mb-1">Monto reembolsado</label>
+                <input type="text" inputmode="decimal" autocomplete="off"
+                        class="form-control form-control-sm"
+                        id="refundAmountInput" placeholder="0.00">
+                </div>
+
+                <div class="form-group">
+                <label class="mb-1">Fecha y hora del reembolso</label>
+                <input type="datetime-local"
+                        class="form-control form-control-sm"
+                        id="refundAtInput">
+                </div>
+
+                <div class="form-group">
+                <label class="mb-1">Motivo del reembolso</label>
+                <select class="form-control form-control-sm" id="refundReasonSelect">
+                    <option value="">Seleccione...</option>
+                    <option value="patient_request">Solicitud del paciente</option>
+                    <option value="service_not_provided">Servicio no prestado</option>
+                    <option value="duplicate_payment">Pago duplicado</option>
+                    <option value="schedule_issue">Problema de agenda</option>
+                    <option value="other">Otro</option>
+                </select>
+                </div>
+
+                <div class="form-group" id="refundReasonOtherWrapper" style="display:none;">
+                <label class="mb-1">Especifica (opcional)</label>
+                <input type="text" class="form-control form-control-sm" id="refundReasonOtherText" maxlength="255"
+                        placeholder="Escribe un comentario breve">
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-dismiss="modal" id="refundCancelBtn">
+                Cancelar
+                </button>
+                <button type="button" class="btn btn-primary btn-sm" id="btnConfirmRefund">
+                Confirmar reembolso
+                </button>
+            </div>
             </div>
         </div>
     </div>
@@ -4021,7 +4086,39 @@
 
         // ✅ Antes de enviar el form: valida reglas y llena hidden inputs
         $(document).on('submit', '#appointmentStatusForm', function (e) {
-            // ============================
+            // ✅ Si payment_status va a refunded, pedir datos del reembolso
+            try {
+            const pay = String($('#modalPaymentStatusHidden').val() || '').trim();
+            if (pay === 'refunded' && !window.__refundBypassSubmit) {
+                // ✅ Guardar estado anterior para poder revertir si cancelan
+                window.__refundPrevPaymentStatus = String($('#modalPaymentStatusHidden').val() || '').trim();
+
+                // limpiar valores anteriores del modal (por si re-abren)
+                $('#refundAmountInput').val('');
+                $('#refundAtInput').val('');
+                $('#refundReasonSelect').val('');
+                $('#refundReasonOtherText').val('');
+                $('#refundReasonOtherWrapper').hide();
+
+                // Flags de control
+                window.__refundConfirmed = false;
+                window.__returnToApptAfterRefund = true;
+
+                // 🔒 IMPORTANTÍSIMO: evita que hidden.bs.modal te mate el modo edición / reseteos
+                window.__suspendApptModalHiddenCleanup = true;
+
+                // ✅ Oculta "Detalles de la cita" UNA sola vez
+                $('#appointmentModal').modal('hide');
+
+                // Abre reembolso
+                $('#refundModal').modal('show');
+
+                // ⛔ frena el submit hasta confirmar reembolso
+                e.preventDefault();
+                return false;
+            }
+            } catch (e) {}
+                        // ============================
             // ✅ Motivo del cambio (modal)
             // - Paciente + Facturación: opcional
             // - Pago (transfer/card/cash): obligatorio
@@ -4416,6 +4513,80 @@
             return false;
         });
 
+        // ✅ Confirmar reembolso: llena hidden + re-envía el form real
+        $(document).on('click', '#btnConfirmRefund', function (e) {
+            e.preventDefault();
+
+            const amount = String($('#refundAmountInput').val() || '').trim();
+            const at     = String($('#refundAtInput').val() || '').trim(); // datetime-local
+            const reason = String($('#refundReasonSelect').val() || '').trim();
+            const other  = String($('#refundReasonOtherText').val() || '').trim();
+
+            if (!amount || Number(amount) < 0) {
+                alert('Ingresa un monto reembolsado válido.');
+                return;
+            }
+            if (!at) {
+                alert('Selecciona la fecha y hora del reembolso.');
+                return;
+            }
+            if (!reason) {
+                alert('Selecciona un motivo de reembolso.');
+                return;
+            }
+            if (reason === 'other' && !other) {
+                // aquí tú dijiste "comentario opcional" -> si de verdad es opcional, quita este if completo
+                // si lo quieres obligatorio cuando es "Otro", deja esto:
+                // alert('Escribe el motivo (Otro).'); return;
+            }
+
+            // ✅ Normalizar datetime-local a "YYYY-MM-DD HH:MM:SS"
+            let atSql = at;
+            if (atSql.includes('T')) {
+                atSql = atSql.replace('T', ' ');
+                if (atSql.length === 16) atSql += ':00';
+            }
+
+            // ✅ Setear hidden inputs (ajusta IDs si los tuyos se llaman distinto)
+            $('#modalAmountRefundedHidden').val(amount);
+            $('#modalRefundedAtHidden').val(atSql);
+            $('#modalRefundReasonHidden').val(reason);
+            $('#modalRefundReasonOtherHidden').val(reason === 'other' ? other : '');
+
+            // ✅ ahora sí permitimos enviar
+            window.__refundConfirmed = true;
+            window.__refundBypassSubmit = true;
+
+            // cerrar modal de reembolso
+            $('#refundModal').modal('hide');
+
+            // ✅ re-enviar el form (ya no se frenará porque __refundBypassSubmit=true)
+            $('#appointmentStatusForm').trigger('submit');
+
+            window.__refundBypassSubmit = false;
+            window.__suspendApptModalHiddenCleanup = false;
+        });
+
+        // ✅ Si cancela o cierra el modal de reembolso, volver a edición y revertir selección
+        $(document).on('click', '#refundCancelBtn', function (e) {
+            e.preventDefault();
+
+            // Revertir estado del pago en hidden (y en el select si aplica)
+            const prev = String(window.__refundPrevPaymentStatus || '').trim();
+            if (prev) {
+                $('#modalPaymentStatusHidden').val(prev);
+                // si tienes el select visible:
+                $('#modalPaymentStatusSelect').val(prev).trigger('change');
+            }
+
+            // Cerrar reembolso y volver a edición
+            $('#refundModal').modal('hide');
+
+            // reabrir modal principal en modo edición (sin reset)
+            window.__suspendApptModalHiddenCleanup = true;
+            $('#appointmentModal').modal('show');
+        });
+
         // ============================
         // ✅ Modal motivo del cambio - handlers
         // ============================
@@ -4471,6 +4642,75 @@
             $('#changeReasonModal').css('z-index', '');
             $('.modal-backdrop').css('z-index', '');
         });
+
+        // ============================
+        // ✅ Modal Reembolso - handlers
+        // ============================
+        window.__refundBypassSubmit = false;
+
+        // Mostrar/ocultar “Otro”
+        $(document).on('change', '#refundReasonSelect', function () {
+        const v = String($(this).val() || '').trim();
+        if (v === 'other') {
+            $('#refundReasonOtherWrapper').show();
+        } else {
+            $('#refundReasonOtherWrapper').hide();
+            $('#refundReasonOtherText').val('');
+        }
+        });
+
+        // Formateo simple dinero (2 decimales)
+        function __normalizeMoney2(v) {
+        let s = String(v ?? '').trim().replace(',', '.').replace(/[^\d.]/g, '');
+        const firstDot = s.indexOf('.');
+        if (firstDot !== -1) s = s.slice(0, firstDot + 1) + s.slice(firstDot + 1).replace(/\./g, '');
+        if (s === '' || s === '.') return '';
+        const n = Number(s);
+        if (Number.isNaN(n)) return '';
+        return n.toFixed(2);
+        }
+
+        // Confirmar reembolso => llenar hidden + re-submit
+        $(document).on('click', '#btnConfirmRefund', function () {
+            const amount = __normalizeMoney2($('#refundAmountInput').val());
+            const at     = String($('#refundAtInput').val() || '').trim();
+            const reason = String($('#refundReasonSelect').val() || '').trim();
+            const other  = String($('#refundReasonOtherText').val() || '').trim();
+
+            if (!amount) { alert('Ingresa el monto reembolsado.'); return; }
+            if (!at)     { alert('Ingresa la fecha y hora del reembolso.'); return; }
+            if (!reason) { alert('Selecciona el motivo del reembolso.'); return; }
+            if (reason === 'other' && !other) { alert('Especifica el motivo en "Otro".'); return; }
+
+            // ✅ estos SÍ son tus hidden del edit modal
+            $('#modalAmountRefundedHidden').val(amount);
+            $('#modalRefundedAtHidden').val(at);
+            $('#modalRefundReasonHidden').val(reason);
+            $('#modalRefundReasonOtherHidden').val(reason === 'other' ? other : '');
+
+            window.__refundBypassSubmit = true;
+            $('#refundModal').modal('hide');
+
+            // Re-disparar submit
+            $('#appointmentStatusForm')[0].submit();
+
+            setTimeout(() => { window.__refundBypassSubmit = false; }, 0);
+        });
+
+        // Al cerrar modal, limpiar bypass
+        $('#refundModal').on('hidden.bs.modal', function () {
+            // siempre limpia bypass
+            window.__refundBypassSubmit = false;
+
+            // Si NO confirmó y veníamos del modal de edición, lo regresamos
+            if (window.__returnToApptAfterRefund && !window.__refundConfirmed) {
+                $('#appointmentModal').modal('show');
+            }
+
+            // reset flags
+            window.__returnToApptAfterRefund = false;
+            window.__refundConfirmed = false;
+        });
     </script>
 
     <script>
@@ -4524,6 +4764,9 @@
         });
 
         $('#appointmentModal').on('hidden.bs.modal', function () {
+            // ✅ si lo ocultamos SOLO para abrir reembolso, NO mates el modo edición
+            if (window.__suspendApptModalHiddenCleanup) return;
+
             // ✅ mata cualquier draft no guardado
             $('#btnSaveChanges').prop('disabled', true);
             window.__apptIsEditMode = false;
@@ -6580,6 +6823,10 @@
 
             <!-- FORM -->
             <form id="formCreateAppointment" enctype="multipart/form-data">
+                <input type="hidden" name="amount_refunded" id="ca_amount_refunded">
+                <input type="hidden" name="refunded_at" id="ca_refunded_at">
+                <input type="hidden" name="refund_reason" id="ca_refund_reason">
+                <input type="hidden" name="refund_reason_other" id="ca_refund_reason_other">
             <input type="hidden" name="_token" value="{{ csrf_token() }}">
 
             <!-- Hidden para slot -->
