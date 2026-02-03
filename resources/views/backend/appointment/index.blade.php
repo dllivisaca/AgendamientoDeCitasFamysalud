@@ -5408,12 +5408,6 @@
             __updateSaveButtonState();
         });
 
-        // ✅ Al cerrar modal, limpiar snapshot y deshabilitar el botón
-        $('#appointmentModal').on('hidden.bs.modal', function () {
-            window.__apptModalSnapshot = null;
-            $('#btnSaveChanges').prop('disabled', true);
-        });
-
         function __applyPendingRescheduleUi() {
             const p = window.__pendingRescheduleUi;
             if (!p || !p.appointment_id) return;
@@ -6456,7 +6450,11 @@
             // Guardar si "Detalles" estaba abierto y ocultarlo para evitar superposición
             reopenDetailsAfterHistory = $('#appointmentModal').hasClass('show');
             if (reopenDetailsAfterHistory) {
-            $('#appointmentModal').modal('hide');
+
+                // ✅ IMPORTANTE: NO limpies snapshot / modo edición por este hide temporal
+                window.__suspendApptModalHiddenCleanup = true;
+
+                $('#appointmentModal').modal('hide');
             }
 
             // Abrir modal de historial
@@ -6500,6 +6498,10 @@
         $('#auditHistoryModal').on('hidden.bs.modal', function () {
             if (reopenDetailsAfterHistory) {
                 reopenDetailsAfterHistory = false;
+
+                // ✅ Ya vamos a volver a Detalles, permite cleanup normal otra vez
+                window.__suspendApptModalHiddenCleanup = false;
+
                 $('#appointmentModal').modal('show');
             }
         });
