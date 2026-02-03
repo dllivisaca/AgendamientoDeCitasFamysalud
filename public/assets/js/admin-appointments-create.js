@@ -1186,6 +1186,7 @@ if (prevValue === '') return;
       if (RefundFlow.bypassOnce === true) {
         RefundFlow.bypassOnce = false;
       } else {
+        resetRefundModalUI();
         RefundFlow.open = true;
         RefundFlow.confirmed = false;
 
@@ -1326,6 +1327,38 @@ if (prevValue === '') return;
     hideCreateApptModal();
 });
 
+// =========================
+  // 9.Z.1) RESET UI refund modal (para evitar valores "pegados")
+  // =========================
+  function resetRefundModalUI() {
+    // Limpia inputs visibles del modal de reembolso
+    $('#refundAmountInput').val('');
+    $('#refundAtInput').val('');
+    $('#refundReasonSelect').val('').trigger('change');
+    $('#refundReasonOtherText').val('');
+
+    // Limpia hidden del CREATE (los que sí envías al backend)
+    $('#ca_amount_refunded').val('');
+    $('#ca_refunded_at').val('');
+    $('#ca_refund_reason').val('');
+    $('#ca_refund_reason_other').val('');
+
+    // Limpia marca de origen/flags
+    $('#refundModal').removeData('source');
+
+    if (window.__RefundFlowCreate) {
+      window.__RefundFlowCreate.open = false;
+      window.__RefundFlowCreate.confirmed = false;
+      window.__RefundFlowCreate.bypassOnce = false;
+    }
+
+    // ✅ Extra: por si refundAtInput usa algún datepicker externo
+    try {
+      const el = document.getElementById('refundAtInput');
+      if (el && el._flatpickr) el._flatpickr.clear();
+    } catch (e) {}
+  }
+
   function init() {
     // Estado inicial de selects
     disable(UI.serviceSelect, true);
@@ -1453,6 +1486,9 @@ if (prevValue === '') return;
 
       // reset UI
       $(UI.form)[0].reset();
+
+      // ✅ limpiar SIEMPRE el modal de reembolso para que no arrastre valores previos
+      resetRefundModalUI();
 
       State.lastPaymentMethod = null;
 
