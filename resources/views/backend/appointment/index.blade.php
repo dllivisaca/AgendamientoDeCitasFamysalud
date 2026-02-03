@@ -6255,7 +6255,11 @@
         audit_cancel_reason: 'Motivo de cancelación',
         audit_cancel_note: 'Comentario de cancelación',
         transfer_date: 'Fecha de transferencia',
-        payment_notes: 'Observaciones de pago'
+        payment_notes: 'Observaciones de pago',
+        refunded_at: 'Reembolsado en',
+        refund_reason: 'Motivo de reembolso',
+        amount_refunded: 'Monto reembolsado',
+        refund_reason_other: 'Otro motivo de reembolso'
         };
 
         // ✅ Traducciones de valores comunes
@@ -6268,6 +6272,10 @@
         no_show: 'No asistió',
         on_hold: 'En espera',
         pending_payment: 'Pendiente de pago',
+        completed: 'Completada',
+        service_not_provided: 'Servicio no prestado',
+        patient_request: 'Solicitud del paciente',
+        other: 'Otro',
 
         unpaid: 'No pagado',
         partial: 'Pagado parcialmente',

@@ -294,6 +294,15 @@ class AppointmentController extends Controller
             'method' => request()->method(),
         ]);
 
+        logger()->info('REFUND PAYLOAD CHECK', $request->only([
+            'appointment_id',
+            'payment_status',
+            'amount_refunded',
+            'refunded_at',
+            'refund_reason',
+            'refund_reason_other',
+        ]));
+
         // ✅ Normalizar status para que la BD (ENUM) no reviente
         if ($request->filled('status')) {
             $status = strtolower(trim($request->status));
@@ -317,6 +326,12 @@ class AppointmentController extends Controller
             'payment_method' => 'nullable|in:transfer,card,cash',
             'amount' => 'nullable|numeric|min:0',
             'payment_status' => 'nullable|in:pending,unpaid,partial,paid,refunded',
+
+            // ✅ Refund fields (solo cuando payment_status = refunded)
+            'amount_refunded'      => 'nullable|numeric|min:0',
+            'refunded_at'          => 'nullable|date',
+            'refund_reason'        => 'nullable|in:duplicate,patient_request,service_not_provided,admin_error,fraud,other',
+            'refund_reason_other'  => 'nullable|string|max:180',
 
             // ✅ Campos adicionales cuando el pago es tarjeta / edición manual
             'amount_paid' => 'nullable|numeric|min:0',
@@ -449,6 +464,9 @@ class AppointmentController extends Controller
             // Montos y pago
             'amount', 'amount_paid', 'payment_paid_at', 'client_transaction_id',
             'payment_notes',
+
+            //Reembolsos
+            'amount_refunded', 'refunded_at', 'refund_reason', 'refund_reason_other',
 
             // Paciente
             'patient_full_name', 'patient_doc_type', 'patient_doc_number', 'patient_dob',
@@ -714,6 +732,63 @@ class AppointmentController extends Controller
         // ✅ Guardar estado de pago (si lo cambiaron)
         if ($request->filled('payment_status')) {
             $appointment->payment_status = $request->payment_status;
+        }
+
+        // ✅ Guardar refund fields SOLO si payment_status = refunded
+        $psNow = strtolower(trim((string) ($request->input('payment_status', $appointment->payment_status) ?? '')));
+
+        if ($psNow === 'refunded') {
+
+            // amount_refunded
+            if ($request->has('amount_refunded')) {
+                $rawAmt = $request->input('amount_refunded');
+                $rawAmt = is_string($rawAmt) ? trim($rawAmt) : $rawAmt;
+                $appointment->amount_refunded = ($rawAmt !== '' && $rawAmt !== null) ? $rawAmt : null;
+            }
+
+            // refunded_at (normalizar a DATETIME)
+            if ($request->has('refunded_at')) {
+                $val = $request->input('refunded_at');
+                $val = is_string($val) ? trim($val) : $val;
+
+                if ($val !== '' && $val !== null) {
+                    try {
+                        $appointment->refunded_at = Carbon::parse($val)->format('Y-m-d H:i:s');
+                    } catch (\Throwable $e) {
+                        $appointment->refunded_at = null;
+
+                        logger()->warning('refunded_at invalid format', [
+                            'appointment_id' => $appointment->id ?? null,
+                            'incoming' => $val,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+                } else {
+                    $appointment->refunded_at = null;
+                }
+            }
+
+            // refund_reason + refund_reason_other
+            if ($request->has('refund_reason')) {
+                $reason = trim((string) $request->input('refund_reason'));
+                $appointment->refund_reason = ($reason !== '') ? $reason : null;
+            }
+
+            if (($appointment->refund_reason ?? null) === 'other') {
+                $other = $request->input('refund_reason_other');
+                $other = is_string($other) ? trim($other) : $other;
+                $appointment->refund_reason_other = ($other !== '' && $other !== null) ? $other : null;
+            } else {
+                // si no es other, limpiamos
+                $appointment->refund_reason_other = null;
+            }
+
+        } else {
+            // ✅ Si ya NO está refunded, limpia refund fields para evitar basura
+            $appointment->amount_refunded = null;
+            $appointment->refunded_at = null;
+            $appointment->refund_reason = null;
+            $appointment->refund_reason_other = null;
         }
 
         // ✅ Guardar monto pagado SOLO si viene con valor (evita setear null en columnas NOT NULL)
