@@ -5315,8 +5315,10 @@
             }
 
             // ✅ Payment notes (restaurar en los 3 inputs)
-            const pn = String(snap.payment_notes || '');
+            const pnRaw = String(snap.payment_notes || '').trim();
+            const pn = (pnRaw && pnRaw.toUpperCase() !== 'N/A') ? pnRaw : '';
 
+            // Inputs (sí, en los 3, porque tu flujo los restaura así)
             $('#modalCashNotesInput').val(pn);
             $('#modalCardNotesInput').val(pn);
             $('#modalTransferNotesInput').val(pn);
@@ -5325,17 +5327,15 @@
 
             // ✅ REPINTAR modo lectura de Observaciones de pago
             (function () {
-            const t = String(pn || '').trim();
-            if (t !== '') {
-                $('#modalCashNotesText').text(t);
-                $('#modalCardNotesText').text(t);
-                $('#modalTransferNotesText').text(t);
-            } else {
-                const na = '<span class="text-muted font-italic small">N/A</span>';
-                $('#modalCashNotesText').html(na);
-                $('#modalCardNotesText').html(na);
-                $('#modalTransferNotesText').html(na);
-            }
+                if (pn !== '') {
+                    $('#modalCashNotesText').text(pn);
+                    $('#modalCardNotesText').text(pn);
+                    $('#modalTransferNotesText').text(pn);
+                } else {
+                    $('#modalCashNotesText').html('<span class="text-muted font-italic small">No se registraron observaciones</span>');
+                    $('#modalTransferNotesText').html('<span class="text-muted font-italic small">No se registraron observaciones</span>');
+                    $('#modalCardNotesText').html('<span class="text-muted font-italic small">No se registraron observaciones</span>');
+                }
             })();
 
             // Monto pagado hidden
