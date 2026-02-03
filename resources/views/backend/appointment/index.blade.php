@@ -4112,14 +4112,34 @@
             $('#modalPaymentPaidAtHidden').prop('disabled', false).val(v);
         });
 
+        function __refundAlreadyRecorded() {
+            // Usa tus hiddens reales (estos sí existen en tu código)
+            const amount = String($('#modalAmountRefundedHidden').val() || '').trim();
+            const at     = String($('#modalRefundedAtHidden').val() || '').trim();
+            const reason = String($('#modalRefundReasonHidden').val() || '').trim();
+
+            // Si hay ALGO guardado, asumimos que el reembolso ya fue registrado
+            return (amount !== '' || at !== '' || reason !== '');
+        }
+
         // ✅ Antes de enviar el form: valida reglas y llena hidden inputs
         $(document).on('submit', '#appointmentStatusForm', function (e) {
             // ✅ Si payment_status va a refunded, pedir datos del reembolso
             try {
-            const pay = String($('#modalPaymentStatusHidden').val() || '').trim();
-            if (pay === 'refunded' && !window.__refundBypassSubmit) {
-                // ✅ Guardar estado anterior para poder revertir si cancelan
-                window.__refundPrevPaymentStatus = String($('#modalPaymentStatusHidden').val() || '').trim();
+            const pay = String($('#modalPaymentStatusHidden').val() || '').trim().toLowerCase();
+
+            // ✅ Detectar transición: SOLO si ANTES NO era refunded y AHORA sí.
+            const snap = window.__apptModalSnapshot || {};
+            const prevPay = String(snap.payment_status || '').trim().toLowerCase();
+            const changedToRefunded = (prevPay !== 'refunded' && pay === 'refunded');
+
+            // ✅ Si ya existe info de reembolso en hidden => NO pedir modal otra vez
+            const alreadyRecorded = __refundAlreadyRecorded();
+
+            if (changedToRefunded && !alreadyRecorded && !window.__refundBypassSubmit) {
+
+                // ✅ Guardar estado anterior REAL (para revertir si cancelan)
+                window.__refundPrevPaymentStatus = prevPay || '';
 
                 // limpiar valores anteriores del modal (por si re-abren)
                 $('#refundAmountInput').val('');
@@ -4132,7 +4152,7 @@
                 window.__refundConfirmed = false;
                 window.__returnToApptAfterRefund = true;
 
-                // 🔒 IMPORTANTÍSIMO: evita que hidden.bs.modal te mate el modo edición / reseteos
+                // 🔒 evita que hidden.bs.modal te haga cleanup mientras abrimos el modal de reembolso
                 window.__suspendApptModalHiddenCleanup = true;
 
                 // Abre reembolso
