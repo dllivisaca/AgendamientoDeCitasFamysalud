@@ -245,6 +245,12 @@ class AdminAppointmentCreateController extends Controller
             'amount_paid' => 'required|numeric|min:0',
             'payment_status' => 'required|in:pending,unpaid,partial,paid,refunded',
 
+            // Reembolso (solo si payment_status = refunded)
+            'amount_refunded' => 'nullable|required_if:payment_status,refunded|numeric|min:0',
+            'refunded_at' => 'nullable|required_if:payment_status,refunded|date',
+            'refund_reason' => 'nullable|required_if:payment_status,refunded|string|max:255',
+            'refund_reason_other' => 'nullable|string|max:255',
+
             // ⬇️ Solo se llena cuando NO es transferencia
             'payment_paid_at' => 'nullable|required_if:payment_method,cash,card|date',
 
@@ -362,6 +368,19 @@ class AdminAppointmentCreateController extends Controller
         if ($pm === 'transfer') $validated['payment_channel'] = 'bank_transfer';
         if ($pm === 'cash')     $validated['payment_channel'] = 'cash_in_person';
         if ($pm === 'card')     $validated['payment_channel'] = !empty($validated['client_transaction_id']) ? 'payphone' : 'manual_card';
+
+        // Si NO es reembolsado, aseguramos que no se guarden residuos
+        if (($validated['payment_status'] ?? null) !== 'refunded') {
+            $validated['amount_refunded'] = null;
+            $validated['refunded_at'] = null;
+            $validated['refund_reason'] = null;
+            $validated['refund_reason_other'] = null;
+        } else {
+            // Si es refunded y viene refunded_at, normalizamos formato
+            if (!empty($validated['refunded_at'])) {
+                $validated['refunded_at'] = Carbon::parse($validated['refunded_at'])->format('Y-m-d H:i:s');
+            }
+        }
 
         // =====================================================
         // REGLAS: SOLO restringir combos inválidos

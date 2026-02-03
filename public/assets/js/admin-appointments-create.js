@@ -1159,6 +1159,7 @@ if (prevValue === '') return;
   // =========================
   async function onSubmit() {
     hideError();
+    console.log('[CreateAppt] onSubmit START ✅', new Date().toISOString());
 
     // Validación secuencial mínima
     if (!State.categoryId) return showError('Seleccione el área de atención.');
@@ -1230,6 +1231,13 @@ if (prevValue === '') return;
     const form = document.querySelector(UI.form);
     const fd = new FormData(form);
 
+    console.log('[CreateAppt] FD keys count:', Array.from(fd.keys()).length);
+    console.log('[CreateAppt] payment_status:', fd.get('payment_status'));
+    console.log('[CreateAppt] amount_refunded:', fd.get('amount_refunded'));
+    console.log('[CreateAppt] refunded_at:', fd.get('refunded_at'));
+    console.log('[CreateAppt] refund_reason:', fd.get('refund_reason'));
+    console.log('[CreateAppt] refund_reason_other:', fd.get('refund_reason_other'));
+
     // =========================
     // FORZAR CAMPOS QUE A VECES NO VIAJAN (disabled / names)
     // =========================
@@ -1242,6 +1250,12 @@ if (prevValue === '') return;
 
     // 3) payment_notes (aunque por UI esté lleno, lo forzamos)
     fd.set('payment_notes', String($(UI.paymentNotes).val() || '').trim());
+
+    // ✅ 3.1) REEMBOLSO: forzar campos (por si el DOM/Modal no los incluye en FormData)
+    fd.set('amount_refunded', String($('#ca_amount_refunded').val() || '').trim());
+    fd.set('refunded_at', String($('#ca_refunded_at').val() || '').trim());
+    fd.set('refund_reason', String($('#ca_refund_reason').val() || '').trim());
+    fd.set('refund_reason_other', String($('#ca_refund_reason_other').val() || '').trim());
 
     // 4) amount_paid (por si el input tiene name diferente o no viaja)
     fd.set('amount_paid', String($(UI.amountPaid).val() || '0.00').trim());
@@ -1270,6 +1284,13 @@ if (prevValue === '') return;
     $(UI.submitBtn).text('Guardando...');
 
     try {
+      console.log('--- CREATE FD entries ---');
+      for (const [k, v] of fd.entries()) {
+        if (['amount_refunded','refunded_at','refund_reason','refund_reason_other','payment_status'].includes(k)) {
+          console.log(k, v);
+        }
+      }
+      console.log('[CreateAppt] POST to:', url);
       const data = await fetchForm(url, fd);
 
       // success

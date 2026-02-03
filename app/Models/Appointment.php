@@ -47,6 +47,12 @@ class Appointment extends Model
         'payment_paid_at',
         'payment_paid_at_date_source',
         'payment_notes',
+
+        // Reembolso
+        'amount_refunded',
+        'refunded_at',
+        'refund_reason',
+        'refund_reason_other',
         
         // Cita
         'appointment_date',
@@ -82,6 +88,7 @@ class Appointment extends Model
         'transfer_date' => 'date',
         'transfer_validated_at' => 'datetime',
         'payment_paid_at' => 'datetime',
+        'refunded_at' => 'datetime',
     ];
 
     public function service()

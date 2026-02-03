@@ -107,6 +107,15 @@ class AppointmentController extends Controller
             // STATUS
             'status' => 'required|string',
 
+            // ✅ Estado del pago (admin create)
+            'payment_status' => 'nullable|in:pending,unpaid,partial,paid,refunded',
+
+            // ✅ Refund fields (solo cuando payment_status = refunded)
+            'amount_refunded'      => 'nullable|required_if:payment_status,refunded|numeric|min:0',
+            'refunded_at'          => 'nullable|required_if:payment_status,refunded|date',
+            'refund_reason'        => 'nullable|required_if:payment_status,refunded|in:duplicate_payment,patient_request,service_not_provided,admin_error,fraud,schedule_issue,other',
+            'refund_reason_other'  => 'nullable|string|max:180',
+
             'payment_method' => 'required|in:transfer,card',
             'tr_file' => 'nullable|required_if:payment_method,transfer|file|mimes:jpg,jpeg,png,pdf|max:5120',
 
@@ -226,6 +235,57 @@ class AppointmentController extends Controller
                     // (Esto cubre tarjeta manual POS u otros escenarios)
                 }
         }
+    }
+
+    // ✅ Normalizar y guardar refund fields SOLO si payment_status = refunded
+    $psNow = strtolower(trim((string) ($validated['payment_status'] ?? '')));
+
+    if ($psNow === 'refunded') {
+
+        // amount_refunded
+        if (array_key_exists('amount_refunded', $validated)) {
+            $rawAmt = $validated['amount_refunded'];
+            $rawAmt = is_string($rawAmt) ? trim($rawAmt) : $rawAmt;
+            $validated['amount_refunded'] = ($rawAmt !== '' && $rawAmt !== null) ? $rawAmt : null;
+        }
+
+        // refunded_at a DATETIME
+        if (array_key_exists('refunded_at', $validated)) {
+            $val = $validated['refunded_at'];
+            $val = is_string($val) ? trim($val) : $val;
+
+            if ($val !== '' && $val !== null) {
+                try {
+                    $validated['refunded_at'] = \Carbon\Carbon::parse($val)->format('Y-m-d H:i:s');
+                } catch (\Throwable $e) {
+                    $validated['refunded_at'] = null;
+                }
+            } else {
+                $validated['refunded_at'] = null;
+            }
+        }
+
+        // refund_reason
+        if (array_key_exists('refund_reason', $validated)) {
+            $reason = trim((string) $validated['refund_reason']);
+            $validated['refund_reason'] = ($reason !== '') ? $reason : null;
+        }
+
+        // refund_reason_other solo si reason=other
+        if (($validated['refund_reason'] ?? null) === 'other') {
+            $other = $validated['refund_reason_other'] ?? null;
+            $other = is_string($other) ? trim($other) : $other;
+            $validated['refund_reason_other'] = ($other !== '' && $other !== null) ? $other : null;
+        } else {
+            $validated['refund_reason_other'] = null;
+        }
+
+    } else {
+        // ✅ Si NO es refunded, limpiar para no guardar basura
+        $validated['amount_refunded'] = null;
+        $validated['refunded_at'] = null;
+        $validated['refund_reason'] = null;
+        $validated['refund_reason_other'] = null;
     }
 
         DB::transaction(function () use (&$appointment, &$validated, $hold, $request) {
