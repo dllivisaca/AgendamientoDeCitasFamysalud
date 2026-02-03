@@ -6639,6 +6639,130 @@
 
         window.__cancelConfirmed = false;
 
+        // ✅ Atajo: "Crear nueva cita con estos datos" (copia paciente + facturación al modal Crear)
+        $(document).on('click', '#btnCrearNuevaCitaConDatos', function () {
+            // Cerrar dropdown de acciones (igual que historial)
+            try { $('#apptActionsDropdown').dropdown('hide'); } catch (e) {}
+
+            // Helpers
+            const txt = (sel) => String($(sel).text() || '').trim();
+            const val = (sel) => String($(sel).val() || '').trim();
+
+            // Tomar datos del modal de detalles (prioriza inputs; fallback a textos)
+            const patient = {
+                full_name:   val('#modalPatientFullNameInput') || txt('#modalPatientFullName'),
+                dob:         val('#modalPatientDobInput'), // ya viene YYYY-MM-DD por tu código
+                phone:       val('#modalPhoneInput') || txt('#modalPhone'),
+                email:       val('#modalEmailInput') || txt('#modalEmail'),
+                doc_type:    val('#modalDocTypeInput'),     // cedula | ruc | pasaporte (según tu select)
+                doc_number:  val('#modalDocNumberInput') || txt('#modalDocNumber'),
+                address:     val('#modalAddressInput') || txt('#modalAddress'),
+            };
+
+            const billing = {
+                name:        val('#modalBillingNameInput') || txt('#modalBillingName'),
+                doc_type:    val('#modalBillingDocTypeInput'),
+                doc_number:  val('#modalBillingDocNumberInput') || txt('#modalBillingDocNumber'),
+                email:       val('#modalBillingEmailInput') || txt('#modalBillingEmail'),
+                phone:       val('#modalBillingPhoneInput') || txt('#modalBillingPhone'),
+                address:     val('#modalBillingAddressInput') || txt('#modalBillingAddress'),
+                same_as_patient: $('#modalBillingSameNote').is(':visible') // tu nota "Se usaron los mismos..."
+            };
+
+            // Si el modal de detalles está en modo lectura y muestra "N/A", evitar copiar eso
+            const cleanNA = (s) => {
+                const x = String(s || '').trim();
+                return (!x || x.toUpperCase() === 'N/A') ? '' : x;
+            };
+
+            Object.keys(patient).forEach(k => patient[k] = cleanNA(patient[k]));
+            Object.keys(billing).forEach(k => {
+                if (k !== 'same_as_patient') billing[k] = cleanNA(billing[k]);
+            });
+
+            // Abrir Crear cita y, cuando ya esté abierto (luego del reset), rellenar
+            $('#modalCreateAppointment')
+                .off('shown.bs.modal.prefillFromDetails')
+                .one('shown.bs.modal.prefillFromDetails', function () {
+
+                    // --- helpers de set ---
+                    const safeSet = (sel, v) => {
+                        $(sel).val(v || '');
+                        $(sel).trigger('input').trigger('change');
+                    };
+
+                    const safeSetSelectIfExists = (sel, v) => {
+                        const $sel = $(sel);
+                        const value = String(v || '').trim();
+                        if (!value) { $sel.val('').trigger('change'); return; }
+
+                        // solo setear si existe la opción
+                        if ($sel.find(`option[value="${value}"]`).length) {
+                            $sel.val(value).trigger('change');
+                        } else {
+                            $sel.val('').trigger('change');
+                        }
+                    };
+
+                    const setPhoneIntoCreate = (uiInputId, hiddenId, phoneValue) => {
+                        // 1) hidden (lo que se manda al backend)
+                        safeSet(`#${hiddenId}`, phoneValue || '');
+
+                        // 2) UI (intl-tel-input) si existe
+                        const iti = window._itiByInputId?.[uiInputId];
+                        const uiEl = document.getElementById(uiInputId);
+
+                        if (iti && phoneValue) {
+                            try {
+                                // Si viene en E164 (+593...), esto setea país y número
+                                iti.setNumber(phoneValue);
+                                // fuerza sync del hidden (tu setupIntlPhone escucha input)
+                                uiEl && uiEl.dispatchEvent(new Event('input', { bubbles: true }));
+                                return;
+                            } catch (e) {}
+                        }
+
+                        // Fallback: pegar dígitos al visible
+                        if (uiEl) {
+                            uiEl.value = (phoneValue || '').replace(/\D/g, '');
+                            uiEl.dispatchEvent(new Event('input', { bubbles: true }));
+                        }
+                    };
+
+                    // --- PACIENTE ---
+                    safeSet('#ca_patient_full_name', patient.full_name);
+                    safeSet('#ca_patient_dob', patient.dob);
+                    setPhoneIntoCreate('ca_patient_phone_ui', 'ca_patient_phone', patient.phone);
+                    safeSet('#ca_patient_email', patient.email);
+
+                    // En crear: patient_doc_type solo tiene (cedula/pasaporte). Si viene ruc, lo deja vacío.
+                    safeSetSelectIfExists('#ca_patient_doc_type', patient.doc_type);
+
+                    safeSet('#ca_patient_doc_number', patient.doc_number);
+                    safeSet('#ca_patient_address', patient.address);
+                    safeSet('#ca_patient_notes', '');
+
+                    // --- FACTURACIÓN ---
+                    if (billing.same_as_patient) {
+                        // marcar y disparar change para que tu JS haga sync + disable
+                        $('#ca_billing_same_as_patient').prop('checked', true).trigger('change');
+                    } else {
+                        $('#ca_billing_same_as_patient').prop('checked', false).trigger('change');
+
+                        safeSet('#ca_billing_name', billing.name);
+                        safeSetSelectIfExists('#ca_billing_doc_type', billing.doc_type);
+                        safeSet('#ca_billing_doc_number', billing.doc_number);
+                        safeSet('#ca_billing_email', billing.email);
+                        setPhoneIntoCreate('ca_billing_phone_ui', 'ca_billing_phone', billing.phone);
+                        safeSet('#ca_billing_address', billing.address);
+                    }
+                });
+
+            // Cerrar detalles y abrir crear
+            try { $('#appointmentModal').modal('hide'); } catch (e) {}
+            $('#modalCreateAppointment').modal('show');
+        });
+
         // ✅ Cancelar cita (real)
         $(document).on('click', '#btnCancelarCita', async function () {
             $('#apptActionsDropdown').dropdown('hide');
