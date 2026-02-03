@@ -6525,9 +6525,9 @@
                 }
 
                 // 💵 Montos
-                if (key === 'amount' || key === 'amount_paid') {
-                before = formatMoney(beforeRaw);
-                after  = formatMoney(afterRaw);
+                    if (key === 'amount' || key === 'amount_paid' || key === 'amount_refunded') {
+                    before = formatMoney(beforeRaw);
+                    after  = formatMoney(afterRaw);
                 }
 
                 return `
