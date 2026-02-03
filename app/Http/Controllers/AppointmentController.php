@@ -598,6 +598,17 @@ class AppointmentController extends Controller
             $appointment->status = $request->status;
         }
 
+        // ✅ completed_at: setear SOLO la primera vez que pasa a completed
+        if ($request->filled('status')) {
+
+            $incomingStatus = strtolower(trim((string) $request->input('status')));
+            $currentStatus  = strtolower(trim((string) ($appointment->getOriginal('status') ?? $appointment->status ?? '')));
+
+            if ($incomingStatus === 'completed' && $currentStatus !== 'completed' && empty($appointment->completed_at)) {
+                $appointment->completed_at = now();
+            }
+        }
+
         // ✅ Si es reagendamiento REAL: actualizar fecha/hora de la cita + guardar historial
         if ($isRescheduleNow) {
 
