@@ -1143,6 +1143,18 @@ if (prevValue === '') return;
     }
 
   // =========================
+  // 9.Z) REFUND (CREATE FLOW)
+  // =========================
+  const RefundFlow = {
+    open: false,        // modal abierto desde CREATE
+    confirmed: false,   // confirmado en modal
+    bypassOnce: false   // evita que onSubmit vuelva a abrir el modal
+  };
+
+  // expone flags al scope global por si tu modal refund está en otro archivo JS
+  window.__RefundFlowCreate = RefundFlow;
+
+  // =========================
   // 10) SUBMIT
   // =========================
   async function onSubmit() {
@@ -1168,11 +1180,21 @@ if (prevValue === '') return;
     if (!$(UI.amountPaid).val()) return showError('Ingrese el monto pagado.');
     if (!$(UI.paymentStatus).val()) return showError('Seleccione el estado del pago.');
     if (String($(UI.paymentStatus).val() || '') === 'refunded') {
-      // abre el mismo modal refundModal y al confirmar setea estos hidden del create form:
-      // #ca_amount_refunded, #ca_refunded_at, #ca_refund_reason, #ca_refund_reason_other
-      // y recién ahí continúas con el submit
-      $('#refundModal').modal('show');
-      return;
+
+      // ✅ si venimos de confirmar reembolso, NO reabrir el modal
+      if (RefundFlow.bypassOnce === true) {
+        RefundFlow.bypassOnce = false;
+      } else {
+        RefundFlow.open = true;
+        RefundFlow.confirmed = false;
+
+        // ✅ marcar que este refundModal fue abierto desde CREATE
+        $('#refundModal').data('source', 'create');
+
+        // abre modal y corta submit
+        $('#refundModal').modal('show');
+        return;
+      }
     }
     if (!$(UI.status).val()) return showError('Seleccione el estado de la cita.');
 // canal es opcional, así que NO lo obligues
@@ -1456,6 +1478,88 @@ if (prevValue === '') return;
         await deleteHoldIfAny();
     });
   }
+
+  // =========================
+  // 10.B) HOOK: Confirmar reembolso (desde CREATE) - BLINDADO
+  // =========================
+  $('#btnConfirmRefund')
+    .off('click.createRefund')
+    .on('click.createRefund', function (e) {
+
+      // Solo actuar si el refundModal fue abierto desde CREATE
+      if (!window.__RefundFlowCreate) return;
+      if ($('#refundModal').data('source') !== 'create') return;
+
+      // ✅ CLAVE: cortar cualquier submit/handler anterior
+      e.preventDefault();
+      e.stopPropagation();
+      if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+
+      const amount = String($('#refundAmountInput').val() || '').trim();
+      const at     = String($('#refundAtInput').val() || '').trim();
+      const reason = String($('#refundReasonSelect').val() || '').trim();
+      const other  = String($('#refundReasonOtherText').val() || '').trim();
+
+      if (!amount) { alert('Ingresa el monto reembolsado.'); return; }
+      if (!at)     { alert('Ingresa la fecha del reembolso.'); return; }
+      if (!reason) { alert('Selecciona el motivo del reembolso.'); return; }
+      if (reason === 'other' && !other) { alert('Especifica el motivo del reembolso.'); return; }
+
+      // 1) Setear hidden del CREATE (ca_*)
+      $('#ca_amount_refunded').val(amount);
+      $('#ca_refunded_at').val(at);
+      $('#ca_refund_reason').val(reason);
+      $('#ca_refund_reason_other').val(reason === 'other' ? other : '');
+
+      // ✅ 1.1) Re-forzar selection en el select (por si otro handler la limpió)
+      $('#ca_payment_status').val('refunded').trigger('change');
+
+      // 2) Flags
+      window.__RefundFlowCreate.confirmed = true;
+      window.__RefundFlowCreate.open = false;
+
+      // 3) Cerrar modal
+      try { $('#refundModal').modal('hide'); } catch(err) {}
+
+      // 4) Retomar submit con bypass
+      window.__RefundFlowCreate.bypassOnce = true;
+
+      setTimeout(() => {
+        const btn = document.querySelector('#btnSubmitCreateAppointment');
+        if (btn) btn.click();
+      }, 0);
+
+      return false;
+    });
+
+  // =========================
+  // 10.C) Si cierran refundModal (CREATE) - solo si source=create
+  // =========================
+  $('#refundModal')
+    .off('hidden.bs.modal.createRefund')
+    .on('hidden.bs.modal.createRefund', function () {
+
+      if (!window.__RefundFlowCreate) return;
+      if ($(this).data('source') !== 'create') return;
+
+      // si NO confirmaron, limpiar hidden de reembolso y revertir refunded
+      if (window.__RefundFlowCreate.confirmed !== true) {
+        $('#ca_amount_refunded').val('');
+        $('#ca_refunded_at').val('');
+        $('#ca_refund_reason').val('');
+        $('#ca_refund_reason_other').val('');
+
+        // solo revertir si estaba en refunded
+        if (String($('#ca_payment_status').val() || '') === 'refunded') {
+          $('#ca_payment_status').val('').trigger('change');
+        }
+      }
+
+      // limpiar marca y flags
+      $(this).removeData('source');
+      window.__RefundFlowCreate.open = false;
+      window.__RefundFlowCreate.confirmed = false;
+    });
 
   $(document).ready(init);
 })();
