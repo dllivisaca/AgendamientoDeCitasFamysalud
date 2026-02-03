@@ -2613,7 +2613,7 @@
                 tzFinal = `(${tzLabel})`;
             }
 
-            $('#modalPatientTimezone').text(tzFinal);
+            setOptionalText($('#modalPatientTimezone'), tzFinal, 'No se registró zona horaria');
             // Fecha y horas
             const date = $(this).data('date');
             const startTime = $(this).data('start-time');
@@ -2709,6 +2709,17 @@
                     .normalize('NFD')
                     .replace(/[\u0300-\u036f]/g, '')  // quita tildes
                     .replace(/\s+/g, ' ');
+            }
+
+            function setOptionalText($el, raw, emptyMsg) {
+                const v = (raw === null || raw === undefined) ? '' : String(raw).trim();
+
+                if (!v || v.toUpperCase() === 'N/A') {
+                    $el.html(`<span class="text-muted font-italic small">${emptyMsg}</span>`);
+                    return;
+                }
+
+                $el.text(v);
             }
 
             function formatDocTypeLabel(docType) {
@@ -2987,7 +2998,11 @@
                 $('#paymentCardBlock').show();
 
                 $('#modalPaymentMethodLabel').text(paymentMethodLabel(pm));
-                $('#modalClientTransactionId').text(clientTxIdRaw ? String(clientTxIdRaw) : 'N/A');
+                $('#modalClientTransactionId').html(
+                    (clientTxIdRaw && String(clientTxIdRaw).trim() !== '')
+                        ? String(clientTxIdRaw)
+                        : '<span class="text-muted font-italic small">No se registró Client Transaction ID</span>'
+                );
 
                 const amountText =
                     amountRaw !== null && amountRaw !== undefined && amountRaw !== ''
