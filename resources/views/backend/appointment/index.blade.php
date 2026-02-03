@@ -1614,9 +1614,15 @@
         background-color: rgba(0, 0, 0, 0.80) !important;
     }
 
-    /* ✅ Cuando se abre un modal hijo (wizard), oscurecer el modal de detalles SIN blur */
-    #appointmentModal.appt-dimmed .modal-dialog {
-        opacity: 0.35;
+    /* Cuando está abierto el reembolso, NO bajamos opacidad del modal.
+   Solo lo dejamos "inactivo" para que no se pueda clicar. */
+    #appointmentModal.appt-dimmed .modal-dialog{
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+    }
+
+    body.refund-open #appointmentModal{
         pointer-events: none;
     }
 
@@ -2165,6 +2171,20 @@
     opacity: .15;
     pointer-events: none;
     filter: blur(1px);
+    }
+
+    /* =========================
+    Modal Registrar Reembolso
+    ========================= */
+
+    /* Hacer el modal más ancho */
+    #refundModal .modal-dialog {
+        max-width: 780px;   /* puedes subir a 820px si lo quieres más protagonista */
+    }
+
+    /* Asegurar que quede por encima del modal de detalles */
+    #refundModal {
+        z-index: 1070 !important;
     }
 </style>
 @stop
@@ -4656,6 +4676,36 @@
         // ✅ Modal Reembolso - handlers
         // ============================
         window.__refundBypassSubmit = false;
+
+        // =========================
+        // Modal Reembolso - efecto visual (dim + stacking)
+        // =========================
+        $('#refundModal').on('shown.bs.modal', function () {
+
+            // Oscurecer el modal de Detalles de la cita (modo edición)
+            $('#appointmentModal').addClass('appt-dimmed');
+
+            // Asegurar stacking correcto (backdrop entre ambos modales)
+            setTimeout(() => {
+                const $bd = $('.modal-backdrop').last();
+                $bd.css('z-index', '1065').addClass('refund-backdrop');
+                $('#refundModal').css('z-index', '1070');
+            }, 0);
+        });
+
+        $('#refundModal').on('hidden.bs.modal', function () {
+            // ✅ Visual cleanup (dim + stacking)
+            $('#appointmentModal').removeClass('appt-dimmed');
+            $('#refundModal').css('z-index', '');
+            $('.modal-backdrop').removeClass('refund-backdrop').css('z-index', '');
+
+            // Quitar oscurecimiento del modal de atrás
+            $('#appointmentModal').removeClass('appt-dimmed');
+
+            // Limpieza visual
+            $('#refundModal').css('z-index', '');
+            $('.modal-backdrop').removeClass('refund-backdrop').css('z-index', '');
+        });
 
         // Mostrar/ocultar “Otro”
         $(document).on('change', '#refundReasonSelect', function () {
