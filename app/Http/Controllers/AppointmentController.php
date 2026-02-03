@@ -330,7 +330,7 @@ class AppointmentController extends Controller
             // ✅ Refund fields (solo cuando payment_status = refunded)
             'amount_refunded'      => 'nullable|numeric|min:0',
             'refunded_at'          => 'nullable|date',
-            'refund_reason'        => 'nullable|in:duplicate,patient_request,service_not_provided,admin_error,fraud,other',
+            'refund_reason'        => 'nullable|in:duplicate_payment,patient_request,service_not_provided,admin_error,fraud,schedule_issue,other',
             'refund_reason_other'  => 'nullable|string|max:180',
 
             // ✅ Campos adicionales cuando el pago es tarjeta / edición manual

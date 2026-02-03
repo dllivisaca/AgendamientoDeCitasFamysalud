@@ -6309,7 +6309,8 @@
         refunded_at: 'Reembolsado en',
         refund_reason: 'Motivo de reembolso',
         amount_refunded: 'Monto reembolsado',
-        refund_reason_other: 'Otro motivo de reembolso'
+        refund_reason_other: 'Otro motivo de reembolso',
+        patient_doc_number: 'Número de documento del paciente'
         };
 
         // ✅ Traducciones de valores comunes
