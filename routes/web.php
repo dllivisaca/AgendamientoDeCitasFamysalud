@@ -31,9 +31,17 @@ Auth::routes([
 // ================================
 Route::middleware(['auth'])->group(function () {
 
-    //ENCUESTA
-    Route::post('/admin/appointments/{appointment}/survey-email/send', [AdminAppointmentSurveyController::class, 'sendManual'])
-    ->middleware('permission:appointments.edit|appointments.view')
+    // ENCUESTA (ADMIN)
+    Route::get(
+        '/admin/appointments/{appointment}/survey-email/status',
+        [AdminAppointmentSurveyController::class, 'status']
+    )->middleware('permission:appointments.view')
+    ->name('admin.appointments.survey_email.status');
+
+    Route::post(
+        '/admin/appointments/{appointment}/survey-email/send',
+        [AdminAppointmentSurveyController::class, 'sendManual']
+    )->middleware('permission:appointments.edit|appointments.view')
     ->name('admin.appointments.survey_email.send');
 
     Route::get('/admin/appointments/create/options/categories', [AdminAppointmentCreateController::class, 'categories'])

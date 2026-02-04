@@ -89,6 +89,7 @@ class Appointment extends Model
         'transfer_validated_at' => 'datetime',
         'payment_paid_at' => 'datetime',
         'refunded_at' => 'datetime',
+        'completed_at' => 'datetime',
     ];
 
     public function service()

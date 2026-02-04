@@ -112,6 +112,11 @@
                                     <button type="button" class="dropdown-item d-none" id="btnSendReminder3h">
                                         <i class="fas fa-bell mr-2"></i>Enviar recordatorio (3h)
                                     </button>
+
+                                    <button type="button" class="dropdown-item d-none" id="btnSendSurveyEmail">
+                                        <i class="fas fa-envelope mr-2"></i>
+                                        <span id="btnSendSurveyEmailText">Enviar encuesta</span>
+                                    </button>
                                 </div>
                             </div>
 
@@ -1383,6 +1388,7 @@
                                                             data-transfer-validation-notes="{{ $appointment->transfer_validation_notes ?? '' }}"
                                                             data-paid-amount="{{ $appointment->amount_paid ?? '' }}"
                                                             data-created-at="{{ $appointment->created_at }}"
+                                                            data-completed-at="{{ $appointment->completed_at ?? '' }}"
                                                             data-status="{{ $appointment->status }}">Ver detalles</button>
                                                     </td>
                                                 </tr>
@@ -2449,7 +2455,7 @@
             $('#modalAmountPaidHidden').val('');
             $('#modalPaymentMethodRaw').val(method);
         };
-        $(document).on('click', '.view-appointment-btn', function() {
+        $(document).on('click', '.view-appointment-btn', async function() {
             // ✅ RESET DURO: al abrir, limpia cualquier "draft" viejo (evita glitch de valores fantasma)
             // Limpia hiddens de reagendamiento por defecto (se volverán a setear si la cita está rescheduled)
             $('#rescheduleDateHidden').val('');
@@ -2495,6 +2501,23 @@
             $('#modalTransferValidationTouchedInput').val('0');
             // Set modal fields
             $('#modalAppointmentId').val($(this).data('id'));
+
+            // ✅ Reset botón encuesta al abrir
+            $('#btnSendSurveyEmail').addClass('d-none').prop('disabled', false);
+            $('#btnSendSurveyEmailText').text('Enviar encuesta');
+
+            // ============================
+            // ✅ ENCUESTA: consultar status y pintar botón
+            // ============================
+            try {
+                const apptId = String($(this).data('id') || '').trim();
+                if (apptId) {
+                    await window.__refreshSurveyEmailButton(apptId);
+                }
+            } catch (e) {
+                console.warn('[SurveyEmail] status check failed:', e);
+            }
+
             // ✅ Código de reserva (booking_id)
             $('#modalBookingCode').text($(this).data('booking-code') || 'N/A');
             $('#modalAppointmentName').text($(this).data('name'));
@@ -3768,6 +3791,49 @@
                 [$p1, $p2].forEach($sel => $sel.data('allowed', allowedNow));
             }
 
+            async function __refreshSurveyButton(appointmentId) {
+                try {
+                    const $btn = $('#btnSendSurveyEmail');
+                    const $txt = $('#btnSendSurveyEmailText');
+
+                    // Reset visual
+                    $btn.addClass('d-none').prop('disabled', false).removeClass('disabled');
+                    $txt.text('Enviar encuesta');
+
+                    const res = await fetch(`/admin/appointments/${appointmentId}/survey-email/status`, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                    });
+
+                    const data = await res.json().catch(() => null);
+                    if (!res.ok || !data || data.success !== true) return;
+
+                    // Backend decide si se muestra o no
+                    if (!data.can_show_button) {
+                    $btn.addClass('d-none');
+                    return;
+                    }
+
+                    // Texto: "Enviar encuesta" o "Reenviar encuesta"
+                    $txt.text(data.button_text || 'Enviar encuesta');
+
+                    // Mostrar botón
+                    $btn.removeClass('d-none');
+
+                    // Deshabilitar si aún no pasan 2 horas
+                    const canSendNow = (data.can_send_now !== false);
+                    $btn.prop('disabled', !canSendNow);
+                    if (!canSendNow) $btn.addClass('disabled');
+
+                    // Guardar flags para el click
+                    $btn.data('appt-id', String(appointmentId));
+                    $btn.data('can-send-now', canSendNow);
+                    $btn.data('reason', data.reason || '');
+                } catch (e) {
+                    console.warn('[SurveyStatus] Error', e);
+                    $('#btnSendSurveyEmail').addClass('d-none').prop('disabled', false).removeClass('disabled');
+                }
+            }
 
             $(document).on('change.apptStatusSelects', '#modalPaymentStatusSelect', function () {
                 const prev = String($('#modalPaymentStatusHidden').val() || '').trim().toLowerCase();
@@ -4015,6 +4081,12 @@
             if (pm !== 'card') {
                 $('#modalClientTransactionIdHidden').val('');
                 $('#modalPaymentPaidAtHidden').val('');
+            }
+
+            // ✅ Pintar botón encuesta según backend (status)
+            const apptId = String($(this).data('id') || '').trim();
+            if (apptId) {
+                __refreshSurveyButton(apptId);
             }
 
             // ✅ Snapshot final (BD) para habilitar Guardar cambios solo si hay cambios reales
@@ -5702,11 +5774,53 @@
             $action.toggleClass('d-none', !shouldShow);
         }
 
-        // Al abrir modal: siempre volver a solo lectura
-        $(document).on('click', '.view-appointment-btn', function() {
-            __exitEditModeUI();
-            __toggleReminder3hActionByTime($(this)); // ✅ NUEVO: mostrar/ocultar acción 3h
-        });
+        function __toggleSurveyActionByCompletedAt($btn) {
+            const $action = $('#btnSendSurveyEmail');
+            const $text = $('#btnSendSurveyEmailText');
+            if (!$action.length) return;
+
+            const status = String($btn.attr('data-status') || '').trim().toLowerCase();
+            const completedAtStr = String($btn.attr('data-completed-at') || '').trim();
+            const autoSent = String($btn.attr('data-survey-auto-sent') || '').trim();
+            const manualSent = String($btn.attr('data-survey-manual-sent') || '').trim();
+
+            if (status !== 'completed') {
+                $action.addClass('d-none');
+                return;
+            }
+
+            if (!completedAtStr) {
+                $action.addClass('d-none');
+                return;
+            }
+
+            const completedDt = new Date(completedAtStr.replace(' ', 'T'));
+            if (isNaN(completedDt.getTime())) {
+                $action.addClass('d-none');
+                return;
+            }
+
+            const now = new Date();
+            const diffHours = (now.getTime() - completedDt.getTime()) / (1000 * 60 * 60);
+
+            if (diffHours < 2) {
+                $action.addClass('d-none');
+                return;
+            }
+
+            if (manualSent === '1') {
+                $action.addClass('d-none');
+                return;
+            }
+
+            if (autoSent === '1') {
+                $text.text('Reenviar encuesta');
+            } else {
+                $text.text('Enviar encuesta');
+            }
+
+            $action.removeClass('d-none');
+        }
 
         // Al cerrar modal: resetear
         $('#appointmentModal').on('hidden.bs.modal', function () {
@@ -6761,6 +6875,52 @@
             // Cerrar detalles y abrir crear
             try { $('#appointmentModal').modal('hide'); } catch (e) {}
             $('#modalCreateAppointment').modal('show');
+        });
+
+        $(document).on('click', '#btnSendSurveyEmail', async function () {
+            try { $('#apptActionsDropdown').dropdown('hide'); } catch(e) {}
+
+            // Necesitamos el ID: lo tomamos del hidden del modal si existe, si no del último botón
+            const apptId = String($('#modalAppointmentId').val() || '').trim()
+                || String($('.view-appointment-btn[data-target="#appointmentModal"]').attr('data-id') || '').trim();
+
+            if (!apptId) {
+                alert('No se encontró el ID de la cita.');
+                return;
+            }
+
+            const canSendNow = $('#btnSendSurveyEmail').data('can-send-now');
+            if (canSendNow === false) {
+                const reason = String($('#btnSendSurveyEmail').data('reason') || '').trim();
+                alert(reason || 'Aún no han pasado 2 horas desde que la cita se marcó como completada.');
+                return;
+            }
+
+            const res = await fetch(`/admin/appointments/${apptId}/survey-email/send`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': __csrfToken(),
+                },
+                body: JSON.stringify({})
+            });
+
+            const data = await res.json().catch(() => null);
+
+            if (!res.ok || !data || data.success !== true) {
+                alert((data && data.message) ? data.message : 'No se pudo enviar la encuesta.');
+                return;
+            }
+
+            alert('Encuesta enviada ✅');
+
+            await __refreshSurveyButton(apptId);
+
+            // Refrescar visibilidad/texto (debería ocultarse si ya se envió manual)
+            const $btn = $('.view-appointment-btn[data-id="' + apptId + '"]').first();
+            if ($btn.length) __toggleSurveyActionByCompletedTime($btn);
+
         });
 
         // ✅ Cancelar cita (real)

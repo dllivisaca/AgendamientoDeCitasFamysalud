@@ -40,4 +40,8 @@ return [
         'store_id' => env('PAYPHONE_STORE_ID'),
     ],
 
+    'surveys' => [
+        'google_form_url' => env('https://forms.gle/kk6wV7iwfQZh5jDZ7', ''),
+    ],
+
 ];
