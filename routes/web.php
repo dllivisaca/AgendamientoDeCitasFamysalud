@@ -17,6 +17,7 @@ use App\Http\Controllers\PayphoneController;
 use App\Http\Controllers\Admin\TransferReceiptController;
 use App\Http\Controllers\Admin\AdminAvailabilityController;
 use App\Http\Controllers\Admin\AdminAppointmentCreateController;
+use App\Http\Controllers\Admin\AdminAppointmentSurveyController;
 
 use Illuminate\Http\Request;
 
@@ -29,6 +30,11 @@ Auth::routes([
 // ADMIN - CREAR CITA (wizard)
 // ================================
 Route::middleware(['auth'])->group(function () {
+
+    //ENCUESTA
+    Route::post('/admin/appointments/{appointment}/survey-email/send', [AdminAppointmentSurveyController::class, 'sendManual'])
+    ->middleware('permission:appointments.edit|appointments.view')
+    ->name('admin.appointments.survey_email.send');
 
     Route::get('/admin/appointments/create/options/categories', [AdminAppointmentCreateController::class, 'categories'])
         ->name('admin.appointments.create.categories');
