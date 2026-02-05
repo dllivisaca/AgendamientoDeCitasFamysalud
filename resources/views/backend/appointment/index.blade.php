@@ -5713,8 +5713,8 @@
             const diffMs = apptDt.getTime() - now.getTime();
             const diffHours = diffMs / (1000 * 60 * 60);
 
-            // ✅ regla: futura y ≤ 3 horas
-            const shouldShow = diffHours >= 0 && diffHours <= 3;
+            // ✅ regla: mostrar SOLO entre 3h y 1h antes de la cita (no incluir 1h)
+            const shouldShow = diffHours > 1 && diffHours <= 3;
 
             $action.toggleClass('d-none', !shouldShow);
         }
