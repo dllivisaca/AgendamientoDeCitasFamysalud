@@ -17,6 +17,7 @@ use App\Http\Controllers\PayphoneController;
 use App\Http\Controllers\Admin\TransferReceiptController;
 use App\Http\Controllers\Admin\AdminAvailabilityController;
 use App\Http\Controllers\Admin\AdminAppointmentCreateController;
+use App\Http\Controllers\AppointmentReminderController;
 
 use Illuminate\Http\Request;
 
@@ -29,6 +30,10 @@ Auth::routes([
 // ADMIN - CREAR CITA (wizard)
 // ================================
 Route::middleware(['auth'])->group(function () {
+
+    //RECORDATORIOS
+    Route::post('/appointments/{appointment}/reminders/manual', [AppointmentReminderController::class, 'sendManual'])
+    ->name('appointments.reminders.manual');
 
     // ================================
     // ENCUESTA (NUEVAS RUTAS - MODAL)

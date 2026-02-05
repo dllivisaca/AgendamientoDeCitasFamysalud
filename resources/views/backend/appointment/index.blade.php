@@ -6617,8 +6617,45 @@
             }
         });
 
+        $(document).on('click', '#btnSendReminder3h', async function () {
+            $('#apptActionsDropdown').dropdown('hide');
+
+            const apptId = String($('#modalAppointmentId').val() || '').trim();
+            if (!apptId) return;
+
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+            try {
+                $(this).prop('disabled', true);
+
+                const res = await fetch(`/appointments/${apptId}/reminders/manual`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'X-CSRF-TOKEN': token } : {})
+                },
+                body: JSON.stringify({ kind: 'MANUAL_3H' })
+                });
+
+                const data = await res.json().catch(() => null);
+
+                if (!res.ok) {
+                alert(data?.message || 'No se pudo enviar el recordatorio.');
+                return;
+                }
+
+                alert(data?.message || 'Recordatorio enviado.');
+            } catch (e) {
+                console.error(e);
+                alert('Error de red enviando recordatorio.');
+            } finally {
+                $('#btnSendReminder3h').prop('disabled', false);
+            }
+        });
+
         // (Opcional) seguir dejando placeholder en los otros botones
-        $(document).on('click', '#btnNoAsistio,#btnSendReminder3h', function(){
+        $(document).on('click', '#btnNoAsistio', function(){
             alert('Acción pendiente de implementar (solo UI en este paso).');
             $('#apptActionsDropdown').dropdown('hide');
         });
