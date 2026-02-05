@@ -2868,7 +2868,7 @@
             console.log('[pmRaw hidden now]', $('#modalPaymentMethodRaw').val());
             console.log('------------------');
             const clientTxIdRaw = $(this).data('client-transaction-id');      // largo
-            const paymentStatusRaw = $(this).data('payment-status');          // pending|paid|refunded
+            const paymentStatusRaw = $(this).attr('data-payment-status');          // pending|paid|refunded
             const amountRaw = $(this).data('amount');
             const paymentPaidAtRaw = $(this).data('payment-paid-at');         // NUEVO: datetime real (BD)
             const paymentNotesRaw = $(this).data('payment-notes');
@@ -3046,7 +3046,7 @@
                 }
 
                 // ✅ Monto pagado (desde BD: appointments.paid_amount)
-                const paidAmountRaw = $(this).data('paid-amount');
+                const paidAmountRaw = $(this).attr('data-paid-amount');
 
                 let paidAmountVal = '';
                 let paidAmountText = 'N/A';
@@ -3179,7 +3179,7 @@
                 }
 
                 // ✅ Monto pagado (desde BD: data-paid-amount)
-                const paidAmountRaw = $(this).data('paid-amount');
+                const paidAmountRaw = $(this).attr('data-paid-amount');
 
                 let paidAmountVal = '';
                 let paidAmountText = 'N/A';
@@ -3273,7 +3273,7 @@
                 $('#modalCashAmount').text(amountText);
 
                 // ✅ Monto pagado (desde BD: data-paid-amount)
-                const paidAmountRaw = $(this).data('paid-amount');
+                const paidAmountRaw = $(this).attr('data-paid-amount');
 
                 let paidAmountVal = '';
                 let paidAmountText = 'N/A';
@@ -3423,16 +3423,11 @@
             $('#modalStatusBadge').html(badgeHtml);
             $('#modalStatusBadgeLegacy').html(badgeHtml);
 
-            // Por ahora, estado del pago queda N/A hasta que lo conectemos a tus campos reales
-            $('#modalPaymentStatusBadge').html(window.paymentStatusBadge(paymentStatusRaw));
-
             // ============================
             // ✅ Pre-cargar selects de estados (Resumen)
             // ============================
 
-            // Estado cita (usa el normalizedStatus que ya armaste)
             $('#modalStatusSelect').val(normalizedStatus || 'pending_verification');
-            __applyPaymentOptionsByAppointmentStatus(normalizedStatus);
 
             // Estado pago (normaliza para que matchee opciones)
             const pStat = String(paymentStatusRaw || '').trim().toLowerCase();
@@ -3441,6 +3436,9 @@
             // ✅ Hiddens que se envían al backend
             $('#modalStatusHidden').val(normalizedStatus || 'pending_verification');
             $('#modalPaymentStatusHidden').val(pStat);
+
+            // ✅ AHORA sí: aplicar reglas (ya existe current y no te lo vacía)
+            __applyPaymentOptionsByAppointmentStatus(normalizedStatus);
             __togglePaymentPlaceholder(false);
             $('#modalPaymentStatusSelectCard').val(pStat);
             $('#modalPaymentStatusSelect').data('last_valid', pStat);
