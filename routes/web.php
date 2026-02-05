@@ -17,7 +17,6 @@ use App\Http\Controllers\PayphoneController;
 use App\Http\Controllers\Admin\TransferReceiptController;
 use App\Http\Controllers\Admin\AdminAvailabilityController;
 use App\Http\Controllers\Admin\AdminAppointmentCreateController;
-use App\Http\Controllers\Admin\AdminAppointmentSurveyController;
 
 use Illuminate\Http\Request;
 
@@ -31,18 +30,20 @@ Auth::routes([
 // ================================
 Route::middleware(['auth'])->group(function () {
 
-    // ENCUESTA (ADMIN)
+    // ================================
+    // ENCUESTA (NUEVAS RUTAS - MODAL)
+    // ================================
     Route::get(
-        '/admin/appointments/{appointment}/survey-email/status',
-        [AdminAppointmentSurveyController::class, 'status']
+        '/appointments/{appointment}/survey-ui',
+        [\App\Http\Controllers\AppointmentSurveyController::class, 'ui']
     )->middleware('permission:appointments.view')
-    ->name('admin.appointments.survey_email.status');
+    ->name('appointments.survey.ui');
 
     Route::post(
-        '/admin/appointments/{appointment}/survey-email/send',
-        [AdminAppointmentSurveyController::class, 'sendManual']
+        '/appointments/{appointment}/survey-send-manual',
+        [\App\Http\Controllers\AppointmentSurveyController::class, 'sendManual']
     )->middleware('permission:appointments.edit|appointments.view')
-    ->name('admin.appointments.survey_email.send');
+    ->name('appointments.survey.send_manual');
 
     Route::get('/admin/appointments/create/options/categories', [AdminAppointmentCreateController::class, 'categories'])
         ->name('admin.appointments.create.categories');

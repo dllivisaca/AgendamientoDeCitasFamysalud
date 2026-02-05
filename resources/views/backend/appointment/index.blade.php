@@ -110,7 +110,13 @@
                                     </button>
 
                                     <button type="button" class="dropdown-item d-none" id="btnEnviarEncuesta">
-                                        <i class="fas fa-poll-h mr-2"></i>Enviar encuesta
+                                        <div class="d-flex flex-column">
+                                            <span>
+                                            <i class="fas fa-poll-h mr-2"></i>
+                                            <span id="surveyActionText">Enviar encuesta</span>
+                                            </span>
+                                            <small id="surveyActionHint" class="text-muted font-italic"></small>
+                                        </div>
                                     </button>
 
                                     <button type="button" class="dropdown-item d-none" id="btnSendReminder3h">
@@ -5713,10 +5719,49 @@
             $action.toggleClass('d-none', !shouldShow);
         }
 
+        async function __toggleSurveyAction($btn) {
+            const $action = $('#btnEnviarEncuesta');
+            if (!$action.length) return;
+
+            $action.addClass('d-none');
+            $('#surveyActionText').text('Enviar encuesta');
+            $('#surveyActionHint').text('');
+
+            const apptStatus = String($btn.attr('data-status') || '').trim().toLowerCase();
+            if (apptStatus !== 'completed') return;
+
+            const apptId =
+                String($btn.attr('data-id') || '').trim() ||
+                String($('#modalAppointmentId').val() || '').trim();
+
+            if (!apptId) return;
+
+            try {
+                const res = await fetch(`/appointments/${apptId}/survey-ui`, {
+                method: 'GET',
+                headers: { 'Accept': 'application/json' }
+                });
+
+                const data = await res.json().catch(() => null);
+                if (!res.ok || !data || !data.show) return;
+
+                $('#surveyActionText').text(data.text || 'Enviar encuesta');
+                $('#surveyActionHint').text(data.hint || '');
+
+                $action.attr('data-appt-id', apptId);
+                $action.attr('data-survey-mode', data.mode || 'send');
+                $action.removeClass('d-none');
+
+            } catch (e) {
+                console.warn('survey-ui failed', e);
+            }
+        }
+
         // Al abrir modal: siempre volver a solo lectura
         $(document).on('click', '.view-appointment-btn', function() {
             __exitEditModeUI();
             __toggleReminder3hActionByTime($(this)); // ✅ NUEVO: mostrar/ocultar acción 3h
+            __toggleSurveyAction($(this));           // ✅ NUEVO: encuesta
         });
 
         // Al cerrar modal: resetear
@@ -6532,8 +6577,48 @@
             }
         });
 
+        $(document).on('click', '#btnEnviarEncuesta', async function () {
+            const apptId = String($(this).attr('data-appt-id') || '').trim();
+            if (!apptId) return;
+
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+            try {
+                $(this).prop('disabled', true);
+
+                const res = await fetch(`/appointments/${apptId}/survey-send-manual`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'X-CSRF-TOKEN': token } : {})
+                },
+                body: JSON.stringify({})
+                });
+
+                const data = await res.json().catch(() => null);
+
+                if (!res.ok) {
+                alert(data?.message || 'No se pudo enviar la encuesta.');
+                return;
+                }
+
+                // refrescar UI del botón
+                const $fakeBtn = $(`<button data-id="${apptId}" data-status="completed"></button>`);
+                await __toggleSurveyAction($fakeBtn);
+
+                alert(data?.message || 'Encuesta enviada.');
+
+            } catch (e) {
+                console.error(e);
+                alert('Error enviando encuesta.');
+            } finally {
+                $('#btnEnviarEncuesta').prop('disabled', false);
+            }
+        });
+
         // (Opcional) seguir dejando placeholder en los otros botones
-        $(document).on('click', '#btnNoAsistio,#btnSendReminder3h,#btnEnviarEncuesta', function(){
+        $(document).on('click', '#btnNoAsistio,#btnSendReminder3h', function(){
             alert('Acción pendiente de implementar (solo UI en este paso).');
             $('#apptActionsDropdown').dropdown('hide');
         });
