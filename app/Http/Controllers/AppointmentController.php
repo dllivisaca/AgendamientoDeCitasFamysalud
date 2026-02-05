@@ -606,6 +606,33 @@ class AppointmentController extends Controller
 
             if ($incomingStatus === 'completed' && $currentStatus !== 'completed' && empty($appointment->completed_at)) {
                 $appointment->completed_at = now();
+
+                // ✅ Encuesta: crear 1 SOLO registro auto queued al completar (máx 1 auto por cita)
+                $emailForSurvey = trim((string) ($request->input('patient_email') ?? $appointment->patient_email ?? ''));
+
+                $existsAuto = DB::table('appointment_survey_emails')
+                    ->where('appointment_id', $appointment->id)
+                    ->where('type', 'auto')
+                    ->exists();
+
+                if (!$existsAuto) {
+                    DB::table('appointment_survey_emails')->insert([
+                        'appointment_id'     => $appointment->id,
+                        'to_email'           => $emailForSurvey,
+                        'type'               => 'auto',
+                        'attempt_number'     => 1,
+                        'status'             => 'queued',
+                        'sent_at'            => null,
+                        'error_message'      => null,
+                        'sent_by_admin_id'   => null,
+                        'created_at'         => now(),
+                        'updated_at'         => now(),
+                    ]);
+                }
+            }
+            // ✅ Si SALE de completed, limpiar completed_at
+            elseif ($currentStatus === 'completed' && $incomingStatus !== 'completed') {
+                $appointment->completed_at = null;
             }
         }
 
