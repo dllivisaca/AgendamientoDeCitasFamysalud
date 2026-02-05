@@ -109,6 +109,10 @@
                                         <i class="fas fa-copy mr-2"></i>Crear nueva cita con estos datos
                                     </button>
 
+                                    <button type="button" class="dropdown-item d-none" id="btnEnviarEncuesta">
+                                        <i class="fas fa-poll-h mr-2"></i>Enviar encuesta
+                                    </button>
+
                                     <button type="button" class="dropdown-item d-none" id="btnSendReminder3h">
                                         <i class="fas fa-bell mr-2"></i>Enviar recordatorio (3h)
                                     </button>
@@ -3365,6 +3369,13 @@
                     $('#btnCancelarCita').removeClass('d-none');
                 }
 
+                // ✅ Mostrar "Enviar encuesta" SOLO si la cita está COMPLETADA
+                if (normalizedStatus === 'completed') {
+                    $('#btnEnviarEncuesta').removeClass('d-none');
+                } else {
+                    $('#btnEnviarEncuesta').addClass('d-none');
+                }
+
             // Colores por status normalizado
             const statusColors = {
                 // ✅ nuevos
@@ -6522,7 +6533,7 @@
         });
 
         // (Opcional) seguir dejando placeholder en los otros botones
-        $(document).on('click', '#btnNoAsistio,#btnSendReminder3h', function(){
+        $(document).on('click', '#btnNoAsistio,#btnSendReminder3h,#btnEnviarEncuesta', function(){
             alert('Acción pendiente de implementar (solo UI en este paso).');
             $('#apptActionsDropdown').dropdown('hide');
         });
