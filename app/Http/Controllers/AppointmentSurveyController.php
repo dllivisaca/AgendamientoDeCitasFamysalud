@@ -154,6 +154,17 @@ class AppointmentSurveyController extends Controller
                     'sent_at'    => now(),
                     'updated_at' => now(),
                 ]);
+            
+            // ✅ Si existía auto queued, lo cancelamos porque ya se envió manual
+            DB::table('appointment_survey_emails')
+                ->where('appointment_id', $appointment->id)
+                ->where('type', 'auto')
+                ->where('status', 'queued')
+                ->update([
+                    'status'        => 'failed',
+                    'error_message' => 'Skipped: manual already sent',
+                    'updated_at'    => now(),
+                ]);
 
             return response()->json([
                 'success' => true,
