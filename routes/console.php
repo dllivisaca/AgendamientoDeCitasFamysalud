@@ -8,4 +8,7 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote')->hourly();
 
-Schedule::command('surveys:dispatch')->everyFiveMinutes();
+if (config('app.enable_auto_surveys')) {
+    Schedule::command('surveys:send-queued-auto --limit=50')
+        ->everyFiveMinutes();
+}

@@ -151,7 +151,7 @@ class SendQueuedSurveyEmails extends Command
             }
         }
 
-        $this->info("Processed rows: {$processed}");
+        $this->info("Evaluated queued rows: {$processed}");
         return 0;
     }
 }

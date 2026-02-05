@@ -15,6 +15,8 @@ return [
 
     'name' => env('APP_NAME', 'FamySalud en Línea'),
 
+    'enable_auto_surveys' => env('ENABLE_AUTO_SURVEYS', false),
+
     /*
     |--------------------------------------------------------------------------
     | Application Environment
