@@ -9,6 +9,8 @@
     use Illuminate\Support\Facades\Log;
     use Illuminate\Support\Facades\Mail;
     use App\Mail\AppointmentRegisteredMail;
+    use App\Mail\AppointmentAdminNewBookingMail;
+    use App\Models\User;
 
     class PayphoneController extends Controller
     {
@@ -288,6 +290,134 @@
                         ]);
                     }
 
+                    // ✅ Email admin: Nueva cita registrada (PayPhone/card) - EXISTING appointment
+                    try {
+
+                        // Titles sin Eloquent (ya lo haces arriba)
+                        $serviceTitle = $serviceTitle ?? null;
+                        $categoryTitle = $categoryTitle ?? null;
+
+                        // Profesional (employee -> user)
+                        $professionalName = null;
+                        if (!empty($exists->employee_id)) {
+                            $empRow = DB::table('employees as e')
+                                ->leftJoin('users as u', 'u.id', '=', 'e.user_id')
+                                ->where('e.id', $exists->employee_id)
+                                ->select([
+                                    DB::raw('COALESCE(u.name, e.full_name) as professional_name'),
+                                ])
+                                ->first();
+
+                            $professionalName = $empRow->professional_name ?? null;
+                        }
+
+                        $dateStr = $exists->appointment_date ?? null;
+
+                        $timeStr = $exists->appointment_time ?? null;
+                        $timeShort = $timeStr ? substr((string)$timeStr, 0, 5) : null;
+
+                        $endStr = $exists->appointment_end_time ?? null;
+                        $endShort = $endStr ? substr((string)$endStr, 0, 5) : null;
+
+                        $startsAt = ($dateStr && $timeShort) ? ($dateStr.' '.$timeShort.':00') : null;
+                        $endsAt   = ($dateStr && $endShort)  ? ($dateStr.' '.$endShort.':00')  : null;
+
+                        $mailDataAdmin = [
+                            'booking_id' => $exists->booking_id ?? null,
+
+                            'date' => $dateStr,
+                            'time' => $timeShort,
+                            'starts_at' => $startsAt,
+                            'end_time' => $endShort,
+                            'ends_at' => $endsAt,
+
+                            'mode' => $exists->appointment_mode ?? 'presencial',
+                            'patient_timezone' => $exists->patient_timezone ?? null,
+
+                            'area' => $categoryTitle,
+                            'service' => $serviceTitle,
+                            'professional' => $professionalName,
+
+                            'patient_full_name' => $exists->patient_full_name ?? null,
+                            'patient_email' => $exists->patient_email ?? null,
+                            'patient_phone' => $exists->patient_phone ?? null,
+
+                            'payment_method' => $exists->payment_method ?? 'card',
+                            'payment_status' => $exists->payment_status ?? 'paid',
+                            'amount' => $exists->amount ?? null,
+                        ];
+
+                        // ✅ Admin fijo: Users ID = 1
+                        $adminEmail = trim((string) (User::find(1)->email ?? ''));
+
+                        Log::info('[PayPhone] ADMIN NEW BOOKING MAIL (existing) - admin email resolved', [
+                            'admin_user_id' => 1,
+                            'admin_email' => $adminEmail,
+                            'booking_id' => $exists->booking_id ?? null,
+                        ]);
+
+                        if ($adminEmail !== '') {
+
+                            // ✅ MISMA lógica que AppointmentController.php
+                            $maxAttempts = 3;         // 1 intento + 2 reintentos
+                            $delaysSec = [5, 15, 30]; // espera progresiva
+
+                            for ($i = 0; $i < $maxAttempts; $i++) {
+                                try {
+
+                                    if ($i > 0) {
+                                        $sleep = $delaysSec[$i] ?? 30;
+                                        sleep($sleep);
+                                    } else {
+                                        usleep(500000); // 0.5s
+                                    }
+
+                                    Mail::to($adminEmail)->send(new AppointmentAdminNewBookingMail($mailDataAdmin));
+
+                                    Log::info('[PayPhone] ADMIN NEW BOOKING MAIL (existing): sent OK', [
+                                        'to' => $adminEmail,
+                                        'attempt' => $i + 1,
+                                        'booking_id' => $exists->booking_id ?? null,
+                                    ]);
+
+                                    break;
+
+                                } catch (\Throwable $e) {
+
+                                    $msg = $e->getMessage();
+
+                                    Log::warning('[PayPhone] ADMIN NEW BOOKING MAIL (existing): attempt failed', [
+                                        'to' => $adminEmail,
+                                        'attempt' => $i + 1,
+                                        'error' => $msg,
+                                        'booking_id' => $exists->booking_id ?? null,
+                                    ]);
+
+                                    if ($i === $maxAttempts - 1) {
+                                        throw $e;
+                                    }
+
+                                    if (stripos($msg, 'Too many emails per second') === false && stripos($msg, '550 5.7.0') === false) {
+                                        throw $e;
+                                    }
+                                }
+                            }
+
+                        } else {
+                            Log::warning('[PayPhone] ADMIN NEW BOOKING MAIL (existing): skipped (admin email empty)', [
+                                'admin_user_id' => 1,
+                                'booking_id' => $exists->booking_id ?? null,
+                            ]);
+                        }
+
+                    } catch (\Throwable $e) {
+                        Log::error('[PayPhone] ADMIN NEW BOOKING MAIL FAILED (existing)', [
+                            'booking_id' => $exists->booking_id ?? null,
+                            'error' => $e->getMessage(),
+                            'trace' => substr($e->getTraceAsString(), 0, 2000),
+                        ]);
+                    }
+
                     return response()->json([
                         'ok' => true,
                         'redirect_url' => url('/?paid=1&booking_id=' . urlencode((string)($exists->booking_id ?? ''))),
@@ -481,6 +611,155 @@
                     Log::error('[PayPhone] registered mail FAILED', [
                         'booking_id' => $bookingId,
                         'error' => $e->getMessage(),
+                    ]);
+                }
+
+                // ✅ Email admin: Nueva cita registrada (PayPhone/card) - no tumbar flujo si falla
+                try {
+
+                    // Reusar titles (si ya los calculaste arriba para el correo del paciente)
+                    // Si NO existen en tu scope en este punto, vuelve a calcularlos aquí.
+                    $serviceTitle = $serviceTitle ?? null;
+                    $categoryTitle = $categoryTitle ?? null;
+
+                    if ($serviceTitle === null || $categoryTitle === null) {
+                        if (!empty($hold->service_id)) {
+                            $row = DB::table('services as s')
+                                ->leftJoin('categories as c', 'c.id', '=', 's.category_id')
+                                ->where('s.id', $hold->service_id)
+                                ->select(['s.title as service_title', 'c.title as category_title'])
+                                ->first();
+
+                            $serviceTitle = $row->service_title ?? null;
+                            $categoryTitle = $row->category_title ?? null;
+                        }
+                    }
+
+                    // Profesional (employee -> user)
+                    $professionalName = null;
+                    if (!empty($hold->employee_id)) {
+                        $empRow = DB::table('employees as e')
+                            ->leftJoin('users as u', 'u.id', '=', 'e.user_id')
+                            ->where('e.id', $hold->employee_id)
+                            ->select([
+                                DB::raw('COALESCE(u.name, e.full_name) as professional_name'),
+                            ])
+                            ->first();
+
+                        $professionalName = $empRow->professional_name ?? null;
+                    }
+
+                    $dateStr = $hold->appointment_date ?? null;
+
+                    $timeStr = $hold->appointment_time ?? null;
+                    $timeShort = $timeStr ? substr((string)$timeStr, 0, 5) : null;
+
+                    $endStr = $hold->appointment_end_time ?? null;
+                    $endShort = $endStr ? substr((string)$endStr, 0, 5) : null;
+
+                    $startsAt = ($dateStr && $timeShort) ? ($dateStr.' '.$timeShort.':00') : null;
+                    $endsAt   = ($dateStr && $endShort)  ? ($dateStr.' '.$endShort.':00')  : null;
+
+                    $mailDataAdmin = [
+                        'booking_id' => $bookingId,
+
+                        'date' => $dateStr,
+                        'time' => $timeShort,
+                        'starts_at' => $startsAt,
+                        'end_time' => $endShort,
+                        'ends_at' => $endsAt,
+
+                        'mode' => $payload['appointment_mode'] ?? 'presencial',
+                        'patient_timezone' => $payload['patient_timezone'] ?? null,
+
+                        'area' => $categoryTitle,
+                        'service' => $serviceTitle,
+                        'professional' => $professionalName,
+
+                        'patient_full_name' => $payload['patient_full_name'] ?? null,
+                        'patient_email' => $payload['patient_email'] ?? null,
+                        'patient_phone' => $payload['patient_phone'] ?? null,
+
+                        'payment_method' => 'card',
+                        'payment_status' => 'paid',
+                        'amount' => $attempt->amount ?? null,
+                    ];
+
+                    // ✅ Admin fijo: Users ID = 1
+                    $adminEmail = trim((string) (User::find(1)->email ?? ''));
+
+                    Log::info('[PayPhone] ADMIN NEW BOOKING MAIL - admin email resolved', [
+                        'admin_user_id' => 1,
+                        'admin_email' => $adminEmail,
+                        'booking_id' => $bookingId,
+                    ]);
+
+                    if ($adminEmail !== '') {
+
+                        // ✅ Delay / retry para Mailtrap free (evita rate limit)
+                        // Si quieres 1 minuto exacto, cambia $initialDelaySec = 60;
+                        usleep(500000); // 0.5s
+
+                        if ($initialDelaySec > 0) {
+                            sleep($initialDelaySec);
+                        }
+
+                        $maxAttempts = 3;         // 1 intento + 2 reintentos
+                        $delaysSec = [5, 15, 30]; // backoff
+
+                        for ($i = 0; $i < $maxAttempts; $i++) {
+                            try {
+
+                                if ($i > 0) {
+                                    $sleep = $delaysSec[$i] ?? 30;
+                                    sleep($sleep);
+                                }
+
+                                Mail::to($adminEmail)->send(new AppointmentAdminNewBookingMail($mailDataAdmin));
+
+                                Log::info('[PayPhone] ADMIN NEW BOOKING MAIL: sent OK', [
+                                    'to' => $adminEmail,
+                                    'attempt' => $i + 1,
+                                    'booking_id' => $bookingId,
+                                ]);
+
+                                break;
+
+                            } catch (\Throwable $e) {
+
+                                $msg = $e->getMessage();
+
+                                Log::warning('[PayPhone] ADMIN NEW BOOKING MAIL: attempt failed', [
+                                    'to' => $adminEmail,
+                                    'attempt' => $i + 1,
+                                    'error' => $msg,
+                                    'booking_id' => $bookingId,
+                                ]);
+
+                                // último intento -> lanzar para que lo capture el catch externo
+                                if ($i === $maxAttempts - 1) {
+                                    throw $e;
+                                }
+
+                                // si NO es rate limit, no reintentar
+                                if (stripos($msg, 'Too many emails per second') === false && stripos($msg, '550 5.7.0') === false) {
+                                    throw $e;
+                                }
+                            }
+                        }
+
+                    } else {
+                        Log::warning('[PayPhone] ADMIN NEW BOOKING MAIL: skipped (admin email empty)', [
+                            'admin_user_id' => 1,
+                            'booking_id' => $bookingId,
+                        ]);
+                    }
+
+                } catch (\Throwable $e) {
+                    Log::error('[PayPhone] ADMIN NEW BOOKING MAIL FAILED', [
+                        'booking_id' => $bookingId,
+                        'error' => $e->getMessage(),
+                        'trace' => substr($e->getTraceAsString(), 0, 2000),
                     ]);
                 }
 

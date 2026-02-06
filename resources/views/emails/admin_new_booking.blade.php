@@ -209,26 +209,23 @@ use Carbon\Carbon;
               </table>
 
               <!-- Pago -->
-              <div style="margin-top:16px;font-size:14px;line-height:20px;color:#111827;font-weight:700;">
+                <div style="margin-top:16px;font-size:14px;line-height:20px;color:#111827;font-weight:700;">
                 Pago
-              </div>
+                </div>
 
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
-                     style="margin-top:10px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                    style="margin-top:10px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;">
                 <tr>
-                  <td style="padding:14px 16px;">
+                    <td style="padding:14px 16px;">
                     <div style="font-size:14px;line-height:20px;color:#111827;">
-                      <strong>Método:</strong> {{ $pmLabel }}
+                        <strong>Método:</strong> {{ $pmLabel }}
                     </div>
-                    <div style="margin-top:6px;font-size:14px;line-height:20px;color:#111827;">
-                      <strong>Monto:</strong> {{ $amountTxt }}
+                    <div style="margin-top:6px;font-size:13px;line-height:18px;color:#6b7280;">
+                        El estado y los detalles del pago pueden revisarse desde el panel administrativo.
                     </div>
-                    <div style="margin-top:6px;font-size:14px;line-height:20px;color:#111827;">
-                      <strong>Estado del pago:</strong> {{ $psLabel }}
-                    </div>
-                  </td>
+                    </td>
                 </tr>
-              </table>
+                </table>
 
               <div style="margin-top:18px;font-size:14px;line-height:20px;color:#111827;">
                 Puedes ubicarla rápidamente en el panel usando el <strong>código de reserva</strong>.
