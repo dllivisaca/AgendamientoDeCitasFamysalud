@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\AppointmentRegisteredMail;
 use App\Mail\AppointmentConfirmedMail;
 use App\Mail\AppointmentCancelledMail;
+use App\Mail\AppointmentRescheduledMail;
 
 class AppointmentController extends Controller
 {
@@ -789,6 +790,56 @@ class AppointmentController extends Controller
                     ->where('expires_at', '>', now())
                     ->delete();
             });
+
+            // 📧 Email: Reagendamiento (solo si fue REAL) — no tumbar el proceso si falla
+            if ($isRescheduleNow) {
+
+                $email = trim((string) ($appointment->patient_email ?? ''));
+
+                if ($email !== '') {
+                    try {
+
+                        $appointment->loadMissing(['service.category']);
+
+                        // BEFORE (old)
+                        $beforeDate = $oldDate ?? null;
+                        $beforeTime = !empty($oldTime) ? substr((string) $oldTime, 0, 5) : null;
+                        $beforeEnd  = !empty($oldEnd)  ? substr((string) $oldEnd, 0, 5)  : null;
+
+                        // AFTER (new)
+                        $afterDate = $newDate ?? null;
+                        $afterTime = !empty($newTime) ? substr((string) $newTime, 0, 5) : null;
+                        $afterEnd  = !empty($newEnd)  ? substr((string) $newEnd, 0, 5)  : null;
+
+                        $mailData = [
+                            // “Antes”
+                            'before_date' => $beforeDate,
+                            'before_time' => $beforeTime,
+                            'before_end_time' => $beforeEnd,
+
+                            // “Después”
+                            'after_date' => $afterDate,
+                            'after_time' => $afterTime,
+                            'after_end_time' => $afterEnd,
+
+                            // Comunes
+                            'mode' => $appointment->appointment_mode ?? null, // presencial | virtual
+                            'patient_timezone' => $appointment->patient_timezone ?? null,
+                            'service' => $appointment->service->title ?? null,
+                            'area' => $appointment->service->category->title ?? null,
+                        ];
+
+                        Mail::to($email)->send(new AppointmentRescheduledMail($mailData));
+
+                    } catch (\Throwable $e) {
+                        logger()->error('RESCHEDULE MAIL FAILED', [
+                            'appointment_id' => $appointment->id ?? null,
+                            'email' => $email,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+                }
+            }
         }
 
         // ✅ Guardar datos del paciente SOLO si vienen en el request
