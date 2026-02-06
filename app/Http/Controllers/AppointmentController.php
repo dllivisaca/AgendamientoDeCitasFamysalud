@@ -17,6 +17,8 @@ use App\Mail\AppointmentRegisteredMail;
 use App\Mail\AppointmentConfirmedMail;
 use App\Mail\AppointmentCancelledMail;
 use App\Mail\AppointmentRescheduledMail;
+use App\Mail\AppointmentAdminNewBookingMail;
+use App\Models\User;
 
 class AppointmentController extends Controller
 {
@@ -383,6 +385,83 @@ class AppointmentController extends Controller
                     'appointment_id' => $appointment->id ?? null,
                     'error' => $e->getMessage(),
                     'trace' => substr($e->getTraceAsString(), 0, 2000),
+                ]);
+            }
+        }
+
+        // ✅ Email admin: Nueva cita registrada (SOLO paciente agenda online)
+        if (!$isPrivilegedRole) {
+
+            try {
+                $appointment->loadMissing(['service.category', 'employee.user']);
+
+                $dateStr = $appointment->appointment_date ?? null;
+
+                $timeShort = $appointment->appointment_time
+                    ? substr((string) $appointment->appointment_time, 0, 5)
+                    : null;
+
+                $endShort = $appointment->appointment_end_time
+                    ? substr((string) $appointment->appointment_end_time, 0, 5)
+                    : null;
+
+                $startsAt = ($dateStr && $timeShort) ? ($dateStr . ' ' . $timeShort . ':00') : null;
+                $endsAt   = ($dateStr && $endStr = $endShort) ? ($dateStr . ' ' . $endStr . ':00') : null;
+
+                $mailDataAdmin = [
+                    'booking_id' => $appointment->booking_id ?? null,
+
+                    'date' => $dateStr,
+                    'time' => $timeShort,
+                    'starts_at' => $startsAt,
+                    'end_time' => $endShort,
+                    'ends_at' => $endsAt,
+
+                    'mode' => $appointment->appointment_mode ?? null,
+                    'patient_timezone' => $appointment->patient_timezone ?? null,
+
+                    'area' => $appointment->service->category->title ?? null,
+                    'service' => $appointment->service->title ?? null,
+                    'professional' => $appointment->employee->user->name
+                        ?? $appointment->employee->full_name
+                        ?? null,
+
+                    'patient_full_name' => $appointment->patient_full_name ?? null,
+                    'patient_email' => $appointment->patient_email ?? null,
+                    'patient_phone' => $appointment->patient_phone ?? null,
+
+                    'payment_method' => $appointment->payment_method ?? null,
+                    'payment_status' => $appointment->payment_status ?? null,
+                    'amount' => $appointment->amount ?? null,
+                ];
+
+                // ✅ Enviar a TODOS los admins (Spatie)
+                $adminEmails = User::role('admin')
+                    ->pluck('email')
+                    ->filter(fn($e) => is_string($e) && trim($e) !== '')
+                    ->values()
+                    ->all();
+
+                logger()->info('ADMIN NEW BOOKING MAIL - adminEmails resolved', [
+                    'count' => count($adminEmails),
+                    'emails' => $adminEmails,
+                ]);
+
+                if (!empty($adminEmails)) {
+                    $to = array_shift($adminEmails);
+                    $m = Mail::to($to);
+
+                    if (!empty($adminEmails)) {
+                        $m->cc($adminEmails);
+                    }
+
+                    $m->send(new AppointmentAdminNewBookingMail($mailDataAdmin));
+                }
+
+            } catch (\Throwable $e) {
+                logger()->error('ADMIN NEW BOOKING MAIL FAILED', [
+                    'appointment_id' => $appointment->id ?? null,
+                    'error' => $e->getMessage(),
                 ]);
             }
         }
