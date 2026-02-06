@@ -12,10 +12,9 @@ use App\Events\StatusUpdated;
 use Illuminate\Support\Facades\Storage; 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Notification;
-use App\Notifications\PatientNotificationAppointmentConfirmed;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\AppointmentRegisteredMail;
+use App\Mail\AppointmentConfirmedMail;
 
 class AppointmentController extends Controller
 {
@@ -1339,8 +1338,44 @@ class AppointmentController extends Controller
             $email = trim((string) ($appointment->patient_email ?? ''));
             if ($email !== '') {
                 try {
-                    Notification::route('mail', $email)
-                        ->notify(new PatientNotificationAppointmentConfirmed($appointment));
+
+                    // ✅ Asegurar relaciones (service -> category) para "Área" y "Servicio"
+                    $appointment->loadMissing(['service.category']);
+
+                    $dateStr = $appointment->appointment_date ?? null;
+
+                    // HH:MM
+                    $timeStr = $appointment->appointment_time ?? null;
+                    $timeShort = $timeStr ? substr((string) $timeStr, 0, 5) : null;
+
+                    // HH:MM
+                    $endStr = $appointment->appointment_end_time ?? null;
+                    $endShort = $endStr ? substr((string) $endStr, 0, 5) : null;
+
+                    // Datetimes base interpretados como Ecuador (la vista convierte a TZ paciente si aplica)
+                    $startsAt = ($dateStr && $timeShort) ? ($dateStr . ' ' . $timeShort . ':00') : null;
+                    $endsAt   = ($dateStr && $endShort)  ? ($dateStr . ' ' . $endShort . ':00')  : null;
+
+                    $serviceTitle  = $appointment->service->title ?? null;
+                    $categoryTitle = $appointment->service->category->title ?? null;
+
+                    $mailData = [
+                        'date' => $dateStr,
+                        'time' => $timeShort,
+                        'starts_at' => $startsAt,
+                        'end_time' => $endShort,
+                        'ends_at' => $endsAt,
+
+                        'mode' => $appointment->appointment_mode ?? null, // presencial | virtual
+                        'patient_timezone' => $appointment->patient_timezone ?? null,
+
+                        'service' => $serviceTitle,
+                        'area' => $categoryTitle,
+                    ];
+
+                    // ✅ NUEVO: correo de confirmación (mismo formato/lógica que registro)
+                    Mail::to($email)->send(new AppointmentConfirmedMail($mailData));
+
                 } catch (\Throwable $e) {
                     logger()->error('CONFIRM: email notification failed', [
                         'appointment_id' => $appointment->id,
