@@ -7,6 +7,8 @@
     use Illuminate\Support\Facades\DB;
     use Illuminate\Support\Facades\Http;
     use Illuminate\Support\Facades\Log;
+    use Illuminate\Support\Facades\Mail;
+    use App\Mail\AppointmentRegisteredMail;
 
     class PayphoneController extends Controller
     {
@@ -226,6 +228,66 @@
                 if ($exists) {
                     DB::table('appointment_holds')->where('id', $attempt->appointment_hold_id)->delete();
 
+                    // ✅ Email: Registro de cita (PayPhone) - idempotente (no tumba flujo si falla)
+                    try {
+                        $toEmail = trim((string) ($exists->patient_email ?? ''));
+                        if ($toEmail !== '') {
+
+                            // Si tienes columna tipo "registered_mail_sent_at" mejor; si no, enviamos siempre.
+                            // Para evitar doble envío sin columna, puedes omitir esta parte.
+
+                            // Obtener titles (service/category) sin Eloquent:
+                            $serviceTitle = null;
+                            $categoryTitle = null;
+
+                            if (!empty($exists->service_id)) {
+                                $row = DB::table('services as s')
+                                    ->leftJoin('categories as c', 'c.id', '=', 's.category_id')
+                                    ->where('s.id', $exists->service_id)
+                                    ->select(['s.title as service_title', 'c.title as category_title'])
+                                    ->first();
+
+                                $serviceTitle = $row->service_title ?? null;
+                                $categoryTitle = $row->category_title ?? null;
+                            }
+
+                            $dateStr = $exists->appointment_date ?? null;
+
+                            $timeStr = $exists->appointment_time ?? null;
+                            $timeShort = $timeStr ? substr((string)$timeStr, 0, 5) : null;
+
+                            $endStr = $exists->appointment_end_time ?? null;
+                            $endShort = $endStr ? substr((string)$endStr, 0, 5) : null;
+
+                            $startsAt = ($dateStr && $timeShort) ? ($dateStr.' '.$timeShort.':00') : null;
+                            $endsAt   = ($dateStr && $endShort)  ? ($dateStr.' '.$endShort.':00')  : null;
+
+                            $mailData = [
+                                'date' => $dateStr,
+                                'time' => $timeShort,
+                                'starts_at' => $startsAt,
+                                'end_time' => $endShort,
+                                'ends_at' => $endsAt,
+                                'mode' => $exists->appointment_mode ?? null,
+                                'patient_timezone' => $exists->patient_timezone ?? null,
+                                'service' => $serviceTitle,
+                                'area' => $categoryTitle,
+                            ];
+
+                            Mail::to($toEmail)->send(new AppointmentRegisteredMail($mailData));
+
+                            Log::info('[PayPhone] registered mail sent (existing appointment)', [
+                                'booking_id' => $exists->booking_id ?? null,
+                                'to' => $toEmail,
+                            ]);
+                        }
+                    } catch (\Throwable $e) {
+                        Log::error('[PayPhone] registered mail FAILED (existing appointment)', [
+                            'booking_id' => $exists->booking_id ?? null,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+
                     return response()->json([
                         'ok' => true,
                         'redirect_url' => url('/?paid=1&booking_id=' . urlencode((string)($exists->booking_id ?? ''))),
@@ -360,6 +422,67 @@
                 ]);
 
                 DB::table('appointment_holds')->where('id', $hold->id)->delete();
+
+                // ✅ Email: Registro de cita (PayPhone) - no tumbar flujo si falla
+                try {
+                    $toEmail = trim((string) ($payload['patient_email'] ?? ''));
+                    if ($toEmail !== '') {
+
+                        // Obtener titles (service/category) sin Eloquent:
+                        $serviceTitle = null;
+                        $categoryTitle = null;
+
+                        if (!empty($hold->service_id)) {
+                            $row = DB::table('services as s')
+                                ->leftJoin('categories as c', 'c.id', '=', 's.category_id')
+                                ->where('s.id', $hold->service_id)
+                                ->select(['s.title as service_title', 'c.title as category_title'])
+                                ->first();
+
+                            $serviceTitle = $row->service_title ?? null;
+                            $categoryTitle = $row->category_title ?? null;
+                        }
+
+                        $dateStr = $hold->appointment_date ?? null;
+
+                        $timeStr = $hold->appointment_time ?? null;
+                        $timeShort = $timeStr ? substr((string)$timeStr, 0, 5) : null;
+
+                        $endStr = $hold->appointment_end_time ?? null;
+                        $endShort = $endStr ? substr((string)$endStr, 0, 5) : null;
+
+                        $startsAt = ($dateStr && $timeShort) ? ($dateStr.' '.$timeShort.':00') : null;
+                        $endsAt   = ($dateStr && $endShort)  ? ($dateStr.' '.$endShort.':00')  : null;
+
+                        $mailData = [
+                            'date' => $dateStr,
+                            'time' => $timeShort,
+                            'starts_at' => $startsAt,
+                            'end_time' => $endShort,
+                            'ends_at' => $endsAt,
+                            'mode' => $payload['appointment_mode'] ?? 'presencial',
+                            'patient_timezone' => $payload['patient_timezone'] ?? null,
+                            'service' => $serviceTitle,
+                            'area' => $categoryTitle,
+                        ];
+
+                        Mail::to($toEmail)->send(new AppointmentRegisteredMail($mailData));
+
+                        Log::info('[PayPhone] registered mail sent', [
+                            'booking_id' => $bookingId,
+                            'to' => $toEmail,
+                        ]);
+                    } else {
+                        Log::warning('[PayPhone] registered mail skipped (empty email)', [
+                            'booking_id' => $bookingId,
+                        ]);
+                    }
+                } catch (\Throwable $e) {
+                    Log::error('[PayPhone] registered mail FAILED', [
+                        'booking_id' => $bookingId,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
 
                 return response()->json([
                     'ok' => true,
