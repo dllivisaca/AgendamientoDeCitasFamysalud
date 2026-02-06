@@ -227,4 +227,85 @@ class AppointmentReminderController extends Controller
             ],
         ]);
     }
+
+    public function ui($appointmentId)
+    {
+        // Construye UI para 3H y 24H con el mismo patrón de encuesta:
+        // - Si MANUAL sent => ocultar
+        // - Si AUTO sent => "Reenviar"
+        // - Si AUTO failed => "Reintento manual"
+        // - Si nada => "Enviar ahora"
+        //
+        // Nota: la validación de "ventana" (24→20 y 3→1) ya la maneja tu JS por tiempo,
+        // aquí solo devolvemos texto/hint y el estado de envíos.
+
+        $kinds = [
+            'MANUAL_3H'  => ['AUTO' => 'AUTO_3H',  'label' => '3H'],
+            'MANUAL_24H' => ['AUTO' => 'AUTO_24H', 'label' => '24H'],
+        ];
+
+        $out = [];
+
+        foreach ($kinds as $manualKind => $meta) {
+            $autoKind = $meta['AUTO'];
+            $label    = $meta['label'];
+
+            $auto = DB::table('appointment_reminder_logs')
+                ->where('appointment_id', $appointmentId)
+                ->where('reminder_kind', $autoKind)
+                ->orderByDesc('id')
+                ->first();
+
+            $manual = DB::table('appointment_reminder_logs')
+                ->where('appointment_id', $appointmentId)
+                ->where('reminder_kind', $manualKind)
+                ->orderByDesc('id')
+                ->first();
+
+            // Caso 4/5: si manual fue enviado => ocultar botón (límite alcanzado)
+            if ($manual && strtoupper((string)($manual->status ?? '')) === 'SENT') {
+                $out[$manualKind] = [
+                    'show' => false,
+                    'text' => '',
+                    'hint' => '',
+                ];
+                continue;
+            }
+
+            $autoStatus = strtoupper((string)($auto->status ?? ''));
+
+            // Caso 2: auto sent y manual no usado
+            if ($autoStatus === 'SENT') {
+                $out[$manualKind] = [
+                    'show' => true,
+                    'text' => "Reenviar recordatorio {$label}",
+                    'hint' => 'Máximo un reenvío manual permitido.',
+                ];
+                continue;
+            }
+
+            // Caso 3: auto failed y manual no usado
+            if ($autoStatus === 'FAILED') {
+                $out[$manualKind] = [
+                    'show' => true,
+                    'text' => "Enviar recordatorio {$label} (reintento manual)",
+                    'hint' => 'El envío automático falló.',
+                ];
+                continue;
+            }
+
+            // Caso 1: nada enviado aún (o auto queued / no existe)
+            $out[$manualKind] = [
+                'show' => true,
+                'text' => "Enviar recordatorio {$label} ahora",
+                'hint' => 'Este recordatorio está dentro de su ventana de envío.',
+            ];
+        }
+
+        // Devolver en formato cómodo para el JS
+        return response()->json([
+            'MANUAL_3H'  => $out['MANUAL_3H'],
+            'MANUAL_24H' => $out['MANUAL_24H'],
+        ]);
+    }
 }

@@ -38,6 +38,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/appointments/{appointment}/reminders/manual/status', [AppointmentReminderController::class, 'manualStatus'])
     ->name('appointments.reminders.manual.status');
 
+    Route::get('/appointments/{appointment}/reminders-ui', [AppointmentReminderController::class, 'ui'])
+    ->middleware('permission:appointments.view')
+    ->name('appointments.reminders.ui');
+
     // ================================
     // ENCUESTA (NUEVAS RUTAS - MODAL)
     // ================================

@@ -120,11 +120,23 @@
                                     </button>
 
                                     <button type="button" class="dropdown-item d-none" id="btnSendReminder3h">
-                                        <i class="fas fa-bell mr-2"></i>Enviar recordatorio (3h)
+                                        <div class="d-flex flex-column">
+                                            <span>
+                                            <i class="fas fa-bell mr-2"></i>
+                                            <span id="reminder3hActionText">Enviar recordatorio 3H</span>
+                                            </span>
+                                            <small id="reminder3hActionHint" class="text-muted font-italic"></small>
+                                        </div>
                                     </button>
 
                                     <button type="button" class="dropdown-item d-none" id="btnSendReminder24h">
-                                        <i class="fas fa-bell mr-2"></i>Enviar recordatorio (24h)
+                                        <div class="d-flex flex-column">
+                                            <span>
+                                            <i class="fas fa-bell mr-2"></i>
+                                            <span id="reminder24hActionText">Enviar recordatorio 24H</span>
+                                            </span>
+                                            <small id="reminder24hActionHint" class="text-muted font-italic"></small>
+                                        </div>
                                     </button>
                                 </div>
                             </div>
@@ -5777,6 +5789,52 @@
             $('#btnSendReminder24h').toggleClass('d-none', !shouldShow);
         }
 
+        async function __toggleReminderActionsTextByStatus(apptId) {
+            // Defaults (por si falla el fetch)
+            $('#reminder3hActionText').text('Enviar recordatorio 3H ahora');
+            $('#reminder3hActionHint').text('Este recordatorio está dentro de su ventana de envío.');
+            $('#reminder24hActionText').text('Enviar recordatorio 24H ahora');
+            $('#reminder24hActionHint').text('Este recordatorio está dentro de su ventana de envío.');
+
+            if (!apptId) return;
+
+            try {
+                const res = await fetch(`/appointments/${apptId}/reminders-ui`, {
+                method: 'GET',
+                headers: { 'Accept': 'application/json' }
+                });
+
+                const data = await res.json().catch(() => null);
+                if (!res.ok || !data) return;
+
+                // Esperado:
+                // data.MANUAL_3H = { show, text, hint }
+                // data.MANUAL_24H = { show, text, hint }
+
+                if (data.MANUAL_3H) {
+                $('#reminder3hActionText').text(data.MANUAL_3H.text || 'Enviar recordatorio 3H ahora');
+                $('#reminder3hActionHint').text(data.MANUAL_3H.hint || '');
+
+                // Si backend dice show:false, ocultar sí o sí
+                if (data.MANUAL_3H.show === false) {
+                    $('#btnSendReminder3h').addClass('d-none');
+                }
+                }
+
+                if (data.MANUAL_24H) {
+                $('#reminder24hActionText').text(data.MANUAL_24H.text || 'Enviar recordatorio 24H ahora');
+                $('#reminder24hActionHint').text(data.MANUAL_24H.hint || '');
+
+                if (data.MANUAL_24H.show === false) {
+                    $('#btnSendReminder24h').addClass('d-none');
+                }
+                }
+
+            } catch (e) {
+                console.warn('reminders-ui failed', e);
+            }
+        }
+
         async function __toggleSurveyAction($btn) {
             const $action = $('#btnEnviarEncuesta');
             if (!$action.length) return;
@@ -5815,12 +5873,56 @@
             }
         }
 
+        async function __toggleReminderActionUI(apptId) {
+            // Defaults
+            $('#reminder3hActionText').text('Enviar recordatorio 3H');
+            $('#reminder3hActionHint').text('');
+            $('#reminder24hActionText').text('Enviar recordatorio 24H');
+            $('#reminder24hActionHint').text('');
+
+            if (!apptId) return;
+
+            try {
+                const res = await fetch(`/appointments/${apptId}/reminders-ui`, {
+                method: 'GET',
+                headers: { 'Accept': 'application/json' }
+                });
+
+                const data = await res.json().catch(() => null);
+                if (!res.ok || !data) return;
+
+                // data = { MANUAL_3H: {show,text,hint}, MANUAL_24H: {show,text,hint} }
+
+                if (data.MANUAL_3H) {
+                $('#reminder3hActionText').text(data.MANUAL_3H.text || 'Enviar recordatorio 3H');
+                $('#reminder3hActionHint').text(data.MANUAL_3H.hint || '');
+                // OJO: show/hide final lo decide la ventana de tiempo también (ya la tienes),
+                // pero si backend dice show:false, lo ocultamos sí o sí.
+                if (data.MANUAL_3H.show === false) $('#btnSendReminder3h').addClass('d-none');
+                }
+
+                if (data.MANUAL_24H) {
+                $('#reminder24hActionText').text(data.MANUAL_24H.text || 'Enviar recordatorio 24H');
+                $('#reminder24hActionHint').text(data.MANUAL_24H.hint || '');
+                if (data.MANUAL_24H.show === false) $('#btnSendReminder24h').addClass('d-none');
+                }
+
+            } catch (e) {
+                console.warn('reminders-ui failed', e);
+            }
+        }
+
         // Al abrir modal: siempre volver a solo lectura
         $(document).on('click', '.view-appointment-btn', function() {
             __exitEditModeUI();
-            __toggleReminder3hActionByTime($(this)); // ✅ NUEVO: mostrar/ocultar acción 3h
-            __toggleReminder24hActionByTime($(this));
-            __toggleSurveyAction($(this));           // ✅ NUEVO: encuesta
+
+            __toggleReminder3hActionByTime($(this)); // ventana 3h->1h
+            __toggleReminder24hActionByTime($(this)); // ventana 24h->20h
+
+            const apptId = String($(this).attr('data-id') || '').trim();
+            __toggleReminderActionsTextByStatus(apptId);
+
+            __toggleSurveyAction($(this)); // encuesta
         });
 
         // Al cerrar modal: resetear
@@ -6702,7 +6804,8 @@
                 if (!res.ok) {
                     // ✅ Si ya fue enviado (409), ocultar botón y NO mostrar alert
                     if (res.status === 409) {
-                        $('#btnSendReminder3h').addClass('d-none');
+                        await __toggleReminderActionsTextByStatus(apptId);
+                        // El backend ya dirá show:false => se oculta solo
                         return;
                     }
 
@@ -6711,7 +6814,8 @@
                 }
 
                 alert(data?.message || 'Recordatorio enviado.');
-                $('#btnSendReminder3h').addClass('d-none');
+                await __toggleReminderActionsTextByStatus(apptId);
+                // (Si el manual quedó SENT, el endpoint devolverá show:false y se ocultará)
             } catch (e) {
                 console.error(e);
                 alert('Error de red enviando recordatorio.');
@@ -6747,7 +6851,7 @@
                 if (!res.ok) {
                 // ✅ Si ya fue enviado, ocultar (igual que 3h)
                 if (res.status === 409) {
-                    $('#btnSendReminder24h').addClass('d-none');
+                    await __toggleReminderActionsTextByStatus(apptId);
                     return;
                 }
 
@@ -6756,7 +6860,7 @@
                 }
 
                 alert(data?.message || 'Recordatorio enviado.');
-                $('#btnSendReminder24h').addClass('d-none');
+                await __toggleReminderActionsTextByStatus(apptId);
             } catch (e) {
                 console.error(e);
                 alert('Error de red enviando recordatorio.');
