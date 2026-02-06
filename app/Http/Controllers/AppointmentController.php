@@ -15,6 +15,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\AppointmentRegisteredMail;
 use App\Mail\AppointmentConfirmedMail;
+use App\Mail\AppointmentCancelledMail;
 
 class AppointmentController extends Controller
 {
@@ -1482,6 +1483,56 @@ class AppointmentController extends Controller
                 ->where('appointment_time', $appointment->appointment_time)
                 ->where('appointment_end_time', $appointment->appointment_end_time)
                 ->delete();
+
+            // 📧 Email: Cita cancelada (admin) — no tumbar cancelación si falla
+            $email = trim((string) ($appointment->patient_email ?? ''));
+
+            if ($email !== '') {
+                try {
+
+                    // Cargar relaciones para Área/Servicio
+                    $appointment->loadMissing(['service.category']);
+
+                    $dateStr = $appointment->appointment_date ?? null;
+
+                    // HH:MM
+                    $timeShort = $appointment->appointment_time
+                        ? substr((string) $appointment->appointment_time, 0, 5)
+                        : null;
+
+                    // HH:MM
+                    $endShort = $appointment->appointment_end_time
+                        ? substr((string) $appointment->appointment_end_time, 0, 5)
+                        : null;
+
+                    // Datetimes base interpretados como Ecuador (la vista convierte a TZ paciente si aplica)
+                    $startsAt = ($dateStr && $timeShort) ? ($dateStr . ' ' . $timeShort . ':00') : null;
+                    $endsAt   = ($dateStr && $endShort)  ? ($dateStr . ' ' . $endShort . ':00')  : null;
+
+                    $mailData = [
+                        'date' => $dateStr,
+                        'time' => $timeShort,
+                        'starts_at' => $startsAt,
+                        'end_time' => $endShort,
+                        'ends_at' => $endsAt,
+
+                        'mode' => $appointment->appointment_mode ?? null, // presencial | virtual
+                        'patient_timezone' => $appointment->patient_timezone ?? null,
+
+                        'service' => $appointment->service->title ?? null,
+                        'area' => $appointment->service->category->title ?? null,
+                    ];
+
+                    Mail::to($email)->send(new AppointmentCancelledMail($mailData));
+
+                } catch (\Throwable $e) {
+                    logger()->error('CANCEL MAIL FAILED', [
+                        'appointment_id' => $appointment->id ?? null,
+                        'email' => $email,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
 
             // 4) Mantener coherencia con el sistema
             event(new StatusUpdated($appointment));
