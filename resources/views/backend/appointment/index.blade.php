@@ -122,6 +122,10 @@
                                     <button type="button" class="dropdown-item d-none" id="btnSendReminder3h">
                                         <i class="fas fa-bell mr-2"></i>Enviar recordatorio (3h)
                                     </button>
+
+                                    <button type="button" class="dropdown-item d-none" id="btnSendReminder24h">
+                                        <i class="fas fa-bell mr-2"></i>Enviar recordatorio (24h)
+                                    </button>
                                 </div>
                             </div>
 
@@ -2460,6 +2464,9 @@
             $('#modalPaymentMethodRaw').val(method);
         };
         $(document).on('click', '.view-appointment-btn', function() {
+            // Reset: se recalcula por ventana + estado
+            $('#btnSendReminder3h').addClass('d-none');
+            $('#btnSendReminder24h').addClass('d-none');
             // ✅ RESET DURO: al abrir, limpia cualquier "draft" viejo (evita glitch de valores fantasma)
             // Limpia hiddens de reagendamiento por defecto (se volverán a setear si la cita está rescheduled)
             $('#rescheduleDateHidden').val('');
@@ -2505,6 +2512,33 @@
             $('#modalTransferValidationTouchedInput').val('0');
             // Set modal fields
             $('#modalAppointmentId').val($(this).data('id'));
+
+            // ================================
+            // Ocultar botones manuales si ya fueron enviados (SENT)
+            // ================================
+            (async function () {
+                try {
+                    const apptId = String($('#modalAppointmentId').val() || '').trim();
+                    if (!apptId) return;
+
+                    const res = await fetch(`/appointments/${apptId}/reminders/manual/status`, {
+                        headers: { 'Accept': 'application/json' }
+                    });
+
+                    const data = await res.json().catch(() => null);
+
+                    if (data?.MANUAL_3H?.status === 'SENT') {
+                        $('#btnSendReminder3h').addClass('d-none');
+                    }
+
+                    if (data?.MANUAL_24H?.status === 'SENT') {
+                        $('#btnSendReminder24h').addClass('d-none');
+                    }
+                } catch (e) {
+                    console.warn('No se pudo verificar estado de recordatorios manuales', e);
+                }
+            })();
+
             // ✅ Código de reserva (booking_id)
             $('#modalBookingCode').text($(this).data('booking-code') || 'N/A');
             $('#modalAppointmentName').text($(this).data('name'));
@@ -5719,6 +5753,30 @@
             $action.toggleClass('d-none', !shouldShow);
         }
 
+        function __toggleReminder24hActionByTime($btn){
+            const date = String($btn.data('date') || '').trim();
+            const start = String($btn.data('startTime') || '').trim();
+            if (!date || !start) { $('#btnSendReminder24h').addClass('d-none'); return; }
+
+            const apptDt = new Date(`${date}T${start}:00`);
+
+            // ✅ Validar que sea "mañana" (usando fechas locales)
+            const today = new Date();
+            const tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+
+            const apptDay = new Date(apptDt.getFullYear(), apptDt.getMonth(), apptDt.getDate());
+            const isTomorrow = apptDay.getTime() === tomorrow.getTime();
+
+            const now = new Date();
+            const diffMs = apptDt.getTime() - now.getTime();
+            const diffHours = diffMs / 36e5;
+
+            // ✅ Ventana: <=24h y >20h
+            const shouldShow = isTomorrow && diffHours <= 24 && diffHours > 20;
+
+            $('#btnSendReminder24h').toggleClass('d-none', !shouldShow);
+        }
+
         async function __toggleSurveyAction($btn) {
             const $action = $('#btnEnviarEncuesta');
             if (!$action.length) return;
@@ -5761,6 +5819,7 @@
         $(document).on('click', '.view-appointment-btn', function() {
             __exitEditModeUI();
             __toggleReminder3hActionByTime($(this)); // ✅ NUEVO: mostrar/ocultar acción 3h
+            __toggleReminder24hActionByTime($(this));
             __toggleSurveyAction($(this));           // ✅ NUEVO: encuesta
         });
 
@@ -6658,6 +6717,51 @@
                 alert('Error de red enviando recordatorio.');
             } finally {
                 $('#btnSendReminder3h').prop('disabled', false);
+            }
+        });
+
+        $(document).on('click', '#btnSendReminder24h', async function () {
+            $('#apptActionsDropdown').dropdown('hide');
+
+            const apptId = String($('#modalAppointmentId').val() || '').trim();
+            if (!apptId) return;
+
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+            try {
+                const $btn = $('#btnSendReminder24h');
+                $btn.prop('disabled', true);
+
+                const res = await fetch(`/appointments/${apptId}/reminders/manual`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'X-CSRF-TOKEN': token } : {})
+                },
+                body: JSON.stringify({ kind: 'MANUAL_24H' })
+                });
+
+                const data = await res.json().catch(() => null);
+
+                if (!res.ok) {
+                // ✅ Si ya fue enviado, ocultar (igual que 3h)
+                if (res.status === 409) {
+                    $('#btnSendReminder24h').addClass('d-none');
+                    return;
+                }
+
+                alert(data?.message || 'No se pudo enviar el recordatorio.');
+                return;
+                }
+
+                alert(data?.message || 'Recordatorio enviado.');
+                $('#btnSendReminder24h').addClass('d-none');
+            } catch (e) {
+                console.error(e);
+                alert('Error de red enviando recordatorio.');
+            } finally {
+                $('#btnSendReminder24h').prop('disabled', false);
             }
         });
 

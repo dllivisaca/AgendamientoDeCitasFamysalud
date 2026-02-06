@@ -19,6 +19,32 @@ class AppointmentReminderController extends Controller
 
         // 1) Validar que la cita exista (evita FK error)
         $appt = DB::table('appointments')->where('id', $appointmentId)->first();
+
+        if ($kind === 'MANUAL_24H') {
+            // ✅ Tomamos la fecha/hora real de tu cita (ajusta nombres si difieren)
+            $dateStr = $appt->appointment_date ?? null;
+            $timeStr = $appt->appointment_time ?? null;
+
+            if (!$dateStr || !$timeStr) {
+                return response()->json(['ok' => false, 'message' => 'La cita no tiene fecha/hora para validar 24h.'], 422);
+            }
+
+            $tz = 'America/Guayaquil';
+            $apptDt = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $dateStr.' '.$timeStr.':00', $tz);
+            $now = now($tz);
+
+            // ✅ Debe ser mañana (por fecha calendario)
+            if (!$apptDt->isTomorrow()) {
+                return response()->json(['ok' => false, 'message' => 'El recordatorio 24h solo se puede enviar cuando la cita es mañana.'], 422);
+            }
+
+            // ✅ Y además dentro de ventana 24→20h
+            $diffHours = $now->diffInMinutes($apptDt, false) / 60;
+            if (!($diffHours <= 24 && $diffHours > 20)) {
+                return response()->json(['ok' => false, 'message' => 'Fuera de la ventana permitida (24h a 20h).'], 422);
+            }
+        }
+
         if (!$appt) {
             return response()->json(['ok' => false, 'message' => 'Cita no encontrada'], 404);
         }
@@ -129,5 +155,26 @@ class AppointmentReminderController extends Controller
             ]);
 
         return response()->json(['ok' => false, 'message' => 'Falló el envío', 'error' => $errorMsg], 500);
+    }
+
+    public function manualStatus($appointmentId)
+    {
+        $rows = DB::table('appointment_reminder_logs')
+            ->select('reminder_kind', 'status')
+            ->where('appointment_id', $appointmentId)
+            ->whereIn('reminder_kind', ['MANUAL_3H', 'MANUAL_24H'])
+            ->get()
+            ->keyBy('reminder_kind');
+
+        return response()->json([
+            'MANUAL_3H' => [
+                'exists' => isset($rows['MANUAL_3H']),
+                'status' => $rows['MANUAL_3H']->status ?? null,
+            ],
+            'MANUAL_24H' => [
+                'exists' => isset($rows['MANUAL_24H']),
+                'status' => $rows['MANUAL_24H']->status ?? null,
+            ],
+        ]);
     }
 }
