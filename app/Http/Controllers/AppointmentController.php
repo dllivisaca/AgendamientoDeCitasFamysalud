@@ -406,7 +406,7 @@ class AppointmentController extends Controller
                     : null;
 
                 $startsAt = ($dateStr && $timeShort) ? ($dateStr . ' ' . $timeShort . ':00') : null;
-                $endsAt   = ($dateStr && $endStr = $endShort) ? ($dateStr . ' ' . $endStr . ':00') : null;
+                $endsAt   = ($dateStr && $endShort)  ? ($dateStr . ' ' . $endShort . ':00')  : null;
 
                 $mailDataAdmin = [
                     'booking_id' => $appointment->booking_id ?? null,
@@ -435,33 +435,83 @@ class AppointmentController extends Controller
                     'amount' => $appointment->amount ?? null,
                 ];
 
-                // ✅ Enviar a TODOS los admins (Spatie)
-                $adminEmails = User::role('admin')
-                    ->pluck('email')
-                    ->filter(fn($e) => is_string($e) && trim($e) !== '')
-                    ->values()
-                    ->all();
+                // ✅ Admin fijo: Users ID = 1 (tu regla)
+                $adminEmail = trim((string) (User::find(1)->email ?? ''));
 
-                logger()->info('ADMIN NEW BOOKING MAIL - adminEmails resolved', [
-                    'count' => count($adminEmails),
-                    'emails' => $adminEmails,
+                logger()->info('ADMIN NEW BOOKING MAIL - admin email resolved', [
+                    'admin_user_id' => 1,
+                    'admin_email' => $adminEmail,
                 ]);
 
-                if (!empty($adminEmails)) {
-                    $to = array_shift($adminEmails);
-                    $m = Mail::to($to);
+                if ($adminEmail !== '') {
 
-                    if (!empty($adminEmails)) {
-                        $m->cc($adminEmails);
+                    // ✅ Delay para Mailtrap free (evita envío simultáneo con el correo al paciente)
+                    // 1.2 segundos (ajústalo a 2s si aún falla)
+                    $maxAttempts = 3;               // 1 intento + 2 reintentos
+                    $delaysSec = [5, 15, 30];       // espera progresiva (ajusta si quieres)
+
+                    for ($i = 0; $i < $maxAttempts; $i++) {
+                        try {
+
+                            if ($i > 0) {
+                                $sleep = $delaysSec[$i] ?? 30;
+                                sleep($sleep); // segundos
+                            } else {
+                                // pequeño respiro antes del primer envío admin
+                                usleep(500000); // 0.5s
+                            }
+
+                            Mail::to($adminEmail)->send(new AppointmentAdminNewBookingMail($mailDataAdmin));
+
+                            logger()->info('ADMIN NEW BOOKING MAIL: sent OK', [
+                                'to' => $adminEmail,
+                                'attempt' => $i + 1,
+                                'appointment_id' => $appointment->id ?? null,
+                                'booking_id' => $appointment->booking_id ?? null,
+                            ]);
+
+                            break; // ✅ ya se envió, salir del loop
+
+                        } catch (\Throwable $e) {
+
+                            $msg = $e->getMessage();
+
+                            logger()->warning('ADMIN NEW BOOKING MAIL: attempt failed', [
+                                'to' => $adminEmail,
+                                'attempt' => $i + 1,
+                                'error' => $msg,
+                            ]);
+
+                            // ✅ si ya fue el último intento, lanzar error para que lo capture el catch externo
+                            if ($i === $maxAttempts - 1) {
+                                throw $e;
+                            }
+
+                            // ✅ si NO es rate limit, no tiene sentido reintentar
+                            if (stripos($msg, 'Too many emails per second') === false && stripos($msg, '550 5.7.0') === false) {
+                                throw $e;
+                            }
+                        }
                     }
 
-                    $m->send(new AppointmentAdminNewBookingMail($mailDataAdmin));
+                    logger()->info('ADMIN NEW BOOKING MAIL: sent OK', [
+                        'to' => $adminEmail,
+                        'appointment_id' => $appointment->id ?? null,
+                        'booking_id' => $appointment->booking_id ?? null,
+                    ]);
+
+                } else {
+                    logger()->warning('ADMIN NEW BOOKING MAIL: skipped (admin email empty)', [
+                        'admin_user_id' => 1,
+                        'appointment_id' => $appointment->id ?? null,
+                    ]);
                 }
 
             } catch (\Throwable $e) {
                 logger()->error('ADMIN NEW BOOKING MAIL FAILED', [
                     'appointment_id' => $appointment->id ?? null,
                     'error' => $e->getMessage(),
+                    'trace' => substr($e->getTraceAsString(), 0, 2000),
                 ]);
             }
         }
