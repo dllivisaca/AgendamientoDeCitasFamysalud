@@ -6641,11 +6641,18 @@
                 const data = await res.json().catch(() => null);
 
                 if (!res.ok) {
-                alert(data?.message || 'No se pudo enviar el recordatorio.');
-                return;
+                    // ✅ Si ya fue enviado (409), ocultar botón y NO mostrar alert
+                    if (res.status === 409) {
+                        $('#btnSendReminder3h').addClass('d-none');
+                        return;
+                    }
+
+                    alert(data?.message || 'No se pudo enviar el recordatorio.');
+                    return;
                 }
 
                 alert(data?.message || 'Recordatorio enviado.');
+                $('#btnSendReminder3h').addClass('d-none');
             } catch (e) {
                 console.error(e);
                 alert('Error de red enviando recordatorio.');
