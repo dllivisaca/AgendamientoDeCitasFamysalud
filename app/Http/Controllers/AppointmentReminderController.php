@@ -103,12 +103,62 @@ class AppointmentReminderController extends Controller
                 ], 422);
             }
 
-            // ✅ Data mínima para la plantilla del correo
+            // ✅ Data para la plantilla del correo (servicio/área + tz)
+            $dateStr = $appt->appointment_date ?? $appt->date ?? null;
+
+            // Hora inicio (HH:MM)
+            $timeStr = $appt->appointment_time ?? $appt->time ?? null;
+            $timeShort = $timeStr ? substr((string) $timeStr, 0, 5) : null;
+
+            // Hora fin (HH:MM)
+            $endStr = $appt->appointment_end_time ?? $appt->end_time ?? null;
+            $endShort = $endStr ? substr((string) $endStr, 0, 5) : null;
+
+            // Datetimes base interpretados en Ecuador
+            $startsAt = ($dateStr && $timeShort) ? ($dateStr . ' ' . $timeShort . ':00') : null;
+            $endsAt   = ($dateStr && $endShort)  ? ($dateStr . ' ' . $endShort . ':00')  : null;
+
+            // IDs según lo que me dijiste (service_ID, category_ID)
+            $serviceId = $appt->service_ID ?? $appt->service_id ?? null;
+
+            $serviceTitle = null;
+            $categoryTitle = null;
+
+            if ($serviceId) {
+                $serviceRow = DB::table('services')
+                    ->select('title', 'category_ID', 'category_id')
+                    ->where('id', $serviceId)
+                    ->first();
+
+                if ($serviceRow) {
+                    $serviceTitle = $serviceRow->title ?? null;
+
+                    $categoryId = $serviceRow->category_ID ?? $serviceRow->category_id ?? null;
+
+                    if ($categoryId) {
+                        $categoryTitle = DB::table('categories')
+                            ->where('id', $categoryId)
+                            ->value('title');
+                    }
+                }
+            }
+
             $mailData = [
-                // ajusta estos si tus columnas tienen otro nombre
-                'date' => $appt->appointment_date ?? $appt->date ?? null,
-                'time' => $appt->appointment_time ?? $appt->time ?? null,
+                'date' => $dateStr,
+                'time' => $timeShort,
+                'starts_at' => $startsAt,
+                'end_time' => $endShort,
+                'ends_at' => $endsAt,
+
+                // Campos reales
+                'mode' => $appt->appointment_mode ?? null,       // 'presencial' | 'virtual'
+                'patient_timezone' => $appt->patient_timezone ?? null,
+
+                // Derivados por lookup
+                'service' => $serviceTitle,
+                'area' => $categoryTitle,
             ];
+
 
             Mail::to($toEmail)->send(new AppointmentReminderMail($mailData, $kind));
 

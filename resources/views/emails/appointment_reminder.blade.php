@@ -9,7 +9,73 @@ use Carbon\Carbon;
   $date = !empty($data['date'])
       ? Carbon::parse($data['date'])->locale('es')->translatedFormat('d M Y')
       : '—';
-  $time = $data['time'] ?? '—';
+  // =========================
+  // Modalidad / Área / Servicio / Zonas horarias
+  // =========================
+  $ecuTz = 'America/Guayaquil';
+
+  $mode = (string) ($data['mode'] ?? '');
+  $modeNorm = trim(mb_strtolower($mode));
+  $isVirtual = ($modeNorm === 'virtual'); // en BD viene 'virtual' o 'presencial'
+
+  $area = $data['area'] ?? '—';
+  $service = $data['service'] ?? '—';
+
+  $patientTz = $data['patient_timezone'] ?? null;
+
+  // Datetime base en TZ Ecuador (para convertir si es virtual)
+  $dtEc = null;
+  $startsAtRaw = $data['starts_at'] ?? null;
+  $dtEndEc = null;
+  $endsAtRaw = $data['ends_at'] ?? null;
+
+  try {
+      // Inicio
+      if (!empty($startsAtRaw)) {
+          $dtEc = Carbon::parse($startsAtRaw, $ecuTz);
+      } elseif (!empty($data['date']) && !empty($data['time'])) {
+          $dtEc = Carbon::parse(($data['date'].' '.$data['time']), $ecuTz);
+      }
+
+      // Fin
+      if (!empty($endsAtRaw)) {
+          $dtEndEc = Carbon::parse($endsAtRaw, $ecuTz);
+      } elseif (!empty($data['date']) && !empty($data['end_time'])) {
+          $dtEndEc = Carbon::parse(($data['date'].' '.$data['end_time']), $ecuTz);
+      }
+  } catch (\Throwable $e) {
+      $dtEc = null;
+      $dtEndEc = null;
+  }
+
+  // Hora Ecuador (siempre)
+  if ($dtEc) {
+      $startTxt = $dtEc->locale('es')->translatedFormat('h:i a');
+      $endTxt = $dtEndEc ? $dtEndEc->locale('es')->translatedFormat('h:i a') : null;
+
+      $timeEc = $endTxt
+          ? "{$startTxt} – {$endTxt} (Ecuador)"
+          : "{$startTxt} (Ecuador)";
+  } else {
+      $timeEc = '—';
+  }
+
+  // Hora paciente (solo si es virtual y hay timezone)
+  $timePatient = null;
+  if ($dtEc && $isVirtual && !empty($patientTz)) {
+      try {
+          $pStart = $dtEc->copy()->setTimezone($patientTz)->locale('es')->translatedFormat('h:i a');
+          $pEnd = $dtEndEc
+              ? $dtEndEc->copy()->setTimezone($patientTz)->locale('es')->translatedFormat('h:i a')
+              : null;
+
+          $timePatient = $pEnd
+              ? "{$pStart} – {$pEnd} ({$patientTz})"
+              : "{$pStart} ({$patientTz})";
+      } catch (\Throwable $e) {
+          $timePatient = null;
+      }
+  }
 
   // Opcional (si luego decides mandar link de ver/cancelar/whatsapp):
   $ctaUrl = $data['cta_url'] ?? null;
@@ -58,8 +124,26 @@ use Carbon\Carbon;
                       <strong>Fecha:</strong> {{ $date }}
                     </div>
                     <div style="margin-top:6px;font-size:14px;line-height:20px;color:#111827;">
-                      <strong>Hora:</strong> {{ $time }}
+                        <strong>Modalidad:</strong> {{ $modeNorm ? ucfirst($modeNorm) : '—' }}
                     </div>
+
+                    <div style="margin-top:6px;font-size:14px;line-height:20px;color:#111827;">
+                        <strong>Área de atención:</strong> {{ $area }}
+                    </div>
+
+                    <div style="margin-top:6px;font-size:14px;line-height:20px;color:#111827;">
+                        <strong>Servicio:</strong> {{ $service }}
+                    </div>
+
+                    <div style="margin-top:6px;font-size:14px;line-height:20px;color:#111827;">
+                        <strong>Hora:</strong> {{ $timeEc }}
+                    </div>
+
+                    @if(!empty($timePatient))
+                        <div style="margin-top:6px;font-size:14px;line-height:20px;color:#111827;">
+                            <strong>Hora (tu zona horaria):</strong> {{ $timePatient }}
+                        </div>
+                    @endif
                   </td>
                 </tr>
               </table>
