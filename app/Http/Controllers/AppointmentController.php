@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\PatientNotificationAppointmentConfirmed;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\AppointmentRegisteredMail;
 
 class AppointmentController extends Controller
 {
@@ -152,6 +154,13 @@ class AppointmentController extends Controller
         if (!$isPrivilegedRole) {
             $validated['appointment_channel'] = 'patient_online';
         }
+
+        logger()->info('BOOKING ROLE CHECK', [
+            'auth_check' => auth()->check(),
+            'user_id' => auth()->id(),
+            'is_privileged' => $isPrivilegedRole,
+            'channel' => !$isPrivilegedRole ? 'patient_online' : 'staff',
+        ]);
 
         // ✅ Canal de pago: transferencia bancaria (solo cuando el paciente agenda online)
         if (!$isPrivilegedRole && (($validated['payment_method'] ?? null) === 'transfer')) {
@@ -301,6 +310,81 @@ class AppointmentController extends Controller
             // ✅ consumir el hold
             $hold->delete();
         });
+
+        // ✅ Email: Registro de cita (SOLO paciente agenda online)
+        if (!$isPrivilegedRole) {
+
+            logger()->info('REGISTER MAIL: entering patient_online block', [
+                'appointment_id' => $appointment->id ?? null,
+                'patient_email' => $appointment->patient_email ?? null,
+                'mode' => $appointment->appointment_mode ?? null,
+                'tz' => $appointment->patient_timezone ?? null,
+            ]);
+
+            try {
+                // Asegurar relaciones (service -> category)
+                $appointment->loadMissing(['service.category']);
+
+                $dateStr = $appointment->appointment_date ?? null;
+
+                // HH:MM
+                $timeStr = $appointment->appointment_time ?? null;
+                $timeShort = $timeStr ? substr((string) $timeStr, 0, 5) : null;
+
+                // HH:MM
+                $endStr = $appointment->appointment_end_time ?? null;
+                $endShort = $endStr ? substr((string) $endStr, 0, 5) : null;
+
+                // Datetimes base interpretados como Ecuador (la vista convierte a TZ paciente si aplica)
+                $startsAt = ($dateStr && $timeShort) ? ($dateStr . ' ' . $timeShort . ':00') : null;
+                $endsAt   = ($dateStr && $endShort)  ? ($dateStr . ' ' . $endShort . ':00')  : null;
+
+                $serviceTitle = $appointment->service->title ?? null;
+                $categoryTitle = $appointment->service->category->title ?? null;
+
+                $mailData = [
+                    'date' => $dateStr,
+                    'time' => $timeShort,
+                    'starts_at' => $startsAt,
+                    'end_time' => $endShort,
+                    'ends_at' => $endsAt,
+
+                    'mode' => $appointment->appointment_mode ?? null, // presencial | virtual
+                    'patient_timezone' => $appointment->patient_timezone ?? null,
+
+                    'service' => $serviceTitle,
+                    'area' => $categoryTitle,
+                ];
+
+                $toEmail = trim((string) ($appointment->patient_email ?? ''));
+                if ($toEmail !== '') {
+
+                    logger()->info('REGISTER MAIL: about to send', [
+                        'to' => $toEmail,
+                        'mailData' => $mailData,
+                    ]);
+
+                    Mail::to($toEmail)->send(new AppointmentRegisteredMail($mailData));
+
+                    logger()->info('REGISTER MAIL: sent OK', [
+                        'to' => $toEmail,
+                    ]);
+
+                } else {
+
+                    logger()->warning('REGISTER MAIL: skipped (empty email)', [
+                        'appointment_id' => $appointment->id ?? null,
+                    ]);
+                }
+
+            } catch (\Throwable $e) {
+                logger()->error('REGISTER MAIL FAILED', [
+                    'appointment_id' => $appointment->id ?? null,
+                    'error' => $e->getMessage(),
+                    'trace' => substr($e->getTraceAsString(), 0, 2000),
+                ]);
+            }
+        }
 
         event(new BookingCreated($appointment));
 
