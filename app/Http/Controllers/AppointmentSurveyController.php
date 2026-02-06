@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use App\Mail\AppointmentSurveyMail;
 
 class AppointmentSurveyController extends Controller
 {
@@ -140,12 +141,10 @@ class AppointmentSurveyController extends Controller
             $surveyUrl = config('app.appointment_survey_url') ?? env('APPOINTMENT_SURVEY_URL');
 
             // Envío simple (si ya tienes un Mailable propio, lo reemplazamos luego)
-            Mail::raw(
-                "Hola {$appointment->patient_full_name}, gracias por tu visita. Por favor completa esta encuesta: {$surveyUrl}",
-                function ($message) use ($to) {
-                    $message->to($to)->subject('Encuesta de satisfacción - FamySALUD');
-                }
-            );
+            Mail::to($to)->send(new AppointmentSurveyMail(
+                $appointment->patient_full_name,
+                $surveyUrl
+            ));
 
             DB::table('appointment_survey_emails')
                 ->where('id', $manualRowId)
