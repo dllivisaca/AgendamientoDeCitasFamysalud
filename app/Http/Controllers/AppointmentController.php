@@ -466,7 +466,14 @@ class AppointmentController extends Controller
             }
         }
 
-        event(new BookingCreated($appointment));
+        try {
+            event(new BookingCreated($appointment));
+        } catch (\Throwable $e) {
+            logger()->error('BOOKING CREATED EVENT FAILED', [
+                'appointment_id' => $appointment->id ?? null,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         return response()->json([
             'success' => true,
