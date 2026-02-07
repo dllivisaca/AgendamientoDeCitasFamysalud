@@ -303,9 +303,7 @@
                             $empRow = DB::table('employees as e')
                                 ->leftJoin('users as u', 'u.id', '=', 'e.user_id')
                                 ->where('e.id', $exists->employee_id)
-                                ->select([
-                                    DB::raw('COALESCE(u.name, e.full_name) as professional_name'),
-                                ])
+                                ->select(['u.name as professional_name'])
                                 ->first();
 
                             $professionalName = $empRow->professional_name ?? null;
@@ -639,12 +637,10 @@
                     $professionalName = null;
                     if (!empty($hold->employee_id)) {
                         $empRow = DB::table('employees as e')
-                            ->leftJoin('users as u', 'u.id', '=', 'e.user_id')
-                            ->where('e.id', $hold->employee_id)
-                            ->select([
-                                DB::raw('COALESCE(u.name, e.full_name) as professional_name'),
-                            ])
-                            ->first();
+                                ->join('users as u', 'u.id', '=', 'e.user_id')
+                                ->where('e.id', $hold->employee_id)
+                                ->select(['u.name as professional_name'])
+                                ->first();
 
                         $professionalName = $empRow->professional_name ?? null;
                     }
@@ -699,10 +695,6 @@
                         // ✅ Delay / retry para Mailtrap free (evita rate limit)
                         // Si quieres 1 minuto exacto, cambia $initialDelaySec = 60;
                         usleep(500000); // 0.5s
-
-                        if ($initialDelaySec > 0) {
-                            sleep($initialDelaySec);
-                        }
 
                         $maxAttempts = 3;         // 1 intento + 2 reintentos
                         $delaysSec = [5, 15, 30]; // backoff
