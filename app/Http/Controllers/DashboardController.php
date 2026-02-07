@@ -29,7 +29,8 @@ class DashboardController extends Controller
         }
 
         // Format the appointments with proper date handling
-        $appointments = $query->get()->map(function ($appointment) {
+        $appointments = $query->whereNotIn('status', ['canceled', 'cancelled'])
+            ->get()->map(function ($appointment) {
             // ✅ Parse appointment date (igual)
             $appointmentDate = Carbon::parse($appointment->appointment_date);
 
