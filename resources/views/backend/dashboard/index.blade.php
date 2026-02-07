@@ -210,6 +210,8 @@
                     right: 'month,agendaDay'
                 },
                 defaultView: 'month',
+                timeFormat: 'h:mm A',
+                displayEventTime: true,
                 editable: false,
                 slotDuration: '00:30:00',
                 minTime: '06:00:00',
