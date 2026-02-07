@@ -65,13 +65,15 @@
                         <div class="form-group">
                             <label><strong>Change Status:</strong></label>
                             <select name="status" class="form-control" id="modalStatusSelect">
-                                <option value="Pending payment">Pending payment</option>
-                                <option value="Processing">Processing</option>
-                                <option value="Paid">Paid</option>
-                                <option value="Cancelled">Cancelled</option>
-                                <option value="Completed">Completed</option>
-                                <option value="On Hold">On Hold</option>
-                                <option value="No Show">No Show</option>
+                                <option value="pending_verification">pending_verification</option>
+                                <option value="pending_payment">pending_payment</option>
+                                <option value="paid">paid</option>
+                                <option value="confirmed">confirmed</option>
+                                <option value="completed">completed</option>
+                                <option value="canceled">canceled</option>
+                                <option value="rescheduled">rescheduled</option>
+                                <option value="no_show">no_show</option>
+                                <option value="on_hold">on_hold</option>
                             </select>
                         </div>
                     </div>
@@ -216,16 +218,19 @@
                 eventRender: function(event, element) {
 
                     var statusColors = {
-                        'Pending payment': '#f39c12',
-                        'Processing': '#3498db',
-                        'Paid': '#2ecc71',
-                        'Cancelled': '#ff0000',
-                        'Completed': '#008000',
-                        'On Hold': '#95a5a6',
-                        'No Show': '#e67e22',
+                        'pending_verification': '#7f8c8d',
+                        'pending_payment':      '#f39c12',
+                        'paid':                 '#2ecc71',
+                        'confirmed':            '#3498db',
+                        'completed':            '#008000',
+                        'canceled':             '#ff0000',
+                        'rescheduled':          '#f1c40f',
+                        'no_show':              '#e67e22',
+                        'on_hold':              '#95a5a6',
                     };
 
-                    var c = statusColors[event.status] || '#7f8c8d';
+                    var s = (event.status || '').toString().trim().toLowerCase().replace(/[\s-]+/g, '_');
+                    var c = statusColors[s] || '#7f8c8d';
 
                     element.css({
                         'background-color': c,
@@ -259,21 +264,24 @@
     );
 
     // Get the status from the calendar event
-    var status = calEvent.status || 'Pending payment';
+    var status = calEvent.status || 'pending_verification';
     $('#modalStatusSelect').val(status);
 
     // Set status badge
     var statusColors = {
-        'Pending payment': '#f39c12',
-        'Processing': '#3498db',
-        'Paid': '#2ecc71',
-        'Cancelled': '#ff0000',
-        'Completed': '#008000',
-        'On Hold': '#95a5a6',
-        'No Show': '#e67e22',
+        'pending_verification': '#7f8c8d',
+        'pending_payment':      '#f39c12',
+        'paid':                 '#2ecc71',
+        'confirmed':            '#3498db',
+        'completed':            '#008000',
+        'canceled':             '#ff0000',
+        'rescheduled':          '#f1c40f',
+        'no_show':              '#e67e22',
+        'on_hold':              '#95a5a6',
     };
 
-    var badgeColor = statusColors[status] || '#7f8c8d';
+    var s = (status || '').toString().trim().toLowerCase().replace(/[\s-]+/g, '_');
+    var badgeColor = statusColors[s] || '#7f8c8d';
     $('#modalStatusBadge').html(
         `<span class="badge px-2 py-1" style="background-color: ${badgeColor}; color: white;">${status}</span>`
     );

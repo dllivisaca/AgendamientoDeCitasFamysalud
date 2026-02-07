@@ -56,6 +56,9 @@ class DashboardController extends Controller
                 $endDateTime->addDay();
             }
 
+            // ✅ AQUÍ va la variable, antes del return array
+            $color = $this->getStatusColor($appointment->status);
+
             return [
                 'id' => $appointment->id,
                 'title' => sprintf(
@@ -71,7 +74,14 @@ class DashboardController extends Controller
                 'amount' => $appointment->amount,
                 'status' => $appointment->status,
                 'staff' => $appointment->employee->user->name ?? 'Unassigned',
-                'color' => $this->getStatusColor($appointment->status),
+
+                'color'           => $color, // ✅ FullCalendar lo entiende en casi todas las configs
+                'backgroundColor' => $color,
+                'borderColor'     => $color,
+                'textColor'       => '#ffffff',
+
+                // ✅ Clase para forzar estilos por CSS si algo lo pisa
+                'classNames'      => ['appt-status-' . ($appointment->status ?? 'unknown')],
                 'service_title' => $appointment->service->title ?? 'Service',
                 'name' => $appointment->patient_full_name,
                 'notes' => $appointment->patient_notes,
@@ -83,18 +93,25 @@ class DashboardController extends Controller
     // Helper function to get color based on status
     private function getStatusColor($status)
     {
+        $s = strtolower(trim((string) $status));
+
+        // Normaliza por si llega con espacios o guiones
+        $s = str_replace([' ', '-'], '_', $s);
+        $s = preg_replace('/_+/', '_', $s);
+
         $colors = [
-            'Pending payment' => '#f39c12',
-            'Processing' => '#3498db',
-            'Paid' => '#2ecc71',
-            'Cancelled' => '#ff0000',
-            'Completed' => '#008000',
-            'On Hold' => '#95a5a6',
-            'Rescheduled' => '#f1c40f',
-            'No Show' => '#e67e22',
+            'pending_verification' => '#7f8c8d',
+            'pending_payment'      => '#f39c12',
+            'paid'                 => '#2ecc71',
+            'confirmed'            => '#3498db',
+            'completed'            => '#008000',
+            'canceled'             => '#ff0000',
+            'rescheduled'          => '#f1c40f',
+            'no_show'              => '#e67e22',
+            'on_hold'              => '#95a5a6',
         ];
 
-        return $colors[$status] ?? '#7f8c8d';
+        return $colors[$s] ?? '#7f8c8d';
     }
 
 
@@ -103,11 +120,15 @@ class DashboardController extends Controller
     {
         $request->validate([
             'appointment_id' => 'required|exists:appointments,id',
-            'status' => 'required|in:Pending payment,Processing,Paid,Cancelled,Completed,On Hold,No Show'
+            'status' => 'required|in:pending_verification,pending_payment,paid,confirmed,completed,canceled,rescheduled,no_show,on_hold'
         ]);
 
         $appointment = Appointment::findOrFail($request->appointment_id);
-        $appointment->status = $request->status;
+        $status = strtolower(trim((string) $request->status));
+        $status = str_replace([' ', '-'], '_', $status);
+        $status = preg_replace('/_+/', '_', $status);
+
+        $appointment->status = $status;
         $appointment->save();
 
         event(new StatusUpdated($appointment));
