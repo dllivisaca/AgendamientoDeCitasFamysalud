@@ -30,53 +30,52 @@ class DashboardController extends Controller
 
         // Format the appointments with proper date handling
         $appointments = $query->get()->map(function ($appointment) {
-            try {
-                if (!str_contains($appointment->appointment_time ?? '', '-')) {
-                    throw new \Exception("Invalid time format");
-                }
+            // ✅ Parse appointment date (igual)
+            $appointmentDate = Carbon::parse($appointment->appointment_date);
 
-                // Parse appointment date
-                $appointmentDate = Carbon::parse($appointment->appointment_date);
+            // ✅ Tu BD: appointment_time = inicio, appointment_end_time = fin
+            $startTime = trim((string) $appointment->appointment_time);
+            $endTime   = trim((string) ($appointment->appointment_end_time ?? ''));
 
-                // Parse start and end times
-                [$startTime, $endTime] = array_map('trim', explode('-', $appointment->appointment_time));
-
-                // Create proper datetime objects
-                $startDateTime = Carbon::createFromFormat('h:i A', $startTime)
-                    ->setDate($appointmentDate->year, $appointmentDate->month, $appointmentDate->day);
-
-                $endDateTime = Carbon::createFromFormat('h:i A', $endTime)
-                    ->setDate($appointmentDate->year, $appointmentDate->month, $appointmentDate->day);
-
-                // Handle overnight appointments
-                if ($endDateTime->lt($startDateTime)) {
-                    $endDateTime->addDay();
-                }
-
-                return [
-                    'id' => $appointment->id,
-                    'title' => sprintf(
-                        '%s - %s',
-                        $appointment->patient_full_name,
-                        $appointment->service->title ?? 'Service'
-                    ),
-                    'start' => $startDateTime->toIso8601String(),
-                    'end' => $endDateTime->toIso8601String(),
-                    'description' => $appointment->patient_notes,
-                    'email' => $appointment->patient_email,
-                    'phone' => $appointment->patient_phone,
-                    'amount' => $appointment->amount,
-                    'status' => $appointment->status,
-                    'staff' => $appointment->employee->user->name ?? 'Unassigned',
-                    'color' => $this->getStatusColor($appointment->status),
-                    'service_title' => $appointment->service->title ?? 'Service',
-                    'name' => $appointment->patient_full_name,
-                    'notes' => $appointment->patient_notes,
-                ];
-            } catch (\Exception $e) {
-                \Log::error("Format error for appointment {$appointment->id}: {$e->getMessage()}");
+            // Si falta inicio, no se puede renderizar
+            if ($startTime === '') {
+                \Log::warning("Appointment {$appointment->id} missing appointment_time");
                 return null;
             }
+
+            // Construye datetimes (Carbon::parse tolera HH:mm)
+            $startDateTime = Carbon::parse($appointmentDate->toDateString() . ' ' . $startTime);
+
+            // Si no hay fin, default +30 min
+            $endDateTime = $endTime !== ''
+                ? Carbon::parse($appointmentDate->toDateString() . ' ' . $endTime)
+                : $startDateTime->copy()->addMinutes(30);
+
+            // Overnight safety
+            if ($endDateTime->lt($startDateTime)) {
+                $endDateTime->addDay();
+            }
+
+            return [
+                'id' => $appointment->id,
+                'title' => sprintf(
+                    '%s - %s',
+                    $appointment->patient_full_name,
+                    $appointment->service->title ?? 'Service'
+                ),
+                'start' => $startDateTime->toIso8601String(),
+                'end' => $endDateTime->toIso8601String(),
+                'description' => $appointment->patient_notes,
+                'email' => $appointment->patient_email,
+                'phone' => $appointment->patient_phone,
+                'amount' => $appointment->amount,
+                'status' => $appointment->status,
+                'staff' => $appointment->employee->user->name ?? 'Unassigned',
+                'color' => $this->getStatusColor($appointment->status),
+                'service_title' => $appointment->service->title ?? 'Service',
+                'name' => $appointment->patient_full_name,
+                'notes' => $appointment->patient_notes,
+            ];
         })->filter();
         return view('backend.dashboard.index', compact('appointments'));
     }

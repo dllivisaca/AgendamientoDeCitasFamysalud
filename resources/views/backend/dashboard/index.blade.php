@@ -196,6 +196,9 @@
             //     delay: 5000
             // });
 
+            var calendarEvents = @json($appointments ?? []);
+            console.log('[Calendar] events =', calendarEvents);
+
             // Initialize calendar
             $('#calendar').fullCalendar({
                 locale: 'es',
@@ -209,14 +212,35 @@
                 slotDuration: '00:30:00',
                 minTime: '06:00:00',
                 maxTime: '22:00:00',
-                events: @json($appointments ?? []),
+                events: calendarEvents,
                 eventRender: function(event, element) {
-                    element.tooltip({
-                        title: event.description || 'No description',
-                        placement: 'top',
-                        trigger: 'hover',
-                        container: 'body'
+
+                    var statusColors = {
+                        'Pending payment': '#f39c12',
+                        'Processing': '#3498db',
+                        'Paid': '#2ecc71',
+                        'Cancelled': '#ff0000',
+                        'Completed': '#008000',
+                        'On Hold': '#95a5a6',
+                        'No Show': '#e67e22',
+                    };
+
+                    var c = statusColors[event.status] || '#7f8c8d';
+
+                    element.css({
+                        'background-color': c,
+                        'border-color': c,
+                        'color': '#fff'
                     });
+
+                    if ($.fn.tooltip) {
+                        element.tooltip({
+                            title: event.description || event.notes || 'Sin notas',
+                            placement: 'top',
+                            trigger: 'hover',
+                            container: 'body'
+                        });
+                    }
                 },
                 eventClick: function(calEvent, jsEvent, view) {
     // Populate modal with event data
@@ -228,8 +252,11 @@
     $('#modalStaff').text(calEvent.staff || 'N/A');
     $('#modalAmount').text(calEvent.amount || 'N/A');
     $('#modalNotes').text(calEvent.description || calEvent.notes || 'N/A');
-    moment(calEvent.start).locale('es').format('D [de] MMMM [de] YYYY HH:mm')
-    $('#modalEndTime').text(calEvent.end ? moment(calEvent.end).format('MMMM D, YYYY h:mm A') : 'N/A');
+    $('#modalStartTime').text(
+        calEvent.start
+            ? moment(calEvent.start).locale('es').format('D [de] MMMM [de] YYYY HH:mm')
+            : 'N/A'
+    );
 
     // Get the status from the calendar event
     var status = calEvent.status || 'Pending payment';
@@ -263,6 +290,7 @@
     </script>
 
     <script>
+        console.log('🔥 JS DEL CALENDARIO CARGADO');
         $(document).ready(function() {
             $(".alert").delay(2000).slideUp(300);
         });
