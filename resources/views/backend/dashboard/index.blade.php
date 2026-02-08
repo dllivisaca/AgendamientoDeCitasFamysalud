@@ -918,7 +918,26 @@
                         status: calEvent.status || '',
 
                         // Fecha / hora para los labels del modal
-                        date_time_label: calEvent.start ? moment(calEvent.start).locale('es').format('D [de] MMM YYYY · h:mm A') : 'N/A',
+                        date_time_label: (function () {
+                            if (!calEvent.start) return 'N/A';
+
+                            const mStart = moment(calEvent.start).locale('es');
+                            const datePart = mStart.format('DD MMM YYYY'); // ej: 06 feb 2026
+                            const startTime = mStart.format('h:mm A');
+
+                            // FullCalendar debería traer calEvent.end; si no, intentamos con appointment_end_time
+                            let endTime = '';
+                            if (calEvent.end) {
+                                endTime = moment(calEvent.end).locale('es').format('h:mm A');
+                            } else if (calEvent.appointment_end_time) {
+                                // si te llega "11:35:00" o "11:35"
+                                endTime = moment(datePart + ' ' + String(calEvent.appointment_end_time).trim(), 'DD MMM YYYY HH:mm:ss', true).isValid()
+                                    ? moment(datePart + ' ' + String(calEvent.appointment_end_time).trim(), 'DD MMM YYYY HH:mm:ss').format('h:mm A')
+                                    : String(calEvent.appointment_end_time).trim();
+                            }
+
+                            return endTime ? `${datePart} · ${startTime} – ${endTime}` : `${datePart} · ${startTime}`;
+                        })(),
                         created_at_label: calEvent.created_at ? moment(calEvent.created_at).locale('es').format('D [de] MMM YYYY · h:mm A') : 'N/A',
 
                         appointment_mode: calEvent.appointment_mode || 'N/A',
@@ -927,7 +946,7 @@
                         patient_full_name: calEvent.patient_full_name || calEvent.name || 'N/A',
                         patient_doc_type: calEvent.patient_doc_type || '',
                         patient_doc_number: calEvent.patient_doc_number || '',
-                        patient_dob: calEvent.patient_dob || '',
+                        patient_dob: calEvent.patient_dob_label || calEvent.patient_dob || '',
                         patient_age: calEvent.patient_age || '',
                         patient_email: calEvent.email || '',
                         patient_phone: calEvent.phone || '',

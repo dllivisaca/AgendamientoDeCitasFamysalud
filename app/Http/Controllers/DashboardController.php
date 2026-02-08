@@ -60,6 +60,16 @@ class DashboardController extends Controller
             // ✅ AQUÍ va la variable, antes del return array
             $color = $this->getStatusColor($appointment->status);
 
+            // ✅ DOB label desde BD (SIN usar Date() en JS para evitar -1 día por timezone)
+            $dobLabel = null;
+            if (!empty($appointment->patient_dob)) {
+                $dob = Carbon::parse($appointment->patient_dob);
+
+                // Ej: "11 abr 2000" (sin punto)
+                $dobLabel = $dob->locale('es')->translatedFormat('d M Y');
+                $dobLabel = str_replace('.', '', mb_strtolower($dobLabel, 'UTF-8'));
+            }
+
             return [
                 'id' => $appointment->id,
                 'booking_id' => $appointment->booking_id ?? null,
@@ -70,6 +80,7 @@ class DashboardController extends Controller
                 ),
                 'start' => $startDateTime->toIso8601String(),
                 'end' => $endDateTime->toIso8601String(),
+                'patient_dob_label' => $dobLabel,
                 'description' => $appointment->patient_notes,
                 'email' => $appointment->patient_email,
                 'phone' => $appointment->patient_phone,
