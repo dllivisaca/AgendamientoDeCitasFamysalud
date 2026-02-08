@@ -70,6 +70,13 @@ class DashboardController extends Controller
                 $dobLabel = str_replace('.', '', mb_strtolower($dobLabel, 'UTF-8'));
             }
 
+            // ✅ Edad calculada desde DOB (backend)
+            $patientAge = null;
+            if (!empty($appointment->patient_dob)) {
+                $years = Carbon::parse($appointment->patient_dob)->age;
+                $patientAge = $years . ' años';
+            }
+
             return [
                 'id' => $appointment->id,
                 'booking_id' => $appointment->booking_id ?? null,
@@ -81,6 +88,7 @@ class DashboardController extends Controller
                 'start' => $startDateTime->toIso8601String(),
                 'end' => $endDateTime->toIso8601String(),
                 'patient_dob_label' => $dobLabel,
+                'patient_age' => $patientAge,
                 'description' => $appointment->patient_notes,
                 'email' => $appointment->patient_email,
                 'phone' => $appointment->patient_phone,

@@ -815,7 +815,11 @@
             $('#modalAddress').text(data.patient_address || 'N/A');
             $('#modalPatientTimezone').text(data.patient_timezone || 'N/A');
 
-            $('#modalAppointmentMode').text(data.appointment_mode || 'N/A');
+            $('#modalAppointmentMode').text(
+                data.appointment_mode
+                    ? data.appointment_mode.charAt(0).toUpperCase() + data.appointment_mode.slice(1)
+                    : 'N/A'
+            );
             $('#modalDateTime2').text(data.date_time_label || 'N/A');
             $('#modalCreatedAt').text(data.created_at_label || 'N/A');
 
