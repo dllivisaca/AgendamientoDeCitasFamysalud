@@ -669,7 +669,7 @@
             $('#modalPaymentMethodLabel').text(paymentMethodLabel(pm));
             $('#modalPaymentStatusBadge2').html(paymentStatusBadge(data.payment_status));
             $('#modalPaymentAmount').text(fmtMoney(data.amount));
-            $('#modalPaidAmountText').text(fmtMoney(data.paid_amount));
+            $('#modalPaidAmountText').text(fmtMoney(data.amount_paid));
             $('#modalPaymentDate').text(fmtNiceDateTime(data.payment_paid_at));
 
             const ctx = String(data.client_transaction_id || '').trim();
@@ -688,7 +688,7 @@
 
             $('#modalTransferMethodLabel').text(paymentMethodLabel(pm));
             $('#modalTransferAmount').text(fmtMoney(data.amount));
-            $('#modalTransferPaidAmountText').text(fmtMoney(data.paid_amount));
+            $('#modalTransferPaidAmountText').text(fmtMoney(data.amount_paid));
 
             const notes = String(data.payment_notes || '').trim();
             $('#modalTransferNotesText').html(
@@ -739,7 +739,7 @@
 
             $('#modalCashMethodLabel').text('Efectivo');
             $('#modalCashAmount').text(fmtMoney(data.amount));
-            $('#modalCashPaidAmountText').text(fmtMoney(data.paid_amount));
+            $('#modalCashPaidAmountText').text(fmtMoney(data.amount_paid));
             $('#modalCashPaidAtText').text(fmtNiceDateTime(data.payment_paid_at));
 
             const notes = String(data.payment_notes || '').trim();
@@ -813,7 +813,15 @@
             $('#modalEmail').text(data.patient_email || data.email || 'N/A');
             $('#modalPhone').text(data.patient_phone || data.phone || 'N/A');
             $('#modalAddress').text(data.patient_address || 'N/A');
-            $('#modalPatientTimezone').text(data.patient_timezone || 'N/A');
+            (function () {
+                const tz = String(data.patient_timezone || '').trim();
+
+                $('#modalPatientTimezone').html(
+                    tz
+                        ? tz
+                        : '<span class="text-muted font-italic small">No se registró zona horaria</span>'
+                );
+            })();
 
             $('#modalAppointmentMode').text(
                 data.appointment_mode
@@ -973,7 +981,7 @@
                         payment_paid_at: calEvent.payment_paid_at || '',
                         payment_notes: calEvent.payment_notes || '',
                         amount: calEvent.amount || '',
-                        paid_amount: calEvent.paid_amount || '',
+                        amount_paid: calEvent.amount_paid || '',
                         client_transaction_id: calEvent.client_transaction_id || '',
 
                         // Transfer extras (si los tienes)
