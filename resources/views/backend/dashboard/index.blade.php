@@ -33,60 +33,382 @@
         </div>
     </div>
 
-    <!-- Appointment Modal -->
-    <form id="appointmentStatusForm" method="POST" action="{{ route('dashboard.update.status') }}"
-        onsubmit="return confirm('Are you sure you want to update the booking status?')">
+    <!-- MODAL PARA VER DETALLES DE LA CITA AL HACER CLIC -->
+    <div class="modal fade" id="appointmentModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
 
-        @csrf
-        <input type="hidden" name="appointment_id" id="modalAppointmentId">
+            <div class="modal-header d-flex align-items-start justify-content-between">
+                <div>
+                <h5 class="modal-title mb-0">Detalles de la cita</h5>
+                <div class="small text-muted mt-1">
+                    Código de reserva: <strong id="modalBookingCode">N/A</strong>
+                </div>
+                </div>
 
-        <div class="modal fade" id="appointmentModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Appointment Details</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <!-- Resumen -->
+                <div class="p-3 mb-3 rounded border bg-light">
+                <h6 class="mb-3 font-weight-bold text-primary">Resumen de la cita</h6>
+
+                <div class="row">
+                    <div class="col-md-6 mb-2">
+                    <div class="small text-muted">Paciente</div>
+                    <div class="text-dark" id="modalAppointmentName">N/A</div>
                     </div>
 
-                    <div class="modal-body">
-                        <p><strong>Client:</strong> <span id="modalAppointmentName">N/A</span></p>
-                        <p><strong>Service:</strong> <span id="modalService">N/A</span></p>
-                        <p><strong>Email:</strong> <span id="modalEmail">N/A</span></p>
-                        <p><strong>Phone:</strong> <span id="modalPhone">N/A</span></p>
-                        <p><strong>Staff:</strong> <span id="modalStaff">N/A</span></p>
-                        <p><strong>Date & Time:</strong> <span id="modalStartTime">N/A</span></p>
-                        {{-- <p><strong>End:</strong> <span id="modalEndTime">N/A</span></p> --}}
-                        <p><strong>Amount:</strong> <span id="modalAmount">N/A</span></p>
-                        <p><strong>Notes:</strong> <span id="modalNotes">N/A</span></p>
-                        <p><strong>Current Status:</strong> <span id="modalStatusBadge">N/A</span></p>
+                    <div class="col-md-6 mb-2">
+                    <div class="small text-muted">Profesional</div>
+                    <div class="text-dark" id="modalStaff">N/A</div>
+                    </div>
 
-                        <div class="form-group">
-                            <label><strong>Change Status:</strong></label>
-                            <select name="status" class="form-control" id="modalStatusSelect">
-                                <option value="pending_verification">pending_verification</option>
-                                <option value="pending_payment">pending_payment</option>
-                                <option value="paid">paid</option>
-                                <option value="confirmed">confirmed</option>
-                                <option value="completed">completed</option>
-                                <option value="canceled">canceled</option>
-                                <option value="rescheduled">rescheduled</option>
-                                <option value="no_show">no_show</option>
-                                <option value="on_hold">on_hold</option>
-                            </select>
+                    <div class="col-md-6 mb-2">
+                    <div class="small text-muted">Área de atención</div>
+                    <div class="text-dark" id="modalArea">N/A</div>
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                    <div class="small text-muted">Servicio</div>
+                    <div class="text-dark" id="modalService">N/A</div>
+                    </div>
+
+                    <div class="col-md-12 mb-2">
+                    <div class="small text-muted">Fecha y hora de la cita</div>
+                    <div class="text-dark" id="modalDateTime">N/A</div>
+                    </div>
+
+                    <div class="col-md-6 mb-0">
+                    <div class="small text-muted">Estado de la cita</div>
+                    <div class="text-dark" id="modalStatusBadge">N/A</div>
+                    </div>
+
+                    <div class="col-md-6 mb-0">
+                    <div class="small text-muted">Estado del pago</div>
+                    <div class="text-dark" id="modalPaymentStatusBadge">
+                        <span class="badge px-2 py-1" style="background-color:#95a5a6;color:white;">N/A</span>
+                    </div>
+                    </div>
+                </div>
+                </div>
+
+                <!-- Datos del paciente (colapsable) -->
+                <div class="p-3 mb-3 rounded border bg-light">
+                <a class="d-flex align-items-center justify-content-between text-decoration-none"
+                    data-toggle="collapse"
+                    href="#collapsePatientData"
+                    role="button"
+                    aria-expanded="true"
+                    aria-controls="collapsePatientData">
+                    <h6 class="mb-0 font-weight-bold text-primary">Datos del paciente</h6>
+                    <span class="text-muted"><i class="fas fa-chevron-down"></i></span>
+                </a>
+
+                <div class="collapse show mt-3" id="collapsePatientData">
+                    <div class="row">
+                    <div class="col-md-6 mb-2">
+                        <div class="small text-muted">Nombre del paciente</div>
+                        <div class="text-dark" id="modalPatientFullName">N/A</div>
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                        <div class="small text-muted">Tipo de documento</div>
+                        <div class="text-dark" id="modalDocType">N/A</div>
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                        <div class="small text-muted">Número de documento</div>
+                        <div class="text-dark" id="modalDocNumber">N/A</div>
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                        <div class="small text-muted">Fecha de nacimiento</div>
+                        <div class="text-dark" id="modalPatientDobText">N/A</div>
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                        <div class="small text-muted">Edad</div>
+                        <div class="text-dark" id="modalPatientAge">N/A</div>
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                        <div class="small text-muted">Correo</div>
+                        <div class="text-dark" id="modalEmail">N/A</div>
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                        <div class="small text-muted">Teléfono</div>
+                        <div class="text-dark" id="modalPhone">N/A</div>
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                        <div class="small text-muted">Dirección</div>
+                        <div class="text-dark" id="modalAddress">N/A</div>
+                    </div>
+
+                    <div class="col-md-12 mb-0">
+                        <div class="small text-muted">Zona horaria del paciente</div>
+                        <div class="text-dark" id="modalPatientTimezone">N/A</div>
+                    </div>
+                    </div>
+                </div>
+                </div>
+
+                <!-- Detalles de la cita -->
+                <div class="p-3 mb-3 rounded border bg-light">
+                <h6 class="mb-3 font-weight-bold text-primary">Detalles de la cita</h6>
+
+                <div class="row">
+                    <div class="col-md-6 mb-2">
+                    <div class="small text-muted">Modalidad de la cita</div>
+                    <div class="text-dark" id="modalAppointmentMode">N/A</div>
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                    <div class="small text-muted">Fecha y hora de la cita</div>
+                    <div class="text-dark" id="modalDateTime2">N/A</div>
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                    <div class="small text-muted">Registrada el</div>
+                    <div class="text-dark" id="modalCreatedAt">N/A</div>
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                    <div class="small text-muted">Notas del paciente</div>
+                    <div class="text-dark" id="modalNotes">N/A</div>
+                    </div>
+                </div>
+                </div>
+
+                <!-- Facturación (colapsable) -->
+                <div class="p-3 mb-3 rounded border bg-light">
+                <a class="d-flex align-items-center justify-content-between text-decoration-none"
+                    data-toggle="collapse"
+                    href="#collapseBillingData"
+                    role="button"
+                    aria-expanded="false"
+                    aria-controls="collapseBillingData">
+                    <h6 class="mb-0 font-weight-bold text-primary">Datos de facturación</h6>
+                    <span class="text-muted"><i class="fas fa-chevron-down"></i></span>
+                </a>
+
+                <div id="modalBillingSameNote" class="small text-muted font-italic mt-1" style="display:none;">
+                    Se usaron los mismos datos del paciente
+                </div>
+
+                <div class="collapse mt-3" id="collapseBillingData">
+                    <div class="row">
+                    <div class="col-md-6 mb-2">
+                        <div class="small text-muted">Nombre para facturación</div>
+                        <div class="text-dark" id="modalBillingName">N/A</div>
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                        <div class="small text-muted">Tipo de documento</div>
+                        <div class="text-dark" id="modalBillingDocType">N/A</div>
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                        <div class="small text-muted">Número de documento</div>
+                        <div class="text-dark" id="modalBillingDocNumber">N/A</div>
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                        <div class="small text-muted">Correo de facturación</div>
+                        <div class="text-dark" id="modalBillingEmail">N/A</div>
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                        <div class="small text-muted">Teléfono de facturación</div>
+                        <div class="text-dark" id="modalBillingPhone">N/A</div>
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                        <div class="small text-muted">Dirección de facturación</div>
+                        <div class="text-dark" id="modalBillingAddress">N/A</div>
+                    </div>
+                    </div>
+                </div>
+                </div>
+
+                <!-- Pago (dinámico) -->
+                <div class="p-3 mb-3 rounded border bg-light" id="paymentSectionWrapper" style="display:none;">
+                <h6 class="mb-3 font-weight-bold text-primary">Información de pago</h6>
+
+                <!-- TARJETA (READ-ONLY) -->
+                <div id="paymentCardBlock" style="display:none;">
+                    <div class="row">
+                    <div class="col-md-6 mb-2">
+                        <div class="small text-muted">Método</div>
+                        <div class="text-dark" id="modalPaymentMethodLabel">N/A</div>
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                        <div class="small text-muted">Estado del pago</div>
+                        <div class="text-dark" id="modalPaymentStatusBadge2">N/A</div>
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                        <div class="small text-muted">Monto total a pagar</div>
+                        <div class="text-dark" id="modalPaymentAmount">N/A</div>
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                        <div class="small text-muted">Monto pagado</div>
+                        <div class="text-dark" id="modalPaidAmountText">N/A</div>
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                        <div class="small text-muted">Fecha del pago</div>
+                        <div class="text-dark" id="modalPaymentDate">N/A</div>
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                        <div class="small text-muted">Client Transaction ID</div>
+                        <div class="text-dark" id="modalClientTransactionId" style="word-break: break-word; overflow-wrap:anywhere;">N/A</div>
+                    </div>
+
+                    <div class="col-md-12 mb-0">
+                        <div class="small text-muted">Observaciones de pago</div>
+                        <div class="text-dark" id="modalCardNotesText">
+                        <span class="text-muted font-italic small">N/A</span>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+
+                <!-- TRANSFERENCIA (READ-ONLY) -->
+                <div id="paymentTransferBlock" style="display:none;">
+                    <div class="row">
+                    <div class="col-md-6 mb-2">
+                        <div class="small text-muted">Método</div>
+                        <div class="text-dark" id="modalTransferMethodLabel">N/A</div>
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                        <div class="small text-muted">Monto total a pagar</div>
+                        <div class="text-dark" id="modalTransferAmount">N/A</div>
+                    </div>
+
+                    <div class="col-md-6 mb-2 offset-md-6">
+                        <div class="small text-muted">Monto pagado</div>
+                        <div class="text-dark" id="modalTransferPaidAmountText">N/A</div>
+                    </div>
+
+                    <div class="col-md-12 mb-0">
+                        <div class="small text-muted">Observaciones de pago</div>
+                        <div class="text-dark" id="modalTransferNotesText">
+                        <span class="text-muted font-italic small">N/A</span>
                         </div>
                     </div>
 
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-danger">Update Status</button>
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <div class="col-md-12 mt-2">
+                        <div class="small text-muted font-weight-bold">Datos de la transferencia</div>
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                        <div class="small text-muted">Banco de origen</div>
+                        <div class="text-dark" id="modalTransferBankOrigin">N/A</div>
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                        <div class="small text-muted">Nombre del titular</div>
+                        <div class="text-dark" id="modalTransferPayerName">N/A</div>
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                        <div class="small text-muted">Fecha de la transferencia</div>
+                        <div class="text-dark" id="modalTransferDate">N/A</div>
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                        <div class="small text-muted">Número de referencia</div>
+                        <div class="text-dark" id="modalTransferReference">N/A</div>
+                    </div>
+
+                    <div class="col-md-12 mb-0">
+                        <div class="small text-muted">Comprobante</div>
+                        <div class="text-dark" id="modalTransferReceipt">
+                        <span class="text-muted font-italic small">N/A</span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-12 mt-3">
+                        <div class="small text-muted font-weight-bold">Validación de transferencia</div>
+                    </div>
+
+                    <div class="col-md-12 mb-2">
+                        <div class="small text-muted">Estado de validación</div>
+                        <div class="text-dark" id="modalTransferValidationText">Sin revisar</div>
+                    </div>
+
+                    <div class="col-md-12 mb-2" id="transferValidationMeta" style="display:none;">
+                        <div class="small text-muted">Última validación</div>
+                        <div class="text-dark">
+                        <span id="modalTransferValidatedAt">N/A</span>
+                        <span class="text-muted">·</span>
+                        <span id="modalTransferValidatedBy">N/A</span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-12 mb-0" id="transferValidationNotesWrapper" style="display:none;">
+                        <div class="small text-muted">Observaciones de validación</div>
+                        <div class="text-dark" id="modalTransferValidationNotesText">
+                        <span class="text-muted font-italic small">N/A</span>
+                        </div>
+                    </div>
                     </div>
                 </div>
+
+                <!-- EFECTIVO (READ-ONLY) -->
+                <div id="paymentCashBlock" style="display:none;">
+                    <div class="row">
+                    <div class="col-md-6 mb-2">
+                        <div class="small text-muted">Método</div>
+                        <div class="text-dark" id="modalCashMethodLabel">Efectivo</div>
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                        <div class="small text-muted">Monto total a pagar</div>
+                        <div class="text-dark" id="modalCashAmount">N/A</div>
+                    </div>
+
+                    <div class="col-md-6 mb-2 offset-md-6">
+                        <div class="small text-muted">Monto pagado</div>
+                        <div class="text-dark" id="modalCashPaidAmountText">N/A</div>
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                        <div class="small text-muted">Fecha del pago</div>
+                        <div class="text-dark" id="modalCashPaidAtText">N/A</div>
+                    </div>
+
+                    <div class="col-md-12 mb-0">
+                        <div class="small text-muted">Observaciones de pago</div>
+                        <div class="text-dark" id="modalCashNotesText">
+                        <span class="text-muted font-italic small">N/A</span>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+            </div>
+
             </div>
         </div>
-    </form>
-
+    </div>
 @stop
 
 @section('css')
@@ -226,6 +548,305 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@3.10.2/dist/fullcalendar.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@3.10.2/dist/locale/es.js"></script>
 
+    <script>
+        /**
+         * Modal Detalles (READ-ONLY)
+         * Se llama con: openAppointmentModalReadOnly(data)
+         */
+        (function () {
+
+        function normalizeValue(v) {
+            return String(v ?? '').trim().toLowerCase();
+        }
+
+        function formatDocTypeLabel(v) {
+            const s = String(v || '').trim().toLowerCase();
+            if (!s) return 'N/A';
+            if (s === 'cedula') return 'Cédula';
+            if (s === 'ruc') return 'RUC';
+            if (s === 'pasaporte') return 'Pasaporte';
+            return v;
+        }
+
+        function fmtMoney(n) {
+            if (n === null || n === undefined || String(n).trim() === '') return 'N/A';
+            const x = Number(String(n).trim().replace(',', '.'));
+            if (!isFinite(x)) return String(n);
+            return `$${x.toFixed(2)}`;
+        }
+
+        function fmtNiceDateTime(dateRaw) {
+            if (!dateRaw || String(dateRaw).trim() === '') return 'N/A';
+            const d = new Date(String(dateRaw).replace(' ', 'T'));
+            if (isNaN(d.getTime())) return String(dateRaw);
+            const datePart = d.toLocaleDateString('es-EC', { day: '2-digit', month: 'short', year: 'numeric' });
+            const timePart = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+            return `${datePart} · ${timePart}`;
+        }
+
+        function statusBadge(statusRaw) {
+            let normalized = String(statusRaw || '')
+            .trim()
+            .toLowerCase()
+            .replace(/\s+/g, '_')
+            .replace('cancelled', 'canceled');
+
+            const colors = {
+            pending_verification: '#7f8c8d',
+            pending_payment: '#f39c12',
+            paid: '#2ecc71',
+            confirmed: '#3498db',
+            completed: '#008000',
+            canceled: '#ff0000',
+            rescheduled: '#f1c40f',
+            no_show: '#e67e22',
+            on_hold: '#95a5a6',
+            };
+
+            const labels = {
+            pending_verification: 'Pendiente de verificación',
+            pending_payment: 'Pendiente de pago',
+            paid: 'Pagada',
+            confirmed: 'Confirmada',
+            completed: 'Completada',
+            canceled: 'Cancelada',
+            rescheduled: 'Reagendada',
+            no_show: 'No asistió',
+            on_hold: 'En espera',
+            };
+
+            const color = colors[normalized] || '#7f8c8d';
+            const label = labels[normalized] || (statusRaw ? String(statusRaw) : 'N/A');
+            return `<span class="badge px-2 py-1" style="background-color:${color};color:white;">${label}</span>`;
+        }
+
+        function paymentStatusBadge(status) {
+            const s = String(status || '').trim().toLowerCase();
+            const colors = {
+            unpaid: '#95a5a6',
+            pending: '#f39c12',
+            partial: '#3498db',
+            paid: '#2ecc71',
+            refunded: '#9b59b6',
+            };
+            const labels = {
+            unpaid: 'No pagado',
+            pending: 'Pendiente',
+            partial: 'Pagado parcialmente',
+            paid: 'Pagado',
+            refunded: 'Reembolsado',
+            };
+            const key = s || 'na';
+            const color = colors[key] || '#95a5a6';
+            const label = labels[key] || (status ? String(status) : 'N/A');
+            return `<span class="badge px-2 py-1" style="background-color:${color};color:white;">${label}</span>`;
+        }
+
+        function paymentMethodLabel(m) {
+            const s = String(m || '').trim().toLowerCase();
+            if (s === 'card') return 'Tarjeta';
+            if (s === 'transfer') return 'Transferencia';
+            if (s === 'cash') return 'Efectivo';
+            return s ? (s.charAt(0).toUpperCase() + s.slice(1)) : 'N/A';
+        }
+
+        function setPaymentUI(data) {
+            const pm = String(data.payment_method || '').trim().toLowerCase();
+
+            $('#paymentSectionWrapper').hide();
+            $('#paymentCardBlock, #paymentTransferBlock, #paymentCashBlock').hide();
+
+            // Siempre pinta el badge de estado pago (aunque no haya método)
+            $('#modalPaymentStatusBadge').html(paymentStatusBadge(data.payment_status));
+
+            if (!pm) return;
+
+            $('#paymentSectionWrapper').show();
+
+            if (pm === 'card') {
+            $('#paymentCardBlock').show();
+
+            $('#modalPaymentMethodLabel').text(paymentMethodLabel(pm));
+            $('#modalPaymentStatusBadge2').html(paymentStatusBadge(data.payment_status));
+            $('#modalPaymentAmount').text(fmtMoney(data.amount));
+            $('#modalPaidAmountText').text(fmtMoney(data.paid_amount));
+            $('#modalPaymentDate').text(fmtNiceDateTime(data.payment_paid_at));
+
+            const ctx = String(data.client_transaction_id || '').trim();
+            $('#modalClientTransactionId').html(
+                ctx ? ctx : '<span class="text-muted font-italic small">No se registró Client Transaction ID</span>'
+            );
+
+            const notes = String(data.payment_notes || '').trim();
+            $('#modalCardNotesText').html(
+                notes ? notes : '<span class="text-muted font-italic small">N/A</span>'
+            );
+            }
+
+            if (pm === 'transfer') {
+            $('#paymentTransferBlock').show();
+
+            $('#modalTransferMethodLabel').text(paymentMethodLabel(pm));
+            $('#modalTransferAmount').text(fmtMoney(data.amount));
+            $('#modalTransferPaidAmountText').text(fmtMoney(data.paid_amount));
+
+            const notes = String(data.payment_notes || '').trim();
+            $('#modalTransferNotesText').html(
+                notes ? notes : '<span class="text-muted font-italic small">N/A</span>'
+            );
+
+            $('#modalTransferBankOrigin').text(data.transfer_bank_origin || 'N/A');
+            $('#modalTransferPayerName').text(data.transfer_payer_name || 'N/A');
+            $('#modalTransferDate').text(data.transfer_date ? String(data.transfer_date) : 'N/A');
+            $('#modalTransferReference').text(data.transfer_reference || 'N/A');
+
+            if (data.transfer_receipt_path && String(data.transfer_receipt_path).trim() !== '') {
+                $('#modalTransferReceipt').text(String(data.transfer_receipt_path));
+            } else {
+                $('#modalTransferReceipt').html('<span class="text-muted font-italic small">N/A</span>');
+            }
+
+            const vStatus = String(data.transfer_validation_status || '').trim().toLowerCase();
+            const vAt = String(data.transfer_validated_at || '').trim();
+            const vBy = String(data.transfer_validated_by || '').trim();
+            const vNotes = String(data.transfer_validation_notes || '').trim();
+
+            let vLabel = 'Sin revisar';
+            if (vStatus === 'validated') vLabel = 'Validada';
+            if (vStatus === 'rejected') vLabel = 'Rechazada';
+
+            $('#modalTransferValidationText').text(vLabel);
+
+            if (vAt || vBy) {
+                $('#transferValidationMeta').show();
+                $('#modalTransferValidatedAt').text(vAt || 'N/A');
+                $('#modalTransferValidatedBy').text(vBy || 'N/A');
+            } else {
+                $('#transferValidationMeta').hide();
+            }
+
+            if (vNotes) {
+                $('#transferValidationNotesWrapper').show();
+                $('#modalTransferValidationNotesText').text(vNotes);
+            } else {
+                $('#transferValidationNotesWrapper').hide();
+                $('#modalTransferValidationNotesText').html('<span class="text-muted font-italic small">N/A</span>');
+            }
+            }
+
+            if (pm === 'cash') {
+            $('#paymentCashBlock').show();
+
+            $('#modalCashMethodLabel').text('Efectivo');
+            $('#modalCashAmount').text(fmtMoney(data.amount));
+            $('#modalCashPaidAmountText').text(fmtMoney(data.paid_amount));
+            $('#modalCashPaidAtText').text(fmtNiceDateTime(data.payment_paid_at));
+
+            const notes = String(data.payment_notes || '').trim();
+            $('#modalCashNotesText').html(
+                notes ? notes : '<span class="text-muted font-italic small">N/A</span>'
+            );
+            }
+        }
+
+        function setBillingUX(data, patient) {
+            const billing = {
+            name: data.billing_name || '',
+            doc_type: data.billing_doc_type || '',
+            doc_number: data.billing_doc_number || '',
+            email: data.billing_email || '',
+            phone: data.billing_phone || '',
+            address: data.billing_address || '',
+            };
+
+            $('#modalBillingName').text(billing.name || 'N/A');
+            $('#modalBillingDocType').text(formatDocTypeLabel(billing.doc_type));
+            $('#modalBillingDocNumber').text(billing.doc_number || 'N/A');
+            $('#modalBillingEmail').text(billing.email || 'N/A');
+            $('#modalBillingPhone').text(billing.phone || 'N/A');
+            $('#modalBillingAddress').text(billing.address || 'N/A');
+
+            const hasAny =
+            normalizeValue(billing.name) ||
+            normalizeValue(billing.doc_type) ||
+            normalizeValue(billing.doc_number) ||
+            normalizeValue(billing.email) ||
+            normalizeValue(billing.phone) ||
+            normalizeValue(billing.address);
+
+            let isDifferent = false;
+
+            if (hasAny) {
+            if (normalizeValue(billing.name) !== normalizeValue(patient.name)) isDifferent = true;
+            if (normalizeValue(formatDocTypeLabel(billing.doc_type)) !== normalizeValue(formatDocTypeLabel(patient.doc_type))) isDifferent = true;
+            if (normalizeValue(billing.doc_number) !== normalizeValue(patient.doc_number)) isDifferent = true;
+            if (normalizeValue(billing.email) !== normalizeValue(patient.email)) isDifferent = true;
+            if (normalizeValue(billing.phone) !== normalizeValue(patient.phone)) isDifferent = true;
+            if (normalizeValue(billing.address) !== normalizeValue(patient.address)) isDifferent = true;
+            }
+
+            if (isDifferent) {
+            $('#modalBillingSameNote').hide();
+            $('#collapseBillingData').collapse('show');
+            } else {
+            $('#modalBillingSameNote').show();
+            $('#collapseBillingData').collapse('hide');
+            }
+        }
+
+        function fillModal(data) {
+            $('#modalBookingCode').text(data.booking_code || 'N/A');
+
+            $('#modalAppointmentName').text(data.patient_name || data.title || 'N/A');
+            $('#modalStaff').text(data.employee_name || data.staff || 'N/A');
+            $('#modalArea').text(data.area_name || data.area || 'N/A');
+            $('#modalService').text(data.service_name || data.service_title || 'N/A');
+            $('#modalDateTime').text(data.date_time_label || 'N/A');
+
+            $('#modalStatusBadge').html(statusBadge(data.status));
+
+            $('#modalPatientFullName').text(data.patient_full_name || 'N/A');
+            $('#modalDocType').text(formatDocTypeLabel(data.patient_doc_type));
+            $('#modalDocNumber').text(data.patient_doc_number || 'N/A');
+            $('#modalPatientDobText').text(data.patient_dob || 'N/A');
+            $('#modalPatientAge').text(data.patient_age || 'N/A');
+            $('#modalEmail').text(data.patient_email || data.email || 'N/A');
+            $('#modalPhone').text(data.patient_phone || data.phone || 'N/A');
+            $('#modalAddress').text(data.patient_address || 'N/A');
+            $('#modalPatientTimezone').text(data.patient_timezone || 'N/A');
+
+            $('#modalAppointmentMode').text(data.appointment_mode || 'N/A');
+            $('#modalDateTime2').text(data.date_time_label || 'N/A');
+            $('#modalCreatedAt').text(data.created_at_label || 'N/A');
+
+            const notes = String(data.patient_notes || data.notes || data.description || '').trim();
+            $('#modalNotes').html(
+            notes ? notes : '<span class="text-muted font-italic small">No se registraron notas</span>'
+            );
+
+            setBillingUX(
+            data,
+            {
+                name: data.patient_full_name || '',
+                doc_type: data.patient_doc_type || '',
+                doc_number: data.patient_doc_number || '',
+                email: data.patient_email || '',
+                phone: data.patient_phone || '',
+                address: data.patient_address || '',
+            }
+            );
+
+            setPaymentUI(data);
+
+            $('#appointmentModal').modal('show');
+        }
+
+        window.openAppointmentModalReadOnly = function (data) {
+            fillModal(data || {});
+        };
+
+        })();
+    </script>
 
     <script>
         $(document).ready(function() {
@@ -286,46 +907,70 @@
                     }
                 },
                 eventClick: function(calEvent, jsEvent, view) {
-    // Populate modal with event data
-    $('#modalAppointmentId').val(calEvent.id);
-    $('#modalAppointmentName').text(calEvent.name || calEvent.title.split(' - ')[0] || 'N/A');
-    $('#modalService').text(calEvent.service_title || calEvent.title.split(' - ')[1] || 'N/A');
-    $('#modalEmail').text(calEvent.email || 'N/A');
-    $('#modalPhone').text(calEvent.phone || 'N/A');
-    $('#modalStaff').text(calEvent.staff || 'N/A');
-    $('#modalAmount').text(calEvent.amount || 'N/A');
-    $('#modalNotes').text(calEvent.description || calEvent.notes || 'N/A');
-    $('#modalStartTime').text(
-        calEvent.start
-            ? moment(calEvent.start).locale('es').format('D [de] MMMM [de] YYYY HH:mm')
-            : 'N/A'
-    );
 
-    // Get the status from the calendar event
-    var status = calEvent.status || 'pending_verification';
-    $('#modalStatusSelect').val(status);
+                    console.log('EVENTO COMPLETO =>', calEvent);
+                    console.log('PAYMENT METHOD =>', calEvent.payment_method);
 
-    // Set status badge
-    var statusColors = {
-        'pending_verification': '#7f8c8d',
-        'pending_payment':      '#f39c12',
-        'paid':                 '#2ecc71',
-        'confirmed':            '#3498db',
-        'completed':            '#008000',
-        'canceled':             '#ff0000',
-        'rescheduled':          '#f1c40f',
-        'no_show':              '#e67e22',
-        'on_hold':              '#95a5a6',
-    };
+                    const data = {
+                        booking_code: calEvent.booking_code || 'N/A',
 
-    var s = (status || '').toString().trim().toLowerCase().replace(/[\s-]+/g, '_');
-    var badgeColor = statusColors[s] || '#7f8c8d';
-    $('#modalStatusBadge').html(
-        `<span class="badge px-2 py-1" style="background-color: ${badgeColor}; color: white;">${status}</span>`
-    );
+                        patient_name: calEvent.name || (calEvent.title ? String(calEvent.title).split(' - ')[0] : '') || 'N/A',
+                        service_name: calEvent.service_title || (calEvent.title ? String(calEvent.title).split(' - ')[1] : '') || 'N/A',
+                        employee_name: calEvent.staff || 'N/A',
+                        area_name: calEvent.area || 'N/A',
 
-    $('#appointmentModal').modal('show');
-}
+                        status: calEvent.status || '',
+
+                        // Fecha / hora para los labels del modal
+                        date_time_label: calEvent.start ? moment(calEvent.start).locale('es').format('D [de] MMM YYYY · h:mm A') : 'N/A',
+                        created_at_label: calEvent.created_at ? moment(calEvent.created_at).locale('es').format('D [de] MMM YYYY · h:mm A') : 'N/A',
+
+                        appointment_mode: calEvent.appointment_mode || 'N/A',
+
+                        // Paciente
+                        patient_full_name: calEvent.patient_full_name || calEvent.name || 'N/A',
+                        patient_doc_type: calEvent.patient_doc_type || '',
+                        patient_doc_number: calEvent.patient_doc_number || '',
+                        patient_dob: calEvent.patient_dob || '',
+                        patient_age: calEvent.patient_age || '',
+                        patient_email: calEvent.email || '',
+                        patient_phone: calEvent.phone || '',
+                        patient_address: calEvent.patient_address || '',
+                        patient_timezone: calEvent.patient_timezone || '',
+
+                        patient_notes: calEvent.notes || calEvent.description || '',
+
+                        // Facturación
+                        billing_name: calEvent.billing_name || '',
+                        billing_doc_type: calEvent.billing_doc_type || '',
+                        billing_doc_number: calEvent.billing_doc_number || '',
+                        billing_email: calEvent.billing_email || '',
+                        billing_phone: calEvent.billing_phone || '',
+                        billing_address: calEvent.billing_address || '',
+
+                        // Pago
+                        payment_method: calEvent.payment_method || '',
+                        payment_status: calEvent.payment_status || '',
+                        payment_paid_at: calEvent.payment_paid_at || '',
+                        payment_notes: calEvent.payment_notes || '',
+                        amount: calEvent.amount || '',
+                        paid_amount: calEvent.paid_amount || '',
+                        client_transaction_id: calEvent.client_transaction_id || '',
+
+                        // Transfer extras (si los tienes)
+                        transfer_bank_origin: calEvent.transfer_bank_origin || '',
+                        transfer_payer_name: calEvent.transfer_payer_name || '',
+                        transfer_date: calEvent.transfer_date || '',
+                        transfer_reference: calEvent.transfer_reference || '',
+                        transfer_receipt_path: calEvent.transfer_receipt_path || '',
+                        transfer_validation_status: calEvent.transfer_validation_status || '',
+                        transfer_validated_at: calEvent.transfer_validated_at || '',
+                        transfer_validated_by: calEvent.transfer_validated_by || '',
+                        transfer_validation_notes: calEvent.transfer_validation_notes || '',
+                    };
+
+                    openAppointmentModalReadOnly(data);
+                }
             });
 
             // Single form submission handler

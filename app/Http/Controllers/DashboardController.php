@@ -76,6 +76,54 @@ class DashboardController extends Controller
                 'status' => $appointment->status,
                 'staff' => $appointment->employee->user->name ?? 'Unassigned',
 
+                // =======================
+                // ✅ CAMPOS PARA MODAL (MODO LECTURA)
+                // =======================
+                'booking_code'      => $appointment->booking_code ?? null,
+
+                // Paciente (extra)
+                'patient_full_name' => $appointment->patient_full_name ?? null,
+                'patient_doc_type'  => $appointment->patient_doc_type ?? null,
+                'patient_doc_number'=> $appointment->patient_doc_number ?? null,
+                'patient_dob'       => $appointment->patient_dob ?? null,
+                'patient_address'   => $appointment->patient_address ?? null,
+                'patient_timezone'  => $appointment->patient_timezone ?? null,
+
+                // Facturación
+                'billing_name'      => $appointment->billing_name ?? null,
+                'billing_doc_type'  => $appointment->billing_doc_type ?? null,
+                'billing_doc_number'=> $appointment->billing_doc_number ?? null,
+                'billing_email'     => $appointment->billing_email ?? null,
+                'billing_phone'     => $appointment->billing_phone ?? null,
+                'billing_address'   => $appointment->billing_address ?? null,
+
+                // Cita
+                'appointment_mode'  => $appointment->appointment_mode ?? null, // virtual/presencial si existe
+                'created_at'        => optional($appointment->created_at)->toIso8601String(),
+
+                // =======================
+                // ✅ PAGO (lo que te falta)
+                // =======================
+                'payment_method'        => $appointment->payment_method ?? null,     // card|transfer|cash
+                'payment_status'        => $appointment->payment_status ?? null,     // pending|unpaid|partial|paid|refunded
+                'amount_paid'           => $appointment->amount_paid ?? null,
+                'payment_paid_at'       => $appointment->payment_paid_at ?? null,
+                'payment_notes'         => $appointment->payment_notes ?? null,
+                'client_transaction_id' => $appointment->client_transaction_id ?? null,
+
+                // Transferencia (si tienes estas columnas)
+                'transfer_bank_origin'  => $appointment->transfer_bank_origin ?? null,
+                'transfer_payer_name'   => $appointment->transfer_payer_name ?? null,
+                'transfer_date'         => $appointment->transfer_date ?? null,
+                'transfer_reference'    => $appointment->transfer_reference ?? null,
+                'transfer_receipt'      => $appointment->transfer_receipt ?? null,
+
+                // Validación transferencia (si existen)
+                'transfer_validation_status' => $appointment->transfer_validation_status ?? null,
+                'transfer_validated_at'      => $appointment->transfer_validated_at ?? null,
+                'transfer_validated_by'      => $appointment->transfer_validated_by ?? null,
+                'transfer_validation_notes'  => $appointment->transfer_validation_notes ?? null,
+
                 'color'           => $color, // ✅ FullCalendar lo entiende en casi todas las configs
                 'backgroundColor' => $color,
                 'borderColor'     => $color,
