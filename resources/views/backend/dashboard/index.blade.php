@@ -679,7 +679,9 @@
 
             const notes = String(data.payment_notes || '').trim();
             $('#modalCardNotesText').html(
-                notes ? notes : '<span class="text-muted font-italic small">N/A</span>'
+                notes
+                    ? notes
+                    : '<span class="text-muted font-italic small">No se registraron observaciones</span>'
             );
             }
 
@@ -692,12 +694,25 @@
 
             const notes = String(data.payment_notes || '').trim();
             $('#modalTransferNotesText').html(
-                notes ? notes : '<span class="text-muted font-italic small">N/A</span>'
+                notes
+                    ? notes
+                    : '<span class="text-muted font-italic small">No se registraron observaciones</span>'
             );
 
             $('#modalTransferBankOrigin').text(data.transfer_bank_origin || 'N/A');
             $('#modalTransferPayerName').text(data.transfer_payer_name || 'N/A');
-            $('#modalTransferDate').text(data.transfer_date ? String(data.transfer_date) : 'N/A');
+            if (data.transfer_date) {
+                const m = moment(data.transfer_date);
+                $('#modalTransferDate').text(
+                    m.isValid()
+                        ? m.locale('es')
+                            .format('DD MMM YYYY')
+                            .replace('.', '')   // 👈 quita el punto del mes
+                        : 'N/A'
+                );
+            } else {
+                $('#modalTransferDate').text('N/A');
+            }
             $('#modalTransferReference').text(data.transfer_reference || 'N/A');
 
             if (data.transfer_receipt_path && String(data.transfer_receipt_path).trim() !== '') {
@@ -744,7 +759,9 @@
 
             const notes = String(data.payment_notes || '').trim();
             $('#modalCashNotesText').html(
-                notes ? notes : '<span class="text-muted font-italic small">N/A</span>'
+                notes
+                    ? notes
+                    : '<span class="text-muted font-italic small">No se registraron observaciones</span>'
             );
             }
         }
