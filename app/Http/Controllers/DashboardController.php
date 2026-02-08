@@ -16,7 +16,7 @@ class DashboardController extends Controller
         $user = auth()->user();
 
         // Start with base query
-        $query = Appointment::query()->with(['employee.user', 'service', 'user']);
+        $query = Appointment::query()->with(['employee.user', 'service.category', 'user']);
 
         // Only admins can see all data - no conditions added
         if (!$user->hasRole('admin')) {
@@ -62,6 +62,7 @@ class DashboardController extends Controller
 
             return [
                 'id' => $appointment->id,
+                'booking_id' => $appointment->booking_id ?? null,
                 'title' => sprintf(
                     '%s - %s',
                     $appointment->patient_full_name,
@@ -134,6 +135,8 @@ class DashboardController extends Controller
                 'service_title' => $appointment->service->title ?? 'Service',
                 'name' => $appointment->patient_full_name,
                 'notes' => $appointment->patient_notes,
+                'area_name' => $appointment->service->category->title
+                    ?? 'N/A',
             ];
         })->filter();
         return view('backend.dashboard.index', compact('appointments'));

@@ -907,17 +907,13 @@
                     }
                 },
                 eventClick: function(calEvent, jsEvent, view) {
-
-                    console.log('EVENTO COMPLETO =>', calEvent);
-                    console.log('PAYMENT METHOD =>', calEvent.payment_method);
-
                     const data = {
-                        booking_code: calEvent.booking_code || 'N/A',
+                        booking_code: calEvent.booking_id || 'N/A',
 
                         patient_name: calEvent.name || (calEvent.title ? String(calEvent.title).split(' - ')[0] : '') || 'N/A',
                         service_name: calEvent.service_title || (calEvent.title ? String(calEvent.title).split(' - ')[1] : '') || 'N/A',
                         employee_name: calEvent.staff || 'N/A',
-                        area_name: calEvent.area || 'N/A',
+                        area_name: calEvent.area_name || 'N/A',
 
                         status: calEvent.status || '',
 
