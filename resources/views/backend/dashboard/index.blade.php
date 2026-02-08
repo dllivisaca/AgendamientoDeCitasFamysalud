@@ -181,6 +181,42 @@
         .main-footer {
         text-align: center !important;
         }
+
+        /* ===============================
+        MEJORAR LEGIBILIDAD EN VISTA DÍA
+        =============================== */
+
+        /* Evento en agendaDay */
+        .fc-agendaDay-view .fc-event {
+            padding: 6px 8px !important;
+            font-size: 0.9rem !important;
+            line-height: 1.3 !important;
+            border-radius: 6px;
+        }
+
+        /* Contenido del evento */
+        .fc-agendaDay-view .fc-event .fc-content {
+            white-space: normal !important;   /* permite saltos de línea */
+            overflow: visible !important;
+        }
+
+        /* Hora del evento */
+        .fc-agendaDay-view .fc-event .fc-time {
+            font-weight: 600;
+            margin-right: 6px;
+        }
+
+        /* Título del evento */
+        .fc-agendaDay-view .fc-event .fc-title {
+            display: block;
+            font-weight: 500;
+            margin-top: 2px;
+        }
+
+        /* Evita que se vea "aplastado" verticalmente */
+        .fc-agendaDay-view .fc-time-grid-event {
+            min-height: 42px;
+        }
     </style>
 @stop
 
