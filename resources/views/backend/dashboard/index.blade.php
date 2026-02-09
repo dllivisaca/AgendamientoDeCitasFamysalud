@@ -409,6 +409,47 @@
             </div>
         </div>
     </div>
+
+    <!-- ✅ Modal: Vista rápida del comprobante -->
+    <div class="modal fade" id="transferReceiptModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-receipt" role="document">
+            <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Comprobante de transferencia</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div id="receiptLoading" class="text-center py-3" style="display:none;">
+                <span class="text-muted">Cargando comprobante...</span>
+                </div>
+
+                <div id="receiptError" class="alert alert-danger" style="display:none;">
+                No se pudo cargar el comprobante.
+                </div>
+
+                <div id="receiptViewer">
+                <img id="receiptImg" src="" alt="Comprobante">
+                <iframe id="receiptPdf" src="" title="Comprobante PDF"></iframe>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="receiptDownloadBtn">Descargar</button>
+
+                <a href="#" target="_blank" id="receiptOpenNewTab" class="btn btn-primary">
+                Pantalla completa
+                </a>
+
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+            </div>
+
+            </div>
+        </div>
+    </div>
 @stop
 
 @section('css')
@@ -538,6 +579,59 @@
         /* Evita que se vea "aplastado" verticalmente */
         .fc-agendaDay-view .fc-time-grid-event {
             min-height: 42px;
+        }
+
+        /* ✅ Modal de comprobante: tamaño fijo al viewport (no gigante) */
+        .modal-dialog.modal-receipt{
+        max-width: 900px;
+        width: calc(100% - 2rem);
+        margin: 1rem auto;
+        }
+
+        /* ✅ El modal ocupa alto fijo del viewport (esto sí "amarra" el flex) */
+        #transferReceiptModal .modal-content{
+        height: calc(100vh - 2rem);
+        display: flex;
+        flex-direction: column;
+        }
+
+        /* ✅ IMPORTANTE en flex: permite que el body se encoja y calcule bien */
+        #transferReceiptModal .modal-body{
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: hidden;
+        padding: 12px;
+        }
+
+        /* ✅ Visor interno ocupa todo el body */
+        #receiptViewer{
+        width: 100%;
+        height: 100%;
+        min-height: 0;
+        overflow: auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        }
+
+        /* ✅ Imagen: SIEMPRE encaja completa */
+        #receiptViewer img{
+        max-width: 100%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+        display: none;
+        border-radius: 6px;
+        }
+
+        /* ✅ PDF: ocupa todo el visor */
+        #receiptViewer iframe{
+        width: 100%;
+        height: 100%;
+        border: 0;
+        display: none;
+        border-radius: 6px;
         }
     </style>
 @stop
@@ -715,8 +809,28 @@
             }
             $('#modalTransferReference').text(data.transfer_reference || 'N/A');
 
-            if (data.transfer_receipt_path && String(data.transfer_receipt_path).trim() !== '') {
-                $('#modalTransferReceipt').text(String(data.transfer_receipt_path));
+            const tReceiptPath = String(data.transfer_receipt_path || '').trim();
+
+            if (tReceiptPath !== '') {
+                const appointmentId = String(data.appointment_id || '').trim();
+                const protectedUrl = `/admin/appointments/${appointmentId}/transfer-receipt`;
+                const openViewUrl  = `/admin/appointments/${appointmentId}/transfer-receipt/view`;
+
+                const pathLower = tReceiptPath.toLowerCase();
+                const fileType = pathLower.endsWith('.pdf') ? 'pdf' : 'image';
+
+                const bookingCode = String(data.booking_code || `FS-${appointmentId}`).trim();
+
+                $('#modalTransferReceipt').html(
+                    `<button type="button"
+                        class="btn btn-outline-primary btn-sm js-open-receipt-modal"
+                        data-url="${protectedUrl}"
+                        data-open-url="${openViewUrl}"
+                        data-filetype="${fileType}"
+                        data-booking-code="${bookingCode}">
+                        Ver comprobante
+                    </button>`
+                );
             } else {
                 $('#modalTransferReceipt').html('<span class="text-muted font-italic small">N/A</span>');
             }
@@ -937,7 +1051,8 @@
                 },
                 eventClick: function(calEvent, jsEvent, view) {
                     const data = {
-                        booking_code: calEvent.booking_id || 'N/A',
+                        appointment_id: calEvent.id || '',
+                        booking_code: calEvent.booking_code || calEvent.booking_id || 'N/A',
 
                         patient_name: calEvent.name || (calEvent.title ? String(calEvent.title).split(' - ')[0] : '') || 'N/A',
                         service_name: calEvent.service_title || (calEvent.title ? String(calEvent.title).split(' - ')[1] : '') || 'N/A',
@@ -1021,6 +1136,105 @@
 
 
 
+        });
+
+        // ✅ Abrir modal del comprobante (delegado) - versión "la que sí funciona"
+        $(document).on('click', '.js-open-receipt-modal', function () {
+            const url = $(this).data('url'); // ✅ SIEMPRE el protegido: /transfer-receipt
+            const fileType = String($(this).data('filetype') || '').toLowerCase();
+            const isPdf = (fileType === 'pdf');
+
+            // ✅ Reset UI SIEMPRE
+            $('#receiptError').hide();
+            $('#receiptLoading').show();
+
+            // ✅ Reset visor
+            $('#receiptPdf').hide().attr('src', 'about:blank');
+
+            // ✅ Matar handlers viejos y resetear IMG
+            const $img = $('#receiptImg');
+            $img.off('load error');
+            $img.hide().attr('src', '');
+
+            // Botones
+            const openUrl = $(this).data('open-url') || url; // ✅ /view para pantalla completa
+            $('#receiptOpenNewTab').attr('href', openUrl);
+            $('#receiptDownloadBtn').data('url', url);
+
+            const bookingCode = String($(this).data('bookingcode') || $(this).data('booking-code') || '').trim();
+            $('#receiptDownloadBtn').data('booking-code', bookingCode);
+
+            if (isPdf) {
+                // ✅ PDF: no mostrar error (solo ocultarlo)
+                $('#receiptError').hide();
+                $('#receiptLoading').hide();
+                $('#receiptPdf').attr('src', url).show();
+            } else {
+                // ✅ IMG: attach handlers nuevos
+                $img.on('load', function () {
+                    $('#receiptError').hide();
+                    $('#receiptLoading').hide();
+                    $img.show();
+                });
+
+                $img.on('error', function () {
+                    $('#receiptLoading').hide();
+                    $('#receiptError').show();
+                });
+
+                $img.attr('src', url);
+            }
+
+            $('#transferReceiptModal').modal('show');
+        });
+
+        // ✅ Descargar comprobante desde el modal (usa la URL protegida)
+        $(document).on('click', '#receiptDownloadBtn', async function () {
+            const url = $(this).data('url');
+            if (!url) return;
+
+            const $btn = $(this);
+            const oldText = $btn.text();
+
+            try {
+                $btn.prop('disabled', true).text('Descargando...');
+
+                const res = await fetch(url, {
+                    method: 'GET',
+                    credentials: 'same-origin',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+
+                const blob = await res.blob();
+                const blobUrl = window.URL.createObjectURL(blob);
+
+                const ext = (blob.type && blob.type.includes('pdf')) ? 'pdf'
+                    : (blob.type && blob.type.includes('png')) ? 'png'
+                    : (blob.type && blob.type.includes('jpeg')) ? 'jpg'
+                    : 'bin';
+
+                const bookingCode = String($(this).data('booking-code') || '').trim();
+                const safeCode = bookingCode ? bookingCode.replace(/[^\w\-]+/g, '-') : 'SIN_CODIGO';
+
+                const fileName = `comprobante_transferencia_${safeCode}.${ext}`;
+
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+
+                window.URL.revokeObjectURL(blobUrl);
+
+            } catch (err) {
+                console.error('Download error:', err);
+                alert('No se pudo descargar el comprobante. Prueba con "Pantalla completa" y descarga desde la pestaña.');
+            } finally {
+                $btn.prop('disabled', false).text(oldText);
+            }
         });
     </script>
 

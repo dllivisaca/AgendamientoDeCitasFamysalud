@@ -136,7 +136,7 @@ class DashboardController extends Controller
                 'transfer_payer_name'   => $appointment->transfer_payer_name ?? null,
                 'transfer_date'         => $appointment->transfer_date ?? null,
                 'transfer_reference'    => $appointment->transfer_reference ?? null,
-                'transfer_receipt'      => $appointment->transfer_receipt ?? null,
+                'transfer_receipt_path' => $appointment->transfer_receipt_path ?? null,
 
                 // Validación transferencia (si existen)
                 'transfer_validation_status' => $appointment->transfer_validation_status ?? null,
