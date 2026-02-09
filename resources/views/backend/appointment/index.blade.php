@@ -1193,7 +1193,7 @@
                         <div class="card py-2 px-2">
 
                             <div class="card-body p-0">
-                                <div class="table-responsive w-100" style="overflow-x:auto; -webkit-overflow-scrolling: touch;">
+                                <div class="table-responsive w-100 table-scroll-1680">
                                     <table id="myTable" class="table table-striped projects ">
                                         <thead>
                                             <tr>
@@ -2211,6 +2211,59 @@
     #refundModal {
         z-index: 1070 !important;
     }
+
+    /* =========================
+    <= 1680px: SOLO scrollers
+    + texto siempre horizontal
+    + header fijo (sticky)
+    ========================= */
+    @media (max-width: 1680px){
+
+    .table-scroll-1680{
+        overflow: auto;                 /* scroll horizontal + vertical */
+        -webkit-overflow-scrolling: touch;
+        max-height: calc(100vh - 260px);/* ajusta 260px según tu header */
+    }
+
+    /* Clave: evita que “se aplaste” y se ponga vertical */
+    .table-scroll-1680 table{
+        width: max-content;             /* permite crecer a lo ancho */
+        min-width: 100%;                /* pero no más angosta que el contenedor */
+        table-layout: auto !important;
+        margin-bottom: 0;
+    }
+
+    /* Fuerza texto horizontal en TODO (headers + celdas) */
+    .table-scroll-1680 thead th,
+    .table-scroll-1680 tbody td{
+        white-space: nowrap !important;
+        word-break: normal !important;
+        overflow-wrap: normal !important;
+    }
+
+    /* Header fijo cuando haces scroll vertical dentro del wrapper */
+    .table-scroll-1680 thead th{
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        background: #fff;              /* para que no se transparente */
+    }
+    }
+
+    
+  /* Header fijo (sticky) */
+  .table-scroll-1680 thead th{
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 999 !important;
+    background: #fff !important;     /* o #f4f6f9 si quieres estilo AdminLTE */
+    box-shadow: 0 2px 0 rgba(0,0,0,.08);
+  }
+
+  /* Por si tu tabla usa stripes y se ve “transparente” */
+  .table-scroll-1680 thead{
+    background: #fff !important;
+  }
 </style>
 @stop
 
