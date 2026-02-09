@@ -832,12 +832,26 @@
                     </button>`
                 );
             } else {
-                $('#modalTransferReceipt').html('<span class="text-muted font-italic small">N/A</span>');
+                $('#modalTransferReceipt').html(
+                    '<span class="text-muted font-italic small">No se registró comprobante</span>'
+                );
             }
 
             const vStatus = String(data.transfer_validation_status || '').trim().toLowerCase();
-            const vAt = String(data.transfer_validated_at || '').trim();
-            const vBy = String(data.transfer_validated_by || '').trim();
+            const vAtRaw = String(data.transfer_validated_at || '').trim();
+            const vById = String(data.transfer_validated_by || '').trim();
+            const vByName = String(data.transfer_validated_by_name || '').trim();
+
+            // ✅ Formato: "27 ene 2026 · 11:16 AM"
+            let vAtLabel = '';
+            if (vAtRaw) {
+                const m = moment(vAtRaw);
+                vAtLabel = m.isValid()
+                    ? m.locale('es').format('DD MMM YYYY · h:mm A').replace('.', '') // quita "ene."
+                    : vAtRaw;
+            }
+
+            const vByLabel = vByName || vById || '';
             const vNotes = String(data.transfer_validation_notes || '').trim();
 
             let vLabel = 'Sin revisar';
@@ -846,10 +860,10 @@
 
             $('#modalTransferValidationText').text(vLabel);
 
-            if (vAt || vBy) {
+            if (vAtLabel || vByLabel) {
                 $('#transferValidationMeta').show();
-                $('#modalTransferValidatedAt').text(vAt || 'N/A');
-                $('#modalTransferValidatedBy').text(vBy || 'N/A');
+                $('#modalTransferValidatedAt').text(vAtLabel || 'N/A');
+                $('#modalTransferValidatedBy').text(vByLabel || 'N/A');
             } else {
                 $('#transferValidationMeta').hide();
             }
@@ -1125,6 +1139,7 @@
                         transfer_validation_status: calEvent.transfer_validation_status || '',
                         transfer_validated_at: calEvent.transfer_validated_at || '',
                         transfer_validated_by: calEvent.transfer_validated_by || '',
+                        transfer_validated_by_name: calEvent.transfer_validated_by_name || '',
                         transfer_validation_notes: calEvent.transfer_validation_notes || '',
                     };
 

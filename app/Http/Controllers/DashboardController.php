@@ -16,7 +16,7 @@ class DashboardController extends Controller
         $user = auth()->user();
 
         // Start with base query
-        $query = Appointment::query()->with(['employee.user', 'service.category', 'user']);
+        $query = Appointment::query()->with(['employee.user', 'service.category', 'user', 'transferValidatedBy']);
 
         // Only admins can see all data - no conditions added
         if (!$user->hasRole('admin')) {
@@ -142,6 +142,7 @@ class DashboardController extends Controller
                 'transfer_validation_status' => $appointment->transfer_validation_status ?? null,
                 'transfer_validated_at'      => $appointment->transfer_validated_at ?? null,
                 'transfer_validated_by'      => $appointment->transfer_validated_by ?? null,
+                'transfer_validated_by_name' => $appointment->transferValidatedBy->name ?? null,
                 'transfer_validation_notes'  => $appointment->transfer_validation_notes ?? null,
 
                 'color'           => $color, // ✅ FullCalendar lo entiende en casi todas las configs
