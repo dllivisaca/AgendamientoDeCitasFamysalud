@@ -2350,7 +2350,7 @@
                                 });
                             } else {
                                 $("#employees-container").html(
-                                    '<div class="col-12 text-center py-5"><p>No employees available for this service.</p></div>'
+                                    '<div class="col-12 text-center py-5"><p>No hay ningún profesional disponible para este servicio.</p></div>'
                                 );
                             }
                         },

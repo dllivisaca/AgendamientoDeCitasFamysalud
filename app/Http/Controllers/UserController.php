@@ -102,7 +102,7 @@ class UserController extends Controller
             $employee->services()->attach($data['service']);
         }
 
-        return redirect()->back()->withSuccess('User has been created successfully!');
+        return redirect()->back()->withSuccess('Usuario creado exitosamente');
     }
 
     /**

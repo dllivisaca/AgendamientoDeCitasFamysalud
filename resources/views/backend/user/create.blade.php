@@ -285,7 +285,7 @@
                                                     <!-- First time input row (main row) -->
                                                     <div class="col-md-4">
                                                         <div class="form-group">
-                                                            <strong>From:</strong>
+                                                            <strong>Desde:</strong>
                                                             <input type="time" class="form-control from"
                                                                 name="days[{{ $day }}][]"
                                                                 value="{{ old('days.' . $day . '.0') }}"
@@ -294,7 +294,7 @@
                                                     </div>
                                                     <div class="col-md-4">
                                                         <div class="form-group">
-                                                            <strong>To:</strong>
+                                                            <strong>Hasta:</strong>
                                                             <input type="time" class="form-control to"
                                                                 name="days[{{ $day }}][]"
                                                                 value="{{ old('days.' . $day . '.1') }}"
