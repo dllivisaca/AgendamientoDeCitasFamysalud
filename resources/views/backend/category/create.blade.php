@@ -1,18 +1,18 @@
 @extends('adminlte::page')
 
-@section('title', 'Add Category')
+@section('title', 'Agregar Área de Atención · FamySalud')
 
 @section('content_header')
 
     <div class="container-fluid">
         <div class="row mb-1">
             <div class="col-sm-6">
-                <h1 class="m-0">Add Category</h1>
+                <h1 class="m-0">Agregar Área de Atención</h1>
             </div>
             <div class="col-sm-6">
                 <ol class="breadcrumb float-sm-right">
-                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-                    <li class="breadcrumb-item active">Category</li>
+                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Inicio</a></li>
+                    <li class="breadcrumb-item active">Áreas de atención</li>
                 </ol>
             </div>
         </div>
@@ -27,7 +27,7 @@
             <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
             </button>
-            <strong>Whoops!</strong> There were some problems with your input.<br>
+            <strong>Ups!</strong> Hubo errores en tu solicitud.<br>
             <ul>
                 @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
@@ -45,7 +45,7 @@
                     <div class="col-md-8">
                         <div class="card card-light">
                             <div class="card-header">
-                                <h3 class="card-title">Add Category
+                                <h3 class="card-title">Agregar Área de atención
                                 </h3>
                                 <div class="card-tools">
                                     <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
@@ -56,22 +56,22 @@
                             </div>
                             <div class="card-body">
                                 <div class="form-group">
-                                    <label for="inputStatus">Title
+                                    <label for="inputStatus">Nombre
                                     </label>
                                     <input class="form-control @error('title') is-invalid @enderror" type="text"
-                                        id="title" name="title" placeholder="Title here.." value="{{ old('title') }}">
-                                        <small class="text-muted">The name is how it appears on your site.</small>
+                                        id="title" name="title" placeholder="Escribe el nombre aquí.." value="{{ old('title') }}">
+                                        <small class="text-muted">El nombre que aparecerá en la aplicación.</small>
                                     @error('title')
                                         <p class="text-danger">{{ $message }}</p>
                                     @enderror
                                 </div>
                                 <div class="form-group">
-                                    <label class="mb-0" for="inputStatus">Slug
+                                    <label class="mb-0" for="inputStatus">Identificador
                                     </label>
 
                                     <input style="background-color: rgb(220, 220, 220);" class="form-control @error('slug') is-invalid @enderror" type="text"
-                                        id="slug" name="slug" placeholder="slug here.." value="{{ old('slug') }}">
-                                        <small class="text-muted">&nbsp;&nbsp;The “slug” is the URL-friendly version of the name. It is usually all lowercase and contains only letters, numbers, and hyphens.
+                                        id="slug" name="slug" placeholder="Escribe el identificador aquí.." value="{{ old('slug') }}">
+                                        <small class="text-muted">&nbsp;&nbsp;El “identificador” es la versión URL amigable del nombre. Suele ser en minúsculas y contiene únicamente letras, números y guiones.
                                         </small>
 
                                     @error('slug')
@@ -84,9 +84,9 @@
 
                         <div class="card card-light">
                             <div class="card-header">
-                                <h3 class="card-title">Description
+                                <h3 class="card-title">Descripción
                                 </h3>
-                                <small>&nbsp;&nbsp;The description is not prominent by default; however, some themes may show it.
+                                <small>&nbsp;&nbsp;La descripción no es visible de forma predeterminada; sin embargo, algunos temas pueden mostrarla.
                                 </small>
                                 <div class="card-tools">
                                     <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
@@ -164,7 +164,7 @@
                         <div class="sticky-top">
                             <div class="card card-primary sticky-bottom">
                                 <div class="card-header">
-                                    <h3 class="card-title">Category Details</h3>
+                                    <h3 class="card-title">Detalles del Área de atención</h3>
                                     <div class="card-tools">
                                         <button type="button" class="btn btn-tool" data-card-widget="collapse"
                                             title="Collapse">
@@ -175,13 +175,13 @@
 
                                 <div class="card-body pb-0">
                                     <div class="form-group">
-                                        <label for="status">Status</label>
+                                        <label for="status">Estado</label>
                                         <select required="required" name="status" id="inputStatus"
                                             class="form-control custom-select">
-                                            <option disabled value="">Select Option</option>
-                                            <option value="1" >PUBLISHED
+                                            <option disabled value="">Seleciona...</option>
+                                            <option value="1" >PUBLICADA
                                             </option>
-                                            <option value="0" >DRAFT
+                                            <option value="0" >BORRADOR
                                             </option>
                                         </select>
                                     </div>
@@ -196,7 +196,7 @@
                                     </div> --}}
 
                                     <div class="form-group pt-0 pb-0 text-right">
-                                        <button type="submit" class="btn btn-primary">Publish
+                                        <button type="submit" class="btn btn-primary">Publicar
                                         </button>
                                     </div>
                                 </div>
@@ -204,7 +204,7 @@
 
                             <div class="card card-primary">
                                 <div class="card-header">
-                                    <h3 class="card-title">Featured Image</h3>
+                                    <h3 class="card-title">Imagen principal</h3>
                                     <div class="card-tools">
                                         <button type="button" class="btn btn-tool" data-card-widget="collapse"
                                             title="Collapse">
@@ -215,7 +215,7 @@
 
                                 <div class="card-body pt-0 pb-0">
                                     <div class="form-group">
-                                        <small class="text-red">Note: size: Width-1280px Height: 720px</small>
+                                        <small class="text-red">Nota: Tamaño: ancho 1280 px, alto 720 px.</small>
                                         <input class="form-control" name="image" accept="image/*" type="file" id="imgInp">
                                         <img style="width: 150px; margin-top:10px; border:1px solid black;" id="blah"
                                             src="{{ asset('uploads/images/no-image.jpg') }}" alt="your image">
