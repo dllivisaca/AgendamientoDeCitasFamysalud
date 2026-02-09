@@ -157,9 +157,23 @@
     <script>
         $(document).ready(function() {
             $('#myTable').DataTable({
-                responsive: true
+                responsive: false,
+                autoWidth: false,
+                language: {
+                    lengthMenu: "Mostrar _MENU_ registros",
+                    search: "Buscar:",
+                    info: "Mostrando registros _START_–_END_ de _TOTAL_",
+                    infoEmpty: "Mostrando 0 a 0 de 0 registros",
+                    infoFiltered: "(filtrado de _MAX_ registros totales)",
+                    zeroRecords: "No se encontraron resultados",
+                    paginate: {
+                        first: "Primero",
+                        last: "Último",
+                        next: "Siguiente",
+                        previous: "Anterior"
+                    }
+                }
             });
-
         });
     </script>
 
