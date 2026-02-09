@@ -142,6 +142,18 @@ use Carbon\Carbon;
                 </tr>
               </table>
 
+              @if($isVirtual)
+                <div style="margin-top:14px;padding:12px 14px;border:1px solid #f59e0b;background:#fffbeb;border-radius:12px;">
+                    <div style="font-size:14px;line-height:20px;color:#92400e;font-weight:700;">
+                    Importante: enlace de la reunión
+                    </div>
+                    <div style="margin-top:6px;font-size:13px;line-height:19px;color:#92400e;">
+                    Recibirás el <strong>link de la reunión</strong> unas horas antes de tu cita.
+                    Te lo enviaremos por <strong>WhatsApp</strong> o por <strong>correo</strong>, según los datos registrados.
+                    </div>
+                </div>
+                @endif
+
               <div style="margin-top:18px;font-size:14px;line-height:20px;color:#111827;">
                 Gracias por confiar en nosotros 💙
               </div>
