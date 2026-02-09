@@ -3285,9 +3285,9 @@
                     </button>`
                     );
                     } else {
-                    $('#modalTransferReceipt').html(
-                        `<span class="text-muted font-italic small">N/A</span>`
-                    );
+                        $('#modalTransferReceipt').html(
+                            `<span class="text-muted font-italic small">No se registró comprobante</span>`
+                        );
                 }
 
             } else if (pm === 'cash') {
