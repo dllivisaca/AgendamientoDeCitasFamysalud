@@ -53,7 +53,7 @@
                 </h5>
                 <div class="card p-2">
 
-                    <div id="" class="card-body p-0">
+                    <div id="" class="card-body p-0 table-scroll-wrap">
                         <table id="myTable" class="table table-striped projects">
                             <thead>
                                 <tr>
@@ -143,62 +143,32 @@
 
 @section('css')
     <style>
-    /* =========================
-        BASE: no tocar desktop
-        ========================= */
-    #myTable { width: 100%; }
+    /* Desktop: normal */
+    .table-scroll-wrap{
+        overflow: visible;
+    }
 
-    /* =========================
-        MÓVIL: <= 730px
-        - headers y celdas pueden volverse verticales
-        - EXCEPTO Acción
-        ========================= */
-    @media (max-width: 730px){
-
-        /* 1) Permitir “verticalidad” en TODO (header + body) */
-        #myTable thead th,
-        #myTable tbody td{
-        white-space: normal !important;
-        word-break: break-all !important;   /* vertical letra por letra si hace falta */
-        overflow-wrap: anywhere !important;
-        vertical-align: middle;
-        text-align: center;
+    /* Móvil: desde ~740px para abajo, scrollers */
+    @media (max-width: 740px){
+        .table-scroll-wrap{
+        overflow-x: auto;          /* scroll horizontal */
+        overflow-y: auto;          /* scroll vertical */
+        -webkit-overflow-scrolling: touch;
+        max-height: 70vh;          /* scroll vertical dentro de la card */
+        border-radius: .25rem;
         }
 
-        /* 2) EXCEPCIÓN: columna Acción (th + td) NO se rompe */
-        #myTable thead th:nth-child(6),
-        #myTable tbody td:nth-child(6){
-        white-space: nowrap !important;
-        word-break: normal !important;
-        overflow-wrap: normal !important;
+        /* Importante: que la tabla pueda ser más ancha que la pantalla */
+        #myTable{
+        min-width: 900px;          /* ajusta si quieres (800/900/1000) */
+        width: 100%;
         }
 
-        /* 3) Header "Acción" centrado y sin romper */
-        #myTable thead th:nth-child(6){
-        text-align: center;
-        min-width: 120px; /* para que “Acción” no se aplaste */
-        }
-
-        /* 4) Botones Acción: uno debajo del otro, sin angostarse demasiado */
-        #myTable tbody td:nth-child(6){
-        min-width: 150px;              /* ancho mínimo para botones */
-        display: flex !important;
-        flex-direction: column !important;  /* uno debajo del otro */
-        align-items: flex-end !important;
-        justify-content: center !important;
-        gap: 8px;
-        }
-
-        /* 5) Que los botones no se partan (texto en una línea) */
-        #myTable tbody td:nth-child(6) .btn{
-        white-space: nowrap !important;
-        width: fit-content;
-        min-width: 110px; /* evita que queden súper angostos */
-        }
-
-        /* 6) Quitar el d-flex que venía del td (para que no gane a tu layout) */
-        #myTable tbody td.project-actions{
-        display: block; /* por si en algún navegador se pelea con flex */
+        #myTable thead th{
+            position: sticky;
+            top: 0;
+            background: #fff;
+            z-index: 2;
         }
     }
     </style>
