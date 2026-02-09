@@ -349,19 +349,19 @@ return [
         ],
 
         [
-            'text' => 'Categories',
+            'text' => 'Áreas de atención',
             'icon' => 'fas fa-fw fa-folder',
             'url'  => 'category*',
             'can'  => 'categories.view | categories.create | categories.edit | categories.delete',
             'submenu' => [
                 [
-                    'text' => 'Add New',
+                    'text' => 'Agregar nueva',
                     'icon' => 'fas fa-fw fa-plus',
                     'route' => 'category.create',
                     'can'   => 'categories.create'
                 ],
                 [
-                    'text' => 'View All',
+                    'text' => 'Ver todas',
                     'icon' => 'fas fa-fw fa-eye',
                     'route' => 'category.index',
                     'can'   => 'categories.view'
