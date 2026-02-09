@@ -55,7 +55,16 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|unique:users',
             'phone' => 'required|string|unique:users,phone',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'confirmed',
+                'regex:/[a-z]/',
+                'regex:/[A-Z]/',
+                'regex:/[0-9]/',
+                'regex:/[@$!%*#?&._-]/',
+            ],
             'roles' => 'required|exists:roles,name', // Validate role
             'service' => 'nullable',
             'slot_duration' => 'nullable',
@@ -165,7 +174,16 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'sometimes|email|unique:users,email,' . $user->id ,
             'social.*' => 'sometimes',
-            'password' => 'nullable|string|min:8|confirmed',
+            'password' => [
+                'nullable',
+                'string',
+                'min:8',
+                'confirmed',
+                'regex:/[a-z]/',
+                'regex:/[A-Z]/',
+                'regex:/[0-9]/',
+                'regex:/[@$!%*#?&._-]/',
+            ],
             'roles' => 'nullable|array|exists:roles,name', // Validate roles array
             'service' => 'nullable',
             'slot_duration' => function ($attribute, $value, $fail) use ($request) {
@@ -436,7 +454,16 @@ class UserController extends Controller
     {
         $request->validate([
             'current_password' => 'required',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'confirmed',
+                'regex:/[a-z]/',
+                'regex:/[A-Z]/',
+                'regex:/[0-9]/',
+                'regex:/[@$!%*#?&._-]/',
+            ],
             'password_confirmation' => 'required',
         ]);
 

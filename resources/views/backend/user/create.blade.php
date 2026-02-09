@@ -1,6 +1,6 @@
 @extends('adminlte::page')
 
-@section('title', 'Create User')
+@section('title', 'Crear Usuario · FamySalud')
 
 @section('content_header')
     <div class="container-fluid">
@@ -103,7 +103,7 @@
                                                 </span>
                                             </div>
                                             <input type="tel" class="form-control @error('phone') is-invalid @enderror"
-                                                name="phone" value="{{ old('phone') }}" placeholder="Phone No.">
+                                                name="phone" value="{{ old('phone') }}" placeholder="Número de teléfono">
                                         </div>
                                         @error('phone')
                                             <small class="text-danger"><strong>{{ $message }}</strong></small>
@@ -122,7 +122,7 @@
                                             <input type="password"
                                                 class="form-control @error('password') is-invalid @enderror"
                                                 name="password"
-                                                placeholder="Enter Password">
+                                                placeholder="Ingresa una contraseña">
                                         </div>
                                         @error('password')
                                             <small class="text-danger"><strong>{{ $message }}</strong></small>
@@ -142,7 +142,7 @@
                                             <input type="password"
                                                 class="form-control @error('password_confirmation') is-invalid @enderror"
                                                 name="password_confirmation"
-                                                placeholder="Confirm Password">
+                                                placeholder="Confirmar contraseña">
                                         </div>
                                         @error('password_confirmation')
                                             <small class="text-danger"><strong>{{ $message }}</strong></small>
