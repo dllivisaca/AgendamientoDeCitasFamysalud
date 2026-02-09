@@ -112,6 +112,7 @@
                     <div class="booking-step" id="step2">
                         <h3 class="mb-4">Seleccione el servicio</h3>
                         <div class="selected-category-name mb-3 fw-bold"></div>
+                        <div id="category-info-message" class="mb-3"></div>
                         <div class="row row-cols-1 row-cols-md-3 g-4" id="services-container">
                             <!-- Services will be loaded dynamically based on category -->
                         </div>
@@ -2222,6 +2223,29 @@
                                 // Clear services container
                                 $("#services-container").empty();
 
+                                // ✅ Mensaje informativo del Área (si aplica)
+                                const cat = services[0]?.category || null;
+                                const infoEnabled = String(cat?.show_info_message || '0') === '1';
+                                const infoText = String(cat?.info_message_text || '').trim();
+
+                                if (infoEnabled && infoText) {
+                                    const infoHtml = `
+                                        <div class="col-12 mb-3">
+                                            <div class="alert alert-info d-flex align-items-start gap-2 mb-0"
+                                                style="border-left: 5px solid #0d6efd; background:#EAF3FF;">
+                                                <div style="font-size: 18px; line-height: 1;">ℹ️</div>
+                                                <div>
+                                                    <div class="fw-bold mb-1">Información importante</div>
+                                                    <div>${infoText}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `;
+                                    $("#category-info-message").html(infoHtml);
+                                } else {
+                                    $("#category-info-message").empty();
+                                }
+
                                 // Add services with animation delay
                                 services.forEach((service, index) => {
                                     // Determine the price display
@@ -2280,6 +2304,8 @@
                         type: 'GET',
                         dataType: 'json',
                         success: function(response) {
+                            $("#category-info-message").empty();
+
                             if (response.success && response.employees) {
                                 const employees = response.employees;
                                 const service = response.service;
@@ -4647,7 +4673,7 @@
                     </div>
 
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
                     </div>
                 </div>
             </div>
