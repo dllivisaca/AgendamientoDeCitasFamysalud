@@ -6,12 +6,12 @@
     <div class="container-fluid">
         <div class="row mb-1">
             <div class="col-sm-6">
-                <h1 class="m-0">Add User</h1>
+                <h1 class="m-0">Agregar Usuario</h1>
             </div>
             <div class="col-sm-6">
                 <ol class="breadcrumb float-sm-right">
                     <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-                    <li class="breadcrumb-item active">Add user</li>
+                    <li class="breadcrumb-item active">Agregar usuario</li>
                 </ol>
             </div>
         </div>
@@ -41,7 +41,7 @@
                         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
-                        <strong>Whoops!</strong> There were some problems with your input.<br>
+                        <strong>Ups!</strong> Hubo errores en tu solicitud.<br>
                         <ul>
                             @foreach ($errors->all() as $error)
                                 <li>{{ $error }}</li>
@@ -58,7 +58,7 @@
                             <div class="row">
                                 <div class="col-xs-12 col-sm-12 col-md-12">
                                     <div class="form-group">
-                                        <label class="my-0">Name</label>
+                                        <label class="my-0">Nombre</label>
                                         <div class="input-group">
                                             <div class="input-group-prepend ">
                                                 <span class="input-group-text ">
@@ -67,7 +67,7 @@
                                                 </span>
                                             </div>
                                             <input type="text" class="form-control @error('name') is-invalid @enderror"
-                                                name="name" value="{{ old('name') }}" placeholder="Full Name">
+                                                name="name" value="{{ old('name') }}" placeholder="Nombre completo">
                                         </div>
                                         @error('name')
                                             <small class="text-danger"><strong>{{ $message }}</strong></small>
@@ -94,7 +94,7 @@
                                 </div>
                                 <div class="col-xs-12 col-sm-12 col-md-12">
                                     <div class="form-group">
-                                        <label class="my-0">Phone</label>
+                                        <label class="my-0">Teléfono</label>
                                         <div class="input-group">
                                             <div class="input-group-prepend">
                                                 <span class="input-group-text">
@@ -112,7 +112,7 @@
                                 </div>
                                 <div class="col-xs-12 col-sm-12 col-md-12">
                                     <div class="form-group">
-                                        <label class="my-0">Password</label>
+                                        <label class="my-0">Contraseña</label>
                                         <div class="input-group">
                                             <div class="input-group-prepend">
                                                 <span class="input-group-text">
@@ -132,7 +132,7 @@
 
                                 <div class="col-xs-12 col-sm-12 col-md-12">
                                     <div class="form-group">
-                                        <label class="my-0">Confirm Password</label>
+                                        <label class="my-0">Confirmar contraseña</label>
                                         <div class="input-group">
                                             <div class="input-group-prepend">
                                                 <span class="input-group-text">
@@ -151,13 +151,15 @@
                                 </div>
 
                                 <div class="col-xs-12 col-sm-12 col-md-12 mb-3 select2-primary">
-                                    <label class="my-0"><i class="fas fa-user-lock"></i> User Role</label>
+                                    <label class="my-0"><i class="fas fa-user-lock"></i> Rol del usuario</label>
                                     <select name="roles[]" class="form-control select2 @error('roles[]') is-invalid @enderror" data-placeholder="Select Role" multiple>
                                         @foreach ($roles as $role)
-                                            <option value="{{ $role->name }}"
-                                                {{ in_array($role->name, old('roles', [])) ? 'selected' : '' }}>
-                                                {{ ucfirst($role->name) }}
-                                            </option>
+                                            @if ($role->name === 'employee')
+                                                <option value="{{ $role->name }}"
+                                                    {{ in_array($role->name, old('roles', ['employee'])) ? 'selected' : '' }}>
+                                                    Profesional
+                                                </option>
+                                            @endif
                                         @endforeach
                                     </select>
                                     @error('roles')
@@ -179,7 +181,7 @@
                                     <input type="checkbox" class="custom-control-input" id="is_employee"
                                         name="is_employee"
                                         {{ old('is_employee') ? 'checked' : '' }}>
-                                    <label class="custom-control-label" for="is_employee">Is Employee</label>
+                                    <label class="custom-control-label" for="is_employee">Es Profesional</label>
                                 </div>
                             </div>
                         </div>
@@ -191,16 +193,14 @@
                                 <div class="col-md-12">
                                     <hr>
                                     <div class="mb-3">
-                                        <h4 class="mb-0">Only For Employees </h4>
-                                        <small class="text-muted">Fill these details if adding an employee only</small>
+                                        <h4 class="mb-0">Sólo para Profesionales </h4>
+                                        <small class="text-muted">Llena estos detalles sólo cuando agregas a un profesional</small>
                                     </div>
 
                                     <div class="row">
                                         <div class="col-xs-12 col-sm-12 col-md-12 mb-3 select2-dark">
                                             <label for="service_id" class="my-0"><i class="fas fa-id-card"></i>
-                                                Select
-                                                Service</label> <small class="text-muted"> Link employees to services they
-                                                are assigned to</small>
+                                                Selecciona servicio(s)</label> <small class="text-muted"> Vincula a los profesionales con sus servicios asignados</small>
                                             <select class="form-control select2 @error('service[]') is-invalid @enderror"
                                                 name="service[]" data-placeholder="Select Service" id="service"
                                                 multiple>
@@ -217,17 +217,14 @@
 
                                         <div class="col-xs-12 col-sm-12 col-md-12 mb-3">
                                             <label for="slot_duration" class="my-0"><i class="fas fa-stopwatch"></i>
-                                                Service
-                                                Duration</label> <small class="text-muted"> Create booking slots based on
-                                                your preferred time duration.</small>
+                                                Duración del/de los servicio(s)</label> <small class="text-muted"> Crea bloques de turnos según la duración de tiempo que prefieras.</small>
                                             @php
                                                 $steps = ['10', '15', '20', '30', '45', '60'];
                                                 $selectedStep = old('slot_duration'); // Get the selected step value from old input
                                             @endphp
                                             <select class="form-control @error('step') is-invalid @enderror"
                                                 name="slot_duration" id="slot_duration">
-                                                <option value="" {{ !$selectedStep ? 'selected' : '' }}>Select
-                                                    Duration
+                                                <option value="" {{ !$selectedStep ? 'selected' : '' }}>Selecciona la duración
                                                 </option>
                                                 @foreach ($steps as $stepValue)
                                                     <option {{ $selectedStep == $stepValue ? 'selected' : '' }}
@@ -241,15 +238,14 @@
 
                                         <div class="col-xs-12 col-sm-12 col-md-12 mb-3">
                                             <label for="break_duration" class="my-0"><i class="fas fa-coffee"></i>
-                                                Preparation or Break time</label> <small class="text-muted"> Break between
-                                                one to another appointment</small>
+                                                Tiempo de preparación o descanso</label> <small class="text-muted"> Descanso entre una cita y otra</small>
                                             @php
                                                 $breaks = ['5', '10', '15', '20', '25', '30'];
                                                 $selectedBreak = old('break_duration'); // Get the selected step value from old input
                                             @endphp
                                             <select class="form-control @error('step') is-invalid @enderror"
                                                 name="break_duration" id="break_duration">
-                                                <option value="" {{ !$selectedBreak ? 'selected' : '' }}>No Break
+                                                <option value="" {{ !$selectedBreak ? 'selected' : '' }}>Sin descanso
                                                 </option>
                                                 @foreach ($breaks as $breakValue)
                                                     <option {{ $selectedBreak == $breakValue ? 'selected' : '' }}
@@ -267,9 +263,8 @@
                                     <hr>
                                     <div class="row">
                                         <div class="mb-3">
-                                            <h4 class="mb-0">Set Availibity - For Employee</h4>
-                                            <small class="text-muted">Select days and timings, with the option to add
-                                                multiple time slots in a day, e.g., 9 AM–12 PM and 4 PM–8 PM</small>
+                                            <h4 class="mb-0">Definir disponibilidad del profesional</h4>
+                                            <small class="text-muted">Selecciona los días y horarios, con la opción de agregar múltiples franjas horarias en un mismo día, por ejemplo: 9 AM–12 PM y 4 PM–8 PM</small>
                                         </div>
                                         <div class="col-md-12">
                                             @foreach ($days as $day)
@@ -352,7 +347,7 @@
                         </div>
                     </div>
                     <div class="col-xs-12 col-sm-12 col-md-12 pt-3 pl-md-3">
-                        <button type="submit" class="btn btn-primary">Add User</button>
+                        <button type="submit" class="btn btn-primary">Agregar usuario</button>
                     </div>
             </div>
         </div>

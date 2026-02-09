@@ -370,19 +370,19 @@ return [
             ],
         ],
         [
-            'text'    => 'Users',
+            'text'    => 'Usuarios',
             'url'  => 'user*',
             'icon'    => 'fas fa-fw fa-users',
             'can'  => 'users.view | users.create | users.edit | users.delete',
             'submenu' => [
                 [
-                    'text' => 'Add New',
+                    'text' => 'Agregar nuevo',
                     'icon'    => 'fas fa-fw fa-plus',
                     'route'  => 'user.create',
                     'can'  => 'users.create',
                 ],
                 [
-                    'text' => 'View All',
+                    'text' => 'Ver todos',
                     'icon'    => 'fas fa-users',
                     'route' => 'user.index',
                 ],
