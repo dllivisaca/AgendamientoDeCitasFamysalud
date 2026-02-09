@@ -112,6 +112,34 @@
                             </div>
                             <!-- /.card-body -->
                         </div>
+
+                        <div class="card card-light">
+                            <div class="card-header">
+                                <h3 class="card-title">Mensaje informativo del Área</h3>
+                                <small>&nbsp;&nbsp;Este mensaje se mostrará cuando el paciente vea los servicios de esta área.</small>
+
+                                <div class="card-tools">
+                                    <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                                        <i class="fas fa-minus" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="card-body">
+                                <div class="form-group mb-2">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="show_info_message_ui">
+                                        <label class="custom-control-label" for="show_info_message_ui">Activar mensaje</label>
+                                    </div>
+                                </div>
+
+                                <div class="form-group mb-0">
+                                    <label class="mb-1" for="info_message_text_ui">Texto del mensaje</label>
+                                    <textarea class="form-control" id="info_message_text_ui" rows="4"
+                                        placeholder="Ej: Si necesitas una cotización especial, escríbenos por WhatsApp y con gusto te ayudamos."></textarea>
+                                </div>
+                            </div>
+                        </div>
                         <!-- /.card -->
                         {{-- seo --}}
                         {{-- <div class="card card-light">
