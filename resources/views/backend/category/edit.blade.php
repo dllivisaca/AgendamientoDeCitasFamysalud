@@ -1,18 +1,18 @@
 @extends('adminlte::page')
 
-@section('title', 'Edit Category')
+@section('title', 'Editar Área de Atención · FamySalud')
 
 @section('content_header')
 
     <div class="container-fluid">
         <div class="row mb-1">
             <div class="col-sm-6">
-                <h1 style="text-decoration: underline;" class="m-0 text-decoration-underline">Edit {{ $category->title }}</h1>
+                <h1 style="text-decoration: underline;" class="m-0 text-decoration-underline">Editar {{ $category->title }}</h1>
             </div>
             <div class="col-sm-6">
                 <ol class="breadcrumb float-sm-right">
                     <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-                    <li class="breadcrumb-item active">Edit Category</li>
+                    <li class="breadcrumb-item active">Áreas de atención</li>
                 </ol>
             </div>
         </div>
@@ -27,7 +27,7 @@
             <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
             </button>
-            <strong>Whoops!</strong> There were some problems with your input.<br>
+            <strong>Ups!</strong> Hubo errores en tu solicitud.<br>
             <ul>
                 @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
@@ -47,7 +47,7 @@
                     <div class="col-md-8">
                         <div class="card card-light">
                             <div class="card-header">
-                                <h3 class="card-title">Edit Category
+                                <h3 class="card-title">Editar Área de atención
                                 </h3>
                                 <div class="card-tools">
                                     <button type="button" class="btn btn-tool" data-card-widget="collapse"
@@ -59,26 +59,25 @@
                             </div>
                             <div class="card-body">
                                 <div class="form-group">
-                                    <label for="inputStatus">Title
+                                    <label for="inputStatus">Nombre
                                     </label>
                                     <input class="form-control @error('title') is-invalid @enderror" type="text"
-                                        id="title" name="title" placeholder="Title here.."
+                                        id="title" name="title" placeholder="Escribe el nombre aquí.."
                                         value="{{ old('title', $category->title) }}">
-                                    <small class="text-muted">The name is how it appears on your site.</small>
+                                    <small class="text-muted"> El nombre que aparecerá en la aplicación.</small>
                                     @error('title')
                                         <p class="text-danger">{{ $message }}</p>
                                     @enderror
                                 </div>
                                 <div class="form-group">
-                                    <label class="mb-0" for="inputStatus">Slug
+                                    <label class="mb-0" for="inputStatus">Identificador
                                     </label>
 
                                     <input style="background-color: rgb(220, 220, 220);"
                                         class="form-control @error('slug') is-invalid @enderror" type="text"
-                                        id="slug" name="slug" placeholder="slug here.."
+                                        id="slug" name="slug" placeholder="Escribe el identificador aquí.."
                                         value="{{ old('slug', $category->slug) }}">
-                                    <small class="text-muted">&nbsp;&nbsp;The “slug” is the URL-friendly version of the
-                                        name. It is usually all lowercase and contains only letters, numbers, and hyphens.
+                                    <small class="text-muted">&nbsp;&nbsp;   El “identificador” es la versión URL amigable del nombre. Suele ser en minúsculas y contiene únicamente letras, números y guiones. 
                                     </small>
 
                                     @error('slug')
@@ -91,10 +90,9 @@
 
                         <div class="card card-light">
                             <div class="card-header">
-                                <h3 class="card-title">Description
+                                <h3 class="card-title">Descripción
                                 </h3>
-                                <small>&nbsp;&nbsp;The description is not prominent by default; however, some themes may
-                                    show it.
+                                <small>&nbsp;&nbsp; La descripción no es visible de forma predeterminada; sin embargo, algunos temas pueden mostrarla. 
                                 </small>
                                 <div class="card-tools">
                                     <button type="button" class="btn btn-tool" data-card-widget="collapse"
@@ -175,7 +173,7 @@
                         <div class="sticky-top">
                             <div class="card card-primary sticky-bottom">
                                 <div class="card-header">
-                                    <h3 class="card-title">Category Details</h3>
+                                    <h3 class="card-title">Detalles del Área de atención</h3>
                                     <div class="card-tools">
                                         <button type="button" class="btn btn-tool" data-card-widget="collapse"
                                             title="Collapse">
@@ -186,11 +184,11 @@
 
                                 <div class="card-body pb-0">
                                     <div class="form-group">
-                                        <label for="inputStatus">Status</label>
+                                        <label for="inputStatus">Estado</label>
                                         <select required="required" name="status" id="inputStatus" class="form-control custom-select">
-                                            <option disabled value="">Select Option</option>
-                                            <option value="1" {{ old('published', $category->status) == 1 ? 'selected' : '' }}>PUBLISHED</option>
-                                            <option value="0" {{ old('published', $category->status) == 0 ? 'selected' : '' }}>DRAFT</option>
+                                            <option disabled value="">Selecciona...</option>
+                                            <option value="1" {{ old('published', $category->status) == 1 ? 'selected' : '' }}>PUBLICADA</option>
+                                            <option value="0" {{ old('published', $category->status) == 0 ? 'selected' : '' }}>BORRADOR</option>
                                         </select>
                                     </div>
                                     {{-- <div class="form-group">
@@ -204,7 +202,7 @@
                                     </div> --}}
 
                                     <div class="form-group pt-0 pb-0 text-right">
-                                        <button onclick="return confirm('Are you sure you want to update this item?');" type="submit" class="btn btn-danger">Update
+                                        <button onclick="return confirm('¿Estás seguro de editar este elemento?');" type="submit" class="btn btn-danger">Actualizar
                                         </button>
                                     </div>
                                 </div>
@@ -212,7 +210,7 @@
 
                             <div class="card card-primary">
                                 <div class="card-header">
-                                    <h3 class="card-title">Featured Image</h3>
+                                    <h3 class="card-title">Imagen principal</h3>
                                     <div class="card-tools">
                                         <button type="button" class="btn btn-tool" data-card-widget="collapse"
                                             title="Collapse">
@@ -225,7 +223,7 @@
                                     <div class="form-group">
                                        @if ($category->image)
                                        <div class="form-group">
-                                        <label for="delete_image">Delete Image</label>
+                                        <label for="delete_image">Borrar imagen</label>
                                         <input type="checkbox" name="delete_image" id="delete_image">
                                     </div>
                                        @endif

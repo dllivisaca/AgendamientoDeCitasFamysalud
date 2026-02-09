@@ -178,7 +178,7 @@
                                         <label for="status">Estado</label>
                                         <select required="required" name="status" id="inputStatus"
                                             class="form-control custom-select">
-                                            <option disabled value="">Seleciona...</option>
+                                            <option disabled value="">Selecciona...</option>
                                             <option value="1" >PUBLICADA
                                             </option>
                                             <option value="0" >BORRADOR

@@ -119,11 +119,10 @@
                                                     @csrf
                                                     @method('DELETE')
                                                     <button
-                                                        onclick="return confirm('Category cannot be delted - Post attached');"
+                                                        onclick="return confirm('¿Estás seguro de eliminar esta categoría?\n\nSi tiene servicios asociados, estos también serán eliminados.\n\nEsta acción no se puede deshacer.');"
                                                         class="btn btn-danger btn-sm ml-2">
                                                         <i class="fas fa-trash"></i>
-                                                        Borrar
-                                                        </a>
+                                                        Borrar       
                                                     </button>
                                                 </form>
 

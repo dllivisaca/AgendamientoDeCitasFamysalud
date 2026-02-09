@@ -55,7 +55,7 @@ class CategoryController extends Controller
         }
 
         Category::create($data);
-        return redirect()->route('category.index')->withSuccess('Category has been created successfully!');
+        return redirect()->route('category.index')->withSuccess('El área de atención ha sido creada exitosamente');
     }
 
     /**
