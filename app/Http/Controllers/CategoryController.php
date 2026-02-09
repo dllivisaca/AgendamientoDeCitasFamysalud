@@ -40,12 +40,17 @@ class CategoryController extends Controller
             'meta_title' => 'nullable|string',
             'meta_description' => 'nullable|string',
             'meta_keywords' => 'nullable|string',
+            'show_info_message' => 'nullable|boolean',
+            'info_message_text' => 'nullable|string',
             'other' => 'nullable',
         ]);
 
         $data['featured'] = $request->featured ?? 0;
         $data['status'] = $request->status ?? 0;
         $data['body'] = $request->body ?? '';
+        $enabled = $request->has('show_info_message');
+        $data['show_info_message'] = $enabled ? 1 : 0;
+        $data['info_message_text'] = $enabled ? ($request->info_message_text ?? null) : null;
 
         if($request->hasFile('image'))
         {
@@ -90,12 +95,17 @@ class CategoryController extends Controller
             'meta_title' => 'nullable|string',
             'meta_description' => 'nullable|string',
             'meta_keywords' => 'nullable|string',
+            'show_info_message' => 'nullable|boolean',
+            'info_message_text' => 'nullable|string',
             'other' => 'nullable',
         ]);
 
         $data['featured'] = $request->featured ?? 0;
         $data['status'] = $request->status ?? 0;
         $data['body'] = $request->body ?? '';
+        $enabled = $request->has('show_info_message');
+        $data['show_info_message'] = $enabled ? 1 : 0;
+        $data['info_message_text'] = $enabled ? ($request->info_message_text ?? null) : null;
 
         if($request->delete_image)
         {

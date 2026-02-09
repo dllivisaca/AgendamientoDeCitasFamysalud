@@ -121,15 +121,23 @@
                             <div class="card-body">
                                 <div class="form-group mb-2">
                                     <div class="custom-control custom-switch">
-                                        <input type="checkbox" class="custom-control-input" id="show_info_message_ui">
+                                        <input type="checkbox"
+                                            class="custom-control-input"
+                                            id="show_info_message_ui"
+                                            name="show_info_message"
+                                            value="1"
+                                            {{ old('show_info_message') ? 'checked' : '' }}>
                                         <label class="custom-control-label" for="show_info_message_ui">Activar mensaje</label>
                                     </div>
                                 </div>
 
                                 <div class="form-group mb-0">
                                     <label class="mb-1" for="info_message_text_ui">Texto del mensaje</label>
-                                    <textarea class="form-control" id="info_message_text_ui" rows="4"
-                                        placeholder="Ej: Si necesitas una cotización especial, escríbenos por WhatsApp y con gusto te ayudamos."></textarea>
+                                    <textarea class="form-control"
+                                        id="info_message_text_ui"
+                                        name="info_message_text"
+                                        rows="4"
+                                        placeholder="Ej: Si necesitas una cotización especial, escríbenos por WhatsApp y con gusto te ayudamos.">{{ old('info_message_text') }}</textarea>
                                 </div>
                             </div>
                         </div>
@@ -304,7 +312,6 @@
         function syncInfoMsgUI(){
             const enabled = $sw.is(':checked');
             $txt.prop('disabled', !enabled);
-            if (!enabled) $txt.val('');
         }
 
         $sw.on('change', syncInfoMsgUI);

@@ -320,4 +320,20 @@
         });
     </script>
 
+    <script>
+        $(document).ready(function () {
+            const $sw = $('#show_info_message_ui');
+            const $txt = $('#info_message_text_ui');
+
+            function syncInfoMsgUI(){
+                const enabled = $sw.is(':checked');
+                $txt.prop('disabled', !enabled);
+                if (!enabled) $txt.val('');
+            }
+
+            $sw.on('change', syncInfoMsgUI);
+            syncInfoMsgUI();
+        });
+    </script>
+
 @stop
