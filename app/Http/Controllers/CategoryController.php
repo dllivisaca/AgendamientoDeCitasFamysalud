@@ -134,7 +134,7 @@ class CategoryController extends Controller
 
         }
         $category->update($data);
-        return redirect()->route('category.index')->with('success', 'Category has been updated successfully.');
+        return redirect()->route('category.index')->with('success', 'El área de atención ha sido actualizada correctamente.');
     }
 
     /**
