@@ -29,13 +29,13 @@ class UserController extends Controller
     public function create()
     {
         $days = [
-            'lunes',
-            'martes',
-            'miercoles',
-            'jueves',
-            'viernes',
-            'sabado',
-            'domingo',
+            'lunes'     => 'Lunes',
+            'martes'    => 'Martes',
+            'miercoles' => 'Miércoles',
+            'jueves'    => 'Jueves',
+            'viernes'   => 'Viernes',
+            'sabado'    => 'Sábado',
+            'domingo'   => 'Domingo',
         ];
 
         //$roles = Role::where('name', '!=', 'admin')->get();

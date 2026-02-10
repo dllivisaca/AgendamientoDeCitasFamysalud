@@ -453,59 +453,80 @@
             function toggleDayFields(dayId) {
                 const isChecked = $('#' + dayId).is(':checked');
 
-                // Inputs principales
+                // inputs principales del día
                 $('#' + dayId + 'From, #' + dayId + 'To').prop('disabled', !isChecked);
 
-                // Inputs de filas extra
+                // inputs de filas adicionales del día
                 $('.additional-' + dayId + ' input[type="time"]').prop('disabled', !isChecked);
 
-                // Botón Agregar más
+                // botón "Agregar más"
                 if (isChecked) {
                     $('#' + dayId + 'AddMore').removeClass('d-none');
                 } else {
                     $('#' + dayId + 'AddMore').addClass('d-none');
-                    $('.additional-' + dayId).remove();
+                    $('.additional-' + dayId).remove(); // limpia filas extra
                 }
             }
 
-            function addMoreFields(dayId) {
-                const originalRow = $('#' + dayId + 'AddMore').closest('.row');
-                const clonedRow = originalRow.clone();
+            function buildAdditionalRow(dayId) {
+                return `
+                    <div class="row additional-${dayId}">
+                        <div class="col-md-2"></div>
 
-                // Limpia valores de time
-                clonedRow.find('input[type="time"]').val('');
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <strong>Desde:</strong>
+                                <input type="time"
+                                    class="form-control from"
+                                    name="days[${dayId}][]"
+                                    value="">
+                            </div>
+                        </div>
 
-                // Vacía la columna izquierda (switch)
-                clonedRow.find('.col-md-2').first().html('');
+                        <div class="col-md-4">
+                            <div class="form-group mb-1">
+                                <strong>Hasta:</strong>
+                                <input type="time"
+                                    class="form-control to"
+                                    name="days[${dayId}][]"
+                                    value="">
+                            </div>
 
-                // Cambia Agregar más -> Eliminar
-                clonedRow.find('#' + dayId + 'AddMore')
-                    .removeAttr('id')
-                    .removeClass('day-add-more text-primary')
-                    .addClass('remove-field text-danger')
-                    .removeClass('d-none')
-                    .text('Eliminar');
-
-                // Marca como fila adicional
-                clonedRow.addClass('additional-' + dayId);
-
-                // Respeta disabled según estado del día
-                const isChecked = $('#' + dayId).is(':checked');
-                clonedRow.find('input[type="time"]').prop('disabled', !isChecked);
-
-                // Inserta al final de las filas adicionales
-                const last = $('.additional-' + dayId).last();
-                if (last.length) last.after(clonedRow);
-                else originalRow.after(clonedRow);
+                            <div class="text-right">
+                                <span class="remove-field text-danger" style="cursor:pointer;">
+                                    Eliminar
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                `;
             }
 
-            // ✅ Toggle por data-day (NO dependemos de arrays)
+            function addMoreFields(dayId) {
+                const rowHtml = buildAdditionalRow(dayId);
+
+                // Insertar después de la última fila adicional (si existe),
+                // si no, después de la fila principal del día.
+                const lastAdditional = $('.additional-' + dayId).last();
+                if (lastAdditional.length) {
+                    lastAdditional.after(rowHtml);
+                } else {
+                    // la fila principal es la que contiene el AddMore
+                    $('#' + dayId + 'AddMore').closest('.row').after(rowHtml);
+                }
+
+                // Respeta disabled según estado del switch
+                const isChecked = $('#' + dayId).is(':checked');
+                $('.additional-' + dayId).last().find('input[type="time"]').prop('disabled', !isChecked);
+            }
+
+            // ✅ Toggle por data-day (tu HTML ya lo tiene)
             $(document).on('change', '.day-toggle', function () {
                 const dayId = $(this).data('day');
                 toggleDayFields(dayId);
             });
 
-            // ✅ Agregar más por data-day
+            // ✅ Click "Agregar más" por data-day
             $(document).on('click', '.day-add-more', function () {
                 const dayId = $(this).data('day');
                 addMoreFields(dayId);
@@ -516,7 +537,7 @@
                 $(this).closest('.row').remove();
             });
 
-            // ✅ Inicializar todos los días existentes en pantalla
+            // ✅ Inicializar todos los días al cargar
             $('.day-toggle').each(function () {
                 toggleDayFields($(this).data('day'));
             });
