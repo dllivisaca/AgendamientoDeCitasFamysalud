@@ -44,8 +44,8 @@
                 <div class="col-md-12">
                     <div class="card py-2 px-2">
 
-                        <div class="card-body p-0">
-                            <table id="myTable" class="table table-striped projects ">
+                        <div id="" class="card-body p-0 table-scroll-wrap">
+                            <table id="myTable" class="table table-striped projects">
                                 <thead>
                                     <tr>
                                         <th style="width: 1%">
@@ -123,7 +123,7 @@
                                                         Editar
                                                     </a>
                                                 
-                                                    <form aaction="{{ route('user.destroy', $user->id) }}" method="post" class="mb-0">
+                                                    <form action="{{ route('user.destroy', $user->id) }}" method="post" class="mb-0">
                                                         @csrf
                                                         @method('delete')
                                                         <button
@@ -154,7 +154,52 @@
 @stop
 
 @section('css')
+    <style>
+        /* Desktop grande: normal */
+        .table-scroll-wrap{
+            overflow: visible;
+        }
 
+        /* ✅ Rango “problemático”: cuando el sidebar aún no colapsa (ej. 1200px hacia abajo)
+        Activamos scroll horizontal PERO sin max-height (para no forzar scroll vertical) */
+        @media (max-width: 1200px){
+            .table-scroll-wrap{
+                overflow-x: auto;
+                overflow-y: visible;
+                -webkit-overflow-scrolling: touch;
+                border-radius: .25rem;
+            }
+
+            /* que pueda ser más ancha que el contenedor */
+            #myTable{
+                min-width: 1100px; /* ✅ ajusta si quieres 1000/1050/1150 */
+                width: 100%;
+            }
+        }
+
+        /* Móvil: ya con scroll vertical y header sticky */
+        @media (max-width: 740px){
+            .table-scroll-wrap{
+                overflow-x: auto;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                max-height: 70vh;
+                border-radius: .25rem;
+            }
+
+            #myTable{
+                min-width: 900px;
+                width: 100%;
+            }
+
+            #myTable thead th{
+                position: sticky;
+                top: 0;
+                background: #fff;
+                z-index: 2;
+            }
+        }
+    </style>
 @stop
 
 @section('js')
@@ -169,9 +214,23 @@
     <script>
         $(document).ready(function() {
             $('#myTable').DataTable({
-                responsive: true
+                responsive: false,
+                autoWidth: false,
+                language: {
+                    lengthMenu: "Mostrar _MENU_ registros",
+                    search: "Buscar:",
+                    info: "Mostrando registros _START_–_END_ de _TOTAL_",
+                    infoEmpty: "Mostrando 0 a 0 de 0 registros",
+                    infoFiltered: "(filtrado de _MAX_ registros totales)",
+                    zeroRecords: "No se encontraron resultados",
+                    paginate: {
+                        first: "Primero",
+                        last: "Último",
+                        next: "Siguiente",
+                        previous: "Anterior"
+                    }
+                }
             });
-
         });
     </script>
 
