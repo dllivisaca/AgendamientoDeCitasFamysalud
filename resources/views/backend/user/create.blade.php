@@ -10,7 +10,7 @@
             </div>
             <div class="col-sm-6">
                 <ol class="breadcrumb float-sm-right">
-                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Inicio</a></li>
                     <li class="breadcrumb-item active">Agregar usuario</li>
                 </ol>
             </div>
@@ -85,7 +85,7 @@
                                                 </span>
                                             </div>
                                             <input type="email" class="form-control @error('email') is-invalid @enderror"
-                                                name="email" value="{{ old('email') }}" placeholder="Email">
+                                                name="email" value="{{ old('email') }}" placeholder="Correo electrónico">
                                         </div>
                                         @error('email')
                                             <small class="text-danger"><strong>{{ $message }}</strong></small>
@@ -152,7 +152,7 @@
 
                                 <div class="col-xs-12 col-sm-12 col-md-12 mb-3 select2-primary">
                                     <label class="my-0"><i class="fas fa-user-lock"></i> Rol del usuario</label>
-                                    <select name="roles[]" class="form-control select2 @error('roles[]') is-invalid @enderror" data-placeholder="Select Role" multiple>
+                                    <select name="roles[]" class="form-control select2 @error('roles[]') is-invalid @enderror" data-placeholder="Selecciona un rol" multiple>
                                         @foreach ($roles as $role)
                                             @if ($role->name === 'employee')
                                                 <option value="{{ $role->name }}"
@@ -202,7 +202,7 @@
                                             <label for="service_id" class="my-0"><i class="fas fa-id-card"></i>
                                                 Selecciona servicio(s)</label> <small class="text-muted"> Vincula a los profesionales con sus servicios asignados</small>
                                             <select class="form-control select2 @error('service[]') is-invalid @enderror"
-                                                name="service[]" data-placeholder="Select Service" id="service"
+                                                name="service[]" data-placeholder="Selecciona servicio(s)" id="service"
                                                 multiple>
                                                 @foreach ($services as $service)
                                                     <option
@@ -301,7 +301,7 @@
                                                                 id="{{ $day }}To">
                                                         </div>
                                                         <div style="margin-top:-15px;" id="{{ $day }}AddMore"
-                                                            class="text-right d-none text-primary">Add More</div>
+                                                            class="text-right d-none text-primary">Agregar más</div>
                                                     </div>
                                                 </div>
 
@@ -316,7 +316,7 @@
                                                                 <div class="col-md-2"></div>
                                                                 <div class="col-md-4">
                                                                     <div class="form-group">
-                                                                        <strong>From:</strong>
+                                                                        <strong>Desde:</strong>
                                                                         <input type="time" class="form-control from"
                                                                             name="days[{{ $day }}][]"
                                                                             value="{{ $time }}"
@@ -325,7 +325,7 @@
                                                                 </div>
                                                                 <div class="col-md-4">
                                                                     <div class="form-group">
-                                                                        <strong>To:</strong>
+                                                                        <strong>Hasta:</strong>
                                                                         <input type="time" class="form-control to"
                                                                             name="days[{{ $day }}][]"
                                                                             value="{{ old('days.' . $day . '.' . ($index + 1)) }}"
@@ -333,7 +333,7 @@
                                                                     </div>
                                                                     <div style="margin-top:-15px;"
                                                                         class="text-right remove-field text-danger">
-                                                                        Remove</div>
+                                                                        Eliminar</div>
                                                                 </div>
                                                             </div>
                                                         @endif
@@ -401,7 +401,7 @@
                 clonedRow.find('.col-md-2').replaceWith('<div class="col-md-2"></div>');
 
                 // Update "Add More" to "Remove" for the cloned row
-                clonedRow.find(`#${dayId}AddMore`).text('Remove').attr('id', '').addClass(
+                clonedRow.find(`#${dayId}AddMore`).text('Eliminar').attr('id', '').addClass(
                     'remove-field text-danger');
 
                 // Add a unique class to the cloned row for targeting specific day rows
@@ -421,7 +421,7 @@
             });
 
             // Bind change and add-more events to all days
-            ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].forEach(function(day) {
+            ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'].forEach(function(day) {
                 $('#' + day).on('change', function() {
                     toggleDayFields(day);
                 }).trigger('change');
