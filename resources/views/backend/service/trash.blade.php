@@ -1,17 +1,16 @@
 @extends('adminlte::page')
 
-@section('title', 'Trash Services')
+@section('title', 'Papelera Servicios · FamySalud')
 
 @section('content_header')
     <div class="row mb-2">
         <div class="col-sm-6">
-            <h1>Deleted Services</h1>
-            <small>All deleted services - you can restore from delete permanently</small>
+            <h1>Papelera de servicios</h1>
         </div>
         <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
-                <li class="breadcrumb-item"><a href="{{ route('service.create') }}">+ Add New</a> |</li>
-                <li class=""> &nbsp; <a href="{{ route('service.index') }}">View All</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('service.create') }}">+ Agregar nuevo</a> |</li>
+                <li class=""> &nbsp; <a href="{{ route('service.index') }}">Ver todos los servicios</a></li>
             </ol>
         </div>
     </div>
@@ -24,7 +23,7 @@
                 <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
-                <strong>Whoops!</strong> There were some problems with your input.<br>
+                <strong>Ups!</strong> Hubo errores en tu solicitud.<br>
                 <ul>
                     @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>
@@ -47,30 +46,30 @@
                     <div class="col-md-12 ">
                         <div class="card py-2 px-2">
 
-                            <div class="card-body p-0">
-                                <table id="table-1" class="table table-striped projects">
+                            <div id="" class="card-body p-0 table-scroll-wrap">
+                                <table id="myTable" class="table table-striped projects">
                                     <thead>
                                         <tr>
                                             <th style="width: 1%">
                                                 #
                                             </th>
                                             <th style="width: 25%">
-                                                Title
+                                                Nombre
                                             </th>
                                             <th style="width: 10%">
-                                                Image
+                                                Imagen
                                             </th>
                                             <th style="width: 10%">
-                                                Category
+                                                Área de atención
                                             </th>
                                             <th>
-                                                Featured
+                                                Destacado
                                             </th>
 
                                             <th style="" class="text-center">
-                                                Status
+                                                Estado
                                             </th>
-                                            <th style="width: 20%">Action
+                                            <th style="width: 20%">Acción
                                             </th>
                                         </tr>
                                     </thead>
@@ -86,7 +85,7 @@
                                                     </a>
                                                     <br>
                                                     <small>
-                                                        Deleted: {{ $service->deleted_at->diffForHumans() }}
+                                                        Eliminado: {{ $service->deleted_at->diffForHumans() }}
                                                     </small>
                                                 </td>
                                                 <td>
@@ -101,30 +100,30 @@
                                                 </td>
                                                 <td>
 
-                                                    {{ $service->category->title ?? 'NA' }}
+                                                    {{ $service->category->title ?? 'N/A' }}
                                                 </td>
                                                 <td>
                                                     @if ($service->featured)
-                                                        Yes
+                                                        Sí
                                                     @else
                                                         No
                                                     @endif
                                                 </td>
                                                 <td class="project-state">
                                                     @if ($service->status)
-                                                        <span class="badge badge-success">Active</span>
+                                                        <span class="badge badge-success">Activo</span>
                                                     @else
-                                                        <span class="badge badge-danger">Pending</span>
+                                                        <span class="badge badge-danger">Inactivo</span>
                                                     @endif
                                                 </td>
 
-                                                <td class="project-actions text-right d-flex">
+                                                <td class="project-actions text-center align-middle">
                                                     <div class="mr-2">
-                                                        <a onclick="return confirm('Are you sure you want to Restore this item?');"
+                                                        <a onclick="return confirm('¿Estás seguro de restaurar este servicio?');"
                                                             class="btn btn-primary btn-sm"
                                                             href="{{ route('service.restore', $service->id) }}"> <i
                                                                 class="fas fa-folder">
-                                                            </i> Restore </a>
+                                                            </i> Restaurar </a>
                                                     </div>
                                                     <div>
                                                         <form action="{{ route('service.force.delete', $service->id) }}"
@@ -132,11 +131,11 @@
                                                             @csrf
                                                             @method('delete')
                                                             <button
-                                                                onclick="return confirm('Are you sure you want to delete this item?');"
+                                                                onclick="return confirm('¿Estás seguro de eliminar este servicio permanentemente?');"
                                                                 type="submit" class="btn btn-danger btn-sm">
                                                                 <i class="fas fa-trash">
                                                                 </i>
-                                                                Delete
+                                                                Borrar
                                                             </button>
                                                         </form>
                                                     </div>
@@ -163,7 +162,47 @@
 @stop
 
 @section('css')
+    <style>
+        .table-scroll-wrap{
+            overflow: visible;
+        }
 
+        @media (max-width: 1200px){
+            .table-scroll-wrap{
+                overflow-x: auto;
+                overflow-y: visible;
+                -webkit-overflow-scrolling: touch;
+                border-radius: .25rem;
+            }
+
+            #myTable{
+                min-width: 1100px;
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 740px){
+            .table-scroll-wrap{
+                overflow-x: auto;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                max-height: 70vh;
+                border-radius: .25rem;
+            }
+
+            #myTable{
+                min-width: 900px;
+                width: 100%;
+            }
+
+            #myTable thead th{
+                position: sticky;
+                top: 0;
+                background: #fff;
+                z-index: 2;
+            }
+        }
+    </style>
 @stop
 
 @section('js')
@@ -177,7 +216,31 @@
 
     <script>
         $(document).ready(function() {
-            $('#table-1').DataTable();
+            $('#myTable').DataTable({
+                responsive: false,
+                autoWidth: false,
+                language: {
+                    lengthMenu: "Mostrar _MENU_ registros",
+                    search: "Buscar:",
+                    info: "Mostrando registros _START_–_END_ de _TOTAL_",
+                    infoEmpty: "Mostrando 0 a 0 de 0 registros",
+                    infoFiltered: "(filtrado de _MAX_ registros totales)",
+                    zeroRecords: "No se encontraron resultados",
+                    paginate: {
+                        first: "Primero",
+                        last: "Último",
+                        next: "Siguiente",
+                        previous: "Anterior"
+                    },
+                    processing: "Procesando...",
+                    loadingRecords: "Cargando...",
+                    emptyTable: "No hay datos disponibles en la tabla",
+                    aria: {
+                        sortAscending: ": activar para ordenar la columna de manera ascendente",
+                        sortDescending: ": activar para ordenar la columna de manera descendente"
+                    }
+                }
+            });
         });
     </script>
 
@@ -197,7 +260,7 @@
 
                 Toast.fire({
                     icon: 'error',
-                    title: 'There are form validation errors. Please fix them.'
+                    title: 'Hay errores en la validación del formulario. Por favor, corrígelos.'
                 });
             @endif
 

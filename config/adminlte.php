@@ -399,7 +399,7 @@ return [
             'submenu' => [
 
                 [
-                    'text' => 'Crear servicio',
+                    'text' => 'Agregar nuevo',
                     'icon'    => 'fas fa-fw fa-plus',
                     'route'  => 'service.create',
                     'can'    => 'services.create'

@@ -10,7 +10,7 @@
         <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
                 <li class="breadcrumb-item"><a href="{{ route('user.create') }}">+ Agregar nuevo</a> |</li>
-                <li class=""> &nbsp; <a href="{{ route('user.trash') }}">Ver papelera</a></li>
+                <li class=""> &nbsp; <a href="{{ route('user.index') }}">Ver todos los usuarios</a></li>
             </ol>
         </div>
     </div>
