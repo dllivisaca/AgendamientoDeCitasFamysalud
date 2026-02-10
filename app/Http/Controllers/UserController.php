@@ -72,6 +72,10 @@ class UserController extends Controller
             'break' => 'nullable',
             'days' => 'nullable',
             'is_employee' => 'nullable',
+            'holidays.date.*' => 'sometimes|required',
+            'holidays.from_time' => 'nullable',
+            'holidays.to_time' => 'nullable',
+            'holidays.recurring' => 'nullable',
         ]);
 
         $user = User::create([
@@ -87,19 +91,53 @@ class UserController extends Controller
 
 
         // transform time slots into from and to combination
-        if($request->is_employee)
-        {
-            $transformedData = $this->transformOpeningHours($data['days']); // Use $this->transformOpeningHours
-            $data['days'] = $transformedData;
+        if ($request->is_employee) {
+
+            // ✅ días (solo si vienen)
+            if (!empty($data['days'])) {
+                $data['days'] = $this->transformOpeningHours($data['days']);
+            }
 
             $employee = Employee::create([
-                'user_id'           => $user['id'],
-                'days'              => $data['days'],
-                'slot_duration'     => $data['slot_duration'],
-                'break_duration'    => $data['break_duration'],
+                'user_id'           => $user->id,
+                'days'              => $data['days'] ?? null,
+                'slot_duration'     => $data['slot_duration'] ?? null,
+                'break_duration'    => $data['break_duration'] ?? null,
             ]);
 
-            $employee->services()->attach($data['service']);
+            // ✅ servicios (solo si vienen)
+            if (!empty($data['service'])) {
+                $employee->services()->attach($data['service']);
+            }
+
+            // ✅ HOLIDAYS (crear)
+            if ($request->has('holidays.date') && is_array($request->input('holidays.date'))) {
+
+                $dates     = $request->input('holidays.date', []);
+                $fromTimes = $request->input('holidays.from_time', []);
+                $toTimes   = $request->input('holidays.to_time', []);
+                $recurring = $request->input('holidays.recurring', []);
+
+                foreach ($dates as $index => $date) {
+                    $date = trim((string)$date);
+                    if ($date === '') continue; // evita filas vacías
+
+                    $isRecurring = isset($recurring[$index]) && (string)$recurring[$index] === '1';
+
+                    $holidayData = [
+                        'employee_id' => $employee->id,
+                        'hours' => (isset($fromTimes[$index]) && isset($toTimes[$index]) && $fromTimes[$index] && $toTimes[$index])
+                            ? [ $fromTimes[$index] . '-' . $toTimes[$index] ]
+                            : [],
+                        'recurring' => $isRecurring,
+                        'date' => $isRecurring
+                            ? \Carbon\Carbon::parse($date)->format('m-d')
+                            : $date,
+                    ];
+
+                    Holiday::create($holidayData);
+                }
+            }
         }
 
         return redirect()->back()->withSuccess('Usuario creado exitosamente');
@@ -185,7 +223,8 @@ class UserController extends Controller
                 'regex:/[@$!%*#?&._-]/',
             ],
             'roles' => 'nullable|array|exists:roles,name', // Validate roles array
-            'service' => 'nullable',
+            'service' => 'required_if:is_employee,on|array|min:1',
+            'service.*' => 'exists:services,id',
             'slot_duration' => function ($attribute, $value, $fail) use ($request) {
                 // Check if 'is_employee' is true and 'slot_duration' is missing
                 if ($request->is_employee && !$value) {
