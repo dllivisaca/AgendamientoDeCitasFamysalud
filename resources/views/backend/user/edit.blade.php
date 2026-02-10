@@ -78,7 +78,7 @@
                                 </div>
                                 <div class="col-xs-12 col-sm-12 col-md-12">
                                     <div class="form-group">
-                                        <label class="my-0">Email</label>
+                                        <label class="my-0">Correo electrónico</label>
                                         <div class="input-group">
                                             <div class="input-group-prepend">
                                                 <span class="input-group-text">
@@ -517,7 +517,16 @@
             $('.select2').select2({
                 allowClear: true,
                 search: true,
-                maximumSelectionLength: 1
+                maximumSelectionLength: 1,
+                language: {
+                    noResults: () => "No se encontraron resultados",
+                    searching: () => "Buscando...",
+                    loadingMore: () => "Cargando más resultados...",
+                    inputTooShort: () => "Escribe más caracteres...",
+                    errorLoading: () => "No se pudieron cargar los resultados",
+                    maximumSelected: () => "Solo puedes seleccionar 1 opción",
+                    removeAllItems: () => "Eliminar todas las selecciones"
+                }
             });
         });
     </script>
@@ -528,6 +537,14 @@
             $('.servicesSelect2').select2({
                 allowClear: true,
                 search: true,
+                language: {
+                    noResults: () => "No se encontraron resultados",
+                    searching: () => "Buscando...",
+                    loadingMore: () => "Cargando más resultados...",
+                    inputTooShort: () => "Escribe más caracteres...",
+                    errorLoading: () => "No se pudieron cargar los resultados",
+                    removeAllItems: () => "Eliminar todas las selecciones"
+                }
                 //maximumSelectionLength: 1
             });
         });

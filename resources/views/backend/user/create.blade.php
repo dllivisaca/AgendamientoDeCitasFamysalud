@@ -1,6 +1,6 @@
 @extends('adminlte::page')
 
-@section('title', 'Crear Usuario · FamySalud')
+@section('title', 'Agregar Usuario · FamySalud')
 
 @section('content_header')
     <div class="container-fluid">
@@ -76,7 +76,7 @@
                                 </div>
                                 <div class="col-xs-12 col-sm-12 col-md-12">
                                     <div class="form-group">
-                                        <label class="my-0">Email</label>
+                                        <label class="my-0">Correo electrónico</label>
                                         <div class="input-group">
                                             <div class="input-group-prepend">
                                                 <span class="input-group-text">
@@ -550,6 +550,14 @@
             $('.select2').select2({
                 allowClear: true,
                 search: true,
+                language: {
+                    noResults: function () { return "No se encontraron resultados"; },
+                    searching: function () { return "Buscando..."; },
+                    loadingMore: function () { return "Cargando más resultados..."; },
+                    inputTooShort: function () { return "Escribe más caracteres..."; },
+                    errorLoading: function () { return "No se pudieron cargar los resultados"; },
+                    removeAllItems: function () { return "Eliminar todas las selecciones"; }
+                }
                 //maximumSelectionLength: 2
             });
         });

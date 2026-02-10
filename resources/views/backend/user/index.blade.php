@@ -55,7 +55,7 @@
                                             Nombre
                                         </th>
                                         <th style="width: 10%">
-                                            Email
+                                            Correo
                                         </th>
                                         <th style="width: 10%">
                                             Imagen
@@ -90,14 +90,14 @@
                                              <td>{{ $user->email }}
                                             </td>
                                             <td>
-                                               <img style="width:50px;" class="rounded-pill" src="{{ $user->profileImage() }}" alt="">
+                                               <img style="width:50px;" class="rounded-pill" src="{{ $user->profileImage() }}" alt="Foto de perfil">
                                             </td>
                                             <td>
                                                 @php
                                                     $roleMap = [
                                                         'admin' => 'Administrador',
                                                         'employee' => 'Profesional',
-                                                        'subscriber' => 'Subscriptor',
+                                                        'subscriber' => 'Suscriptor',
                                                     ];
                                                 @endphp
 
@@ -127,7 +127,7 @@
                                                         @csrf
                                                         @method('delete')
                                                         <button
-                                                            onclick="return confirm('¿Estás seguro de eliminar este elemento?');"
+                                                            onclick="return confirm('¿Estás seguro de eliminar este usuario?');"
                                                             type="submit" class="btn btn-danger btn-sm">
                                                             <i class="fas fa-trash">
                                                             </i>
@@ -228,6 +228,13 @@
                         last: "Último",
                         next: "Siguiente",
                         previous: "Anterior"
+                    },
+                    processing: "Procesando...",
+                    loadingRecords: "Cargando...",
+                    emptyTable: "No hay datos disponibles en la tabla",
+                    aria: {
+                        sortAscending: ": activar para ordenar la columna de manera ascendente",
+                        sortDescending: ": activar para ordenar la columna de manera descendente"
                     }
                 }
             });

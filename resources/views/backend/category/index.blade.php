@@ -199,6 +199,15 @@
                         last: "Último",
                         next: "Siguiente",
                         previous: "Anterior"
+                    },
+                    // ✅ estos son los que a veces salen en inglés si no se definen
+                    processing: "Procesando...",
+                    loadingRecords: "Cargando...",
+                    emptyTable: "No hay datos disponibles en la tabla",
+                    infoThousands: ",",
+                    aria: {
+                        sortAscending: ": activar para ordenar la columna de manera ascendente",
+                        sortDescending: ": activar para ordenar la columna de manera descendente"
                     }
                 }
             });

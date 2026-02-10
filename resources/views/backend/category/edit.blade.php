@@ -11,7 +11,7 @@
             </div>
             <div class="col-sm-6">
                 <ol class="breadcrumb float-sm-right">
-                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Inicio</a></li>
                     <li class="breadcrumb-item active">Áreas de atención</li>
                 </ol>
             </div>
@@ -51,7 +51,7 @@
                                 </h3>
                                 <div class="card-tools">
                                     <button type="button" class="btn btn-tool" data-card-widget="collapse"
-                                        title="Collapse">
+                                        title="Contraer">
                                         <i class="fas fa-minus" aria-hidden="true">
                                         </i>
                                     </button>
@@ -96,7 +96,7 @@
                                 </small>
                                 <div class="card-tools">
                                     <button type="button" class="btn btn-tool" data-card-widget="collapse"
-                                        title="Collapse">
+                                        title="Contraer">
                                         <i class="fas fa-minus" aria-hidden="true">
                                         </i>
                                     </button>
@@ -119,7 +119,7 @@
                                 <small>&nbsp;&nbsp;Este mensaje se mostrará cuando el paciente vea los servicios de esta área.</small>
 
                                 <div class="card-tools">
-                                    <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                                    <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Contraer">
                                         <i class="fas fa-minus" aria-hidden="true"></i>
                                     </button>
                                 </div>
@@ -216,7 +216,7 @@
                                     <h3 class="card-title">Detalles del Área de atención</h3>
                                     <div class="card-tools">
                                         <button type="button" class="btn btn-tool" data-card-widget="collapse"
-                                            title="Collapse">
+                                            title="Contraer">
                                             <i class="fas fa-minus" aria-hidden="true"></i>
                                         </button>
                                     </div>
@@ -242,7 +242,7 @@
                                     </div> --}}
 
                                     <div class="form-group pt-0 pb-0 text-right">
-                                        <button onclick="return confirm('¿Estás seguro de editar este elemento?');" type="submit" class="btn btn-danger">Actualizar
+                                        <button onclick="return confirm('¿Estás seguro de actualizar  este elemento?');" type="submit" class="btn btn-danger">Actualizar
                                         </button>
                                     </div>
                                 </div>
@@ -253,7 +253,7 @@
                                     <h3 class="card-title">Imagen principal</h3>
                                     <div class="card-tools">
                                         <button type="button" class="btn btn-tool" data-card-widget="collapse"
-                                            title="Collapse">
+                                            title="Contraer">
                                             <i class="fas fa-minus" aria-hidden="true"></i>
                                         </button>
                                     </div>
@@ -281,11 +281,11 @@
                                                         style="width: 150px; margin-top:10px; border:1px solid black;"
                                                         id="blah"
                                                         src="{{ asset('uploads/images/category/' . $category->image) }}"
-                                                        alt="your image">
+                                                        alt="Vista previa de la imagen">
                                                 @else
                                                     <img style="width: 150px; margin-top:10px; border:1px solid black;"
                                                         id="blah" src="{{ asset('uploads/images/no-image.jpg') }}"
-                                                        alt="your image">
+                                                        alt="Vista previa de la imagen">
                                                 @endif
                                             </div>
                                         </div>

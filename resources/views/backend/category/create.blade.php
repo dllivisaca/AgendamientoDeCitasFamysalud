@@ -48,7 +48,7 @@
                                 <h3 class="card-title">Agregar Área de atención
                                 </h3>
                                 <div class="card-tools">
-                                    <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                                    <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Contraer">
                                         <i class="fas fa-minus" aria-hidden="true">
                                         </i>
                                     </button>
@@ -254,7 +254,7 @@
                                         <small class="text-red">Nota: Tamaño: ancho 1280 px, alto 720 px.</small>
                                         <input class="form-control" name="image" accept="image/*" type="file" id="imgInp">
                                         <img style="width: 150px; margin-top:10px; border:1px solid black;" id="blah"
-                                            src="{{ asset('uploads/images/no-image.jpg') }}" alt="your image">
+                                            src="{{ asset('uploads/images/no-image.jpg') }}" alt="Vista previa de la imagen">
                                     </div>
 
                                 </div>

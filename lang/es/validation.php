@@ -43,10 +43,37 @@ return [
         'password_confirmation' => 'confirmación de contraseña',
         'roles' => 'rol del usuario',
 
+        'title' => 'nombre',
+        'slug' => 'identificador',
+        'body' => 'descripción',
+        'show_info_message' => 'mensaje informativo',
+        'info_message_text' => 'texto del mensaje informativo',
+        'image' => 'imagen principal',
+        'delete_image' => 'borrar imagen',
+
+        'is_employee' => 'es profesional',
+        'service' => 'servicios',
+        'service.*' => 'servicio',
+        'slot_duration' => 'duración del servicio',
+        'break_duration' => 'tiempo de descanso',
+        'days' => 'disponibilidad',
+        'holidays' => 'feriados',
+        'holidays.date' => 'fecha de feriado',
+        'holidays.from_time' => 'hora de inicio del feriado',
+        'holidays.to_time' => 'hora de fin del feriado',
+        'holidays.recurring' => 'feriado recurrente',
+
+        'date' => 'El campo :attribute debe ser una fecha válida.',
+        'date_format' => 'El campo :attribute no tiene el formato correcto.',
+        'integer' => 'El campo :attribute debe ser un número entero.',
+        'numeric' => 'El campo :attribute debe ser numérico.',
+        'string' => 'El campo :attribute debe ser texto.',
+        'array' => 'El campo :attribute debe ser una lista.',
+
         // los que ya tenías 👇
         'transfer_date' => 'la fecha del comprobante de transferencia',
         'payment_status' => 'el estado del pago',
         'payment_method' => 'el método de pago',
-        'status' => 'estado de la cita',
+        'status' => 'estado',
     ],
 ];
