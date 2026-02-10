@@ -113,19 +113,17 @@
                                                     <span class="badge badge-danger">Inactivo</span>
                                                 @endif
                                             </td>
-                                            <td class="project-actions text-right d-flex justify-content-between">
+                                            <td class="project-actions text-center align-middle">
 
-                                                <div>
-                                                    <a class="btn btn-info btn-sm"
+                                                <div class="d-flex justify-content-center align-items-center gap-3">
+                                                    <a class="btn btn-info btn-sm mr-2"
                                                         href="{{ route('user.edit', $user->id) }}">
                                                         <i class="fas fa-pencil-alt">
                                                         </i>
                                                         Editar
                                                     </a>
-                                                </div>
-                                                <div>
-                                                    <form action="{{ route('user.destroy', $user->id) }}"
-                                                        method="post">
+                                                
+                                                    <form aaction="{{ route('user.destroy', $user->id) }}" method="post" class="mb-0">
                                                         @csrf
                                                         @method('delete')
                                                         <button
