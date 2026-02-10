@@ -244,7 +244,7 @@
                                         <option disabled="" value="">Selecciona...
                                         </option>&gt;
                                         <option class="published" value="1" selected>
-                                            PUBLICADA
+                                            PUBLICADO
                                         </option>
                                         <option value="0"> BORRADOR
                                         </option>
