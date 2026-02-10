@@ -307,13 +307,18 @@
 
                                         <div class="col-md-12">
                                             @foreach ($days as $dayKey => $dayLabel)
+                                                @php
+                                                    $daySlots = old("days.$dayKey") ?? ($employeeDays[$dayKey] ?? []);
+                                                    $daySlots = is_array($daySlots) ? array_values($daySlots) : [];
+                                                @endphp
+
                                                 <div class="row">
                                                     <div class="col-md-2">
                                                         <div class="custom-control custom-switch">
                                                             <input type="checkbox"
                                                                 class="custom-control-input"
                                                                 id="{{ $dayKey }}"
-                                                                {{ old("days.$dayKey") || isset($employeeDays[$dayKey]) ? 'checked' : '' }}>
+                                                                {{ !empty($daySlots) ? 'checked' : '' }}>
                                                             <label class="custom-control-label" for="{{ $dayKey }}">
                                                                 {{ $dayLabel }}
                                                             </label>
@@ -326,7 +331,7 @@
                                                             class="form-control"
                                                             name="days[{{ $dayKey }}][]"
                                                             id="{{ $dayKey }}From"
-                                                            value="{{ old("days.$dayKey.0") ?? ($employeeDays[$dayKey][0] ?? '') }}">
+                                                            value="{{ $daySlots[0] ?? '' }}">
                                                     </div>
 
                                                     <div class="col-md-4">
@@ -335,7 +340,7 @@
                                                             class="form-control"
                                                             name="days[{{ $dayKey }}][]"
                                                             id="{{ $dayKey }}To"
-                                                            value="{{ old("days.$dayKey.1") ?? ($employeeDays[$dayKey][1] ?? '') }}">
+                                                            value="{{ $daySlots[1] ?? '' }}">
 
                                                         <div id="{{ $dayKey }}AddMore"
                                                             class="text-right text-primary d-none"
@@ -344,6 +349,35 @@
                                                         </div>
                                                     </div>
                                                 </div>
+
+                                                {{-- ✅ Render de franjas adicionales (2 en adelante) --}}
+                                                @if (count($daySlots) > 2)
+                                                    @for ($i = 2; $i < count($daySlots); $i += 2)
+                                                        <div class="row additional-{{ $dayKey }}">
+                                                            <div class="col-md-2"></div>
+
+                                                            <div class="col-md-4">
+                                                                <strong>Desde:</strong>
+                                                                <input type="time"
+                                                                    class="form-control"
+                                                                    name="days[{{ $dayKey }}][]"
+                                                                    value="{{ $daySlots[$i] ?? '' }}">
+                                                            </div>
+
+                                                            <div class="col-md-4">
+                                                                <strong>Hasta:</strong>
+                                                                <input type="time"
+                                                                    class="form-control"
+                                                                    name="days[{{ $dayKey }}][]"
+                                                                    value="{{ $daySlots[$i+1] ?? '' }}">
+
+                                                                <div class="text-right text-danger remove-field" style="cursor:pointer;">
+                                                                    Eliminar
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    @endfor
+                                                @endif
                                             @endforeach
                                         </div>
                                     </div>
@@ -507,12 +541,13 @@
                 var isChecked = $('#' + dayId).prop('checked');
                 $('#' + dayId + 'From, #' + dayId + 'To').prop('disabled', !isChecked);
 
-                // Show or hide the "Add More" button based on the checkbox state
+                // ✅ también afecta inputs de filas extra ya renderizadas
+                $('.additional-' + dayId + ' input').prop('disabled', !isChecked);
+
                 if (isChecked) {
                     $('#' + dayId + 'AddMore').removeClass('d-none');
                 } else {
                     $('#' + dayId + 'AddMore').addClass('d-none');
-                    // Remove all additional fields for the day if unchecked
                     $('.additional-' + dayId).remove();
                 }
             }
