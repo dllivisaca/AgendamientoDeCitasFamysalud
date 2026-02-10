@@ -289,7 +289,8 @@ class FrontendController extends Controller
 
         foreach ($availableRanges as $range) {
             $start = Carbon::parse($date->toDateString() . ' ' . $range->start()->format('H:i'));
-            $end = Carbon::parse($date->toDateString() . ' ' . $range->end()->format('H:i'));
+            $end = Carbon::parse($date->toDateString() . ' ' . $range->end()->format('H:i'))
+                ->addSecond(); // ✅ hace el end inclusivo
 
             // Si todo el rango termina antes del mínimo permitido, no sirve
             if ($end->lte($minAllowed)) {
