@@ -264,76 +264,89 @@
                                     <div class="row">
                                         <div class="mb-3">
                                             <h4 class="mb-0">Definir disponibilidad del profesional</h4>
-                                            <small class="text-muted">Selecciona los días y horarios, con la opción de agregar múltiples franjas horarias en un mismo día, por ejemplo: 9 AM–12 PM y 4 PM–8 PM</small>
+                                            <small class="text-muted">
+                                                Selecciona los días y horarios, con la opción de agregar múltiples franjas horarias en un mismo día,
+                                                por ejemplo: 9 AM–12 PM y 4 PM–8 PM
+                                            </small>
                                         </div>
+
                                         <div class="col-md-12">
-                                            @foreach ($days as $day)
-                                                <!-- Main row (first time pair for each day) -->
+                                            @foreach ($days as $dayKey => $dayLabel)
+                                                <!-- Fila principal del día -->
                                                 <div class="row">
                                                     <div class="col-md-2">
                                                         <div class="form-group">
                                                             <div class="custom-control custom-switch">
-                                                                <input type="checkbox" class="custom-control-input"
-                                                                    id="{{ $day }}"
-                                                                    @if (old('days.' . $day)) checked @endif>
-                                                                <label class="custom-control-label"
-                                                                    for="{{ $day }}">{{ ucfirst($day) }}</label>
+                                                                <input type="checkbox"
+                                                                    class="custom-control-input"
+                                                                    id="{{ $dayKey }}"
+                                                                    @if (old('days.' . $dayKey)) checked @endif>
+                                                                <label class="custom-control-label" for="{{ $dayKey }}">
+                                                                    {{ $dayLabel }}
+                                                                </label>
                                                             </div>
                                                         </div>
                                                     </div>
 
-                                                    <!-- First time input row (main row) -->
                                                     <div class="col-md-4">
                                                         <div class="form-group">
                                                             <strong>Desde:</strong>
-                                                            <input type="time" class="form-control from"
-                                                                name="days[{{ $day }}][]"
-                                                                value="{{ old('days.' . $day . '.0') }}"
-                                                                id="{{ $day }}From">
+                                                            <input type="time"
+                                                                class="form-control from"
+                                                                name="days[{{ $dayKey }}][]"
+                                                                value="{{ old('days.' . $dayKey . '.0') }}"
+                                                                id="{{ $dayKey }}From">
                                                         </div>
                                                     </div>
+
                                                     <div class="col-md-4">
                                                         <div class="form-group">
                                                             <strong>Hasta:</strong>
-                                                            <input type="time" class="form-control to"
-                                                                name="days[{{ $day }}][]"
-                                                                value="{{ old('days.' . $day . '.1') }}"
-                                                                id="{{ $day }}To">
+                                                            <input type="time"
+                                                                class="form-control to"
+                                                                name="days[{{ $dayKey }}][]"
+                                                                value="{{ old('days.' . $dayKey . '.1') }}"
+                                                                id="{{ $dayKey }}To">
                                                         </div>
-                                                        <div style="margin-top:-15px;" id="{{ $day }}AddMore"
-                                                            class="text-right d-none text-primary">Agregar más</div>
+
+                                                        <div style="margin-top:-15px;"
+                                                            id="{{ $dayKey }}AddMore"
+                                                            class="text-right d-none text-primary">
+                                                            Agregar más
+                                                        </div>
                                                     </div>
                                                 </div>
 
-                                                <!-- Render additional rows -->
-                                                @if (old('days.' . $day))
-                                                    <!-- Check if there are any times for the day -->
-                                                    @foreach (old('days.' . $day) as $index => $time)
-                                                        <!-- Skip the first time pair, as it's already rendered above -->
+                                                <!-- Filas adicionales (si hubo old input) -->
+                                                @if (old('days.' . $dayKey))
+                                                    @foreach (old('days.' . $dayKey) as $index => $time)
                                                         @if ($index > 1 && $index % 2 == 0)
-                                                            <!-- Skip last pair by checking if index is even -->
-                                                            <div class="row additional-{{ $day }}">
+                                                            <div class="row additional-{{ $dayKey }}">
                                                                 <div class="col-md-2"></div>
+
                                                                 <div class="col-md-4">
                                                                     <div class="form-group">
                                                                         <strong>Desde:</strong>
-                                                                        <input type="time" class="form-control from"
-                                                                            name="days[{{ $day }}][]"
-                                                                            value="{{ $time }}"
-                                                                            id="{{ $day }}From">
+                                                                        <input type="time"
+                                                                            class="form-control from"
+                                                                            name="days[{{ $dayKey }}][]"
+                                                                            value="{{ $time }}">
                                                                     </div>
                                                                 </div>
+
                                                                 <div class="col-md-4">
                                                                     <div class="form-group">
                                                                         <strong>Hasta:</strong>
-                                                                        <input type="time" class="form-control to"
-                                                                            name="days[{{ $day }}][]"
-                                                                            value="{{ old('days.' . $day . '.' . ($index + 1)) }}"
-                                                                            id="{{ $day }}To">
+                                                                        <input type="time"
+                                                                            class="form-control to"
+                                                                            name="days[{{ $dayKey }}][]"
+                                                                            value="{{ old('days.' . $dayKey . '.' . ($index + 1)) }}">
                                                                     </div>
+
                                                                     <div style="margin-top:-15px;"
                                                                         class="text-right remove-field text-danger">
-                                                                        Eliminar</div>
+                                                                        Eliminar
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         @endif
@@ -342,6 +355,67 @@
                                             @endforeach
                                         </div>
                                     </div>
+                                </div>{{-- col-md-12 / row --}}
+                            </div>
+                        </div>
+                        <hr>
+
+                        <div class="row d-flex">
+                            <div class="col-md-10">
+                                <h2 class="mb-0">Agregar Feriados</h2>
+                                <p class="text-muted">
+                                    No es necesario agregar horario para una jornada completa; para trabajo de medio tiempo, especifica el día y la hora.
+                                </p>
+
+                                <span id="addHoliday" class="btn btn-primary mb-2 btn-sm">
+                                    <i class="fa fa-plus"></i> Agregar feriado
+                                </span>
+
+                                <div class="holidayContainer">
+                                    @php
+                                        // En crear usuario, solo hay old() (no hay feriados de BD todavía)
+                                        $holidaysInput = old('holidays.date', []);
+                                        $holidaysToDisplay = !empty($holidaysInput) ? $holidaysInput : [];
+                                    @endphp
+
+                                    @forelse($holidaysToDisplay as $index => $tmp)
+                                        @php
+                                            $date      = old("holidays.date.$index", '');
+                                            $fromTime  = old("holidays.from_time.$index", '');
+                                            $toTime    = old("holidays.to_time.$index", '');
+                                            $recurring = old("holidays.recurring.$index", 0);
+                                        @endphp
+
+                                        <div class="row holiday-row">
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label class="mb-0">Fecha</label>
+                                                    <input class="form-control" type="date" name="holidays[date][]" value="{{ $date }}" required>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <strong>Desde:</strong>
+                                                    <input type="time" class="form-control from" name="holidays[from_time][]" value="{{ $fromTime }}">
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <strong>Hasta:</strong>
+                                                    <input type="time" class="form-control to" name="holidays[to_time][]" value="{{ $toTime }}">
+                                                    <div class="text-right text-danger removeHoliday" style="cursor:pointer;">
+                                                        Eliminar
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <input type="hidden" name="holidays[recurring][]" value="{{ $recurring }}">
+                                        </div>
+                                    @empty
+                                        <p>No se encontraron feriados para este usuario. Haz clic en “Agregar feriado” para crear uno.</p>
+                                    @endforelse
                                 </div>
                             </div>
                         </div>
@@ -467,7 +541,42 @@
     });
 </script>
 
+    <script>
+        $(document).ready(function() {
+            // Agregar nueva fila de feriado
+            $('#addHoliday').on('click', function() {
+                const holidayRow = `
+                <div class="row holiday-row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="mb-0">Fecha</label>
+                            <input class="form-control" type="date" name="holidays[date][]" required>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <strong>Desde:</strong>
+                            <input type="time" class="form-control from" name="holidays[from_time][]">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <strong>Hasta:</strong>
+                            <input type="time" class="form-control to" name="holidays[to_time][]">
+                            <div class="text-right text-danger removeHoliday" style="cursor:pointer;">Eliminar</div>
+                        </div>
+                    </div>
+                    <input type="hidden" name="holidays[recurring][]" value="0">
+                </div>`;
+                $('.holidayContainer').append(holidayRow);
+            });
 
+            // Eliminar fila de feriado
+            $(document).on('click', '.removeHoliday', function() {
+                $(this).closest('.holiday-row').remove();
+            });
+        });
+    </script>
 
 
 @stop
