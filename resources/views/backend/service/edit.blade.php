@@ -108,7 +108,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label class="mb-0" for="price">Precio</label>
-                                    <input class="form-control" type="number" name="price" placeholder="Price"
+                                    <input class="form-control" type="number" name="price" placeholder="Precio"
                                         value="{{ old('price',$service->price) }}">
                                         <p class="mb-0 text-muted small">Precio principal</p>
                                     @error('price')
@@ -241,7 +241,7 @@
                                 <div class="form-group">
                                     <label for="inputStatus">Estado</label>
                                     <select required="required" name="status" id="inputStatus" class="form-control custom-select">
-                                        <option disabled value="">Select Option</option>
+                                        <option disabled value="">Selecciona...</option>
                                         <option value="1" {{ isset($service->status) && $service->status == 1 ? 'selected' : '' }}>
                                             PUBLICADO
                                         </option>
@@ -290,7 +290,7 @@
                                         style="width: 150px; margin-top:10px; border:1px solid black;"
                                         id="blah"
                                         src="{{ asset('uploads/images/service/' . $service->image) }}"
-                                        alt="your image">
+                                        alt="Imagen del servicio">
                                 @else
                                     <img style="width: 150px; margin-top:10px; border:1px solid black;"
                                         id="blah" src="{{ asset('uploads/images/no-image.jpg') }}"
@@ -480,7 +480,7 @@
 
                 Toast.fire({
                     icon: 'error',
-                    title: 'There are form validation errors. Please fix them.'
+                    title: 'Hay errores en el formulario. Por favor corrígelos.'
                 });
             @endif
 
