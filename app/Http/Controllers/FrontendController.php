@@ -140,16 +140,16 @@ class FrontendController extends Controller
                 return implode('-', $formattedTimes);
             };
 
-            // Process holidays exceptions
-            $holidaysExceptions = $employee->holidays->mapWithKeys(function ($holiday) use ($formatTimeRange) {
-                $hours = !empty($holiday->hours)
-                    ? collect($holiday->hours)->map(function ($timeRange) use ($formatTimeRange) {
-                        return $formatTimeRange($timeRange);
-                    })->toArray()
-                    : [];
-
-                return [$holiday->date => $hours];
-            })->toArray();
+            // Process holidays exceptions (SOLO feriados de día completo)
+            // Si holiday tiene horas => NO lo metemos en exceptions (porque Spatie lo interpreta como disponibilidad)
+            $holidaysExceptions = [];
+            foreach ($employee->holidays as $holiday) {
+                $hoursRaw = (array) ($holiday->hours ?? []);
+                if (empty($hoursRaw)) {
+                    // vacío => cerrado todo el día
+                    $holidaysExceptions[$holiday->date] = [];
+                }
+            }
 
             // using spatie opening hours package to process data and expections
             /* $openingHours = OpeningHours::create(array_merge(
@@ -165,16 +165,29 @@ class FrontendController extends Controller
             ));
 
             // Get available time ranges for the requested date
-            $availableRanges = $openingHours->forDate($date);
+            $availableRanges = $openingHours->forDate($date); // ✅ ESTA LÍNEA FALTABA
+
+            // ✅ Restar feriado parcial (si existe) en vez de usarlo como disponibilidad
+            $holidayBlocks = $this->getHolidayBlocksForDate($employee, $date);
+
+            // Trabajamos con array para que no se rompa el tipo del objeto Spatie
+            $availableRangesArr = [];
+            foreach ($availableRanges as $r) {
+                $availableRangesArr[] = $r;
+            }
+
+            if (!empty($holidayBlocks)) {
+                $availableRangesArr = $this->subtractBlocksFromRanges($availableRangesArr, $holidayBlocks, $date);
+            }
 
             // If no availability for this date
-            if ($availableRanges->isEmpty()) {
+            if (empty($availableRangesArr)) {
                 return response()->json(['available_slots' => []]);
             }
 
             // Generate time slots - NOW PASSING THE EMPLOYEE ID
             $slots = $this->generateTimeSlots(
-                $availableRanges,
+                $availableRangesArr,
                 $employee->slot_duration,
                 $employee->break_duration ?? 0,
                 $date,
@@ -664,6 +677,128 @@ class FrontendController extends Controller
             }
 
             $out[$map[$normalized]] = $ranges;
+        }
+
+        return $out;
+    }
+
+    private function getHolidayBlocksForDate(Employee $employee, Carbon $date): array
+    {
+        // holiday->date puede ser 'YYYY-MM-DD' o 'MM-DD' si recurring=1
+        $targetYmd = $date->toDateString();
+        $targetMd  = $date->format('m-d');
+
+        $holiday = $employee->holidays
+            ->filter(function ($h) use ($targetYmd, $targetMd) {
+                $d = (string) ($h->date ?? '');
+                return $d === $targetYmd || $d === $targetMd;
+            })
+            ->first();
+
+        if (!$holiday) return [];
+
+        $hours = (array) ($holiday->hours ?? []);
+
+        // Si no hay horas => feriado día completo (cierra todo)
+        if (empty($hours)) {
+            return [[ 'start' => '00:00', 'end' => '23:59' ]];
+        }
+
+        $blocks = [];
+        foreach ($hours as $range) {
+            $range = trim((string) $range);
+            $range = trim($range, "[]");
+            if (!$range || !str_contains($range, '-')) continue;
+
+            [$s, $e] = array_map('trim', explode('-', $range, 2));
+
+            // Normaliza a HH:MM
+            $s = substr($s, 0, 5);
+            $e = substr($e, 0, 5);
+
+            if ($s && $e) {
+                $blocks[] = ['start' => $s, 'end' => $e];
+            }
+        }
+
+        return $blocks;
+    }
+
+    private function subtractBlocksFromRanges(array $ranges, array $blocks, Carbon $date): array
+    {
+        // $ranges: array de rangos de OpeningHours (objetos TimeRange)
+        // $blocks: [['start'=>'08:00','end'=>'17:00'], ...]
+
+        if (empty($blocks)) return $ranges;
+
+        // Si el "block" cubre todo el día, no hay disponibilidad
+        foreach ($blocks as $b) {
+            if (($b['start'] ?? '') === '00:00' && ($b['end'] ?? '') === '23:59') {
+                return [];
+            }
+        }
+
+        $out = [];
+
+        foreach ($ranges as $range) {
+            $baseStart = Carbon::parse($date->toDateString() . ' ' . $range->start()->format('H:i'));
+            $baseEnd   = Carbon::parse($date->toDateString() . ' ' . $range->end()->format('H:i'));
+
+            $segments = [[ 'start' => $baseStart, 'end' => $baseEnd ]];
+
+            foreach ($blocks as $b) {
+                $blockStart = Carbon::parse($date->toDateString() . ' ' . $b['start']);
+                $blockEnd   = Carbon::parse($date->toDateString() . ' ' . $b['end']);
+
+                $newSegments = [];
+
+                foreach ($segments as $seg) {
+                    /** @var Carbon $s */
+                    $s = $seg['start'];
+                    /** @var Carbon $e */
+                    $e = $seg['end'];
+
+                    // no overlap
+                    if ($blockEnd->lte($s) || $blockStart->gte($e)) {
+                        $newSegments[] = $seg;
+                        continue;
+                    }
+
+                    // left piece
+                    if ($blockStart->gt($s)) {
+                        $newSegments[] = ['start' => $s->copy(), 'end' => $blockStart->copy()];
+                    }
+
+                    // right piece
+                    if ($blockEnd->lt($e)) {
+                        $newSegments[] = ['start' => $blockEnd->copy(), 'end' => $e->copy()];
+                    }
+                }
+
+                $segments = $newSegments;
+                if (empty($segments)) break;
+            }
+
+            // Convertimos segments (Carbon) de vuelta a "rango compatible" para tu generateTimeSlots
+            // Aquí reutilizamos el mismo tipo de objetos de OpeningHours? No hace falta:
+            // Vamos a crear rangos "fake" con start/end en Carbon al vuelo usando un objeto simple.
+            foreach ($segments as $seg) {
+                // Ignora segmentos inválidos o cero
+                if ($seg['end']->lte($seg['start'])) continue;
+
+                $out[] = new class($seg['start'], $seg['end']) {
+                    private Carbon $s;
+                    private Carbon $e;
+
+                    public function __construct(Carbon $s, Carbon $e) {
+                        $this->s = $s;
+                        $this->e = $e;
+                    }
+
+                    public function start() { return $this->s; }
+                    public function end() { return $this->e; }
+                };
+            }
         }
 
         return $out;

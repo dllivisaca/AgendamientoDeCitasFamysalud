@@ -416,7 +416,6 @@
                                             <input type="hidden" name="holidays[recurring][]" value="{{ $recurring }}">
                                         </div>
                                     @empty
-                                        <p>No se encontraron feriados para este usuario. Haz clic en “Agregar feriado” para crear uno.</p>
                                     @endforelse
                                 </div>
                             </div>

@@ -433,7 +433,7 @@
                                                                     value="{{ $toTime }}">
                                                                 <div class="text-right text-danger removeHoliday"
                                                                     style="cursor:pointer;">
-                                                                    Remove
+                                                                    Eliminar
                                                                 </div>
                                                             </div>
                                                         </div>
