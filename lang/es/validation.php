@@ -23,6 +23,18 @@ return [
     'in'        => 'El campo :attribute contiene un valor inválido.',
     'after_or_equal' => 'La fecha de :attribute debe ser igual o posterior a :date.',
 
+    'date' => 'El campo :attribute debe ser una fecha válida.',
+    'date_format' => 'El campo :attribute no tiene el formato correcto.',
+    'integer' => 'El campo :attribute debe ser un número entero.',
+    'numeric' => 'El campo :attribute debe ser numérico.',
+    'string' => 'El campo :attribute debe ser texto.',
+    'array' => 'El campo :attribute debe ser una lista.',
+
+    'exists' => 'El :attribute seleccionado no es válido.',
+    'image' => 'El campo :attribute debe ser una imagen.',
+    'mimes' => 'El campo :attribute debe ser un archivo de tipo: :values.',
+    'file' => 'El campo :attribute debe ser un archivo válido.',
+
     /*
     |--------------------------------------------------------------------------
     | Custom Validation Attributes
@@ -62,13 +74,6 @@ return [
         'holidays.from_time' => 'hora de inicio del feriado',
         'holidays.to_time' => 'hora de fin del feriado',
         'holidays.recurring' => 'feriado recurrente',
-
-        'date' => 'El campo :attribute debe ser una fecha válida.',
-        'date_format' => 'El campo :attribute no tiene el formato correcto.',
-        'integer' => 'El campo :attribute debe ser un número entero.',
-        'numeric' => 'El campo :attribute debe ser numérico.',
-        'string' => 'El campo :attribute debe ser texto.',
-        'array' => 'El campo :attribute debe ser una lista.',
 
         // los que ya tenías 👇
         'transfer_date' => 'la fecha del comprobante de transferencia',
