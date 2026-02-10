@@ -374,7 +374,7 @@ class UserController extends Controller
         }
 
         $user->delete();
-        return redirect()->back()->with('success', 'User has been successfully trashed!');
+        return redirect()->back()->with('success', 'El usuario ha sido eliminado correctamente');
     }
 
 

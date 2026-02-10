@@ -1,16 +1,16 @@
 @extends('adminlte::page')
 
-@section('title', 'All Services')
+@section('title', 'Papelera Usuarios · FamySalud')
 
 @section('content_header')
     <div class="row mb-2">
         <div class="col-sm-6">
-            <h1>All Users</h1>
+            <h1>Papelera de usuarios</h1>
         </div>
         <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
-                <li class="breadcrumb-item"><a href="{{ route('user.create') }}">+ Add New</a> |</li>
-                <li class=""> &nbsp; <a href="{{ route('user.trash') }}">View Trash</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('user.create') }}">+ Agregar nuevo</a> |</li>
+                <li class=""> &nbsp; <a href="{{ route('user.trash') }}">Ver papelera</a></li>
             </ol>
         </div>
     </div>
@@ -24,7 +24,7 @@
                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
-                    <strong>Whoops!</strong> There were some problems with your input.<br>
+                    <strong>Ups!</strong> Hubo errores en tu solicitud.<br>
                     <ul>
                         @foreach ($errors->all() as $error)
                             <li>{{ $error }}</li>
@@ -44,27 +44,27 @@
                 <div class="col-md-12">
                     <div class="card py-2 px-2">
 
-                        <div class="card-body p-0">
-                            <table id="myTable" class="table table-striped projects ">
+                        <div id="" class="card-body p-0 table-scroll-wrap">
+                            <table id="myTable" class="table table-striped projects">
                                 <thead>
                                     <tr>
                                         <th style="width: 1%">
                                             #
                                         </th>
                                         <th style="width: 20%">
-                                            Name
+                                            Nombre
                                         </th>
                                         <th style="width: 10%">
-                                            Image
+                                            Imagen
                                         </th>
                                         <th style="width: 10%">
-                                            Status
+                                            Rol
                                         </th>
                                         <th style="width: 10%">
-                                            Role
+                                            Estado
                                         </th>
                                         <th style="width: 12%">
-                                            Action
+                                            Acción
                                         </th>
                                     </tr>
                                 </thead>
@@ -88,42 +88,47 @@
                                                     src="{{ $user->profileImage() }}" alt="">
                                             </td>
                                             <td>
+                                                @php
+                                                    $roleMap = [
+                                                        'admin' => 'Administrador',
+                                                        'employee' => 'Profesional',
+                                                        'subscriber' => 'Subscriptor',
+                                                    ];
+                                                @endphp
+
                                                 @foreach ($user->getRoleNames() as $role)
-                                                    {{ ucfirst($role) }}@if (!$loop->last)
-                                                        ,
-                                                    @endif
+                                                    {{ $roleMap[strtolower($role)] ?? ucfirst($role) }}@if(!$loop->last),@endif
                                                 @endforeach
                                             </td>
 
                                             <td class="project-state">
                                                 @if ($user->status)
-                                                    <span class="badge badge-success">Active</span>
+                                                    <span class="badge badge-success">Activo</span>
                                                 @else
-                                                    <span class="badge badge-danger">Pending</span>
+                                                    <span class="badge badge-danger">Inactivo</span>
                                                 @endif
                                             </td>
-                                            <td class="project-actions text-right d-flex ">
-                                                <div>
-                                                    <a onclick="return confirm('Are you sure you want to restore this user?')"  class="btn btn-primary btn-sm mr-2"
-                                                        href="{{ route('user.restore', $user->id) }}">
-                                                        <i class="fas fa-folder">
-                                                        </i>
-                                                        Restore
+                                            <td class="project-actions text-center align-middle">
+                                                <div class="d-flex justify-content-center align-items-center flex-nowrap gap-2">
+
+                                                    <a onclick="return confirm('¿Estás seguro de restaurar este usuario?');"
+                                                    class="btn btn-primary btn-sm mr-2"
+                                                    href="{{ route('user.restore', $user->id) }}">
+                                                        <i class="fas fa-folder"></i>
+                                                        Restaurar
                                                     </a>
-                                                </div>
-                                                <div>
-                                                    <form action="{{ route('user.force.delete', $user->id) }}"
-                                                        method="post">
+
+                                                    <form action="{{ route('user.force.delete', $user->id) }}" method="post" class="mb-0">
                                                         @csrf
                                                         @method('delete')
                                                         <button
-                                                            onclick="return confirm('Are you sure you want to delete this item?');"
+                                                            onclick="return confirm('¿Estás seguro de eliminar este elemento?');"
                                                             type="submit" class="btn btn-danger btn-sm">
-                                                            <i class="fas fa-trash">
-                                                            </i>
-                                                            Trash
+                                                            <i class="fas fa-trash"></i>
+                                                            Borrar
                                                         </button>
                                                     </form>
+
                                                 </div>
                                             </td>
                                         </tr>
@@ -144,7 +149,50 @@
 @stop
 
 @section('css')
+    <style>
+        /* Desktop grande: normal */
+        .table-scroll-wrap{
+            overflow: visible;
+        }
 
+        /* ✅ Rango intermedio (cuando el sidebar aún no colapsa) */
+        @media (max-width: 1200px){
+            .table-scroll-wrap{
+                overflow-x: auto;
+                overflow-y: visible;
+                -webkit-overflow-scrolling: touch;
+                border-radius: .25rem;
+            }
+
+            #myTable{
+                min-width: 1100px;
+                width: 100%;
+            }
+        }
+
+        /* Móvil */
+        @media (max-width: 740px){
+            .table-scroll-wrap{
+                overflow-x: auto;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                max-height: 70vh;
+                border-radius: .25rem;
+            }
+
+            #myTable{
+                min-width: 900px;
+                width: 100%;
+            }
+
+            #myTable thead th{
+                position: sticky;
+                top: 0;
+                background: #fff;
+                z-index: 2;
+            }
+        }
+    </style>
 @stop
 
 @section('js')
@@ -159,9 +207,23 @@
     <script>
         $(document).ready(function() {
             $('#myTable').DataTable({
-                responsive: true
+                responsive: false,
+                autoWidth: false,
+                language: {
+                    lengthMenu: "Mostrar _MENU_ registros",
+                    search: "Buscar:",
+                    info: "Mostrando registros _START_–_END_ de _TOTAL_",
+                    infoEmpty: "Mostrando 0 a 0 de 0 registros",
+                    infoFiltered: "(filtrado de _MAX_ registros totales)",
+                    zeroRecords: "No se encontraron resultados",
+                    paginate: {
+                        first: "Primero",
+                        last: "Último",
+                        next: "Siguiente",
+                        previous: "Anterior"
+                    }
+                }
             });
-
         });
     </script>
 
