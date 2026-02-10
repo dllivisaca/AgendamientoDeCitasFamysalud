@@ -156,12 +156,10 @@
                                     <select name="roles[]"
                                         class="form-control select2 @error('roles[]') is-invalid @enderror"
                                         data-placeholder="Selecciona un rol" multiple>
-                                        @foreach ($roles as $role)
-                                            <option value="{{ $role->name }}"
-                                                @if ($user->roles->contains('name', $role->name) || in_array($role->name, old('roles', []))) selected @endif>
-                                                {{ ucfirst($role->name) }}
-                                            </option>
-                                        @endforeach
+                                        <option value="employee"
+                                            @if ($user->roles->contains('name', 'employee') || in_array('employee', old('roles', []))) selected @endif>
+                                            Profesional
+                                        </option>
                                     </select>
                                     @error('roles')
                                         <small class="text-danger"><strong>{{ $message }}</strong></small>
@@ -180,7 +178,7 @@
                                                     name="status" value="1"
                                                     {{ old('status', $user->status) ? 'checked' : '' }}>
 
-                                                <label class="custom-control-label" for="status">Estado</label>
+                                                <label class="custom-control-label" for="status">Activo</label>
                                             </div>
                                         </div>
                                     </div>
