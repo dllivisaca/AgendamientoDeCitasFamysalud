@@ -392,26 +392,26 @@ return [
             ],
         ],
         [
-            'text'    => 'Services',
+            'text'    => 'Servicios',
             'url'  => 'service*',
             'icon'    => 'fas fa-fw fa-briefcase',
             'can'  => 'services.view | services.create | services.edit | services.delete',
             'submenu' => [
 
                 [
-                    'text' => 'Create Service',
+                    'text' => 'Crear servicio',
                     'icon'    => 'fas fa-fw fa-plus',
                     'route'  => 'service.create',
                     'can'    => 'services.create'
                 ],
                 [
-                    'text' => 'View All',
+                    'text' => 'Ver todos',
                     'icon'    => 'fas fa-fw fa-eye',
                     'route'  => 'service.index',
                     'can'    => 'services.view'
                 ],
                 [
-                    'text' => 'View Trash',
+                    'text' => 'Ver papelera',
                     'icon'    => 'fas fa-fw fa-trash',
                     'route'  => 'service.trash',
                     'can'    => 'services.view'

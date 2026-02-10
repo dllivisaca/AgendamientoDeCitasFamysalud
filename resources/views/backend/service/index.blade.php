@@ -1,6 +1,6 @@
 @extends('adminlte::page')
 
-@section('title', 'All Services')
+@section('title', 'Todos los Servicios · FamySalud')
 
 @section('content_header')
     <div class="row mb-2">

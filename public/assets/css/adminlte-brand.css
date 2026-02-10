@@ -85,3 +85,43 @@
   float: none !important;
   text-align: center !important;
 }
+
+/* =====================================================
+   Sidebar – Diferenciar submenús (AdminLTE / FamySALUD)
+   ===================================================== */
+
+/* Contenedor del submenú: línea vertical sutil */
+.nav-sidebar .nav-treeview {
+  border-left: 2px solid rgba(255, 255, 255, 0.18);
+  margin-left: 0.6rem;
+  padding-left: 0.4rem;
+}
+
+/* Links de submenú */
+.nav-sidebar .nav-treeview > .nav-item > .nav-link {
+  padding-left: 2.3rem;     /* más indentación */
+  font-size: 0.9rem;        /* más pequeño que el padre */
+  opacity: 0.92;
+}
+
+/* Iconos de submenú */
+.nav-sidebar .nav-treeview > .nav-item > .nav-link .nav-icon {
+  font-size: 0.7rem;
+  opacity: 0.75;
+}
+
+/* Hover en submenú */
+.nav-sidebar .nav-treeview > .nav-item > .nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Submenú activo */
+.nav-sidebar .nav-treeview > .nav-item > .nav-link.active {
+  font-weight: 600;
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Menú padre abierto (Áreas, Usuarios, Servicios, etc.) */
+.nav-sidebar .nav-item.menu-open > .nav-link {
+  font-weight: 700;
+}
