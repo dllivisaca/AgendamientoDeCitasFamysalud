@@ -278,8 +278,9 @@
                                                         <div class="form-group">
                                                             <div class="custom-control custom-switch">
                                                                 <input type="checkbox"
-                                                                    class="custom-control-input"
+                                                                    class="custom-control-input day-toggle"
                                                                     id="{{ $dayKey }}"
+                                                                    data-day="{{ $dayKey }}"
                                                                     @if (old('days.' . $dayKey)) checked @endif>
                                                                 <label class="custom-control-label" for="{{ $dayKey }}">
                                                                     {{ $dayLabel }}
@@ -309,9 +310,10 @@
                                                                 id="{{ $dayKey }}To">
                                                         </div>
 
-                                                        <div style="margin-top:-15px;"
+                                                        <div style="margin-top:-15px; cursor:pointer;"
                                                             id="{{ $dayKey }}AddMore"
-                                                            class="text-right d-none text-primary">
+                                                            class="text-right text-primary d-none day-add-more"
+                                                            data-day="{{ $dayKey }}">
                                                             Agregar más
                                                         </div>
                                                     </div>
@@ -446,67 +448,81 @@
 @section('js')
 
     <script>
-        $(document).ready(function() {
+        $(document).ready(function () {
+
             function toggleDayFields(dayId) {
-                var isChecked = $('#' + dayId).prop('checked');
+                const isChecked = $('#' + dayId).is(':checked');
+
+                // Inputs principales
                 $('#' + dayId + 'From, #' + dayId + 'To').prop('disabled', !isChecked);
 
-                // Show or hide the "Add More" button based on the checkbox state
+                // Inputs de filas extra
+                $('.additional-' + dayId + ' input[type="time"]').prop('disabled', !isChecked);
+
+                // Botón Agregar más
                 if (isChecked) {
                     $('#' + dayId + 'AddMore').removeClass('d-none');
                 } else {
                     $('#' + dayId + 'AddMore').addClass('d-none');
-                    // Remove all additional fields for the day if unchecked
                     $('.additional-' + dayId).remove();
                 }
             }
 
             function addMoreFields(dayId) {
-                // Clone the original row for the specific day
-                var originalRow = $('#' + dayId + 'AddMore').closest('.row');
-                var clonedRow = originalRow.clone();
+                const originalRow = $('#' + dayId + 'AddMore').closest('.row');
+                const clonedRow = originalRow.clone();
 
-                // Reset the values in the cloned row (but don't enable the fields yet)
-                clonedRow.find('input').each(function() {
-                    $(this).val(''); // Clear the value
-                });
+                // Limpia valores de time
+                clonedRow.find('input[type="time"]').val('');
 
-                // Replace the col-md-2 section with a blank div for the cloned row
-                clonedRow.find('.col-md-2').replaceWith('<div class="col-md-2"></div>');
+                // Vacía la columna izquierda (switch)
+                clonedRow.find('.col-md-2').first().html('');
 
-                // Update "Add More" to "Remove" for the cloned row
-                clonedRow.find(`#${dayId}AddMore`).text('Eliminar').attr('id', '').addClass(
-                    'remove-field text-danger');
+                // Cambia Agregar más -> Eliminar
+                clonedRow.find('#' + dayId + 'AddMore')
+                    .removeAttr('id')
+                    .removeClass('day-add-more text-primary')
+                    .addClass('remove-field text-danger')
+                    .removeClass('d-none')
+                    .text('Eliminar');
 
-                // Add a unique class to the cloned row for targeting specific day rows
+                // Marca como fila adicional
                 clonedRow.addClass('additional-' + dayId);
 
-                // Append the cloned row after the original row or the last cloned row
-                if (originalRow.closest('.row').siblings('.additional-' + dayId).length === 0) {
-                    originalRow.after(clonedRow);
-                } else {
-                    originalRow.closest('.row').siblings('.additional-' + dayId).last().after(clonedRow);
-                }
+                // Respeta disabled según estado del día
+                const isChecked = $('#' + dayId).is(':checked');
+                clonedRow.find('input[type="time"]').prop('disabled', !isChecked);
+
+                // Inserta al final de las filas adicionales
+                const last = $('.additional-' + dayId).last();
+                if (last.length) last.after(clonedRow);
+                else originalRow.after(clonedRow);
             }
 
-            // Remove cloned rows
-            $(document).on('click', '.remove-field', function() {
+            // ✅ Toggle por data-day (NO dependemos de arrays)
+            $(document).on('change', '.day-toggle', function () {
+                const dayId = $(this).data('day');
+                toggleDayFields(dayId);
+            });
+
+            // ✅ Agregar más por data-day
+            $(document).on('click', '.day-add-more', function () {
+                const dayId = $(this).data('day');
+                addMoreFields(dayId);
+            });
+
+            // ✅ Eliminar fila extra
+            $(document).on('click', '.remove-field', function () {
                 $(this).closest('.row').remove();
             });
 
-            // Bind change and add-more events to all days
-            ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'].forEach(function(day) {
-                $('#' + day).on('change', function() {
-                    toggleDayFields(day);
-                }).trigger('change');
-
-                $('#' + day + 'AddMore').on('click', function() {
-                    addMoreFields(day);
-                });
+            // ✅ Inicializar todos los días existentes en pantalla
+            $('.day-toggle').each(function () {
+                toggleDayFields($(this).data('day'));
             });
+
         });
     </script>
-
 
     <script>
         // In your Javascript (external .js resource or <script> tag)
