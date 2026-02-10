@@ -382,7 +382,7 @@ class UserController extends Controller
         }
 
 
-        return redirect()->route('user.index')->with('success', 'Profile has been updated successfully!');
+        return redirect()->route('user.index')->with('success', 'El perfil ha sido actualizado correctamente');
     }
 
 

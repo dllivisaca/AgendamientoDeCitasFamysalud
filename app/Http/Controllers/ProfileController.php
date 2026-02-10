@@ -159,7 +159,7 @@ class ProfileController extends Controller
             }
         }
 
-        return redirect()->back()->with('success', 'Profile has been updated successfully!');
+        return redirect()->back()->with('success', 'El perfil ha sido actualizado correctamente');
     }
 
 

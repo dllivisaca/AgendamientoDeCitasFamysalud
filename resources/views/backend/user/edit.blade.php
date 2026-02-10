@@ -338,7 +338,8 @@
                                                             value="{{ old("days.$dayKey.1") ?? ($employeeDays[$dayKey][1] ?? '') }}">
 
                                                         <div id="{{ $dayKey }}AddMore"
-                                                            class="text-right text-primary d-none">
+                                                            class="text-right text-primary d-none"
+                                                            style="cursor:pointer;">
                                                             Agregar más
                                                         </div>
                                                     </div>
@@ -471,7 +472,9 @@
 @endsection
 
 @section('css')
-
+    <style>
+        .remove-field { cursor: pointer; }
+    </style>
 @endsection
 
 @section('js')
