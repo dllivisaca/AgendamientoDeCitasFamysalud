@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\TransferReceiptController;
 use App\Http\Controllers\Admin\AdminAvailabilityController;
 use App\Http\Controllers\Admin\AdminAppointmentCreateController;
 use App\Http\Controllers\AppointmentReminderController;
+use App\Http\Controllers\AddressController;
 
 use Illuminate\Http\Request;
 
@@ -139,6 +140,16 @@ Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard
     //deleted permanently
     Route::delete('service-delete/{id}', [ServiceController::class, 'force_delete'])->name('service.force.delete');
 
+    //Direcciones
+    Route::prefix('addresses')->name('addresses.')->group(function () {
+
+        Route::get('/', [AddressController::class, 'index'])
+            ->name('index');
+
+        Route::get('/create', [AddressController::class, 'create'])
+            ->name('create');
+
+    });
 
     //summernote image
     Route::post('summernote',[SummerNoteController::class,'summerUpload'])->name('summer.upload.image');

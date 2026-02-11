@@ -420,13 +420,33 @@ return [
             ],
         ],
         [
-            'text' => 'profile',
+        'text'    => 'Direcciones',
+        'url'     => 'addresses*',
+        'icon'    => 'fas fa-fw fa-map-marker-alt',
+        'can'     => 'addresses.view | addresses.create | addresses.edit | addresses.delete',
+        'submenu' => [
+            [
+                'text'  => 'Agregar nueva',
+                'icon'  => 'fas fa-fw fa-plus',
+                'route' => 'addresses.create',
+                'can'   => 'addresses.create',
+            ],
+            [
+                'text'  => 'Ver todas',
+                'icon'  => 'fas fa-fw fa-eye',
+                'route' => 'addresses.index',
+                'can'   => 'addresses.view',
+            ],
+        ],
+    ],
+        [
+            'text' => 'Perfil',
             'route' => 'profile',
             'icon' => 'fas fa-fw fa-user',
 
         ],
         [
-            'text' => 'Settings',
+            'text' => 'Configuración',
             'route'  => 'setting',
             'icon' => 'fas fa-fw fa-cog',
             'can'  => 'setting update',
