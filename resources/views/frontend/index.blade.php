@@ -2396,16 +2396,29 @@
 
                                 // Add services with animation delay
                                 services.forEach((service, index) => {
-                                    // Determine the price display
+                                    // Determine the price display (ordenado: Transferencia: [tachado] [promo])
                                     let priceDisplay;
-                                    if (service.sale_price) {
-                                        // If sale price exists, show both with strike-through on original price
-                                        priceDisplay =
-                                            `<span class="text-decoration-line-through text-muted">${service.price}</span> <span class=" fw-bold">Transferencia: ${service.sale_price}</span>`;
+
+                                    const hasSale =
+                                        service.sale_price !== null &&
+                                        service.sale_price !== undefined &&
+                                        String(service.sale_price).trim() !== '';
+
+                                    if (hasSale) {
+                                        priceDisplay = `
+                                            <span class="d-inline-flex align-items-center justify-content-center gap-2 flex-wrap">
+                                                <span class="fw-bold">Transferencia:</span>
+                                                <span class="text-decoration-line-through text-muted">${service.price}</span>
+                                                <span class="fw-bold">${service.sale_price}</span>
+                                            </span>
+                                        `;
                                     } else {
-                                        // If no sale price, just show regular price normally
-                                        priceDisplay =
-                                            `<span class="fw-bold">Transferencia: ${service.price}</span>`;
+                                        priceDisplay = `
+                                            <span class="d-inline-flex align-items-center justify-content-center gap-2 flex-wrap">
+                                                <span class="fw-bold">Transferencia:</span>
+                                                <span class="fw-bold">${service.price}</span>
+                                            </span>
+                                        `;
                                     }
 
                                     const serviceCard = `
