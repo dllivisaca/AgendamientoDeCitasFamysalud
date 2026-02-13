@@ -722,6 +722,37 @@ class AppointmentController extends Controller
                 'appointment_end_time' => $request->input('reschedule_end_time'),
             ]);
 
+            // ✅ REGLA: si estamos REAGENDANDO, NO se toca nada más (aunque el front lo mande)
+            $request->request->remove('patient_full_name');
+            $request->request->remove('patient_doc_type');
+            $request->request->remove('patient_doc_number');
+            $request->request->remove('patient_dob');
+            $request->request->remove('patient_email');
+            $request->request->remove('patient_phone');
+            $request->request->remove('patient_address');
+            $request->request->remove('patient_timezone');
+            $request->request->remove('patient_notes');
+
+            $request->request->remove('billing_name');
+            $request->request->remove('billing_doc_type');
+            $request->request->remove('billing_doc_number');
+            $request->request->remove('billing_email');
+            $request->request->remove('billing_phone');
+            $request->request->remove('billing_address');
+
+            $request->request->remove('payment_method');
+            $request->request->remove('payment_status');
+            $request->request->remove('amount');
+            $request->request->remove('amount_paid');
+            $request->request->remove('payment_paid_at');
+            $request->request->remove('client_transaction_id');
+            $request->request->remove('payment_notes');
+
+            $request->request->remove('transfer_bank_origin');
+            $request->request->remove('transfer_payer_name');
+            $request->request->remove('transfer_date');
+            $request->request->remove('transfer_reference');
+
             // ✅ (opcional) auditar el motivo SOLO si hubo reagendamiento real
             if ($request->has('reschedule_reason')) {
                 $request->merge(['audit_reschedule_reason' => $request->input('reschedule_reason')]);
@@ -990,7 +1021,7 @@ class AppointmentController extends Controller
             'patient_timezone',
             'patient_notes',
         ])) {
-            if ($request->has('patient_full_name')) {
+            if ($request->filled('patient_full_name')) {
                 $appointment->patient_full_name = $request->input('patient_full_name');
             }
             if ($request->has('patient_doc_type')) {
