@@ -219,7 +219,7 @@
                                     </label>
                                     <small>&nbsp;&nbsp;Selecciona el área de atención para este servicio</small>
 
-                                    <select id="category" name="category_id" class="select2"
+                                    <select id="category" name="category_id" class="form-control select2"
                                     data-placeholder="Buscar área de atención"
                                     data-allow-clear="true"
                                     style="width: 100%;">
@@ -241,7 +241,7 @@
 
                                 {{-- ✅ Modalidad del servicio --}}
                                 <div class="form-group">
-                                    <label class="mb-1">Modalidad <span class="text-danger">*</span></label>
+                                    <label class="mb-1">Modalidad del servicio <span class="text-danger">*</span></label>
 
                                     @if ($errors->has('modalities'))
                                         <div class="text-danger small mb-2">{{ $errors->first('modalities') }}</div>
@@ -377,6 +377,30 @@
             border-bottom: 1px solid #e9ecef;
             border-top-left-radius: calc(0.3rem - 1px);
             border-top-right-radius: calc(0.3rem - 1px);
+        }
+
+        /* ✅ Fix alineación Select2 (AdminLTE + Select2) */
+        .select2-container--default .select2-selection--single {
+            height: calc(2.25rem + 2px) !important; /* mismo alto que form-control */
+            padding: .375rem .75rem !important;
+            display: flex !important;
+            align-items: center !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: normal !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: calc(2.25rem + 2px) !important;
+            top: 0 !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__clear {
+            margin-top: 0 !important;
+            align-self: center !important;
         }
 
     </style>

@@ -93,7 +93,7 @@ class ServiceController extends Controller
         $data['address_id'] = $isPresential ? ($data['address_id'] ?? null) : null;
 
         Service::create($data);
-        return redirect()->route('service.index')->with('success','Service has been added successfully.');
+        return redirect()->route('service.index')->with('success','El servicio ha sido agregado correctamente.');
     }
 
     /**
