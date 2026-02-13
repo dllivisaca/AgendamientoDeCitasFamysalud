@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Service;
 use Illuminate\Http\Request;
 use App\Models\Category;
+use App\Models\Address;
 
 use Illuminate\Validation\Rule;
 use File;
@@ -31,7 +32,10 @@ class ServiceController extends Controller
     public function create()
     {
         $categories = Category::whereStatus(1)->get();
-        return view('backend.service.create',compact('categories'));
+
+        $addresses = Address::where('status', 1)->get();
+
+        return view('backend.service.create', compact('categories', 'addresses'));
     }
 
     /**
@@ -54,7 +58,24 @@ class ServiceController extends Controller
             'featured'          => 'nullable',
             'status'            => 'nullable',
             'other'             => 'nullable',
+            'is_presential'    => 'nullable',
+            'is_virtual'       => 'nullable',
+            'address_id'       => [
+                Rule::requiredIf(fn() => $request->boolean('is_presential')),
+                'nullable',
+                'integer',
+                Rule::exists('addresses', 'id')->where('status', 1),
+            ],
         ]);
+
+        $isPresential = $request->boolean('is_presential');
+        $isVirtual = $request->boolean('is_virtual');
+
+        if (!$isPresential && !$isVirtual) {
+            return back()
+                ->withErrors(['modalities' => 'Selecciona al menos una modalidad (presencial y/o virtual).'])
+                ->withInput();
+        }
 
         $data['featured'] = $request->featured ?? 0;
         $data['status'] = $request->status ?? 0;
@@ -66,6 +87,10 @@ class ServiceController extends Controller
             $request->image->move(public_path('uploads/images/service/'),$imageName);
             $data['image'] = $imageName;
         }
+
+        $data['is_presential'] = $isPresential;
+        $data['is_virtual'] = $isVirtual;
+        $data['address_id'] = $isPresential ? ($data['address_id'] ?? null) : null;
 
         Service::create($data);
         return redirect()->route('service.index')->with('success','Service has been added successfully.');
@@ -85,7 +110,10 @@ class ServiceController extends Controller
     public function edit(Service $service)
     {
         $categories = Category::whereStatus(1)->get();
-        return view('backend.service.edit',compact('service','categories'));
+
+        $addresses = Address::where('status', 1)->get();
+
+        return view('backend.service.edit', compact('service', 'categories', 'addresses'));
     }
 
     /**
@@ -108,7 +136,24 @@ class ServiceController extends Controller
             'featured'          => 'nullable',
             'status'            => 'nullable',
             'other'             => 'nullable',
+            'is_presential'    => 'nullable',
+            'is_virtual'       => 'nullable',
+            'address_id'       => [
+                Rule::requiredIf(fn() => $request->boolean('is_presential')),
+                'nullable',
+                'integer',
+                Rule::exists('addresses', 'id')->where('status', 1),
+            ],
         ]);
+
+        $isPresential = $request->boolean('is_presential');
+        $isVirtual = $request->boolean('is_virtual');
+
+        if (!$isPresential && !$isVirtual) {
+            return back()
+                ->withErrors(['modalities' => 'Selecciona al menos una modalidad (presencial y/o virtual).'])
+                ->withInput();
+        }
 
         $data['featured'] = $request->featured ?? 0;
         $data['status'] = $request->status ?? 0;
@@ -129,6 +174,10 @@ class ServiceController extends Controller
             $request->image->move(public_path('uploads/images/service/'), $imageName);
             $data['image'] = $imageName;
         }
+
+        $data['is_presential'] = $isPresential;
+        $data['is_virtual'] = $isVirtual;
+        $data['address_id'] = $isPresential ? ($data['address_id'] ?? null) : null;
 
         $service->update($data);
         return redirect()->route('service.index')->withSuccess('Service has been updated successfully.');

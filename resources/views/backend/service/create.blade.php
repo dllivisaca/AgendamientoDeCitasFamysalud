@@ -219,12 +219,14 @@
                                     </label>
                                     <small>&nbsp;&nbsp;Selecciona el área de atención para este servicio</small>
 
-                                    <select id="category" name="category_id" class="select2" multiple=""
-                                    data-placeholder="Buscar área de atención" style="width: 100%;">
-                                    <option value="">Ninguna</option>
+                                    <select id="category" name="category_id" class="select2"
+                                    data-placeholder="Buscar área de atención"
+                                    data-allow-clear="true"
+                                    style="width: 100%;">
+                                    <option value=""></option>
                                     @foreach ($categories as $category)
                                     <option value="{{ $category->id }}"
-                                        {{ in_array($category->id, (array) old('category_id', [])) ? 'selected' : '' }}>
+                                        {{ old('category_id') == $category->id ? 'selected' : '' }}>
                                         {{ $category->title }}
                                     </option>
 
@@ -236,6 +238,63 @@
 
 
                                 </div>
+
+                                {{-- ✅ Modalidad del servicio --}}
+                                <div class="form-group">
+                                    <label class="mb-1">Modalidad <span class="text-danger">*</span></label>
+
+                                    @if ($errors->has('modalities'))
+                                        <div class="text-danger small mb-2">{{ $errors->first('modalities') }}</div>
+                                    @endif
+
+                                    <div class="custom-control custom-checkbox">
+                                        <input
+                                            type="checkbox"
+                                            class="custom-control-input"
+                                            id="is_presential"
+                                            name="is_presential"
+                                            value="1"
+                                            {{ old('is_presential') ? 'checked' : '' }}
+                                        >
+                                        <label class="custom-control-label" for="is_presential">Presencial</label>
+                                    </div>
+
+                                    <div class="custom-control custom-checkbox">
+                                        <input
+                                            type="checkbox"
+                                            class="custom-control-input"
+                                            id="is_virtual"
+                                            name="is_virtual"
+                                            value="1"
+                                            {{ old('is_virtual') ? 'checked' : '' }}
+                                        >
+                                        <label class="custom-control-label" for="is_virtual">Virtual</label>
+                                    </div>
+
+                                    <small class="text-muted d-block mt-1">Puedes seleccionar una o ambas.</small>
+                                </div>
+
+                                {{-- ✅ Dirección (solo si Presencial) --}}
+                                <div class="form-group" id="addressWrap" style="display:none;">
+                                    <label class="mb-1">Dirección <span class="text-danger">*</span></label>
+
+                                    <select name="address_id" id="address_id" class="form-control custom-select">
+                                        <option value="">Selecciona una dirección</option>
+
+                                        @if(isset($addresses))
+                                            @foreach($addresses as $addr)
+                                                <option value="{{ $addr->id }}" {{ old('address_id') == $addr->id ? 'selected' : '' }}>
+                                                    {{ $addr->title ?? $addr->name ?? $addr->address ?? $addr->direccion ?? ('Dirección #' . $addr->id) }}
+                                                </option>
+                                            @endforeach
+                                        @endif
+                                    </select>
+
+                                    @error('address_id')
+                                        <div class="text-danger small mt-1">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
                                 <div class="form-group">
                                     <label for="inputStatus">Estado
                                     </label>
@@ -446,9 +505,36 @@
         // In your Javascript (external .js resource or <script> tag)
         $(document).ready(function() {
             $('#category').select2({
+                placeholder: $('#category').data('placeholder'),
                 allowClear: true,
-                maximumSelectionLength: 1 // Restrict to single selection
+                width: '100%'
             });
+        });
+    </script>
+
+    <script>
+        $(document).ready(function() {
+            const $presential = $('#is_presential');
+            const $wrap = $('#addressWrap');
+            const $select = $('#address_id');
+
+            function syncAddress() {
+                const isOn = $presential.is(':checked');
+
+                if (isOn) {
+                    $wrap.show();
+                    $select.prop('required', true);
+                } else {
+                    $wrap.hide();
+                    $select.prop('required', false);
+                    $select.val('');
+                }
+            }
+
+            $presential.on('change', syncAddress);
+
+            // init (por si vuelve con old())
+            syncAddress();
         });
     </script>
 
