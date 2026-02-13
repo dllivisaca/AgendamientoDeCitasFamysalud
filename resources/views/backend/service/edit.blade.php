@@ -220,12 +220,14 @@
                                     </label>
                                     <small>&nbsp;&nbsp;Selecciona el área de atención para este servicio</small>
 
-                                    <select id="category" name="category_id" class="select2" multiple=""
-                                    data-placeholder="Buscar área de atención" style="width: 100%;">
-                                    <option value="">Ninguna</option>
+                                    <select id="category" name="category_id" class="form-control select2"
+                                        data-placeholder="Buscar área de atención"
+                                        data-allow-clear="true"
+                                        style="width: 100%;">
+                                    <option value=""></option>
                                     @foreach ($categories as $category)
                                         <option value="{{ $category->id }}"
-                                            {{ isset($service->category->id) && $service->category->id == $category->id ? 'selected' : '' }}>
+                                            {{ old('category_id', $service->category_id) == $category->id ? 'selected' : '' }}>
                                             {{ $category->title }}
                                         </option>
                                     @endforeach
@@ -238,6 +240,63 @@
 
 
                                 </div>
+                                {{-- ✅ Modalidad del servicio --}}
+                                <div class="form-group">
+                                    <label class="mb-1">Modalidad del servicio <span class="text-danger">*</span></label>
+
+                                    @if ($errors->has('modalities'))
+                                        <div class="text-danger small mb-2">{{ $errors->first('modalities') }}</div>
+                                    @endif
+
+                                    <div class="custom-control custom-checkbox">
+                                        <input
+                                            type="checkbox"
+                                            class="custom-control-input"
+                                            id="is_presential"
+                                            name="is_presential"
+                                            value="1"
+                                            {{ old('is_presential', (int) $service->is_presential) ? 'checked' : '' }}
+                                        >
+                                        <label class="custom-control-label" for="is_presential">Presencial</label>
+                                    </div>
+
+                                    <div class="custom-control custom-checkbox">
+                                        <input
+                                            type="checkbox"
+                                            class="custom-control-input"
+                                            id="is_virtual"
+                                            name="is_virtual"
+                                            value="1"
+                                            {{ old('is_virtual', (int) $service->is_virtual) ? 'checked' : '' }}
+                                        >
+                                        <label class="custom-control-label" for="is_virtual">Virtual</label>
+                                    </div>
+
+                                    <small class="text-muted d-block mt-1">Puedes seleccionar una o ambas.</small>
+                                </div>
+
+                                {{-- ✅ Dirección (solo si Presencial) --}}
+                                <div class="form-group" id="addressWrap" style="display:none;">
+                                    <label class="mb-1">Dirección <span class="text-danger">*</span></label>
+
+                                    <select name="address_id" id="address_id" class="form-control custom-select">
+                                        <option value="">Selecciona una dirección</option>
+
+                                        @if(isset($addresses))
+                                            @foreach($addresses as $addr)
+                                                <option value="{{ $addr->id }}"
+                                                    {{ old('address_id', $service->address_id) == $addr->id ? 'selected' : '' }}>
+                                                    {{ $addr->title ?? $addr->name ?? $addr->address ?? $addr->direccion ?? ('Dirección #' . $addr->id) }}
+                                                </option>
+                                            @endforeach
+                                        @endif
+                                    </select>
+
+                                    @error('address_id')
+                                        <div class="text-danger small mt-1">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
                                 <div class="form-group">
                                     <label for="inputStatus">Estado</label>
                                     <select required="required" name="status" id="inputStatus" class="form-control custom-select">
@@ -328,6 +387,30 @@
             border-bottom: 1px solid #e9ecef;
             border-top-left-radius: calc(0.3rem - 1px);
             border-top-right-radius: calc(0.3rem - 1px);
+        }
+
+        /* ✅ Fix alineación Select2 (AdminLTE + Select2) */
+        .select2-container--default .select2-selection--single {
+            height: calc(2.25rem + 2px) !important;
+            padding: .375rem .75rem !important;
+            display: flex !important;
+            align-items: center !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: normal !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: calc(2.25rem + 2px) !important;
+            top: 0 !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__clear {
+            margin-top: 0 !important;
+            align-self: center !important;
         }
 
     </style>
@@ -456,9 +539,36 @@
         // In your Javascript (external .js resource or <script> tag)
         $(document).ready(function() {
             $('#category').select2({
+                placeholder: $('#category').data('placeholder'),
                 allowClear: true,
-                maximumSelectionLength: 1 // Restrict to single selection
+                width: '100%'
             });
+        });
+    </script>
+
+    <script>
+        $(document).ready(function() {
+            const $presential = $('#is_presential');
+            const $wrap = $('#addressWrap');
+            const $select = $('#address_id');
+
+            function syncAddress() {
+                const isOn = $presential.is(':checked');
+
+                if (isOn) {
+                    $wrap.show();
+                    $select.prop('required', true);
+                } else {
+                    $wrap.hide();
+                    $select.prop('required', false);
+                    $select.val('');
+                }
+            }
+
+            $presential.on('change', syncAddress);
+
+            // init (para que cargue visible si ya es presencial en BD)
+            syncAddress();
         });
     </script>
 

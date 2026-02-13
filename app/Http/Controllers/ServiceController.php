@@ -180,7 +180,7 @@ class ServiceController extends Controller
         $data['address_id'] = $isPresential ? ($data['address_id'] ?? null) : null;
 
         $service->update($data);
-        return redirect()->route('service.index')->withSuccess('Service has been updated successfully.');
+        return redirect()->route('service.index')->withSuccess('El servicio ha sido actualizado correctamente.');
 
     }
 
