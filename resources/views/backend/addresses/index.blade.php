@@ -17,6 +17,90 @@
     </div>
 @stop
 
+@section('css')
+    <style>
+        .table-scroll-wrap{
+            overflow: visible;
+        }
+
+        @media (max-width: 1200px){
+            .table-scroll-wrap{
+                overflow-x: auto;
+                overflow-y: visible;
+                -webkit-overflow-scrolling: touch;
+                border-radius: .25rem;
+            }
+
+            #myTable{
+                min-width: 900px;
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 740px){
+            .table-scroll-wrap{
+                overflow-x: auto;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                max-height: 70vh;
+                border-radius: .25rem;
+            }
+
+            #myTable{
+                min-width: 800px;
+                width: 100%;
+            }
+
+            #myTable thead th{
+                position: sticky;
+                top: 0;
+                background: #fff;
+                z-index: 2;
+            }
+        }
+    </style>
+@stop
+
+@section('js')
+
+    <script>
+        $(document).ready(function() {
+            $(".alert").delay(6000).slideUp(300);
+        });
+    </script>
+
+    <script>
+        $(document).ready(function() {
+            $('#myTable').DataTable({
+                responsive: false,
+                autoWidth: false,
+                language: {
+                    lengthMenu: "Mostrar _MENU_ registros",
+                    search: "Buscar:",
+                    info: "Mostrando registros _START_–_END_ de _TOTAL_",
+                    infoEmpty: "Mostrando 0 a 0 de 0 registros",
+                    infoFiltered: "(filtrado de _MAX_ registros totales)",
+                    zeroRecords: "No se encontraron resultados",
+                    paginate: {
+                        first: "Primero",
+                        last: "Último",
+                        next: "Siguiente",
+                        previous: "Anterior"
+                    },
+                    processing: "Procesando...",
+                    loadingRecords: "Cargando...",
+                    emptyTable: "No hay datos disponibles en la tabla",
+                    aria: {
+                        sortAscending: ": activar para ordenar la columna de manera ascendente",
+                        sortDescending: ": activar para ordenar la columna de manera descendente"
+                    }
+                }
+            });
+        });
+    </script>
+
+@stop
+
 @section('content')
 <section class="content">
     <div class="container-fluid">
