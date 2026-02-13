@@ -138,7 +138,7 @@
                                 Modalidad de atención:
                             </label>
 
-                            <div class="btn-group w-100" role="group" aria-label="Modalidad">
+                            <div id="modeButtonsWrap" class="btn-group w-100" role="group" aria-label="Modalidad">
                                 <input type="radio" class="btn-check" name="appointment_mode"
                                     id="mode_presencial" value="presencial" checked>
                                 <label class="btn btn-outline-primary" for="mode_presencial">
@@ -151,6 +151,8 @@
                                     <i class="bi bi-camera-video me-1"></i> Virtual
                                 </label>
                             </div>
+
+                            <div id="modeConfigAlert" class="mt-2"></div>
 
                             <!-- <small class="text-muted d-block mt-2">
                                 La modalidad puede influir en la disponibilidad de horarios.
@@ -1722,13 +1724,20 @@
                     const serviceDuration = $(this).find('.card-text:contains("Duration:")').text().replace(
                         'Duration: ', '');
 
+                    const isPresential = Number($(this).attr("data-is-presential") || 0);
+                    const isVirtual = Number($(this).attr("data-is-virtual") || 0);
+
                     // Store the selected service in booking state
                     bookingState.selectedService = {
                         id: serviceId,
                         title: serviceTitle,
                         price: servicePrice,
-                        duration: serviceDuration
+                        duration: serviceDuration,
+                        is_presential: isPresential,
+                        is_virtual: isVirtual,
                     };
+
+                    console.log("SERVICE MODES:", bookingState.selectedService);
 
                     // Reset subsequent selections
                     bookingState.selectedEmployee = null;
@@ -1995,6 +2004,135 @@
                     goToStep(1);
                 });
 
+                function applyServiceModalitiesUI() {
+                    const $wrap = $('#modeButtonsWrap');
+                    const $alert = $('#modeConfigAlert');
+
+                    const $presInput = $('#mode_presencial');
+                    const $virtInput = $('#mode_virtual');
+                    const $presLabel = $('label[for="mode_presencial"]');
+                    const $virtLabel = $('label[for="mode_virtual"]');
+
+                    const $nextBtn = $('#next-step');
+                    const $nextBtnFloating = $('#next-step-floating');
+
+                    // helpers
+                    const disableNext = (disabled) => {
+                        $nextBtn.prop('disabled', disabled);
+                        $nextBtnFloating.prop('disabled', disabled);
+
+                        $nextBtn.toggleClass('disabled', disabled);
+                        $nextBtnFloating.toggleClass('disabled', disabled);
+                    };
+
+                    const normalizeBool = (v) => Number(String(v ?? 0)) === 1;
+
+                    // ✅ Asegurar que selectedService tenga modos (por si state viejo no los trae)
+                    let svc = bookingState.selectedService || null;
+
+                    // Si no hay objeto, intenta reconstruirlo con el cache global
+                    if (!svc && bookingState.selectedServiceId) {
+                        const cached = window.bookingServicesById?.[String(bookingState.selectedServiceId)] || null;
+                        if (cached) svc = cached;
+                    }
+
+                    // Si hay objeto pero no trae flags, intenta completarlo desde cache
+                    if (svc && (typeof svc.is_presential === 'undefined' || typeof svc.is_virtual === 'undefined')) {
+                        const cached = window.bookingServicesById?.[String(svc.id ?? bookingState.selectedServiceId)] || null;
+                        if (cached) {
+                            svc.is_presential = cached.is_presential;
+                            svc.is_virtual = cached.is_virtual;
+                        }
+                    }
+
+                    // Persistimos de vuelta al state para que quede sano
+                    if (svc) {
+                        bookingState.selectedService = svc;
+                        bookingState.selectedServiceId = svc.id ?? bookingState.selectedServiceId;
+                        savePayphoneState();
+                    }
+
+                    const isPresential = normalizeBool(svc?.is_presential);
+                    const isVirtual = normalizeBool(svc?.is_virtual);
+
+                    // Reset UI (para cuando cambias de servicio)
+                    $alert.hide().text('');
+                    disableNext(false);
+
+                    // Mostrar ambos inputs/labels por defecto
+                    $presInput.prop('disabled', false);
+                    $virtInput.prop('disabled', false);
+
+                    $presLabel.removeClass('w-100 disabled d-none');
+                    $virtLabel.removeClass('w-100 disabled d-none');
+
+                    $presInput.removeClass('d-none');
+                    $virtInput.removeClass('d-none');
+
+                    // ✅ CASO D: ninguno configurado
+                    if (!isPresential && !isVirtual) {
+                        $wrap.hide();
+                        $alert
+                            .show()
+                            .text('Este servicio no tiene modalidad configurada. Contáctanos.');
+                        disableNext(true);
+
+                        // Limpiar selección
+                        $presInput.prop('checked', false);
+                        $virtInput.prop('checked', false);
+                        bookingState.appointmentMode = null;
+                        savePayphoneState();
+                        return;
+                    }
+
+                    // ✅ CASO A: ambos permitidos
+                    if (isPresential && isVirtual) {
+                        $wrap.show();
+
+                        // Predeterminado a presencial (como pediste)
+                        $presInput.prop('checked', true);
+                        $virtInput.prop('checked', false);
+
+                        bookingState.appointmentMode = 'presencial';
+                        savePayphoneState();
+                        return;
+                    }
+
+                    // ✅ CASO B: solo presencial (mostrar 1 botón seleccionado y bloqueado)
+                    if (isPresential && !isVirtual) {
+                        $wrap.show();
+
+                        // Oculta virtual
+                        $virtInput.addClass('d-none');
+                        $virtLabel.addClass('d-none');
+
+                        // Presencial ocupa todo y queda bloqueado
+                        $presLabel.addClass('w-100');
+                        $presInput.prop('checked', true).prop('disabled', true);
+
+                        bookingState.appointmentMode = 'presencial';
+                        savePayphoneState();
+                        return;
+                    }
+
+                    // ✅ CASO C: solo virtual (mostrar 1 botón seleccionado y bloqueado)
+                    if (!isPresential && isVirtual) {
+                        $wrap.show();
+
+                        // Oculta presencial
+                        $presInput.addClass('d-none');
+                        $presLabel.addClass('d-none');
+
+                        // Virtual ocupa todo y queda bloqueado
+                        $virtLabel.addClass('w-100');
+                        $virtInput.prop('checked', true).prop('disabled', true);
+
+                        bookingState.appointmentMode = 'virtual';
+                        savePayphoneState();
+                        return;
+                    }
+                }
+
                 // Functions
                 function goToStep(step) {
                     // Hide all steps
@@ -2075,6 +2213,10 @@
 
                     if (stepTitles[step]) {
                         document.title = stepTitles[step];
+                    }
+
+                    if (step === 4) {
+                        applyServiceModalitiesUI();
                     }
 
                     // Mostrar alerta de cita urgente SOLO en el paso 4
@@ -2216,6 +2358,12 @@
                             if (response.success && response.services) {
                                 const services = response.services;
 
+                                // ✅ Cache global de servicios por ID (para restaurar state viejo)
+                                window.bookingServicesById = window.bookingServicesById || {};
+                                services.forEach(s => {
+                                    window.bookingServicesById[String(s.id)] = s;
+                                });
+
                                 // Update category name display
                                 $(".selected-category-name").text(
                                     `Área seleccionada: ${services[0]?.category?.title || ''}`);
@@ -2262,7 +2410,10 @@
 
                                     const serviceCard = `
                                         <div class="col animate-slide-in" style="animation-delay: ${index * 100}ms">
-                                            <div class="card border h-100 service-card text-center p-2" data-service="${service.id}">
+                                            <div class="card border h-100 service-card text-center p-2"
+                                                data-service="${service.id}"
+                                                data-is-presential="${Number(service.is_presential ?? 0)}"
+                                                data-is-virtual="${Number(service.is_virtual ?? 0)}">
                                                 <div class="card-body">
                                                     ${service.image ? `<img class="img-fluid rounded mb-2" src="uploads/images/service/${service.image}">` : ""}
                                                     <h5 class="card-title mb-1">${service.title}</h5>

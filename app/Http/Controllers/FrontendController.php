@@ -48,6 +48,14 @@ class FrontendController extends Controller
             ->with('category')
             ->get()
             ->map(function ($service) use ($setting) {
+
+                // ✅ Asegurar que modalidades viajen en el JSON aunque estén hidden en el Model
+                $service->makeVisible(['is_presential', 'is_virtual']);
+
+                // ✅ Normalizar a int (tinyint)
+                $service->is_presential = (int) ($service->is_presential ?? 0);
+                $service->is_virtual    = (int) ($service->is_virtual ?? 0);
+
                 if (isset($service->price)) {
                     $service->price = Number::currency($service->price, $setting->currency);
                 }
