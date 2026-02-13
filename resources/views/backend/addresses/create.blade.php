@@ -51,20 +51,22 @@
                     @csrf
 
                     <div class="form-group">
-                        <label>Nombre de la sede</label>
+                        <label>Nombre de la sede <span class="text-danger">*</span></label>
                         <input type="text"
                             name="name"
                             class="form-control"
                             placeholder="Ej: Matriz - Centro"
-                            value="{{ old('name') }}">
+                            value="{{ old('name') }}"
+                            required>
                     </div>
 
                     <div class="form-group">
-                        <label>Dirección completa</label>
+                        <label>Dirección completa <span class="text-danger">*</span></label>
                         <textarea name="full_address"
                                 class="form-control"
                                 rows="3"
-                                placeholder="Ej: Av. Principal y Calle 10, Edificio X, Piso 2">{{ old('full_address') }}</textarea>
+                                placeholder="Ej: Av. Principal y Calle 10, Edificio X, Piso 2"
+                                required>{{ old('full_address') }}</textarea>
                     </div>
 
                     <div class="form-group">
