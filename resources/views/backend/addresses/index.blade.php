@@ -124,6 +124,9 @@
                                     <th>#</th>
                                     <th>Nombre de sede</th>
                                     <th>Dirección</th>
+                                    <th>Referencia</th>
+                                    <th>Ciudad</th>
+                                    <th>Google Maps</th>
                                     <th>Estado</th>
                                     <th>Acción</th>
                                 </tr>
@@ -134,6 +137,20 @@
                                         <td>{{ $loop->iteration }}</td>
                                         <td>{{ $address->name ?? '' }}</td>
                                         <td>{{ $address->full_address ?? '' }}</td>
+
+                                        <td>{{ $address->reference ?? '—' }}</td>
+                                        <td>{{ $address->city ?? '—' }}</td>
+
+                                        <td>
+                                            @if (!empty($address->google_maps_url))
+                                                <a href="{{ $address->google_maps_url }}" target="_blank" rel="noopener">
+                                                    Ver mapa
+                                                </a>
+                                            @else
+                                                —
+                                            @endif
+                                        </td>
+
                                         <td>
                                             @if ($address->status)
                                                 <span class="badge badge-success">Activa</span>
@@ -141,16 +158,32 @@
                                                 <span class="badge badge-danger">Inactiva</span>
                                             @endif
                                         </td>
-                                        <td>
-                                            <a class="btn btn-info btn-sm">
-                                                <i class="fas fa-pencil-alt"></i>
-                                                Editar
-                                            </a>
+
+                                        <td class="project-actions text-center align-middle">
+                                            <div class="d-flex justify-content-center align-items-center gap-3">
+                                                <a class="btn btn-info btn-sm mr-2"
+                                                href="{{ route('addresses.edit', $address->id) }}">
+                                                    <i class="fas fa-pencil-alt"></i>
+                                                    Editar
+                                                </a>
+
+                                                <form action="{{ route('addresses.destroy', $address->id) }}" method="POST" class="mb-0">
+                                                    @csrf
+                                                    @method('delete')
+                                                    <button
+                                                        onclick="return confirm('¿Estás seguro de eliminar esta dirección?');"
+                                                        type="submit"
+                                                        class="btn btn-danger btn-sm">
+                                                        <i class="fas fa-trash"></i>
+                                                        Borrar
+                                                    </button>
+                                                </form>
+                                            </div>
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="text-center">
+                                        <td colspan="8" class="text-center">
                                             No hay direcciones registradas
                                         </td>
                                     </tr>

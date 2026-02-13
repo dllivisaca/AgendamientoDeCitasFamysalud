@@ -152,6 +152,18 @@ Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard
         Route::post('/', [AddressController::class, 'store'])
             ->name('store');
 
+        // ✅ Editar
+        Route::get('/{address}/edit', [AddressController::class, 'edit'])
+            ->name('edit');
+
+        // ✅ Actualizar
+        Route::put('/{address}', [AddressController::class, 'update'])
+            ->name('update');
+
+        // ✅ Eliminar
+        Route::delete('/{address}', [AddressController::class, 'destroy'])
+            ->name('destroy');
+
     });
 
     //summernote image
