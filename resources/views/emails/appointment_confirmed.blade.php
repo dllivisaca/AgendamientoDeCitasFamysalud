@@ -16,6 +16,14 @@ use Carbon\Carbon;
   $mode = (string) ($data['mode'] ?? '');
   $modeNorm = trim(mb_strtolower($mode));
   $isVirtual = ($modeNorm === 'virtual'); // 'virtual' | 'presencial'
+  $isPresencial = ($modeNorm === 'presencial');
+
+  $addrFull = trim((string) ($data['address_full'] ?? ''));
+  $addrRef  = trim((string) ($data['address_reference'] ?? ''));
+  $addrCity = trim((string) ($data['address_city'] ?? ''));
+  $addrMaps = trim((string) ($data['address_google_maps_url'] ?? ''));
+
+  $hasLocationInfo = ($addrFull !== '' || $addrCity !== '' || $addrRef !== '' || $addrMaps !== '');
 
   $area = $data['area'] ?? '—';
   $service = $data['service'] ?? '—';
@@ -152,7 +160,42 @@ use Carbon\Carbon;
                     Te lo enviaremos por <strong>WhatsApp</strong> o por <strong>correo</strong>, según los datos registrados.
                     </div>
                 </div>
-                @endif
+              @endif
+
+              @if($isPresencial && $hasLocationInfo)
+                <div style="margin-top:14px;padding:12px 14px;border:1px solid #0ea5e9;background:#ecfeff;border-radius:12px;">
+                    <div style="font-size:14px;line-height:20px;color:#0c4a6e;font-weight:700;">
+                      Ubicación de tu cita presencial 📍
+                    </div>
+
+                    @if($addrFull !== '')
+                      <div style="margin-top:8px;font-size:13px;line-height:19px;color:#0c4a6e;">
+                        <strong>Dirección:</strong> {{ $addrFull }}
+                      </div>
+                    @endif
+
+                    @if($addrRef !== '')
+                      <div style="margin-top:6px;font-size:13px;line-height:19px;color:#0c4a6e;">
+                        <strong>Referencia:</strong> {{ $addrRef }}
+                      </div>
+                    @endif
+
+                    @if($addrCity !== '')
+                      <div style="margin-top:6px;font-size:13px;line-height:19px;color:#0c4a6e;">
+                        <strong>Ciudad:</strong> {{ $addrCity }}
+                      </div>
+                    @endif
+
+                    @if($addrMaps !== '')
+                      <div style="margin-top:10px;font-size:13px;line-height:19px;">
+                        <a href="{{ $addrMaps }}" target="_blank"
+                          style="display:inline-block;background:#0ea5e9;color:#ffffff;text-decoration:none;padding:10px 12px;border-radius:10px;font-weight:700;">
+                          Ver en Google Maps
+                        </a>
+                      </div>
+                    @endif
+                </div>
+              @endif
 
               <div style="margin-top:18px;font-size:14px;line-height:20px;color:#111827;">
                 Gracias por confiar en nosotros 💙

@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\DB;
 use App\Mail\AppointmentRegisteredMail;
 use App\Mail\AppointmentConfirmedMail;
 use App\Mail\AppointmentCancelledMail;
@@ -1547,6 +1548,31 @@ class AppointmentController extends Controller
                     $serviceTitle  = $appointment->service->title ?? null;
                     $categoryTitle = $appointment->service->category->title ?? null;
 
+                    // ✅ Dirección (solo para presencial)
+                    $addrFull = null;
+                    $addrRef  = null;
+                    $addrCity = null;
+                    $addrMaps = null;
+
+                    try {
+                        if (($appointment->appointment_mode ?? null) === 'presencial') {
+                            $serviceAddressId = $appointment->service->address_id ?? null;
+
+                            if (!empty($serviceAddressId)) {
+                                $addrRow = DB::table('adresses')->where('id', $serviceAddressId)->first();
+
+                                if ($addrRow) {
+                                    $addrFull = $addrRow->full_address ?? null;
+                                    $addrRef  = $addrRow->reference ?? null;
+                                    $addrCity = $addrRow->city ?? null;
+                                    $addrMaps = $addrRow->google_maps_url ?? null;
+                                }
+                            }
+                        }
+                    } catch (\Throwable $e) {
+                        // no tumbamos el proceso si algo falla
+                    }
+
                     $mailData = [
                         'date' => $dateStr,
                         'time' => $timeShort,
@@ -1559,6 +1585,11 @@ class AppointmentController extends Controller
 
                         'service' => $serviceTitle,
                         'area' => $categoryTitle,
+
+                        'address_full' => $addrFull,
+                        'address_reference' => $addrRef,
+                        'address_city' => $addrCity,
+                        'address_google_maps_url' => $addrMaps,
                     ];
 
                     // ✅ NUEVO: correo de confirmación (mismo formato/lógica que registro)
