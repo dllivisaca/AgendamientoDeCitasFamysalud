@@ -13,7 +13,6 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\DB;
 use App\Mail\AppointmentRegisteredMail;
 use App\Mail\AppointmentConfirmedMail;
 use App\Mail\AppointmentCancelledMail;
