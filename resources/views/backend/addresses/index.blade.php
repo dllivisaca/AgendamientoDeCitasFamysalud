@@ -20,6 +20,14 @@
 @section('content')
 <section class="content">
     <div class="container-fluid">
+        @if (session('success'))
+            <div class="alert alert-success alert-dismissable mt-2">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <strong>{{ session('success') }}</strong>
+            </div>
+        @endif
 
         <div class="row">
             <div class="col-md-12">
@@ -43,7 +51,11 @@
                                         <td>{{ $address->name ?? '' }}</td>
                                         <td>{{ $address->full_address ?? '' }}</td>
                                         <td>
-                                            <span class="badge badge-success">Activa</span>
+                                            @if ($address->status)
+                                                <span class="badge badge-success">Activa</span>
+                                            @else
+                                                <span class="badge badge-danger">Inactiva</span>
+                                            @endif
                                         </td>
                                         <td>
                                             <a class="btn btn-info btn-sm">

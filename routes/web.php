@@ -149,6 +149,9 @@ Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard
         Route::get('/create', [AddressController::class, 'create'])
             ->name('create');
 
+        Route::post('/', [AddressController::class, 'store'])
+            ->name('store');
+
     });
 
     //summernote image
