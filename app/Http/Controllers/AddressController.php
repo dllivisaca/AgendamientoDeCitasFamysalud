@@ -24,11 +24,12 @@ class AddressController extends Controller
             'full_address'    => ['required', 'string'],
             'google_maps_url' => ['nullable', 'string', 'max:2000'],
             'reference'       => ['nullable', 'string', 'max:255'],
-            'city'            => ['nullable', 'string', 'max:150'],
+            'city'            => ['required', 'string', 'max:150'],
             'status'          => ['nullable', 'in:0,1'],
         ], [
             'name.required'         => 'Por favor ingresa el nombre de la sede.',
             'full_address.required' => 'Por favor ingresa la dirección completa.',
+            'city.required' => 'Por favor ingresa la ciudad.',
         ]);
 
         $data['status'] = $data['status'] ?? 1;
