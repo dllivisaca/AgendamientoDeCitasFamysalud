@@ -52,7 +52,7 @@ class SettingController extends Controller
         }
 
         $setting->update($data);
-        return redirect()->route('setting')->with('success', 'Settings Updated Successfully!');
+        return redirect()->route('setting')->with('success', 'Configuración actualizada correctamente');
     }
 
 

@@ -1,18 +1,18 @@
 @extends('adminlte::page')
 
-@section('title', 'Settings')
+@section('title', 'Configuración · FamySalud')
 
 @section('content_header')
 
     <div class="container-fluid">
         <div class="row mb-2">
             <div class="col-sm-6">
-                <h1 class="m-0">Dashboard</h1>
+                <h1 class="m-0">Panel</h1>
             </div>
             <div class="col-sm-6">
                 <ol class="breadcrumb float-sm-right">
-                    <li class="breadcrumb-item"><a href="#">Home</a></li>
-                    <li class="breadcrumb-item active">Settings</li>
+                    <li class="breadcrumb-item"><a href="#">Inicio</a></li>
+                    <li class="breadcrumb-item active">Configuración</li>
                 </ol>
             </div>
         </div>
@@ -69,7 +69,7 @@
                         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
-                        <strong>Whoops!</strong> There were some problems with your input.<br>
+                        <strong>Ups!</strong> Hubo errores en tu solicitud.<br>
                         <ul>
                             @foreach ($errors->all() as $error)
                                 <li>{{ $error }}</li>
@@ -83,12 +83,11 @@
 
                         <div class="card-header p-2">
                             <ul class="nav nav-pills">
-                                <li class="nav-item"><a class="nav-link active" href="#business" data-toggle="tab">Business
-                                        Information</a></li>
-                                <li class="nav-item"><a class="nav-link" href="#social" data-toggle="tab">Social Media</a>
+                                <li class="nav-item"><a class="nav-link active" href="#business" data-toggle="tab">Información del negocio</a></li>
+                                <li class="nav-item"><a class="nav-link" href="#social" data-toggle="tab">Redes sociales</a>
                                 </li>
-                                <li class="nav-item"><a class="nav-link" href="#header" data-toggle="tab">Header</a></li>
-                                <li class="nav-item"><a class="nav-link" href="#footer" data-toggle="tab">Footer</a></li>
+                                <li class="nav-item"><a class="nav-link" href="#header" data-toggle="tab">Encabezado</a></li>
+                                <li class="nav-item"><a class="nav-link" href="#footer" data-toggle="tab">Pie de página</a></li>
                                 {{-- <li class="nav-item"><a class="nav-link" href="#smtp" data-toggle="tab">SMTP</a>
                                 </li> --}}
                                 <li class="nav-item"><a class="nav-link" href="#seo" data-toggle="tab">SEO</a></li>
@@ -104,10 +103,10 @@
                                 <div class="active tab-pane" id="business">
                                     <input type="hidden" class="form-control" name="id" id="inputName" value="">
                                     <div class="form-group row">
-                                        <label for="inputName" class="col-sm-2 col-form-label">Business Name</label>
+                                        <label for="inputName" class="col-sm-2 col-form-label">Nombre del negocio</label>
                                         <div class="col-sm-10">
                                             <input type="text" class="form-control @error('bname') is-invalid @enderror"
-                                                name="bname" id="inputName" placeholder="Business Name"
+                                                name="bname" id="inputName" placeholder="Nombre del negocio"
                                                 value="{{ $setting->bname }}">
                                             @error('bname')
                                                 <span class="text-danger">{{ $message }}</span>
@@ -115,66 +114,63 @@
                                         </div>
                                     </div>
                                     <div class="form-group row">
-                                        <label for="inputEmail" class="col-sm-2 col-form-label">Email</label>
+                                        <label for="inputEmail" class="col-sm-2 col-form-label">Correo</label>
                                         <div class="col-sm-10">
                                             <input type="email"
                                                 class="form-control @error('email') is-invalid @enderror" name="email"
-                                                id="inputEmail" placeholder="Email" value="{{ $setting->email }}">
+                                                id="inputEmail" placeholder="Correo" value="{{ $setting->email }}">
                                             @error('email')
                                                 <span class="text-danger">{{ $message }}</span>
                                             @enderror
                                         </div>
                                     </div>
                                     <div class="form-group row">
-                                        <label for="inputEmail" class="col-sm-2 col-form-label">Currency</label>
+                                        <label for="inputEmail" class="col-sm-2 col-form-label">Moneda</label>
                                         <div class="col-sm-10">
                                             <input type="text"
                                                 class="form-control @error('currency') is-invalid @enderror" name="currency"
                                                 id="inputEmail" placeholder="USD" value="{{ $setting->currency }}">
-                                                <small class="text-muted">Example: USD (use only abbreviation) </small>
+                                                <small class="text-muted">Ejemplo: USD (usa solo la abreviatura) </small>
                                             @error('currency')
                                                 <span class="text-danger">{{ $message }}</span>
                                             @enderror
                                         </div>
                                     </div>
                                     <div class="form-group row">
-                                        <label for="inputName2" class="col-sm-2 col-form-label">Phone</label>
+                                        <label for="inputName2" class="col-sm-2 col-form-label">Teléfono</label>
                                         <div class="col-sm-10">
                                             <input type="text" class="form-control" id="inputName2" name="phone"
-                                                placeholder="Contact Number" value="{{ $setting->phone }}">
+                                                placeholder="Número de contacto" value="{{ $setting->phone }}">
                                         </div>
                                     </div>
                                     <div class="form-group row">
                                         <label for="inputName2" class="col-sm-2 col-form-label">WhatsApp</label>
                                         <div class="col-sm-10">
                                             <input type="text" class="form-control" id="inputName2" name="whatsapp"
-                                                placeholder="WhatsApp Number" value="{{ $setting->whatsapp }}">
-                                            <small>Put whatsapp number with country code without space, Ex:
-                                                919865322154</small>
+                                                placeholder="Número de WhatsApp" value="{{ $setting->whatsapp }}">
+                                            <small>Ingresa el número con código de país y sin espacios. Ej: 593999999999</small>
                                         </div>
                                     </div>
                                     <div class="form-group row">
-                                        <label for="inputName2" class="col-sm-2 col-form-label">Website
-                                            Logo</label>
+                                        <label for="inputName2" class="col-sm-2 col-form-label">Logo del sitio</label>
                                         <div class="col-sm-10">
                                             <input type="file" class="form-control" id="inputName2"
                                                 placeholder="Profiel Picture" name="logo">
                                         </div>
                                     </div>
                                     <div class="form-group row">
-                                        <label for="inputName2" class="col-sm-2 col-form-label">Address</label>
+                                        <label for="inputName2" class="col-sm-2 col-form-label">Dirección</label>
                                         <div class="col-sm-10">
                                             <input type="text" class="form-control" id="inputName2"
-                                                placeholder="Address" value="{{ $setting->address }}" name="address">
-                                            <small>Adress will be visible on contact page</small>
+                                                placeholder="Dirección" value="{{ $setting->address }}" name="address">
+                                            <small>La dirección se mostrará en la página de contacto</small>
                                         </div>
                                     </div>
                                     <div class="form-group row">
                                         <label for="inputName" class="col-sm-2 col-form-label">Google
                                             Map</label>
                                         <div class="col-sm-10">
-                                            <small>Put google map iframe code, keep in mind website contact page map
-                                                section height and width;</small>
+                                            <small>Pega aquí el iframe de Google Maps. Ten en cuenta el alto y ancho del mapa en la página de contacto.</small>
                                             <textarea name="map" id="" class="form-control" cols="30" rows="8">{{ $setting->map }}</textarea>
                                         </div>
                                     </div>
@@ -199,26 +195,26 @@
                                         </div>
                                     </div>
                                     <div class="form-group row">
-                                        <label for="inputName2" class="col-sm-2 col-form-label">Twitter</label>
+                                        <label for="inputName2" class="col-sm-2 col-form-label">X</label>
                                         <div class="col-sm-10">
                                             <input type="text" class="form-control" id="inputName2"
-                                                placeholder="twitter" value="{{ $setting->social['twitter'] ?? '' }}"
+                                                placeholder="X" value="{{ $setting->social['twitter'] ?? '' }}"
                                                 name="social[twitter]">
                                         </div>
                                     </div>
                                     <div class="form-group row">
-                                        <label for="inputName2" class="col-sm-2 col-form-label">Linkedin</label>
+                                        <label for="inputName2" class="col-sm-2 col-form-label">LinkedIn</label>
                                         <div class="col-sm-10">
                                             <input type="text" class="form-control" id="inputName2"
-                                                placeholder="linkedin" value="{{ $setting->social['linkedin'] ?? '' }}"
+                                                placeholder="LinkedIn" value="{{ $setting->social['linkedin'] ?? '' }}"
                                                 name="social[linkedin]">
                                         </div>
                                     </div>
                                     <div class="form-group row">
-                                        <label for="inputName2" class="col-sm-2 col-form-label">Youtube</label>
+                                        <label for="inputName2" class="col-sm-2 col-form-label">YouTube</label>
                                         <div class="col-sm-10">
                                             <input type="text" class="form-control" id="inputName2"
-                                                placeholder="Youtube" value="{{ $setting->social['youtube'] ?? '' }}"
+                                                placeholder="YouTube" value="{{ $setting->social['youtube'] ?? '' }}"
                                                 name="social[youtube]">
                                         </div>
                                     </div>
@@ -227,9 +223,9 @@
                                 <!-- google analytics -->
                                 <div class="tab-pane" id="header">
                                     <div class="form-group row">
-                                        <label for="inputName" class="col-sm-2 col-form-label">Header</label>
+                                        <label for="inputName" class="col-sm-2 col-form-label">Encabezado</label>
                                         <div class="col-sm-10">
-                                            <small>Website Head: Put Google analytics script here or custom css here</small>
+                                            <small>Head del sitio: pega aquí Google Analytics o CSS personalizado</small>
                                             <textarea name="header" id="" class="form-control" cols="30" rows="20">{{ $setting->header }}</textarea>
                                         </div>
                                     </div>
@@ -237,9 +233,9 @@
 
                                 <div class="tab-pane" id="footer">
                                     <div class="form-group row">
-                                        <label for="inputName" class="col-sm-2 col-form-label">Footer</label>
+                                        <label for="inputName" class="col-sm-2 col-form-label">Pie de página</label>
                                         <div class="col-sm-10">
-                                            <small>Website Footer: Add any custom js or any logic</small>
+                                            <small>Footer del sitio: agrega aquí JavaScript personalizado o lógica adicional</small>
                                             <textarea name="footer" id="" class="form-control" cols="30" rows="20">{{ $setting->footer }}</textarea>
                                         </div>
                                     </div>
@@ -364,9 +360,9 @@
                                 <!-- google map -->
                                 <div class="tab-pane" id="smtp">
                                     <h3 class="mb-1">SMTP</h3>
-                                    <small>This email shall send notification emails</small>
+                                    <small>Este correo se usará para enviar notificaciones</small>
                                     <div class="form-group row pt-3">
-                                        <label for="inputName2" class="col-sm-2 col-form-label">Mail Host</label>
+                                        <label for="inputName2" class="col-sm-2 col-form-label">Servidor de correo</label>
                                         <div class="col-sm-8">
                                             <input type="hidden" name="smtp[host]" value="">
                                             <input type="text" class="form-control" id="inputName2" name="smtp[host]"
@@ -374,7 +370,7 @@
                                         </div>
                                     </div>
                                     <div class="form-group row pt-3">
-                                        <label for="inputName2" class="col-sm-2 col-form-label">Mail Host</label>
+                                        <label for="inputName2" class="col-sm-2 col-form-label">Servidor de correo</label>
                                         <div class="col-sm-8">
                                             <input type="hidden" name="smtp[port]" value="">
                                             <input type="text" class="form-control" id="inputName2" name="smtp[port]"
@@ -382,7 +378,7 @@
                                         </div>
                                     </div>
                                     <div class="form-group row pt-3">
-                                        <label for="inputName2" class="col-sm-2 col-form-label">Mail Encryption</label>
+                                        <label for="inputName2" class="col-sm-2 col-form-label">Encriptación</label>
                                         <div class="col-sm-8">
                                             <input type="hidden" name="smtp[encryption]" value="">
                                             <input type="text" class="form-control" id="inputName2"
@@ -391,20 +387,20 @@
                                         </div>
                                     </div>
                                     <div class="form-group row pt-3">
-                                        <label for="inputName2" class="col-sm-2 col-form-label">User name</label>
+                                        <label for="inputName2" class="col-sm-2 col-form-label">Usuario</label>
                                         <div class="col-sm-8">
                                             <input type="hidden" name="smtp[user_name]" value="">
                                             <input type="text" class="form-control" id="inputName2"
-                                                name="smtp[user_name]" placeholder="youremail@gmail.com"
+                                                name="smtp[user_name]" placeholder="tuemail@gmail.com"
                                                 value="{{ $setting->smtp['user_name'] ?? '' }}">
                                         </div>
                                     </div>
                                     <div class="form-group row pt-3">
-                                        <label for="inputName2" class="col-sm-2 col-form-label">Password</label>
+                                        <label for="inputName2" class="col-sm-2 col-form-label">Contraseña</label>
                                         <div class="col-sm-8">
                                             <input type="hidden" name="smtp[password]" value="">
                                             <input type="text" class="form-control" id="inputName2"
-                                                name="smtp[password]" placeholder="password"
+                                                name="smtp[password]" placeholder="contraseña"
                                                 value="{{ $setting->smtp['password'] ?? '' }}">
                                         </div>
                                     </div>
@@ -413,30 +409,28 @@
 
                                 <div class="tab-pane" id="seo">
                                     <div class="form-group row">
-                                        <label for="inputName2" class="col-sm-2 col-form-label">Website
-                                            Title</label>
+                                        <label for="inputName2" class="col-sm-2 col-form-label">Título del sitio</label>
                                         <div class="col-sm-10">
                                             <input type="text" class="form-control" id="inputName2" name="meta_title"
-                                                placeholder="Site SEO Title" value="{{ $setting->meta_title }}">
-                                            <small>Site title for google</small>
+                                                placeholder="Título SEO del sitio" value="{{ $setting->meta_title }}">
+                                            <small>Título que verá Google</small>
                                         </div>
                                     </div>
                                     <div class="form-group row">
-                                        <label for="inputName2" class="col-sm-2 col-form-label">Keywords</label>
+                                        <label for="inputName2" class="col-sm-2 col-form-label">Palabras clave</label>
                                         <div class="col-sm-10">
 
-                                            <textarea name="meta_keywords" id="" placeholder="Keyword1, keyword2, keyword3" class="form-control"
+                                            <textarea name="meta_keywords" id="" placeholder="palabra1, palabra2, palabra3" class="form-control"
                                                 cols="30" rows="2">{{ $setting->meta_keywords }}</textarea>
-                                            <small>Put SEO keywords for your site</small>
+                                            <small>Agrega palabras clave SEO para tu sitio</small>
                                         </div>
                                     </div>
                                     <div class="form-group row">
-                                        <label for="inputName2" class="col-sm-2 col-form-label">Site
-                                            Description</label>
+                                        <label for="inputName2" class="col-sm-2 col-form-label">Descripción del sitio</label>
                                         <div class="col-sm-10">
-                                            <textarea name="meta_description" id="" placeholder="Website description..." class="form-control"
+                                            <textarea name="meta_description" id="" placeholder="Descripción del sitio..." class="form-control"
                                                 cols="30" rows="3">{{ $setting->meta_description }}</textarea>
-                                            <small>SEO description here</small>
+                                            <small>Descripción SEO aquí</small>
                                         </div>
                                     </div>
                                 </div>
@@ -543,8 +537,8 @@
                         <!-- /.tab-content -->
                         <div class="form-group row">
                             <div class="offset-sm-2 col-sm-10">
-                                <button onclick="return confirm('Are you sure you want to update settings?');"
-                                    type="submit" class="btn btn-danger text-left">Update</button>
+                                <button onclick="return confirm('¿Seguro que deseas actualizar la configuración?');"
+                                    type="submit" class="btn btn-danger text-left">Guardar</button>
                             </div>
                         </div>
                     </form>
