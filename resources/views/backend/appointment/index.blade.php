@@ -795,7 +795,7 @@
                 </div>
             </div>
         </div>
-
+    </form>
     <!-- ✅ Modal: Motivo del cambio -->
     <div class="modal fade" id="changeReasonModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-change-reason">
