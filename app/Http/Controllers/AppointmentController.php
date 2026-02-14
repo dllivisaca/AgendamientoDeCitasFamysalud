@@ -567,6 +567,12 @@ class AppointmentController extends Controller
 
     public function updateStatus(Request $request)
     {
+        logger()->info('UPDATE STATUS ROUTE MATCH', [
+            'route' => optional($request->route())->uri(),
+            'name'  => optional($request->route())->getName(),
+            'all'   => $request->all(),
+        ]);
+
         logger()->info('UPDATE STATUS HIT', [
             'user_id' => auth()->id(),
             'payload' => request()->all(),
