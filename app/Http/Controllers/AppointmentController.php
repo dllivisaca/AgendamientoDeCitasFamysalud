@@ -1850,10 +1850,32 @@ class AppointmentController extends Controller
 
             // Armar formato simple: { field: {before, after} }
             $changes = [];
+
+            $labelRescheduleReason = function ($val) {
+                $v = strtolower(trim((string) ($val ?? '')));
+                if ($v === '') return null;
+
+                if ($v === 'admin' || $v === 'admin_requested') return 'Solicitado por el administrador';
+                if ($v === 'patient_requested') return 'Solicitado por el paciente';
+                if ($v === 'doctor_requested') return 'Solicitado por el doctor';
+                if ($v === 'other') return 'Otro';
+
+                return $val;
+            };
+
             foreach ($changedFields as $field) {
+
+                $beforeVal = $old[$field] ?? null;
+                $afterVal  = $new[$field] ?? null;
+
+                if ($field === 'audit_reschedule_reason') {
+                    $beforeVal = $labelRescheduleReason($beforeVal);
+                    $afterVal  = $labelRescheduleReason($afterVal);
+                }
+
                 $changes[$field] = [
-                    'before' => $old[$field] ?? null,
-                    'after'  => $new[$field] ?? null,
+                    'before' => $beforeVal,
+                    'after'  => $afterVal,
                 ];
             }
 
