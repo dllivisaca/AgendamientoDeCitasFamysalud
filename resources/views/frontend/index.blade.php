@@ -24,6 +24,41 @@
         <link rel="preconnect" href="https://cdn.jsdelivr.net">
         <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
         <link rel="preload" as="script" href="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/utils.js">
+
+        <style>
+            /* ✅ Tema verde pastel para el wizard (header + 6 pasos) */
+            .booking-container .booking-header{
+                background: #BFEBC6 !important; /* verde pastel */
+                color: #0F3D22 !important;      /* texto oscuro para contraste */
+            }
+            .booking-container .booking-header h2,
+            .booking-container .booking-header p{
+                color: #0F3D22 !important;
+            }
+
+            /* ✅ Círculo del paso activo */
+            .booking-container .booking-steps .step.active .step-number{
+                background: #79C58A !important; /* verde más marcado */
+                color: #0F3D22 !important;
+                border-color: #79C58A !important;
+            }
+
+            /* ✅ Título del paso activo */
+            .booking-container .booking-steps .step.active .step-title{
+                color: #2F7D4A !important;
+                font-weight: 700;
+            }
+
+            /* ✅ Barra de progreso */
+            .booking-container .booking-steps .progress-bar-steps .progress{
+                background: #79C58A !important;
+            }
+
+            /* (Opcional) bordes suaves en pasos inactivos */
+            .booking-container .booking-steps .step .step-number{
+                border-color: #CFEFD6 !important;
+            }
+        </style>
     </head> 
 
     <body>
