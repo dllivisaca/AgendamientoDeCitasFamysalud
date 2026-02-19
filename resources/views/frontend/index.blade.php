@@ -100,8 +100,8 @@
         <div class="container">
             <div class="booking-container">
                 <div class="booking-header">
-                    <h2><i class="bi bi-calendar-check"></i> Agendamiento de citas</h2>
-                    <p class="mb-0">Complete el proceso en pocos pasos</p>
+                    <h2><i class="bi bi-calendar-check"></i> Agenda tu cita</h2>
+                    <!-- <p class="mb-0">Complete el proceso en pocos pasos</p> -->
                 </div>
 
                 <div class="booking-steps position-relative">
@@ -115,7 +115,7 @@
                     </div>
                     <div class="step" data-step="3">
                         <div class="step-number">3</div>
-                        <div class="step-title">Profesional</div>
+                        <div class="step-title">Profesional de salud</div>
                     </div>
                     <div class="step" data-step="4">
                         <div class="step-number">4</div>
@@ -155,7 +155,7 @@
 
                     <!-- Step 3: Employee Selection -->
                     <div class="booking-step" id="step3">
-                        <h3 class="mb-4">Seleccione el profesional</h3>
+                        <h3 class="mb-4">Seleccione el profesional de salud</h3>
                         <div class="selected-service-name mb-3 fw-bold"></div>
                         <div class="row row-cols-1 row-cols-md-3 g-4" id="employees-container">
                             <!-- Employees will be loaded dynamically based on service -->
@@ -479,7 +479,7 @@
                                     </div>
                                     <div class="summary-item">
                                         <div class="row">
-                                            <div class="col-md-4 text-muted">Profesional:</div>
+                                            <div class="col-md-4 text-muted">Profesional de salud:</div>
                                             <div class="col-md-8" id="summary-employee"></div>
                                         </div>
                                     </div>
@@ -543,7 +543,7 @@
 
                             <div class="summary-item">
                                 <div class="row">
-                                    <div class="col-md-4 text-muted">Profesional:</div>
+                                    <div class="col-md-4 text-muted">Profesional de salud:</div>
                                     <div class="col-md-8" id="pay-summary-employee"></div>
                                 </div>
                             </div>
@@ -652,7 +652,7 @@
                             </div>
 
                             <small class="text-muted d-block mt-2">
-                                Al continuar con el proceso, usted acepta que los pagos no son reembolsables. Las citas pueden ser reagendadas según disponibilidad.
+                                Al continuar con el proceso, usted acepta que los pagos no son reembolsables. Las citas podrán ser reagendadas según disponibilidad, siempre que se notifique con un mínimo de 4 horas de anticipación al turno agendado.
                             </small>
                         </div>
 
@@ -663,11 +663,13 @@
 
                             <!-- Datos bancarios (pon aquí los reales) -->
                             <div class="alert alert-info">
-                                <div><strong>Banco:</strong> TU BANCO</div>
-                                <div><strong>Tipo de cuenta:</strong> Ahorros / Corriente</div>
-                                <div><strong>Número de cuenta:</strong> 0000000000</div>
-                                <div><strong>Titular:</strong> Centro Médico FamySALUD</div>
-                                <div><strong>Identificación:</strong> 0000000000</div>
+                                <div><strong>Banco:</strong>BANCO GUAYAQUIL</div>
+                                <div><strong>Tipo de cuenta:</strong> Corriente</div>
+                                <div><strong>Número de cuenta:</strong> 0017358871</div>
+                                <div><strong>Razón social:</strong> SELSYS S.A.</div>
+                                <div><strong>RUC:</strong> 0992756608001</div>
+                                <div><strong>Correo:</strong> centromedicofamysalud@gmail.com</div>
+                                <div><strong>Teléfono:</strong> 0939034743</div>
                             </div>
 
                             <div class="row g-3">
@@ -777,8 +779,7 @@
 
                                 <!-- 👇 AGREGA ESTE BLOQUE JUSTO AQUÍ -->
                                 <div class="small text-muted mt-3 text-center" id="no-refund-note">
-                                    Al continuar con el proceso, usted acepta que los pagos no son reembolsables.
-                                    Las citas pueden ser reagendadas según disponibilidad.
+                                    Al continuar con el proceso, usted acepta que los pagos no son reembolsables. Las citas podrán ser reagendadas según disponibilidad, siempre que se notifique con un mínimo de 4 horas de anticipación al turno agendado.
                                 </div>                            
                         </div>
                 </div>
@@ -821,7 +822,7 @@
                     </div>
                     <div class="modal-body text-center p-4">
                         <i class="bi bi-check-circle text-success" style="font-size: 4rem;"></i>
-                        <h4 class="mt-3">¡Gracias por preferirnos!</h4>
+                        <h4 class="mt-3">¡Gracias por preferir a FamySALUD!</h4>
                         <p>Su cita se registró correctamente.</p>
                         <div class="alert alert-info mt-3">
                             <p class="mb-0">Le enviamos un correo electrónico con el resumen de su cita</p>
@@ -844,7 +845,7 @@
             const stepTitles = {
                 1: "Área de atención · FamySalud",
                 2: "Servicio · FamySalud",
-                3: "Profesional · FamySalud",
+                3: "Profesional de salud · FamySalud",
                 4: "Modalidad, fecha y hora · FamySalud",
                 5: "Datos del paciente · FamySalud",
                 6: "Pago · FamySalud"
@@ -2334,7 +2335,7 @@
                             return true;
                         case 3:
                             if (!bookingState.selectedEmployee) {
-                                alert("Por favor seleccione a un profesional");
+                                alert("Por favor seleccione a un profesional de salud");
                                 return false;
                             }
                             return true;
@@ -2418,7 +2419,7 @@
                                                 style="border-left: 5px solid #0d6efd; background:#EAF3FF;">
                                                 <div style="font-size: 18px; line-height: 1;">ℹ️</div>
                                                 <div>
-                                                    <div class="fw-bold mb-1">Información importante</div>
+                                                    <div class="fw-bold mb-1">Aviso importante</div>
                                                     <div>${infoText}</div>
                                                 </div>
                                             </div>
@@ -2540,7 +2541,7 @@
                                                     }
                                                 </div>
                                                 <h5 class="card-title">${employee.user.name}</h5>
-                                                <p class="card-text text-muted">${employee.position || 'Profesional'}</p>
+                                                <p class="card-text text-muted">${employee.position || 'Profesional de salud'}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -2549,7 +2550,7 @@
                                 });
                             } else {
                                 $("#employees-container").html(
-                                    '<div class="col-12 text-center py-5"><p>No hay ningún profesional disponible para este servicio.</p></div>'
+                                    '<div class="col-12 text-center py-5"><p>No hay ningún profesional de salud disponible para este servicio.</p></div>'
                                 );
                             }
                         },
@@ -2690,7 +2691,7 @@
                 function updateCalendar() {
                     // Update employee name display
                     const employee = bookingState.selectedEmployee;
-                    $(".selected-employee-name").text(`Profesional seleccionado: ${employee.user.name}`);
+                    $(".selected-employee-name").text(`Profesional de salud seleccionado: ${employee.user.name}`);
 
                     // Clear previous selections
                     bookingState.selectedDate = null;
@@ -3411,7 +3412,7 @@
                         <hr>
 
                         <div class="mb-1"><strong>Servicio:</strong> ${serviceName}</div>
-                        <div class="mb-1"><strong>Profesional:</strong> ${employeeName}</div>
+                        <div class="mb-1"><strong>Profesional de salud:</strong> ${employeeName}</div>
                         <div class="mb-1"><strong>Modalidad:</strong> ${modeTxt}</div>
 
                         <div class="mb-1"><strong>Fecha:</strong> ${dateTxt}</div>
@@ -3424,7 +3425,6 @@
                             payMethod === "transfer"
                                 ? `
                                     <div class="alert alert-info mt-3 mb-0 text-justify">
-                                        <div class="fw-bold mb-1">Transferencia bancaria:</div>
                                         <p class="mb-1">
                                             Su cita quedará <b>confirmada</b> una vez validemos el comprobante.Hemos <b>recibido</b> su comprobante de pago y lo estamos <b>validando</b>.
                                         </p>
@@ -3435,7 +3435,6 @@
                                 `
                                 : `
                                     <div class="alert alert-info mt-3 mb-0">
-                                        <div class="fw-bold mb-1">Pago con tarjeta:</div>
                                         <p class="mb-1">
                                             El pago de su cita ha sido <b>recibido</b>.
                                         </p>
@@ -3732,7 +3731,7 @@
                         <hr>
 
                         <div class="mb-1"><strong>Servicio:</strong> ${serviceName}</div>
-                        <div class="mb-1"><strong>Profesional:</strong> ${employeeName}</div>
+                        <div class="mb-1"><strong>Profesional de salud:</strong> ${employeeName}</div>
                         <div class="mb-1"><strong>Modalidad:</strong> ${modeTxt}</div>
 
                         <div class="mb-1"><strong>Fecha:</strong> ${dateTxt}</div>
@@ -3745,7 +3744,6 @@
                             payMethod === "transfer"
                             ? `
                                 <div class="alert alert-info mt-3 mb-0 text-justify">
-                                    <div class="fw-bold mb-1">Transferencia bancaria:</div>
                                     <p class="mb-1">
                                         Hemos <b>recibido</b> su comprobante de pago y lo estamos <b>validando</b>.
                                     </p>
@@ -4824,16 +4822,14 @@
 
                         <h6>1. Confirmación de la cita</h6>
                         <p>
-                        La cita se considera confirmada una vez que el pago ha sido procesado correctamente o,
-                        en el caso de transferencia bancaria, cuando el comprobante ha sido enviado y validado
-                        por el Centro Médico FamySALUD.
+                        Una vez realizado el pago o enviado el comprobante de transferencia, 
+                        el Centro Médico FamySALUD procederá a validar la información registrada. 
+                        La confirmación final del turno será notificada al paciente por los canales oficiales.
                         </p>
 
                         <h6>2. Pagos y reembolsos</h6>
                         <p>
-                        Los pagos realizados no son reembolsables.
-                        En caso de no poder asistir a la cita, el paciente podrá solicitar un reagendamiento,
-                        sujeto a disponibilidad y a las políticas vigentes del centro médico.
+                        Los pagos realizados no son reembolsables. En caso de no poder asistir a la cita, el paciente podrá solicitar un reagendamiento sujeto a disponibilidad, siempre que notifique al Centro Médico FamySALUD con un mínimo de 4 horas previas al turno agendado.
                         </p>
 
                         <h6>3. Reagendamiento de citas</h6>
@@ -4849,7 +4845,7 @@
                         <h6>4. Responsabilidad del paciente</h6>
                         <p>
                         Es responsabilidad del paciente ingresar correctamente sus datos personales,
-                        seleccionar adecuadamente el servicio, profesional, fecha y modalidad de la cita.
+                        seleccionar adecuadamente el servicio, profesional de salud, fecha y modalidad de la cita.
                         </p>
 
                         <h6>5. Uso del sistema</h6>
@@ -4867,7 +4863,7 @@
 
                         <div class="alert alert-warning mt-4 text-justify">
                             <strong>Importante:</strong>
-                            Los pagos no son reembolsables. Las citas pueden ser reagendadas según disponibilidad.
+                            Los pagos no son reembolsables. Las citas podrán ser reagendadas según disponibilidad, siempre que el paciente notifique con un mínimo de 4 horas de anticipación al turno agendado.
                         </div>
                     </div>
 
