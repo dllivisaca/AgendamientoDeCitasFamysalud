@@ -994,12 +994,6 @@
 
                     const restoredOk = restorePayphoneState();
 
-                    console.log("[Payphone RETURN] restoredOk =", restoredOk);
-                    console.log("[Payphone RETURN] bookingState.selectedService =", bookingState.selectedService);
-                    console.log("[Payphone RETURN] bookingState.selectedEmployee =", bookingState.selectedEmployee);
-                    console.log("[Payphone RETURN] bookingState.selectedDate =", bookingState.selectedDate);
-                    console.log("[Payphone RETURN] bookingState.selectedTime =", bookingState.selectedTime);
-
                     // Asegura que el UI sepa que estamos en pago con tarjeta al volver de PayPhone
                     bookingState.paymentMethod = "card";
 
@@ -1133,8 +1127,6 @@
                         alert(data.message || "Pago rechazado o no se pudo confirmar. Intenta nuevamente.");
                     })
                     .catch((err) => {
-                        console.error("[PayPhone confirm] error:", err);
-                        console.error("[PayPhone confirm] data:", err?.data);
 
                         alert(err?.data?.message || err?.message || "No se pudo confirmar el pago.");
                         $("#pay-now").prop("disabled", false).text("Reintentar confirmación");
@@ -1160,10 +1152,8 @@
                 });
                 async function initPayphoneWithTotal(totalUSD) {
                     try {
-                        console.log("[Payphone] initPayphoneWithTotal called with:", totalUSD);
 
                         if (!totalUSD || totalUSD <= 0) {
-                            console.warn("[Payphone] totalUSD inválido:", totalUSD);
                             return;
                         }
 
@@ -1172,14 +1162,10 @@
 
                         // Necesitamos el hold_id
                         const holdId = bookingState.hold_id;
-                        console.log("[Payphone] hold_id:", holdId);
 
                         if (!holdId) {
-                            console.warn("No hay hold_id para iniciar PayPhone");
                             return;
                         }
-
-                        console.log("[Payphone] PPaymentButtonBox exists?:", typeof PPaymentButtonBox);
 
                         // ✅ Forzar sync del hidden E.164 antes de init
                         try {
@@ -1204,9 +1190,7 @@
                         // ✅ Guardar estado ANTES de salir a PayPhone (para poder restaurar al volver)
                         try {
                             savePayphoneState();
-                            console.log("[Payphone] pp_state guardado OK antes de init");
                         } catch (e) {
-                            console.warn("[Payphone] no se pudo guardar pp_state antes de init", e);
                         }
 
                         // Llamar backend para inicializar intento de pago
@@ -1225,25 +1209,18 @@
                             })
                         });
 
-                        console.log("[Payphone] init status:", res.status);
-
                         if (!res.ok) {
-                        console.error("PayPhone init falló", await res.text());
                         return;
                         }
-
-                        console.log("[Payphone] init status:", res.status);
 
                         const contentType = res.headers.get("content-type") || "";
                         const raw = await res.text();
 
                         if (!res.ok) {
-                        console.error("[Payphone] init NO OK:", raw);
                         return;
                         }
 
                         if (!contentType.includes("application/json")) {
-                        console.error("[Payphone] init NO JSON, llegó:", raw.slice(0, 400));
                         return;
                         }
 
@@ -1251,7 +1228,6 @@
 
                         const container = document.getElementById("pp-button");
                         if (!container) {                        
-                        console.error("[Payphone] No existe el div #pp-button");
                         return;
                         }
 
@@ -1269,10 +1245,7 @@
                         timeZone: -5,
                         }).render("pp-button");
 
-                        console.log("[Payphone] render() called");
-
                     } catch (e) {
-                        console.error("[Payphone] Error:", e);
                     }
                 }
 
@@ -1421,13 +1394,6 @@
                             allowedMinDate = (res.min_allowed || "").toString().substring(0, 10) || null;
                             allowedMaxDate = (res.max_allowed || "").toString().substring(0, 10) || null;
 
-                            console.log("[available-dates] request YM:", key);
-                            console.log("[available-dates] dates count:", dates.length, "sample:", dates.slice(0, 5));
-                            console.log("[available-dates] min_allowed:", res.min_allowed, "max_allowed:", res.max_allowed);
-                            console.log("[available-dates] allowedMinYM/MaxYM:", allowedMinYM, allowedMaxYM);
-                            console.log("[available-dates] allowedMinDate/MaxDate:", allowedMinDate, allowedMaxDate);
-                            console.log("[available-dates] cache keys:", Object.keys(availableDatesByMonth));
-
                             // ✅ si es el mes que estamos viendo, úsalo para pintar
                             if (!onlyCache) {
                                 availableDatesSet = setDates;
@@ -1563,7 +1529,6 @@
 
                         localStorage.setItem(PP_STATE_KEY, JSON.stringify(state));
                     } catch (e) {
-                        console.warn("No se pudo guardar pp_state", e);
                     }
                 }
 
@@ -1591,10 +1556,7 @@
                                 bookingState.selectedEmployee = (employees || []).find(e => String(e.id) === String(eid)) || null;
                             }
                         } catch (e) {
-                            console.warn("[Payphone] rehydrate failed", e);
                         }
-
-                        console.log("[Payphone] restore ok, bookingState:", bookingState);
 
                         // 2) Restaurar formularios si existen
                         if (state.forms) {
@@ -1626,7 +1588,6 @@
 
                         return true;
                     } catch (e) {
-                        console.warn("No se pudo restaurar pp_state", e);
                         return false;
                     }
                 }
@@ -1773,8 +1734,6 @@
                         is_virtual: isVirtual,
                     };
 
-                    console.log("SERVICE MODES:", bookingState.selectedService);
-
                     // Reset subsequent selections
                     bookingState.selectedEmployee = null;
                     bookingState.selectedDate = null;
@@ -1819,7 +1778,6 @@
                     const employee = employees.find(e => Number(e.id) === employeeId);
 
                     if (!employee) {
-                        console.error('Empleado no encontrado para id:', employeeId, employees);
                         return;
                     }
 
@@ -1866,9 +1824,7 @@
                             });
                         }
 
-                        console.log('Días laborales del profesional:', workingWeekdays);
                     } catch (e) {
-                        console.error('Error al procesar employee.days:', e, employee.days);
                         workingWeekdays = null;
                     }
 
@@ -2232,7 +2188,6 @@
 
                         $("#discount-row").addClass("d-none");
 
-                        console.log("[Payphone RETURN] About to fillStep6Summary()");
                         // ✅ Cargar resumen y UI
                         fillStep6Summary();
                         refreshPaymentUI();
@@ -2482,7 +2437,6 @@
                             }
                         },
                         error: function(xhr) {
-                            console.error(xhr);
                             $("#services-container").html(
                                 '<div class="col-12 text-center py-5"><p>Error loading services. Please try again.</p></div>'
                             );
@@ -2555,7 +2509,6 @@
                             }
                         },
                         error: function(xhr) {
-                            console.error(xhr);
                             $("#employees-container").html(
                                 '<div class="col-12 text-center py-5"><p>Error loading employees. Please try again.</p></div>'
                             );
@@ -2940,11 +2893,6 @@
                             $("#time-slots-container").append($slotsContainer);
                         },
                         error: function(xhr) {
-                            console.log("AVAILABILITY ERROR", {
-                                status: xhr.status,
-                                responseText: xhr.responseText,
-                                responseJSON: xhr.responseJSON
-                            });
 
                             const msg =
                                 xhr.responseJSON?.message ||
@@ -3560,7 +3508,6 @@
 
                     // ✅ paymentMethod primero (antes de usarlo)
                     fd.append("payment_method", paymentMethod);
-                    console.log("DEBUG paymentMethod:", paymentMethod);
 
                     // ✅ STATUS + amount
                     fd.append("status", paymentMethod === "transfer" ? "pending_verification" : "pending_payment");
@@ -3785,7 +3732,6 @@
                                 res.message ||
                                 "Validación fallida (422).";
 
-                            console.log("422 VALIDATION", { message: res.message, errors });
                             alert(firstMsg);
                             return;
                         }
@@ -3836,10 +3782,6 @@
                     savePayphoneState();
 
                     const pp = buildPayphonePayload();
-                    console.log("[PP FRONT] data_consent:", pp.data_consent);
-                    console.log("[PP FRONT] tz:", pp.patient_timezone, "label:", pp.patient_timezone_label);
-
-                    console.log("[PP] bookingState.data_consent =", bookingState.data_consent);
 
                     // ✅ TZ del usuario (IANA) + label corto (CST/CDT/GMT-5, etc.)
                     try {
@@ -3854,8 +3796,6 @@
                     } catch (e) {
                         payload.patient_timezone_label = null;
                     }
-
-                    console.log("[INIT] consent:", payload.data_consent, "tz:", payload.patient_timezone, "label:", payload.patient_timezone_label);
 
                     // ✅ Construye el payload en el instante exacto del init (evita que quede viejo / pisado)
                     const payloadToSend = { ...(payload || {}) };
@@ -3904,8 +3844,6 @@
                         }
                     }
 
-                    // ✅ Debug (temporal)
-                    console.log("[PP INIT] consent:", payloadToSend.data_consent, "tz:", payloadToSend.patient_timezone, "label:", payloadToSend.patient_timezone_label);
                     // ✅ llama backend para crear payment_attempt + devolver token/storeId/clientTransactionId
                     $.ajax({
                         url: "/payments/payphone/init",
@@ -3922,7 +3860,6 @@
                             renderPayphoneBox(res);
                         },
                         error: function (xhr) {
-                            console.log(xhr.responseText);
                             alert("No se pudo iniciar el pago con Payphone.");
                         }
                     });
