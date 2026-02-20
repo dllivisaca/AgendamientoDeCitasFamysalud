@@ -1,7 +1,7 @@
 @php
 use Carbon\Carbon;
 
-  $title = 'Nueva cita registrada - FamySALUD';
+  $title = 'Nueva cita registrada - FamySALUD APP';
   $subtitle = 'Te informamos que una nueva cita ha sido registrada en nuestro sistema';
 
   $bookingId = $data['booking_id'] ?? null;
@@ -228,7 +228,7 @@ use Carbon\Carbon;
                 </table>
 
               <div style="margin-top:18px;font-size:14px;line-height:20px;color:#111827;">
-                Puedes ubicarla rápidamente en el panel usando el <strong>código de reserva</strong>.
+                Puedes ubicarla rápidamente en el panel "Todas las citas" usando el <strong>código de reserva</strong>.
               </div>
 
             </td>
@@ -238,7 +238,7 @@ use Carbon\Carbon;
           <tr>
             <td style="padding:14px 22px;border-top:1px solid #e5e7eb;background:#ffffff;">
               <div style="font-size:12px;line-height:18px;color:#94a3b8;text-align:center;">
-                FamySALUD en Línea · Este es un correo automático, por favor no respondas.
+                FamySALUD en Línea · Este es un correo automático, por favor no responder.
               </div>
             </td>
           </tr>

@@ -1,7 +1,7 @@
 @php
 use Carbon\Carbon;
 
-  $title = 'Cita reagendada - FamySALUD';
+  $title = 'Cita médica reagendada - FamySALUD';
   $subtitle = 'Hemos actualizado tu cita 🔄';
 
   // =========================
@@ -122,7 +122,7 @@ use Carbon\Carbon;
           <tr>
             <td style="padding:22px;">
               <div style="font-size:16px;line-height:24px;color:#111827;">
-                Hola, <strong>tu cita ha sido reagendada</strong>.
+                Tu cita ha sido <strong>reagendada</strong>.
               </div>
 
               <div style="margin-top:10px;font-size:14px;line-height:20px;color:#111827;">
@@ -206,7 +206,7 @@ use Carbon\Carbon;
               </table>
 
               <div style="margin-top:18px;font-size:14px;line-height:20px;color:#111827;">
-                Gracias por tu comprensión 💙
+                Gracias por confiar en FamySALUD 💙
               </div>
             </td>
           </tr>
@@ -215,7 +215,7 @@ use Carbon\Carbon;
           <tr>
             <td style="padding:14px 22px;border-top:1px solid #e5e7eb;background:#ffffff;">
               <div style="font-size:12px;line-height:18px;color:#94a3b8;text-align:center;">
-                FamySALUD en Línea · Este es un correo automático, por favor no respondas.
+                FamySALUD en Línea · Este es un correo automático, por favor no responder.
               </div>
             </td>
           </tr>

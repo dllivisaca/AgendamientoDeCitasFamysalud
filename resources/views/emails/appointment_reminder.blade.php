@@ -1,7 +1,7 @@
 @php
 use Carbon\Carbon;
-  $title = 'Recordatorio de cita - FamySALUD';
-  $subtitle = 'Tu salud es prioridad ✨';
+  $title = 'Recordatorio de tu cita médica - FamySALUD';
+  $subtitle = 'Tu cita está próxima. Nos vemos pronto ✨';
 
   $isToday = ($kind === 'MANUAL_3H' || $kind === 'AUTO_3H');
   $whenLabel = $isToday ? 'hoy' : 'mañana';
@@ -149,7 +149,7 @@ use Carbon\Carbon;
               </table>
 
               <div style="margin-top:18px;font-size:14px;line-height:20px;color:#111827;">
-                Gracias por confiar en nosotros.
+                Gracias por confiar en FamySALUD 💙
               </div>
             </td>
           </tr>
@@ -158,7 +158,7 @@ use Carbon\Carbon;
           <tr>
             <td style="padding:14px 22px;border-top:1px solid #e5e7eb;background:#ffffff;">
               <div style="font-size:12px;line-height:18px;color:#94a3b8;text-align:center;">
-                FamySALUD en Línea · Este es un correo automático, por favor no respondas.
+                FamySALUD en Línea · Este es un correo automático, por favor no responder.
               </div>
             </td>
           </tr>

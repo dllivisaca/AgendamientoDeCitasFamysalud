@@ -23,7 +23,7 @@
         </p>
 
         <p style="margin:0 0 18px;font-size:15px;line-height:1.5;">
-          Por favor completa esta breve encuesta:
+          Queremos seguir mejorando para ti. Regálanos un minuto respondiendo esta breve encuesta 💙
         </p>
 
         <a href="{{ $surveyUrl }}"
@@ -40,7 +40,7 @@
     </div>
 
     <div style="text-align:center;font-size:11px;color:#94a3b8;margin-top:14px;">
-      FamySALUD en Línea · Este es un correo automático, por favor no respondas.
+      FamySALUD en Línea · Este es un correo automático, por favor no responder.
     </div>
   </div>
 </body>

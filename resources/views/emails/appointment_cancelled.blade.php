@@ -2,7 +2,7 @@
 use Carbon\Carbon;
 
   $title = 'Cita cancelada - FamySALUD';
-  $subtitle = 'Te informamos sobre tu cita';
+  $subtitle = 'Tu cita ha sido cancelada ❌';
 
   $date = !empty($data['date'])
       ? Carbon::parse($data['date'])->locale('es')->translatedFormat('d M Y')
@@ -105,7 +105,7 @@ use Carbon\Carbon;
           <tr>
             <td style="padding:22px;">
               <div style="font-size:16px;line-height:24px;color:#111827;">
-                Hola, <strong>te informamos que tu cita ha sido cancelada</strong>.
+                Te informamos que tu cita <strong>ha sido cancelada</strong>.
               </div>
 
               <div style="margin-top:10px;font-size:14px;line-height:20px;color:#111827;">
@@ -147,7 +147,7 @@ use Carbon\Carbon;
               </table>
 
               <div style="margin-top:18px;font-size:14px;line-height:20px;color:#111827;">
-                Si necesitas reagendar, puedes comunicarte con nosotros 💙
+                Si necesitas reagendar, puedes comunicarte con nosotros al +593 93 903 4743 📲
               </div>
             </td>
           </tr>
@@ -156,7 +156,7 @@ use Carbon\Carbon;
           <tr>
             <td style="padding:14px 22px;border-top:1px solid #e5e7eb;background:#ffffff;">
               <div style="font-size:12px;line-height:18px;color:#94a3b8;text-align:center;">
-                FamySALUD en Línea · Este es un correo automático, por favor no respondas.
+                FamySALUD en Línea · Este es un correo automático, por favor no responder.
               </div>
             </td>
           </tr>
