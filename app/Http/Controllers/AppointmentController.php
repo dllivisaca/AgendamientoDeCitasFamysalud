@@ -1592,10 +1592,18 @@ class AppointmentController extends Controller
 
                     try {
                         if (($appointment->appointment_mode ?? null) === 'presencial') {
-                            $serviceAddressId = $appointment->service->address_id ?? null;
 
-                            if (!empty($serviceAddressId)) {
-                                $addrRow = DB::table('adresses')->where('id', $serviceAddressId)->first();
+                            // ✅ PRIORIDAD: address_id en appointments (tu regla)
+                            $addressId = $appointment->address_id ?? null;
+
+                            // ✅ Fallback opcional: si no hay address_id, intenta desde service (por si alguna cita vieja no lo guarda)
+                            if (empty($addressId)) {
+                                $addressId = $appointment->service->address_id ?? null;
+                            }
+
+                            if (!empty($addressId)) {
+                                // ✅ Tabla correcta
+                                $addrRow = DB::table('addresses')->where('id', $addressId)->first();
 
                                 if ($addrRow) {
                                     $addrFull = $addrRow->full_address ?? null;
